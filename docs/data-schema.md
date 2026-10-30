@@ -325,3 +325,27 @@ RCS.video = {
   A number no source gives carries `verify: true` and still names the nearest source.
 - The line drawing reads `white`, `sync`, `burst`, `fp`, `hs`, `bp` and `bs` from the PAL column, so keep those ids.
 - "Derived" in a note means arithmetic on the cited table (back porch = sync edge to blanking end, less sync width).
+
+## Board photos
+
+`src/data/photos.js` registers freely licensed board photos and where each chip sits on them. Images live in
+`photos/` at the repo root. Licences allowed: public domain / PD mark, CC0, CC BY, CC BY-SA, GFDL (user decision
+2026-10-30). Photos are shown unaltered apart from resizing; highlights are drawn by the app over the image, never
+baked in.
+```js
+RCS.addPhotos({ c64: [{
+  board: 'Assy 250407', rev: 'Rev B',                      // match a board in schematics.js when possible
+  file: 'photos/c64-250407.webp', w: 1600, h: 1067,       // resized copy, long edge 1600 px, WebP q80
+  side: 'component',                                       // which face is shown
+  rotate: 0,                                               // degrees the app should rotate it for display (0/90/180/270)
+  author: 'Name as the licence requires', licence: 'CC BY-SA 3.0', licenceUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
+  source: { label: 'Wikimedia Commons: File:....jpg', url: 'https://commons.wikimedia.org/wiki/File:....jpg' },
+  chips: { cpu6510: [0.412, 0.318, 0.091, 0.142], vic6567: [...] },  // [x, y, w, h] as fractions of the image, chip id -> box
+  verify: ['sid6581'],                                     // chip ids whose box was placed without a legible designator
+  note: 'Optional: what differs from other revisions.' }] });
+```
+- Boxes are fractions (0-1) of the displayed image before `rotate`. Every key in `chips` is a chip id listed in that
+  machine's `chips`. A chip placed by inference (no legible designator, position from the layout drawing) goes in
+  `verify`.
+- `author`, `licence`, `licenceUrl` and `source` are required; the app prints them under the photo and on the credits
+  page.
