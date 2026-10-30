@@ -100,6 +100,7 @@ for (const [mid, list] of Object.entries(R.connectors)) {
       if (p.n === '?' || p.n === '-' || p.n == null) warn(f, `${c.id} has an unplaced pin ${p.name}`);
       if (!['?', '-'].includes(p.n) && seen.has(String(p.n))) err(f, `${c.id} repeats pin ${p.n}`); seen.add(String(p.n));
       if (p.type && !R.pinTypes[p.type]) err(f, `${c.id} pin ${p.n} type ${p.type}`);
+      if (p.conflict) warn(f, `${c.id} pin ${p.n} conflict: ${p.conflict}`);
       if (c.geo === 'custom' && !(c.pads || []).some(q => String(q.n) === String(p.n))) err(f, `${c.id} pin ${p.n} has no pad`);
       if (pads && p.n !== '?' && p.n !== '-' && !pads.has(String(p.n))) err(f, `${c.id} pin ${p.n} is outside the ${c.geo} layout`);
     }
