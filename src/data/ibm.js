@@ -568,16 +568,16 @@
     power: {
       pc5150: {
         rails: [
-          { rail: '+5 V', expect: '4.75 to 5.25 V', where: 'P9 pins 4, 5, 6 (red); cpu8088 pin 40', note: 'The main logic rail. Dead +5 V means no POST.', verify: true },
+          { rail: '+5 V', expect: '4.75 to 5.25 V', where: 'P9 pins 4, 5, 6 (red); 8088 pin 40', note: 'The main logic rail. Dead +5 V means no POST.', verify: true },
           { rail: '+12 V', expect: '11.4 to 12.6 V', where: 'P8 pin 3 (yellow)', note: 'Drives the motors and the cassette relay. Missing +12 V gives a dead floppy.', verify: true },
           { rail: '-12 V', expect: '-10.8 to -13.2 V', where: 'P8 pin 4 (blue)', note: 'Serial and card supply.', verify: true },
           { rail: '-5 V', expect: '-4.5 to -5.5 V', where: 'P9 pin 3 (white)', note: 'Cassette port and ISA bus. Missing -5 V gives 131.', verify: true },
           { rail: 'Power Good', expect: 'HIGH (about +5 V) after power-up; LOW before', where: 'P8 pin 1 (orange)', note: 'The motherboard holds reset until it is HIGH. Wait at least 5 seconds off before switching on again.', verify: true },
         ],
         testPoints: [
-          { tp: 'CPU supply', where: 'cpu8088 pin 40', expect: '+5 V within 5 percent' },
-          { tp: 'CPU clock', where: 'cpu8088 pin 19', expect: '4.77 MHz square wave' },
-          { tp: 'CPU reset', where: 'cpu8088 pin 21', expect: 'HIGH at power-up, then LOW' },
+          { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V within 5 percent' },
+          { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz square wave' },
+          { tp: 'CPU reset', where: '8088 pin 21', expect: 'HIGH at power-up, then LOW' },
           { tp: '8284 supply', where: 'clk8284 pin 18', expect: '+5 V', verify: true },
           { tp: 'Clock output', where: 'clk8284 pin 8', expect: '4.77 MHz', verify: true },
           { tp: 'Crystal', where: 'clk8284 crystal pins (X1, X2; pins not read)', expect: '14.31818 MHz', verify: true },
@@ -594,9 +594,9 @@
           { rail: 'Power Good', expect: 'HIGH after power-up', where: 'P8 pin 1 (orange)', note: 'Wait 5 seconds off before switching on again.', verify: true },
         ],
         testPoints: [
-          { tp: 'CPU supply', where: 'cpu8088 pin 40', expect: '+5 V within 5 percent' },
-          { tp: 'CPU clock', where: 'cpu8088 pin 19', expect: '4.77 MHz square wave' },
-          { tp: 'CPU reset', where: 'cpu8088 pin 21', expect: 'HIGH at power-up, then LOW' },
+          { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V within 5 percent' },
+          { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz square wave' },
+          { tp: 'CPU reset', where: '8088 pin 21', expect: 'HIGH at power-up, then LOW' },
         ],
       },
       pcjr: {

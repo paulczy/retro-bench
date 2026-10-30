@@ -209,10 +209,27 @@
   .door.pour .j, .door.pour .m { color: var(--copper-ink); opacity: .75; }
   .door.off { border-style: dashed; border-color: var(--silk-45); color: var(--silk-70); pointer-events: none; }
   .door.off .j { color: var(--tin); }
-  .boardarea svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .boardarea .bus { stroke: var(--copper); stroke-width: 2; fill: none; }
-  .boardarea .stub { stroke: var(--copper); stroke-width: 1.5; fill: none; }
-  .boardarea .via { fill: var(--copper); }
+  /* machine board: footprints wrap at --fpw; the bus sits one gap left of the first column, so the same
+     gap-wide stub that joins footprints in a row also joins the first one to the bus */
+  .board-grid { --gx: 18px; --fpw: 196px; position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--fpw), 1fr)); gap: 22px var(--gx); padding: 14px 0 0 calc(8px + var(--gx)); margin-top: 6px; }
+  .board-grid::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 45px; width: 2px; background: var(--copper); }
+  .board-grid::after { content: ''; position: absolute; left: 4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--copper); }
+  .bcell { display: block; min-width: 0; color: var(--silk); }
+  .bcell:hover { color: var(--silk); }
+  .bcell .bl { display: flex; align-items: baseline; gap: 8px; height: 20px; margin-bottom: 4px; white-space: nowrap; font-family: var(--font-mono); }
+  .bcell .bl > span { overflow: hidden; text-overflow: ellipsis; }
+  .bcell .des { font-size: 14px; letter-spacing: .08em; color: var(--copper); }
+  .bcell .flag { font-size: 10px; letter-spacing: .12em; color: var(--tin); flex-shrink: 1000; }   /* gives way before the designator */
+  .bcell .flag.pwr { color: var(--pwr); flex: none; }
+  .bcell .pn { font-size: 12px; color: var(--silk-70); margin-left: auto; flex: none; }
+  .bcell .bfp { display: block; position: relative; }
+  .bcell .bfp::before { content: ''; position: absolute; top: calc(50% - .75px); left: calc(-1 * var(--gx)); width: var(--gx); height: 1.5px; background: var(--copper); }
+  .bcell svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .bcell svg text:not(.nm), .bcell svg .hit { display: none; }
+  .bcell .role { display: block; margin-top: 6px; font: 400 12px/16px var(--font-sans); color: var(--tin); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  a.bcell:hover .ol { stroke: var(--copper); stroke-dasharray: none; }
+  a.bcell:hover .nm { fill: var(--copper-hi); }
+  a.bcell:focus-visible { outline-offset: 4px; }
   .chipfp .ol { fill: var(--mask-deep); stroke: var(--silk); stroke-width: 1.5; }
   .chipfp.nc .ol { fill: none; stroke-dasharray: 4 3; stroke: var(--silk-45); }
   .chipfp .notchc { fill: var(--mask); stroke: var(--silk); stroke-width: 1.5; }
@@ -439,6 +456,7 @@
     .legend.tri > .v3 { grid-column: 1 / -1; text-align: left; padding: 0 0 10px; color: var(--tin); }
     .memmap { grid-template-columns: 150px 1fr; }
     .chiprow { grid-template-columns: 110px 1fr; gap: 12px; }
+    .board-grid { --fpw: 136px; }
     .symrow { grid-template-columns: 1fr; }
     .symrow .u { text-align: left; }
     .symrow .u a, .symrow .u span { margin: 6px 6px 0 0; }

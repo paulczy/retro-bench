@@ -254,7 +254,19 @@ window.RCS = (() => {
     const ids = Object.keys(d.machines || {});
     R.brands.push({ ...d.brand, machines: ids });
     Object.assign(R.machines, d.machines || {});
-    Object.assign(R.chips, d.chips || {});
+    /* A chip id may be defined once with pins. A later file may replace a stub (pins: null); the stub's
+       machines and designators are kept. Two definitions with pins are a data error the validator reports. */
+    R._dupes = R._dupes || [];
+    for (const [cid, c] of Object.entries(d.chips || {})) {
+      const prev = R.chips[cid];
+      if (prev) {
+        if (prev.pins && c.pins) R._dupes.push(`${cid} (${d.brand.id} redefines a chip that already has pins)`);
+        if (prev.pins && !c.pins) continue;            // keep the full record, ignore the stub
+        c.machines = [...new Set([...(prev.machines || []), ...(c.machines || [])])];
+        c.location = Object.assign({}, prev.location || {}, c.location || {});
+      }
+      R.chips[cid] = c;
+    }
     for (const t of ['symptoms', 'connectors', 'power', 'quickref']) Object.assign(R[t], d[t] || {});
     if (d.resources && d.resources.length) R.resources[d.brand.id] = d.resources;
     /* Cross-brand fitting: a machine may list a chip defined in another brand file. After every add(),

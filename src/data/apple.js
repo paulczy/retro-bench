@@ -1243,8 +1243,7 @@ RCS.add({
       "role": "Keyboard encoder",
       "pkg": "DIP-40",
       "machines": [
-        "apple2e",
-        "apple2c"
+        "apple2e"
       ],
       "location": {
         "apple2e": "Keyboard PCB"

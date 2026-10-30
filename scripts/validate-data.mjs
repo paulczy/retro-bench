@@ -66,6 +66,11 @@ for (const [cid, c] of Object.entries(R.chips)) {
   }
   for (const d of c.datasheets || []) if (!d.label || !d.url) err(f, 'datasheet needs label and url');
 }
+for (const d of R._dupes || []) err('chips', `duplicate definition: ${d}`);
+for (const [cid, c] of Object.entries(R.chips)) for (const mid of c.machines || []) {
+  const m = R.machines[mid];
+  if (m && !(m.chips || []).includes(cid)) err(`chip ${cid}`, `lists ${mid} in machines but ${mid}.chips does not list it`);
+}
 for (const [mid, list] of Object.entries(R.symptoms)) for (const s of list) for (const cid of s.suspects) if (!R.chips[cid]) err(`symptoms ${mid}`, `unknown chip ${cid}`);
 for (const [mid, list] of Object.entries(R.connectors)) for (const c of list) {
   if (!c.id || !c.name || !c.kind || !c.pins) err(`connectors ${mid}`, `connector ${c.id || c.name} incomplete`);

@@ -49,10 +49,12 @@ applyMask();
 const SW = /^https?:$/.test(location.protocol) && 'serviceWorker' in navigator ? navigator.serviceWorker : null;
 const STANDALONE_MQ = matchMedia('(display-mode: standalone)');
 const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const net = { local: location.protocol === 'file:', cached: !!(SW && SW.controller), failed: !SW, prompt: null, updated: false };
+/* lost: the first offline copy failed to download (the install was rejected), so nothing is kept yet */
+const net = { local: location.protocol === 'file:', cached: !!(SW && SW.controller), failed: !SW, lost: false, prompt: null, updated: false };
 const installed = () => STANDALONE_MQ.matches || navigator.standalone === true;
-const netLive = () => !installed() && !net.local && !net.failed && !net.cached;
-const netLabel = () => (installed() ? 'Installed' : net.local || net.cached ? 'Works offline' : net.failed ? '' : 'Caching…');
+const netLive = () => !installed() && !net.local && !net.failed && !net.cached && !net.lost;
+const netLost = () => !installed() && !net.local && !net.cached && net.lost;
+const netLabel = () => (installed() ? 'Installed' : net.local || net.cached ? 'Works offline' : net.failed ? '' : net.lost ? 'Offline copy failed' : 'Caching…');
 const netBtn = (act, label, cls) => `<button type="button" data-act="${act}" class="${cls}">${label}</button>`;
 const COPPER_TXT = 'font-mono text-[15px] uppercase whitespace-nowrap text-copper hover:text-copper-hi min-h-11';
 /* strip actions sit with the mask toggle; on a phone there is no room, so Install lives on the More page
@@ -63,6 +65,7 @@ function netMore() {
     : net.local ? 'Running from local files; nothing to download.'
     : net.cached ? 'Works offline. Every machine, chip and font is kept on this device.'
     : net.failed ? 'This browser cannot keep Retro Bench offline from this address.'
+    : net.lost ? 'Offline copy failed: not everything could be downloaded. Reload this page when you are online to try again.'
     : '<span class="text-copper">Caching…</span> saving every machine, chip and font to this device.';
   const ios = IOS && !installed() && !net.local ? '<p class="note">On iPad or iPhone, in Safari: tap Share, then Add to Home Screen.</p>' : '';
   const act = netAction('btn mt-3');
@@ -70,21 +73,29 @@ function netMore() {
 }
 const netRow = () => (net.updated ? netBtn('reload', 'Updated, reload', COPPER_TXT) : '');
 function paintNet() {
-  const st = $('#net-state'); if (st) { st.textContent = netLabel(); st.classList.toggle('text-copper', netLive()); }
+  const st = $('#net-state'); if (st) { st.textContent = netLabel(); st.classList.toggle('text-copper', netLive()); st.classList.toggle('text-silk', netLost()); }
   const a = $('#net-act'); if (a) a.innerHTML = netAction();
   const r = $('#net-row'); if (r) { r.hidden = !net.updated; r.innerHTML = netRow(); }
   const m = $('#net-more'); if (m) m.innerHTML = netMore();
 }
 if (SW) {
-  const had = !!SW.controller;
-  /* an installed app can sit open for days: look for a new deploy whenever it comes back to the front */
-  SW.register('sw.js').then(reg => addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); }))
-    .catch(() => { net.failed = true; paintNet(); });
-  SW.ready.then(() => { net.cached = true; paintNet(); });
+  SW.register('sw.js').then(reg => {
+    /* the precache is all or nothing: a worker that dies installing with none active means no offline copy.
+       A failed update leaves the previous worker active, so it says nothing. */
+    const watch = w => w && w.addEventListener('statechange', () => {
+      if (w.state === 'redundant' && !SW.controller && !reg.active) { net.lost = true; paintNet(); }
+    });
+    watch(reg.installing);
+    reg.addEventListener('updatefound', () => { if (!reg.active && net.lost) { net.lost = false; paintNet(); } watch(reg.installing); });
+    /* an installed app can sit open for days: look for a new deploy whenever it comes back to the front */
+    addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+  }).catch(() => { net.failed = true; paintNet(); });
+  SW.ready.then(() => { net.cached = true; net.lost = false; paintNet(); });
+  /* sw.js says 'ready' on a first install and 'updated' only when it replaced an older version */
   SW.addEventListener('message', e => {
     const t = e.data && e.data.type;
-    if (t === 'updated' && had) net.updated = true;
-    if (t) { net.cached = true; paintNet(); }
+    if (t === 'updated') net.updated = true;
+    if (t) { net.cached = true; net.lost = false; paintNet(); }
   });
 }
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); net.prompt = e; paintNet(); });
@@ -114,6 +125,8 @@ function mDes(m) {
   return short.length <= 9 ? short : tight.length <= 9 ? tight : m.id.toUpperCase().slice(0, 7);
 }
 const chipsOf = m => arr(m.chips).map(id => D.chips[id]).filter(Boolean);
+const fits = (m, id) => arr(m.chips).includes(id);   /* only a machine's own chips list counts */
+const fittedIn = c => arr(c.machines).map(id => D.machines[id]).filter(m => m && fits(m, c.id));
 const brandMachines = br => arr(br.machines).map(id => D.machines[id]).filter(Boolean);
 function dataFor(table, m) {
   if (table[m.id]) return { data: table[m.id], shared: null };
@@ -150,11 +163,12 @@ function termify(text, ids) {
 const datasheets = chip => (arr(chip.datasheets).length
   ? `<div class="h4">Datasheets</div><ul class="ds">${chip.datasheets.map(d => `<li><a class="lnk" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a>${d.verify ? chk() : ''}</li>`).join('')}</ul>${chip.verifiedAgainst ? `<p class="note">Checked against: ${esc(chip.verifiedAgainst)}</p>` : ''}`
   : '');
-/* "TED pin 14", "TED pins 10, 11", "CPU pin 37" become links to that pin on the drawing */
+/* "TED pin 14", "TED pins 10, 11", "CPU pin 37", "cpu8088 pin 40" (short name or chip id) become links to that pin */
 function linkPins(text, m) {
   const chips = chipsOf(m).filter(c => c.pins);
-  return esc(text).replace(/\b([A-Za-z0-9/-]+) (pins?) (\d+(?:, \d+)*)/g, (all, who, word, nums) => {
-    const c = chips.find(x => String(x.short).toLowerCase() === who.toLowerCase()) || (who.toUpperCase() === 'CPU' && chips.find(x => /\bCPU\b/.test(x.role || '')));
+  return esc(text).replace(/\b([\w/-]+) (pins?) (\d+(?:, \d+)*)/g, (all, who, word, nums) => {
+    const w = who.toLowerCase();
+    const c = chips.find(x => String(x.short).toLowerCase() === w || String(x.id).toLowerCase() === w) || (w === 'cpu' && chips.find(x => /\bCPU\b/.test(x.role || '')));
     if (!c) return all;
     const ns = nums.split(', ').filter(n => c.pins.some(p => p.n === Number(n)));
     if (!ns.length) return all;
@@ -172,7 +186,7 @@ function buildIndex() {
     ix.push({ group: 'Machines', title: m.name, sub: [m.aka, m.cpu, statusOf(m)].filter(Boolean).join(', '), keys: `${m.id} ${mDes(m)} ${m.aka || ''} ${b ? b.name : ''}`, href: mPath(m), des: mDes(m) });
   }
   for (const c of Object.values(D.chips)) {
-    const ms = arr(c.machines).map(id => D.machines[id]).filter(Boolean);
+    const ms = fittedIn(c);
     const home = ms.find(m => m.status === 'ready') || ms[0];
     if (!home) continue;
     ix.push({ group: 'Chips', title: c.name, sub: [c.role, c.pkg, ms.map(m => m.name).join(', ')].filter(Boolean).join(', '), keys: `${c.short} ${c.family || ''} ${c.role || ''}`, href: c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`, des: boardDes(c, home), tag: c.pins ? '' : 'not captured' });
@@ -257,20 +271,19 @@ function dipFootprint(chip, m, x, y, w, link = true) {
     ${chip.heat === 'hot' ? `<text class="hotm" x="${markX}" y="${y - 6}">HOT</text>` : ''}${nc ? `<text class="ncm" x="${markX}" y="${y - 6}">NOT CAPTURED</text>` : ''}
   ${link ? '</a>' : '</g>'}`;
 }
-/* the machine's chips laid out as a board: a vertical copper bus feeding each row by short stubs */
-function boardSVG(m, chips, cols) {
-  const CW = 196, CH = 92, GX = 18, GY = 22, X0 = 30, Y0 = 44;
-  const rows = Math.ceil(chips.length / cols);
-  const W = X0 + cols * (CW + GX) - GX + 12, H = Y0 + rows * (CH + GY);
-  let traces = `<path class="bus" d="M 8 ${Y0 - 30} V ${H - 40}"/><circle class="via" cx="8" cy="${Y0 - 30}" r="4"/>`, parts = '';
-  chips.forEach((c, i) => {
-    const r = Math.floor(i / cols), col = i % cols, x = X0 + col * (CW + GX), y = Y0 + r * (CH + GY);
-    traces += `<path class="stub" d="M ${col ? x - GX : 8} ${y + 23} H ${x}"/>`;
-    parts += dipFootprint(c, m, x, y, CW);
-  });
-  return `<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Chips on the ${esc(m.name)} board">${traces}${parts}</svg>`;
+/* the machine's chips laid out as a board: a grid that wraps at a fixed minimum footprint width (CSS),
+   a vertical copper bus down the left, and a stub across every gap so each row is fed from the bus.
+   Labels are HTML so they truncate with an ellipsis instead of running into the next footprint. */
+const BOARD_FW = 196;
+function boardGrid(m, chips) {
+  return `<div class="board-grid" role="group" aria-label="Chips on the ${esc(m.name)} board">${chips.map(c => {
+    const des = desOf(c, m), nc = !c.pins, role = String(c.role || '').split(/[,(]/)[0].trim();
+    return `<a class="bcell${nc ? ' nc' : ''}" href="${nc ? mPath(m) + '/pinouts' : chipPath(m, c)}" aria-label="${esc(des)} ${esc(c.name)}${nc ? ', pinout not captured' : ''}">
+      <span class="bl"><span class="des">${esc(des)}</span>${c.heat === 'hot' ? '<span class="flag pwr">HOT</span>' : ''}${nc ? '<span class="flag">NOT CAPTURED</span>' : ''}<span class="pn">${esc(c.pkg || '')}</span></span>
+      <span class="bfp"><svg viewBox="0 0 ${BOARD_FW} 46" aria-hidden="true">${dipFootprint(c, m, 0, 0, BOARD_FW, false)}</svg></span>
+      <span class="role">${esc(role)}</span></a>`;
+  }).join('')}</div>`;
 }
-function boardCols() { const w = $('#main').clientWidth; return w >= 1080 ? 5 : w >= 860 ? 4 : w >= 560 ? 3 : 2; }
 
 /* ---------- SVG: the big DIP ---------- */
 const PT = 44;          /* pad pitch: every pin row is a 44 px target at every width; the drawing never scales */
@@ -323,14 +336,18 @@ function dipSVG(chip) {
 function parseHash() {
   const h = location.hash.replace(/^#/, '') || '/';
   const [path, qs = ''] = h.split('?');
-  return { path, segs: path.split('/').filter(Boolean).map(decodeURIComponent), q: Object.fromEntries(new URLSearchParams(qs)) };
+  /* a malformed escape (#/%) is a page that does not exist, not a crash */
+  let segs, bad = false;
+  try { segs = path.split('/').filter(Boolean).map(decodeURIComponent); } catch { segs = path.split('/').filter(Boolean); bad = true; }
+  return { path, segs, bad, q: Object.fromEntries(new URLSearchParams(qs)) };
 }
 function render() {
   const r = parseHash();
   const [a, b, c, d] = r.segs;
   const ctx = { route: r, crumbs: [] };
   let html;
-  if (!a) html = viewHome();
+  if (r.bad) html = viewNotFound();
+  else if (!a) html = viewHome();
   else if (a === 'search') { ctx.crumbs = [['Search']]; html = viewSearch(r.q.q || ''); }
   else if (a === 'resources') { ctx.crumbs = [['Resources']]; html = viewResources(); }
   else if (a === 'glossary') { ctx.crumbs = [['Glossary']]; html = viewGlossary(r.q.term); }
@@ -344,7 +361,7 @@ function render() {
     else {
       ctx.brand = brand; ctx.machine = m; touchRecent(m.id);
       ctx.crumbs = [[brand.name, '#/' + brand.id], [m.name, mPath(m)]];
-      const chip = c === 'chip' && D.chips[d];
+      const chip = c === 'chip' && fits(m, d) && D.chips[d];
       if (!c) { ctx.crumbs[1] = [m.name]; html = viewMachine(m); }
       else if (c === 'pinouts' || (chip && !chip.pins)) { ctx.crumbs.push(['Pinouts']); html = viewPinouts(m); }
       else if (c === 'quickref') { ctx.crumbs.push(['Quick reference']); html = viewQuickref(m, r.q.tab); }
@@ -367,7 +384,7 @@ function render() {
   renderStrip(); renderTrace(); renderEdgebar();
   closePop(); closePalette();
   window.scrollTo(0, 0);
-  if (ctx.chip) { renderPanel(); if (PANEL_MQ.matches) padIntoView(); drawWire(); } else closePanel();
+  if (ctx.chip) { renderPanel(); if (PANEL_MQ.matches) padIntoView(); drawWire(); watchDip(); } else { closePanel(); watchDip(); }
   if (a === 'glossary' && r.q.term) { const el = document.getElementById('term-' + r.q.term); if (el) el.scrollIntoView({ block: 'center' }); }
   if (c === 'ports' && r.q.c) { const el = document.getElementById('conn-' + r.q.c); if (el) el.scrollIntoView({ block: 'start' }); }
   document.title = ctx.chip ? `${ctx.chip.short} pinout, Retro Bench` : ctx.machine ? `${ctx.machine.name}, Retro Bench` : ctx.brand ? `${ctx.brand.name}, Retro Bench` : 'Retro Bench';
@@ -379,7 +396,7 @@ function renderStrip() {
   const a = state.ctx.route.segs[0], m = mask(), next = MASKS[(MASKS.indexOf(m) + 1) % MASKS.length];
   $('#strip').className = 'strip' + (a === 'search' || !a ? ' no-edge' : '');
   $('#strip').innerHTML = `
-    <a class="title" href="#/"><b>Retro Bench</b><span class="rev">REV A</span><span class="offline${netLive() ? ' text-copper' : ''}" id="net-state">${netLabel()}</span></a>
+    <a class="title" href="#/"><b>Retro Bench</b><span class="rev">REV A</span><span class="offline${netLive() ? ' text-copper' : netLost() ? ' text-silk' : ''}" id="net-state">${netLabel()}</span></a>
     ${edgeField('', 'q-strip')}
     <div class="tools"><span id="net-act">${netAction()}</span><button type="button" class="tog" data-act="mask" aria-label="Solder mask ${m}${state.maskPick ? '' : ', following the system'}. Switch to ${next}.">Mask: <b>${m}</b></button></div>
     <div id="net-row" class="sm:hidden col-span-full"${net.updated ? '' : ' hidden'}>${netRow()}</div>`;
@@ -464,14 +481,14 @@ function viewMachine(m) {
       ${door(`${mPath(m)}/ports`, 'J3', 'Ports', cn.data ? `${arr(cn.data).length} connectors` : 'Not captured yet', !cn.data)}
       ${door(`${mPath(m)}/power`, 'J4', 'Power', pw.data ? `${arr(pw.data.rails).length} rails, ${arr(pw.data.testPoints).length} test points` : 'Not captured yet', !pw.data)}
     </div>
-    ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardSVG(m, chips, boardCols())}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.</p></section>`
+    ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips)}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.</p></section>`
       : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} is ${m.status === 'planned' ? 'planned' : 'on paper'}: its chips have not been entered yet.`)}
     ${qr.data || tp ? `<div class="grid gap-x-[18px] md:grid-cols-2 items-start">
       ${qr.data && arr(qr.data.firstLook).length ? `<section class="blk"><span class="lbl">First look</span><ul class="bul">${qr.data.firstLook.map(x => `<li>${esc(x)}</li>`).join('')}</ul>${sharedNote(qr.shared)}</section>` : ''}
       ${tp}
     </div>` : ''}
     <section class="blk" id="faults"><span class="lbl">Troubleshooting</span>
-      ${sy.data && arr(sy.data).length ? sy.data.map(s => `<div class="symrow"><div><div class="s">${esc(s.symptom)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</div><div class="u">${arr(s.suspects).map(id => { const c = D.chips[id]; if (!c) return ''; const l = [boardDes(c, m), c.short].filter(Boolean).join(' '); return c.pins ? `<a href="${chipPath(m, c)}">${esc(l)}</a>` : `<span title="Pinout not captured">${esc(l)}</span>`; }).join('')}</div></div>`).join('') + sharedNote(sy.shared)
+      ${sy.data && arr(sy.data).length ? sy.data.map(s => `<div class="symrow"><div><div class="s">${esc(s.symptom)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</div><div class="u">${arr(s.suspects).map(id => { const c = D.chips[id]; if (!c) return ''; const l = [boardDes(c, m), c.short].filter(Boolean).join(' '); return c.pins && fits(m, id) ? `<a href="${chipPath(m, c)}">${esc(l)}</a>` : `<span title="Pinout not captured">${esc(l)}</span>`; }).join('')}</div></div>`).join('') + sharedNote(sy.shared)
         : `<p class="note mt-0">No symptom table yet for this machine.</p>`}
     </section>`;
 }
@@ -516,7 +533,7 @@ function viewChip(m, chip) {
       <p class="desc mt-0">${termify(chip.summary, Object.keys(D.terms))}</p>
       <div class="grid gap-[18px] md:grid-cols-2 mt-3.5">
         ${arr(chip.fails).length ? `<div><div class="h4 mt-0">Fails as</div><ul class="bul">${chip.fails.map(f => `<li>${esc(f)}</li>`).join('')}</ul></div>` : ''}
-        <div><div class="h4 mt-0">Fitted in</div><ul class="bul">${arr(chip.machines).map(id => D.machines[id]).filter(Boolean).map(mm => `<li><a href="${chipPath(mm, chip)}">${esc(mm.name)}</a>${locOf(chip, mm) ? ` <span class="mono tin sm">${esc(locOf(chip, mm))}</span>` : ''}</li>`).join('')}</ul></div>
+        <div><div class="h4 mt-0">Fitted in</div><ul class="bul">${fittedIn(chip).map(mm => `<li><a href="${chipPath(mm, chip)}">${esc(mm.name)}</a>${locOf(chip, mm) ? ` <span class="mono tin sm">${esc(locOf(chip, mm))}</span>` : ''}</li>`).join('')}</ul></div>
       </div>
       ${datasheets(chip)}
     </section>`;
@@ -663,10 +680,10 @@ function selectPin(n) {
   if (PANEL_MQ.matches) padIntoView();
   drawWire();
 }
-/* phone: keep the selected pad visible above the panel so the trace can reach it */
+/* phone: keep the selected pad, or the pad keyboard focus lands on, visible above the panel */
 const panelTop = () => { const p = $('#panel'); return innerHeight - parseFloat(getComputedStyle(p).bottom) - p.offsetHeight; };
-function padIntoView() {
-  const pad = $('svg.dip .pin.sel .pad'); if (!pad || !$('#panel').classList.contains('open')) return;
+function padIntoView(pin = $('svg.dip .pin.sel')) {
+  const pad = pin && pin.querySelector('.pad'); if (!pad || !$('#panel').classList.contains('open')) return;
   const r = pad.getBoundingClientRect(), top = panelTop();
   if (r.bottom > top - 24 || r.top < 24) window.scrollBy(0, r.top - Math.max(24, (top - r.height) * 0.45));
 }
@@ -674,7 +691,7 @@ function refreshChip() {
   const { chip, machine } = state.ctx; if (!chip) return;
   state.compact = wantCompact(chip);
   $('#main').innerHTML = viewChip(machine, chip);
-  renderPanel(); drawWire();
+  renderPanel(); drawWire(); watchDip();
 }
 function drawWire() { drawStageWire(); drawPhoneWire(); }
 /* desktop and tablet: a chamfered copper trace from the selected pad to the PIN DETAIL box,
@@ -836,19 +853,23 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('hashchange', render);
 let raf = 0;
-window.addEventListener('scroll', () => { if (!state.ctx.chip || raf) return; raf = requestAnimationFrame(() => { raf = 0; drawWire(); }); }, { passive: true });
+const queueWire = () => { if (!state.ctx.chip || raf) return; raf = requestAnimationFrame(() => { raf = 0; drawWire(); }); };
+/* scroll does not bubble: capture catches the window and the footprint's own sideways scroll in #dipwrap */
+document.addEventListener('scroll', queueWire, { capture: true, passive: true });
+/* the drawing is rebuilt on every render; follow its size too (fonts, the stage column, a flip) */
+const dipRO = window.ResizeObserver ? new ResizeObserver(queueWire) : null;
+function watchDip() { if (!dipRO) return; dipRO.disconnect(); for (const el of [$('#dipwrap'), $('svg.dip')]) if (el) dipRO.observe(el); }
+document.addEventListener('focusin', e => { const g = e.target.closest && e.target.closest('svg.dip .pin'); if (g && PANEL_MQ.matches) padIntoView(g); });
 $('#panel').addEventListener('transitionend', () => drawPhoneWire());
 let rt;
 window.addEventListener('resize', () => {
   clearTimeout(rt);
   rt = setTimeout(() => {
-    const { chip, machine: m, route } = state.ctx;
+    const { chip } = state.ctx;
     if (chip) {
       if (wantCompact(chip) !== state.compact) refreshChip();
       else { renderPanel(); drawWire(); }
     }
-    const ba = $('#boardarea');
-    if (ba && m && !chip && route.segs.length === 2) ba.querySelector('svg').outerHTML = boardSVG(m, chipsOf(m), boardCols());
   }, 120);
 });
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
