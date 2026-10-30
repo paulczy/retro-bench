@@ -93,16 +93,17 @@ const REPL_KINDS = new Set(['pin-compatible', 'modern', 'adapter']);
 const PIN_JOIN = new Set(['to', 'and', 'or', 'vs', 'from', 'then', 'with']);
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /* every "<short> pin <n>" (or connector name/id, or "to pin <n>" after one) in a where must name a real pin */
+/* returns the chip pins it names as "<chip id>:<n>" (checkWhere(null, ...) only collects, without warnings) */
 function checkWhere(f, mid, at, text) {
-  const m = R.machines[mid]; if (!m) return;
+  const m = R.machines[mid], refs = []; if (!m) return refs;
   const chips = (m.chips || []).map(id => R.chips[id]).filter(c => c && c.pins), conns = R.connectors[mid] || [];
   const names = conns.flatMap(c => [c.name, c.id]).filter(Boolean).sort((a, b) => b.length - a.length).map(reEsc);
-  const NUM = String.raw`(?:\d+|[A-Z]{1,2}\d*)`;
+  const NUM = String.raw`(?:\d+|[A-Z]{1,2}\d*(?:-\d+)?)`;   /* dashed names too: "pc-psu pin P8-3" */
   const re = new RegExp(String.raw`(?:(${names.map(n => n + '|').join('')}\b[\w/-]+) )?\b(pins?) (${NUM}(?:, ${NUM})*)(?![\w])`, 'g');
   const find = w => {
     const lw = w.toLowerCase();
     const c = chips.find(x => String(x.short).toLowerCase() === lw || String(x.id).toLowerCase() === lw) || (lw === 'cpu' && chips.find(x => /\bCPU\b/.test(x.role || '')));
-    if (c) return { name: c.short, pins: new Set(c.pins.map(p => String(p.n))) };
+    if (c) return { name: c.short, id: c.id, pins: new Set(c.pins.map(p => String(p.n))) };
     const k = conns.find(x => x.name === w || x.id === w);
     return k ? { name: k.id, pins: new Set((k.pins || []).filter(p => p && p.n != null && p.n !== '?' && p.n !== '-').map(p => String(p.n))) } : null;
   };
@@ -110,10 +111,11 @@ function checkWhere(f, mid, at, text) {
   for (const [all, who, , nums] of String(text).matchAll(re)) {
     let part = who ? find(who) : null;
     if (!part && (!who || PIN_JOIN.has(who.toLowerCase()))) part = last;
-    if (!part) { warn(f, `${at} "${all}" names no chip or connector of ${mid} (write "<chip short> pin <n>" or the connector's name or id)`); continue; }
+    if (!part) { if (f) warn(f, `${at} "${all}" names no chip or connector of ${mid} (write "<chip short> pin <n>" or the connector's name or id)`); continue; }
     last = part;
-    for (const n of nums.split(', ')) if (!part.pins.has(n)) warn(f, `${at} "${all}": ${part.name} has no pin ${n}`);
+    for (const n of nums.split(', ')) if (!part.pins.has(n)) { if (f) warn(f, `${at} "${all}": ${part.name} has no pin ${n}`); } else if (part.id) refs.push(`${part.id}:${n}`);
   }
+  return refs;
 }
 function checkScope(f, mid, x) {
   const s = x.scope, at = `${x.tp || x.rail} scope`;
@@ -131,7 +133,11 @@ function checkScope(f, mid, x) {
     if (v == null || Math.abs(v) > 50) err(f, `${at} ${k} "${String(s[k]).slice(0, 40)}" must read as volts within ±50 V, nothing after the unit (e.g. '0.4 V')`); else V[k] = v;
   }
   if (V.low != null && V.high != null && !(V.high > V.low)) err(f, `${at} high must be above low`);
-  if (V.sync != null && V.high != null && !(V.high > V.sync)) err(f, `${at} high must be above the sync tip`);
+  /* inverted video (6847 VDG): the sync tip is the most positive level, so sync equals high and white is low */
+  const inv = s.inverted === true;
+  if (s.inverted != null && (s.inverted !== true || s.shape !== 'video-line')) err(f, `${at} inverted must be true, and only on video-line`);
+  if (!inv && V.sync != null && V.high != null && !(V.high > V.sync)) err(f, `${at} high must be above the sync tip`);
+  if (inv && V.sync != null && V.low != null && !(V.sync > V.low)) err(f, `${at} inverted: low (white) must be below the sync tip`);
   if (s.sync != null && s.pp != null) err(f, `${at} sync is an absolute level; give it with high, not with pp`);
   if (s.pp != null) {
     if (s.shape === 'dc') err(f, `${at} pp is a swing; a dc level is given as high`);
@@ -139,11 +145,12 @@ function checkScope(f, mid, x) {
     if (V.pp != null && !(V.pp > 0)) err(f, `${at} pp must be above 0 V`);
   }
   if (s.shape === 'dc' && s.high == null) err(f, `${at} dc needs high (the level, '0 V' allowed)`);
-  if (s.shape !== 'dc' && s.pp == null && ((s.low ?? (s.shape === 'video-line' ? s.sync : null)) == null || s.high == null)) warn(f, `${at} has no low/high or pp: VOLTS/DIV cannot be derived`);
+  if (s.shape !== 'dc' && s.pp == null && ((s.low ?? (s.shape === 'video-line' && !inv ? s.sync : null)) == null || (s.high ?? (inv ? s.sync : null)) == null)) warn(f, `${at} has no low/high or pp: VOLTS/DIV cannot be derived`);
   for (const k of ['black', 'sync']) if (s[k] != null && s.shape !== 'video-line') err(f, `${at} ${k} is a video-line level`);
-  if (V.sync != null && V.low != null && Math.abs(V.sync - V.low) > 1e-6) err(f, `${at} sync "${s.sync}" is the sync tip, so it must equal low "${s.low}" (or give only one)`);
-  const tip = V.low ?? V.sync;
-  if (V.black != null && !(tip != null && V.high != null && V.black > tip && V.black < V.high)) err(f, `${at} black "${s.black}" must lie between the sync tip and high`);
+  const tipK = inv ? 'high' : 'low';
+  if (V.sync != null && V[tipK] != null && Math.abs(V.sync - V[tipK]) > 1e-6) err(f, `${at} sync "${s.sync}" is the sync tip, so it must equal ${tipK} "${s[tipK]}" (or give only one)`);
+  const tip = V[tipK] ?? V.sync, white = inv ? V.low : V.high;
+  if (V.black != null && !(tip != null && white != null && (V.black - tip) * (V.black - white) < 0)) err(f, `${at} black "${s.black}" must lie between the sync tip and ${inv ? 'low (white)' : 'high'}`);
   if (s.duty != null) { const mm = /^\s*(\d*\.?\d+)\s*%\s*$/.exec(String(s.duty)); if (!mm || !(+mm[1] > 0 && +mm[1] < 100)) err(f, `${at} duty "${s.duty}" must be a percentage above 0% and below 100%`); }
   if (s.duty != null && !['pulse', 'square'].includes(s.shape)) warn(f, `${at} duty is only drawn for pulse and square`);
   if (s.polarity != null && !['low', 'high'].includes(s.polarity)) err(f, `${at} polarity "${s.polarity}" (low = idles HIGH, pulses LOW; high is the default)`);
@@ -183,6 +190,14 @@ for (const [mid, list] of Object.entries(R.connectors)) {
     checkSources(f, c.sources);
     for (const t of c.terms || []) if (!R.terms[t]) err(f, `unknown term ${t}`);
   }
+}
+/* every clock pin of a chip on a ready machine should have an expected frequency: a clocks, testPoints or rails
+   where on that machine that names it (PIN DETAIL shows "Not traced for this machine yet" otherwise) */
+for (const m of Object.values(R.machines)) {
+  if (m.status !== 'ready' || (only.length && !only.includes(m.brand))) continue;
+  const pw = R.power[m.id] || {}, seen = new Set();
+  for (const x of [...(pw.clocks || []), ...(pw.testPoints || []), ...(pw.rails || [])]) if (x && x.where) checkWhere(null, m.id, '', x.where).forEach(r => seen.add(r));
+  for (const id of m.chips || []) { const c = R.chips[id]; if (c && c.pins) for (const p of c.pins) if (p.type === 'clock' && !seen.has(`${c.id}:${p.n}`)) warn(`clock ${m.id}`, `${m.id} ${c.short} pin ${p.n} clock has no expected frequency`); }
 }
 for (const [mid, pw] of Object.entries(R.power)) {
   const f = `power ${mid}`;

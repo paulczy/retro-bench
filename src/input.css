@@ -287,6 +287,8 @@
   .mk.pwr { fill: var(--pwr); stroke: var(--pwr); }
   .mk.clk { fill: var(--clk); stroke: var(--clk); }
   .mk.gnd { stroke: var(--tin); stroke-width: 2; }
+  .mk.rst { fill: var(--silk); stroke: var(--silk); stroke-linejoin: round; }   /* reset: solid triangle, reads by shape in print */
+  .probe.expect .bul { margin: 2px 0 0; }
   .mk.ring { fill: none; stroke: var(--silk-45); stroke-width: 1.5; }
 
   .stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 28px; align-items: start; margin-top: 14px; }
@@ -326,7 +328,7 @@
   .kv dt { font: 13px var(--font-mono); color: var(--tin); letter-spacing: .1em; padding-top: 3px; text-transform: uppercase; }
   .desc { margin-top: 14px; font-size: 17px; }
   .probe { margin-top: 14px; border-left: 3px solid var(--copper); padding: 4px 0 4px 12px; font-size: 16px; }
-  .probe b { display: block; font: 400 13px var(--font-mono); letter-spacing: .1em; color: var(--copper); margin-bottom: 2px; text-transform: uppercase; }
+  .probe > b { display: block; font: 400 13px var(--font-mono); letter-spacing: .1em; color: var(--copper); margin-bottom: 2px; text-transform: uppercase; }
   .conflict { margin-top: 14px; border-left: 3px solid var(--warn); padding: 4px 0 4px 12px; font-size: 15px; color: var(--silk-70); }
   .conflict b { display: block; font: 400 13px var(--font-mono); letter-spacing: .1em; color: var(--warn); margin-bottom: 2px; text-transform: uppercase; }
   .pinnav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }

@@ -215,6 +215,7 @@ testPoints: [{ tp: 'CPU clock', where: 'CPU pin 37', expect: '1.02 MHz square',
            duty: '50%',                 // pulse/square only; omit when unknown
            polarity: 'low',             // pulse/square only: the line idles HIGH and pulses LOW (duty is the LOW part)
            black: '2.9 V', sync: '2.6 V', // video-line only: blanking level and sync tip (sync equals low)
+           inverted: true,              // video-line only: sync is the most positive level (6847 VDG); sync equals high
            basis: 'capture' | 'datasheet',   // capture = a Sams or service-manual photo; datasheet = timing diagram + schematic frequency
            source: { label: 'Sams CC17 C64, waveform 3, p. 12', url: '...', sams: true },
            note: 'Rounded edges are normal; a flat line means no clock.' } }]
@@ -239,6 +240,19 @@ How the app reads the fields:
   and white. `black` (the blanking level) places the porches; `sync` may stand in for `low` and must equal it when
   both are given. Without `black` the porches sit at the standard 0.3 of the swing above the sync tip and the
   caption says "levels to standard ratio, not to scale".
+- `inverted: true` (video-line only, e.g. the 6847 VDG): sync is the most positive level. `high` is then the sync
+  tip and `low` peak white; `sync` may stand in for `high` and must equal it when both are given; `black` lies
+  between them. The app draws the tip at the top, starts the line at the sync edge and triggers there (rising,
+  midway between blanking and the tip), and labels the trace "inverted video (sync most positive)".
+- Pin names with a dash (IBM `P8-3`) go after the connector's name or id in a `where`: `pc-psu pin P8-3`,
+  `pc-psu pins P9-4, P9-5, P9-6`. "P8 pin 3" does not link.
+- Clock and reset pins show "Expect on this <machine>" in PIN DETAIL: every `clocks`, `testPoints`, `rails` and
+  `firstTen` entry whose `where` names the pin. The validator warns for each clock pin on a `ready` machine that no
+  `clocks`/`testPoints`/`rails` `where` names. Accepted forms: `<chip short or id> pin <n>`, `pins <n>, <n>`, `CPU pin
+  <n>`, and a bare `pin <n>` after `to`/`and`/`or`/`vs`/`from`/`then`/`with` that reuses the part before it
+  (`'VIC-II pin 17 to 6510 pin 1'` names both).
+- Reset pins stay `type: 'ctrl'`; the app finds them by the `reset` term or a name like `/RES`, `RESET`, `/RST`,
+  `RESIN`, `/POR` (not `MR`, which is Memory Ready on the 6808; tag a master reset with the `reset` term).
 - `square`/`pulse` without `duty`: only the trigger edge is drawn solid, both levels dashed, labelled "duty not in
   source". The app never draws an assumed 50% or 25%. `polarity: 'low'` is a line that idles HIGH and pulses LOW;
   `duty` is then the LOW part of the period.

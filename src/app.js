@@ -181,8 +181,9 @@ const datasheets = chip => sourceList(chip.datasheets, 'Datasheets');
 const conflictNote = p => (p.conflict ? `<div class="conflict"><b>Sources disagree</b>${esc(p.conflict)}</div>` : '');
 /* "TED pin 14", "TED pins 10, 11", "CPU pin 37", "cpu8088 pin 40" (short name or chip id), and a connector by
    its name or id ("Power in (brick) pin 5", "c64-user pin M"). A bare "pin 2" after "to", "and"... reuses the
-   part named before it ("Power in (brick) pin 5 to pin 2"). pinScan finds them; linkPins makes them links. */
-const PIN_NUM = String.raw`(?:\d+|[A-Z]{1,2}\d*)`;
+   part named before it ("Power in (brick) pin 5 to pin 2"). Dashed pin names work too ("pc-psu pin P8-3").
+   pinScan finds them; linkPins makes them links. */
+const PIN_NUM = String.raw`(?:\d+|[A-Z]{1,2}\d*(?:-\d+)?)`;
 const PIN_JOIN = new Set(['to', 'and', 'or', 'vs', 'from', 'then', 'with']);
 const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function pinScan(text, m, fn) {
@@ -261,9 +262,11 @@ function scopeSet(sc) {
   const shape = SHAPES.includes(sc.shape) ? sc.shape : 'square', V = k => qty(sc[k], 'V', true), pos = x => (x > 0 ? x : null);
   const T = sc.period != null ? pos(qty(sc.period, 's', true)) : (f => (f > 0 ? 1 / f : null))(qty(sc.f, 'Hz', true));
   const sq = shape === 'pulse' || shape === 'square';
-  const lo = V('low') ?? (shape === 'video-line' ? V('sync') : null), hi = V('high');
+  /* vinv: inverted video (6847 VDG), the sync tip is the most positive level, so it sits at high, white at low */
+  const vid = shape === 'video-line', vinv = vid && sc.inverted === true;
+  const lo = V('low') ?? (vid && !vinv ? V('sync') : null), hi = V('high') ?? (vinv ? V('sync') : null);
   /* inv: polarity 'low', a line idling HIGH that pulses LOW; unk: square or pulse with no duty in the source */
-  const s = { shape, T, lo, hi, duty: sq ? pct(sc.duty) : null, inv: sq && sc.polarity === 'low' };
+  const s = { shape, T, lo, hi, vinv, duty: sq ? pct(sc.duty) : null, inv: sq && sc.polarity === 'low' };
   s.unk = sq && s.duty == null;
   if (T > 0 && shape !== 'dc') { const b = tdivFor(T); if (b) [s.tdiv, s.cycles] = b; }
   if (shape === 'dc') {
@@ -280,8 +283,10 @@ function scopeSet(sc) {
     s.trig = LOGIC.has(shape) && lo < 1.4 && hi > 1.4 ? 1.4 : (lo + hi) / 2;
     s.yTrig = s.gnd + s.trig / s.vdiv;
     /* video line: blanking (black) as a fraction of sync tip to white, when the source gives it */
-    const bl = shape === 'video-line' ? V('black') : null;
-    if (bl != null && bl > lo && bl < hi) s.black = (bl - lo) / (hi - lo);
+    const bl = vid ? V('black') : null;
+    if (bl != null && bl > lo && bl < hi) s.black = (vinv ? hi - bl : bl - lo) / (hi - lo);
+    /* inverted: trigger on the leading (rising) sync edge, midway between blanking and the tip */
+    if (vinv) { s.trig = hi - (s.black ?? 0.3) * (hi - lo) / 2; s.yTrig = s.gnd + s.trig / s.vdiv; }
   } else if (lo == null && hi == null && pos(V('pp')) != null) {
     /* swing only, no DC level: AC coupling, centred, no 0 V marker, trigger mid-swing */
     s.pp = V('pp'); s.ac = true; s.vdiv = step125(s.pp / 5);
@@ -300,7 +305,11 @@ function shapeSegs(s) {
   /* video line from the start of the active picture: active (flat grey midway black to white), front porch, sync
      tip, back porch; PAL proportions 52, 1.65, 4.7, 5.65 of 64 µs; blanking at the sourced `black` level, else at
      the standard 0.3 of the swing above the sync tip (and the caption says it is not to scale) */
-  if (s.shape === 'video-line') { const k = s.black ?? 0.3; return [[0.8125, (1 + k) / 2], [0.0258, k], [0.0734, 0], [0.0883, k]]; }
+  if (s.shape === 'video-line') {
+    const k = s.black ?? 0.3, segs = [[0.8125, (1 + k) / 2], [0.0258, k], [0.0734, 0], [0.0883, k]];
+    /* inverted: levels flipped (sync tip at high) and the line starts at the sync edge, so the trigger sits on it */
+    return s.vinv ? [...segs.slice(2), ...segs.slice(0, 2)].map(([d, l]) => [d, 1 - l]) : segs;
+  }
   return [[1, 0]];
 }
 const DV = 24;   /* px per division: the screen is 240 x 192 */
@@ -349,12 +358,13 @@ function scopeBlock(sc, title) {
     : s.shape === 'dc' ? `${fmtU(lvl, 'V')} = ${+(Math.abs(lvl) / s.vdiv).toFixed(1)} div` : `${swing} = ${+((s.pp ?? s.hi - s.lo) / s.vdiv).toFixed(1)} div`]);
   rows.push(s.ac ? ['Coupling', 'AC', 'no DC level in source'] : ['Coupling', 'DC', s.gnd == null ? '' : s.gnd >= 0 && s.gnd <= 8
     ? `0 V ${s.gnd === 1 ? 'one division up' : s.gnd === 7 ? 'one division down' : `at ${+s.gnd.toFixed(1)} div`}` : `0 V off screen: offset ${fmtU(-(s.lo + s.hi) / 2, 'V')}`]);
-  rows.push(['Trigger', s.shape === 'dc' ? 'Auto' : `${s.inv ? 'Falling' : 'Rising'}, ${s.trig != null ? fmtU(s.trig, 'V') : 'mid-swing'}`, s.shape === 'dc' ? 'no edges' : s.trig === 1.4 ? 'TTL threshold' : s.trig != null ? 'mid-swing' : '']);
+  rows.push(['Trigger', s.shape === 'dc' ? 'Auto' : `${s.inv ? 'Falling' : 'Rising'}, ${s.trig != null ? fmtU(s.trig, 'V') : 'mid-swing'}`, s.shape === 'dc' ? 'no edges' : s.trig === 1.4 ? 'TTL threshold' : s.vinv && s.trig != null ? 'sync edge' : s.trig != null ? 'mid-swing' : '']);
   if (s.shape === 'square' || s.shape === 'pulse') rows.push(['Duty', s.unk ? '—' : `${+(s.duty * 100).toFixed(1)}%`, s.unk ? 'duty not in source' : `of the period ${s.inv ? 'LOW' : 'HIGH'}`]);
   rows.push(['Probe', '10×', 'channel set to 10×']);
   const f = s.T > 0 ? fmtU(1 / s.T, 'Hz') : '';
-  const label = `Idealised ${SHAPE_WORD[s.shape]}${f && s.shape !== 'dc' ? ', ' + f : ''}${swing ? ', ' + swing : ''}${s.unk ? ', duty not in source' : ''}, from ${basis}`;
-  const cap = [`Idealised from ${basis}`, s.shape === 'video-line' && 'picture drawn as a flat grey',
+  const word = s.vinv ? 'inverted video (sync most positive)' : SHAPE_WORD[s.shape];
+  const label = `Idealised ${word}${f && s.shape !== 'dc' ? ', ' + f : ''}${swing ? ', ' + swing : ''}${s.unk ? ', duty not in source' : ''}, from ${basis}`;
+  const cap = [`Idealised from ${basis}`, s.vinv && 'inverted video (sync most positive)', s.shape === 'video-line' && 'picture drawn as a flat grey',
     s.shape === 'video-line' && s.black == null && 'levels to standard ratio, not to scale', s.unk && 'duty not in source', s.ac && 'no DC level in source'].filter(Boolean).join('; ');
   const sum = s.shape === 'dc' ? (s.vdiv ? `${fmtU(s.vdiv, 'V')}/div, DC` : 'DC') : [s.tdiv && fmtU(s.tdiv, 's') + '/div', s.vdiv && fmtU(s.vdiv, 'V') + '/div'].filter(Boolean).join(' · ');
   return `<details class="scope"${PHONE_MQ.matches ? '' : ' open'}><summary>Scope${title ? ` <span class="t">${esc(title)}</span>` : ''}<span class="s">${esc(sum)}</span></summary>
@@ -371,6 +381,30 @@ function pinScopes(chip, p, m) {
   return [...arr(pw.rails).map(r => [r.rail, r]), ...arr(pw.testPoints).map(t => [t.tp, t])]
     .filter(([, x]) => x && x.scope && pinRefs(x.where || '', m).some(r => r.kind === 'chip' && r.c === chip && String(r.n) === String(p.n)))
     .map(([name, x]) => scopeBlock(x.scope, name)).join('');
+}
+/* reset pins are type ctrl in the data: a 'reset' term, or a reset name (/RES, RESET, /RST, RESIN, /POR...).
+   MR is left to the term: on the 6808 it is Memory Ready. */
+const RESET_NAME = /^(RES|RESET|RST|RESIN|RESOUT|RESET ?IN|RESET ?OUT|SYSRES|POR)\b/i;
+const isReset = p => arr(p.terms).includes('reset') || RESET_NAME.test(String(p.name || '').replace(/^\//, ''));
+const pinIs = (p, f) => (f === 'reset' ? isReset(p) : p.type === f);
+/* "Expect on this <machine>" for clock and reset pins: the clocks, test points, rails and first-ten steps whose
+   `where` names this pin. Nothing found: the chip's own probe text and "Not traced", never a guessed frequency. */
+function pinExpect(chip, p, m) {
+  const rst = isReset(p);
+  if (p.type !== 'clock' && !rst) return '';
+  const pw = dataFor(D.power, m).data || {};
+  const hits = x => x && pinRefs(x.where || '', m).some(r => r.kind === 'chip' && r.c === chip && String(r.n) === String(p.n));
+  const src = x => (x.source ? ` ${srcLink(x.source)}` : '');
+  const rows = [
+    ...arr(pw.clocks).filter(hits).map(c => `<li><b class="mono">${esc(clockFreqs(c))}</b> ${esc(c.name)}${src(c)}</li>`),
+    ...[...arr(pw.testPoints).map(t => [t.tp, t]), ...arr(pw.rails).map(r => [r.rail, r]), ...arr(pw.firstTen).map(s => [s.check, s])].filter(([, x]) => hits(x))
+      .map(([name, x]) => `<li>${esc(name || '')}: <b>${esc(x.expect || '')}</b>${x.ifNot ? `<br><span class="tin sm">If not: ${esc(x.ifNot)}</span>` : ''}${src(x)}</li>`),
+  ];
+  const lvl = p.activeLow || String(p.name).startsWith('/') ? 'Active LOW: near 0 V while in reset.' : 'Active HIGH (not marked active low): HIGH while in reset.';
+  const gen = rst ? `<div class="probe"><b>Reset check</b>${lvl} It goes active at power-on, then releases. Stuck active holds the chip in reset; never going active means the reset circuit is not firing. Catch it with a logic probe or a scope on single-shot at power-on, and check the circuit that drives it.</div>` : '';
+  const body = rows.length ? `<ul class="bul">${rows.join('')}</ul>`
+    : `${p.probe ? `<p class="sm mt-0"><span class="tin">On this chip in general:</span> ${esc(p.probe)}</p>` : ''}<p class="tin sm mt-0">Not traced for this machine yet.</p>`;
+  return `${gen}<div class="probe expect"><b>Expect on this ${esc(m.name)}</b>${body}</div>`;
 }
 const REPL_KIND = { 'pin-compatible': 'Pin-compatible', modern: 'Modern', adapter: 'Adapter' };
 const clockFreqs = c => (c.f ? String(c.f) : [c.pal && `PAL ${c.pal}`, c.ntsc && `NTSC ${c.ntsc}`].filter(Boolean).join(' / '));
@@ -515,6 +549,7 @@ const PT = 44;          /* pad pitch: every pin row is a 44 px target at every w
 const CHAR = 8.2;       /* Share Tech Mono advance at 15 px */
 const mark = (t, x, y) => t === 'power' ? `<rect class="mk pwr" x="${x - 4}" y="${y - 4}" width="8" height="8"/>`
   : t === 'clock' ? `<path class="mk clk" d="M ${x} ${y - 5} l 5 5 -5 5 -5 -5 z"/>`
+  : t === 'reset' ? `<path class="mk rst" d="M ${x} ${y - 5} l 5.5 9.5 h -11 z"/>`
   : t === 'ground' ? `<path class="mk gnd" d="M ${x - 5} ${y - 3} h 10 M ${x - 3} ${y + 1} h 6 M ${x - 1} ${y + 5} h 2"/>` : '';
 const markIcon = t => `<svg viewBox="-7 -7 14 14" aria-hidden="true">${mark(t, 0, 0) || '<circle class="mk ring" r="4.5"/>'}</svg>`;
 function dipGeom(chip, compact) {
@@ -545,13 +580,13 @@ function dipSVG(chip) {
   chip.pins.forEach((p, i) => {
     const leftNormally = i < half, row = leftNormally ? i : n - 1 - i;
     const left = state.flip ? !leftNormally : leftNormally;
-    const y = TOP + row * PT + PT / 2, sel = state.pin === p.n, dim = state.filter && p.type !== state.filter;
+    const y = TOP + row * PT + PT / 2, sel = state.pin === p.n, dim = state.filter && !pinIs(p, state.filter);
     const padX = left ? pl : W - pl, mkX = left ? G.markX : W - G.markX, nameX = left ? G.nameEnd : W - G.nameEnd;
     const pad = p.n === 1 ? `<rect class="pad" x="${padX - 9}" y="${y - 9}" width="18" height="18"/>` : `<circle class="pad" cx="${padX}" cy="${y}" r="9"/>`;
     const lead = left ? `<line class="lead" x1="${padX + 9}" y1="${y}" x2="${bodyX}" y2="${y}"/>` : `<line class="lead" x1="${W - bodyX}" y1="${y}" x2="${padX - 9}" y2="${y}"/>`;
     g += `<g class="pin${dim ? ' dim' : ''}${sel ? ' sel' : ''}" data-pin="${p.n}" data-side="${left ? 'l' : 'r'}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="Pin ${p.n}, ${esc(p.name)}, ${esc(ptype(p.type).label)}">
       <rect class="hit" x="${left ? 1 : W - bodyX + 1}" y="${y - PT / 2}" width="${bodyX - 2}" height="${PT}" rx="3"/>
-      ${lead}${pad}${mark(p.type, mkX, y)}
+      ${lead}${pad}${mark(isReset(p) ? 'reset' : p.type, mkX, y)}
       <text class="num" x="${left ? bodyX + 7 : W - bodyX - 7}" y="${y + 4}" text-anchor="${left ? 'start' : 'end'}">${p.n}</text>
       <text class="name" x="${nameX}" y="${y + 5}" text-anchor="${left ? 'end' : 'start'}">${esc(p.name)}</text>
     </g>`;
@@ -603,7 +638,7 @@ function plccSVG(chip) {
     let { side, slot } = plccPlace(k, per);
     /* bottom view: the same part turned over left to right, so the numbers run clockwise */
     if (state.flip) { if (side === 'l' || side === 'r') side = side === 'l' ? 'r' : 'l'; else slot = per - 1 - slot; }
-    const sel = state.pin === p.n, dim = state.filter && p.type !== state.filter;
+    const sel = state.pin === p.n, dim = state.filter && !pinIs(p, state.filter);
     const v = side === 't' || side === 'b', far = side === 'r' || side === 'b', o = d => (far ? W - d : d), a = pos(slot);
     if (p.n === 1) dot = a;
     const [px, py] = v ? [a, o(padX)] : [o(padX), a];
@@ -617,7 +652,7 @@ function plccSVG(chip) {
     const name = v ? `<text class="name" transform="rotate(-90 ${a + 5} ${o(nameEnd)})" x="${a + 5}" y="${o(nameEnd)}" text-anchor="${far ? 'end' : 'start'}">${esc(p.name)}</text>`
       : `<text class="name" x="${o(nameEnd)}" y="${a + 5}" text-anchor="${far ? 'start' : 'end'}">${esc(p.name)}</text>`;
     g += `<g class="pin${dim ? ' dim' : ''}${sel ? ' sel' : ''}" data-pin="${p.n}" data-side="${side}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="Pin ${p.n}, ${esc(p.name)}, ${esc(ptype(p.type).label)}">
-      ${hit}${lead}${pad}${v ? mark(p.type, a, o(markX)) : mark(p.type, o(markX), a)}${num}${name}</g>`;
+      ${hit}${lead}${pad}${(k => (v ? mark(k, a, o(markX)) : mark(k, o(markX), a)))(isReset(p) ? 'reset' : p.type)}${num}${name}</g>`;
   });
   const c = W / 2;
   return `<svg class="dip plcc" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" role="group" aria-label="${esc(chip.name)} ${esc(chip.pkg)} footprint, ${state.flip ? 'viewed from below, numbers clockwise' : 'top view, numbers counter-clockwise from pin 1 at the top centre'}. Tab to a pad, Enter selects it.">
@@ -847,9 +882,11 @@ function viewPinouts(m) {
 }
 
 function viewChip(m, chip) {
-  const rank = t => { const i = Object.keys(D.pinTypes).indexOf(t); return i < 0 ? 99 : i; };
-  const present = [...new Set(chip.pins.map(p => p.type))].sort((a, b) => rank(a) - rank(b));
-  const count = t => chip.pins.filter(p => p.type === t).length;
+  /* power, clock and reset first: what a tech checks first */
+  const ORDER = ['power', 'clock', 'reset', ...Object.keys(D.pinTypes)];
+  const rank = t => { const i = ORDER.indexOf(t); return i < 0 ? 99 : i; };
+  const present = [...new Set(chip.pins.map(p => p.type)), ...(chip.pins.some(isReset) ? ['reset'] : [])].sort((a, b) => rank(a) - rank(b));
+  const count = t => chip.pins.filter(p => pinIs(p, t)).length;
   const loc = locOf(chip, m);
   return head(boardDes(chip, m), esc(chip.name), `${esc(chip.role || '')}. ${esc(chip.pkg || '')}${loc ? `, ${esc(loc)} on the ${esc(m.name)}` : ''}. ${HEAT[chip.heat] || ''}.${hotMark(chip.heat)}${chip.verify ? chk() : ''}`, chip.verifiedAgainst ? `Checked against: ${esc(chip.verifiedAgainst)}` : '') + `
     <div class="flex flex-wrap gap-2.5 items-center mt-4">
@@ -857,7 +894,7 @@ function viewChip(m, chip) {
       ${state.filter ? `<button type="button" class="btn" data-act="filter" data-t="">Show all pins</button>` : ''}
       <span class="flex-1"></span><span class="tin sm max-sm:hidden">Tap a pad, or Tab to it and press Enter</span>
     </div>
-    <div class="types" role="group" aria-label="Pin types, tap to filter">${present.map(t => `<button type="button" data-act="filter" data-t="${esc(t)}" class="${state.filter === t ? 'on' : ''}" aria-pressed="${state.filter === t}">${markIcon(t)}${esc(ptype(t).label)} <span class="c">${count(t)}</span></button>`).join('')}</div>
+    <div class="types" role="group" aria-label="Pin types, tap to filter">${present.map(t => `<button type="button" data-act="filter" data-t="${esc(t)}" class="${state.filter === t ? 'on' : ''}" aria-pressed="${state.filter === t}">${markIcon(t)}${t === 'reset' ? 'Reset' : esc(ptype(t).label)} <span class="c">${count(t)}</span></button>`).join('')}</div>
     <div class="stage${state.stack ? ' stack' : ''}" id="stage">
       <svg class="wire" id="wire" aria-hidden="true"></svg>
       <div><div class="dipwrap" id="dipwrap">${isPLCC(chip) ? plccSVG(chip) : dipSVG(chip)}</div>
@@ -898,14 +935,16 @@ function detailBox(chip, m) {
 function pinDetail(chip, p, m) {
   const t = ptype(p.type), i = chip.pins.indexOf(p);
   const prev = chip.pins[(i - 1 + chip.pins.length) % chip.pins.length], next = chip.pins[(i + 1) % chip.pins.length];
+  const ex = pinExpect(chip, p, m);
   return `<div class="pinhead"><span class="n">${p.n}</span><span class="nm">${esc(p.name)}</span><span class="ch">${esc([boardDes(chip, m), chip.short].filter(Boolean).join(' '))}</span></div>
     <dl class="kv">
       <dt>Direction</dt><dd>${esc(DIR[p.dir] || p.dir || '')}</dd>
       <dt>Type</dt><dd>${esc(t.label)} <span class="tin">${esc(t.hint)}</span></dd>
       ${p.activeLow ? `<dt>Logic</dt><dd><button type="button" class="term" data-term="active-low">Active low</button> <span class="tin">true at 0 V</span></dd>` : ''}
     </dl>
+    ${ex}
     <p class="desc">${termify(p.desc, p.terms)}${p.verify ? chk() : ''}</p>
-    ${p.probe ? `<div class="probe"><b>Probe</b>${esc(p.probe)}</div>` : ''}
+    ${p.probe && !(ex && ex.includes('On this chip in general')) ? `<div class="probe"><b>Probe</b>${esc(p.probe)}</div>` : ''}
     ${pinScopes(chip, p, m)}
     ${conflictNote(p)}
     ${termLinks(p.terms)}
