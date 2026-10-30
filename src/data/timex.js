@@ -147,7 +147,7 @@ RCS.add({
         p(12, 'IOA2', 'io', 'bidir', 'Port A bit 2, on-chip pull-up.', { terms: ['pullup'] }),
         p(13, 'IOA1', 'io', 'bidir', 'Port A bit 1, on-chip pull-up.', { terms: ['pullup'] }),
         p(14, 'IOA0', 'io', 'bidir', 'Port A bit 0, on-chip pull-up.', { terms: ['pullup'] }),
-        p(15, 'CLOCK', 'clock', 'in', 'Timing reference for tone, noise and envelope.', { terms: ['clock'], probe: 'A steady clock near 1.7 to 1.8 MHz (TS2068 1.764 MHz, Spectrum 128 1.7734 MHz).' }),
+        p(15, 'CLOCK', 'clock', 'in', 'Timing reference for tone, noise and envelope.', { terms: ['clock'], probe: 'A steady clock at the board PSG rate (see the machine test points: 1.764 MHz TS2068, 1.7734 MHz Spectrum 128, 1 MHz CPC).' }),
         p(16, '/RESET', 'ctrl', 'in', 'LOW clears all registers. On-chip pull-up.', { terms: ['reset'] }),
         p(17, 'A8', 'addr', 'in', 'Extra chip-select address bit, on-chip pull-up; most boards tie it HIGH.'),
         p(18, 'BDIR', 'ctrl', 'in', 'Bus direction. With BC1 (BC2 HIGH): 0 0 inactive, 0 1 read, 1 0 write, 1 1 latch address.'),

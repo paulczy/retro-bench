@@ -384,10 +384,10 @@ const driveChips = {
     pins: [
       { n: 1, name: 'IN A', type: 'io', dir: 'in', desc: 'Amplifier input A from the read/write head.' },
       { n: 2, name: 'IN B', type: 'io', dir: 'in', desc: 'Amplifier input B from the read/write head.' },
-      { n: 3, name: 'OFFSET DEC', type: 'ctrl', dir: '-', desc: 'Offset decoupling / gain select. C6 0.22 µF across pins 3 and 4 on the Disk II card.' },
+      { n: 3, name: 'OFFSET DEC', type: 'ctrl', dir: '-', desc: 'Offset decoupling / gain select; an external capacitor sits between pins 3 and 4.' },
       { n: 4, name: 'OFFSET DEC', type: 'ctrl', dir: '-', desc: 'Offset decoupling / gain select (pair with pin 3).' },
       { n: 5, name: 'GND', type: 'ground', dir: '-', terms: ['gnd'], desc: '0 V.', probe: '0 V' },
-      { n: 6, name: 'MONO1', type: 'ctrl', dir: '-', desc: 'One-shot 1 (time-domain filter) timing: C7 330 pF; R20, R21 and pot R33 set the mask, about 3 µs for DOS 3.3. TP5.', probe: 'TP5: rising part 2.5-3.0 µs, whole pulse 3.75-4.0 µs (Amplitude test running)' },
+      { n: 6, name: 'MONO1', type: 'ctrl', dir: '-', desc: 'One-shot 1 (time-domain filter) timing; the external RC sets the mask width (about 3 µs on Apple 5.25 drives).', probe: 'A pulse the width of the mask time; the value and test point are in the machine test points' },
       { n: 7, name: 'MONO1', type: 'ctrl', dir: '-', desc: 'One-shot 1 timing (pair with pin 6).' },
       { n: 8, name: 'MONO2', type: 'ctrl', dir: '-', desc: 'One-shot 2 (output pulse width) timing: C8 330 pF. TP6.' },
       { n: 9, name: 'MONO2', type: 'ctrl', dir: '-', desc: 'One-shot 2 timing (pair with pin 8).' },

@@ -325,11 +325,11 @@ RCS.add({
       ]
     },
     rom23256: {
-      id: 'rom23256', name: '23256 mask ROM 32K x 8 (CPC OS + BASIC)', short: '23256', family: 'Mask ROM (Toshiba TMM23256P, 27256-style pinout)',
+      id: 'rom23256', name: '23256 mask ROM 32K x 8', short: '23256', family: 'Mask ROM (Toshiba TMM23256P, 27256-style pinout)',
       role: 'OS firmware ($0000-$3FFF lower ROM) and Locomotive BASIC ($C000-$FFFF upper ROM 0) in one 32K chip', pkg: 'DIP-28',
       machines: ['cpc464', 'cpc664', 'cpc6128'],
       location: { cpc464: 'IC103 (TMM23256P-1950; Amstrad 40009 on later boards), BASIC 1.0', cpc664: 'IC103 (TMM23256P-1952, Amstrad 40022)', cpc6128: 'IC103 (TMM23256P-1953; Amstrad 40025 on later boards)' },
-      summary: 'A14 (pin 27) picks the half: LOW for the OS lower ROM, HIGH for BASIC. The Gate Array /ROMEN drives /CS (pin 20); /OE (pin 22) is held LOW by 2.2K and pulled HIGH by ROMDIS when an expansion ROM takes over. Each model has its own ROM; they are not interchangeable without the matching firmware. A 27256 EPROM fits with pin 1 (VPP) tied to +5 V. Pin table from the CPC6128 schematic.',
+      summary: 'Generic pin table; the 23256 is a 27256-pinout mask ROM. Board wiring on the CPC: A14 (pin 27) picks the half: LOW for the OS lower ROM, HIGH for BASIC. The Gate Array /ROMEN drives /CS (pin 20); /OE (pin 22) is held LOW by 2.2K and pulled HIGH by ROMDIS when an expansion ROM takes over. Each model has its own ROM; they are not interchangeable without the matching firmware. A 27256 EPROM fits with pin 1 (VPP) tied to +5 V. Pin table from the CPC6128 schematic.',
       fails: ['No boot, black or garbage screen', 'Boots but BASIC crashes on certain keywords', 'Wrong sign-on after a ROM swap'],
       heat: 'cool', verifiedAgainst: 'CPC6128 service manual CPU circuit diagram p. 19-20 (IC103 TMM23256P-1953); parts lists of the CPC464, CPC664 and CPC6128 manuals and the amendment',
       datasheets: [sm6128('CPU circuit diagram p. 19-20, IC103 ROM', 16), sm664('electrical parts list (IC103 TMM-23256P-1952, part 40022)', 17), AMEND],
@@ -344,7 +344,7 @@ RCS.add({
         p(18, 'D6', 'data', 'out', 'Data bit 6.'), p(19, 'D7', 'data', 'out', 'Data bit 7.'),
         p(20, '/CS', 'ctrl', 'in', 'Chip select from Gate Array /ROMEN.', { terms: ['cs'], probe: 'Pulses LOW on ROM reads' }),
         p(21, 'A10', 'addr', 'in', 'Address bit 10.'),
-        p(22, '/OE', 'ctrl', 'in', 'Output enable: 2.2K (R112) to 0 V, HIGH from expansion ROMDIS (pin 43).', { probe: 'LOW unless a ROM board asserts ROMDIS' }),
+        p(22, '/OE', 'ctrl', 'in', 'Output enable: 2.2K (R112) to 0 V, HIGH from expansion ROMDIS (pin 43).', { probe: 'LOW while the ROM is selected' }),
         p(23, 'A11', 'addr', 'in', 'Address bit 11.'), p(24, 'A9', 'addr', 'in', 'Address bit 9.'), p(25, 'A8', 'addr', 'in', 'Address bit 8.'),
         p(26, 'A13', 'addr', 'in', 'Address bit 13.'),
         p(27, 'A14', 'addr', 'in', 'Address bit 14: LOW selects the OS half, HIGH the BASIC half.'),

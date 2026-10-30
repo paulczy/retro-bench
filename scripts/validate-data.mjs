@@ -92,6 +92,7 @@ for (const [mid, list] of Object.entries(R.connectors)) {
       for (const q of c.pads || []) {
         if (!Number.isFinite(+q.x) || !Number.isFinite(+q.y) || +q.x < -20 || +q.x > 120 || +q.y < -20 || +q.y > 120) err(f, `${c.id} pad ${q.n} has a bad position (${q.x}, ${q.y}); use the 0-100 box`);
         if (seenPad.has(String(q.n))) err(f, `${c.id} repeats pad ${q.n}`); seenPad.add(String(q.n));
+        const at = `${+q.x},${+q.y}`; if (seenPad.has('@' + at)) err(f, `${c.id} pad ${q.n} sits on another pad at (${at})`); seenPad.add('@' + at);
       }
       if (c.outline && !/^[MmLlHhVvZzAaCcQqSsTt0-9 ,.\-]+$/.test(c.outline)) err(f, `${c.id} outline is not a plain SVG path`);
     }

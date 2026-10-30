@@ -2,11 +2,11 @@
    The block between the markers is written by scripts/build-sw-manifest.mjs (npm run build):
    the precache list from index.html, the manifest and fonts/, and a content hash as the version. */
 /* precache:start */
-const VERSION = '6181eaa853be';
+const VERSION = 'e1cdf408c40f';
 const PRECACHE = [ "./", "dist/app.css", "fonts/barlow-condensed-400.woff2", "fonts/barlow-condensed-500.woff2", "fonts/barlow-condensed-600.woff2", "fonts/share-tech-mono-400.woff2", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg", "icons/maskable-512.png", "index.html", "manifest.webmanifest", "src/app.js", "src/connectors.js", "src/data/acorn.js", "src/data/amstrad.js", "src/data/apple.js", "src/data/atari.js", "src/data/coleco.js", "src/data/commodore.js", "src/data/core.js", "src/data/dragon.js", "src/data/heathkit.js", "src/data/ibm.js", "src/data/schematics.js", "src/data/sinclair.js", "src/data/tandy.js", "src/data/ti.js", "src/data/timex.js" ];
 /* precache:end */
 /* one cache family per install scope, so two copies of the app on one origin never delete each other's cache */
-const SCOPE = 'rb-' + new URL(self.registration.scope).pathname.replace(/[^\w]+/g, '_') + '-';
+const SCOPE = 'rb-' + encodeURIComponent(new URL(self.registration.scope).pathname) + '-';
 const CACHE = SCOPE + VERSION;
 
 /* addAll is all or nothing: one missing file rejects the install, so a half copy is never served.

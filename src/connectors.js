@@ -308,7 +308,7 @@ function draw(conn, o = {}) {
     let pad, hit;
     if (q.shape === 'r') { pad = `<rect class="pad" x="${r1(q.x - q.w / 2)}" y="${r1(q.y - q.h / 2)}" width="${q.w}" height="${q.h}" rx="2"/>`; hit = `<rect class="hit" x="${r1(q.x - Math.max(q.w, 44) / 2)}" y="${r1(q.y - 22)}" width="${Math.max(q.w, 44)}" height="44" rx="3"/>`; }
     else if (q.shape === 'ring') { pad = `<circle class="pad ring" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${q.r}" style="stroke-width:${q.sw}px"/>`; hit = `<circle class="hit" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${q.r + q.sw / 2 + 6}"/>`; }
-    else { pad = `<circle class="pad" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${q.r || PAD}"/>`; hit = `<circle class="hit" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${Math.floor((q.hr || HIT) * 10) / 10}"/>`; }
+    else { pad = `<circle class="pad" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${q.r || PAD}"/>`; hit = `<circle class="hit" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${Math.floor((q.hr != null ? q.hr : HIT) * 10) / 10}"/>`; }
     const ringNum = q.shape === 'ring' ? `<text class="num" x="${r1(q.x + q.r * 0.71)}" y="${r1(q.y - q.r * 0.71 + 4)}" text-anchor="middle">${t}</text>` : num;
     if (!p) { body += `<g class="cpin vac" aria-hidden="true">${pad}${ringNum}</g>`; continue; }
     placed.add(q.n);

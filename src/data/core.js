@@ -268,6 +268,7 @@ window.RCS = (() => {
       R.chips[cid] = c;
     }
     for (const t of ['symptoms', 'connectors', 'power', 'quickref']) Object.assign(R[t], d[t] || {});
+    for (const list of Object.values(d.connectors || {})) for (const c of list) for (const p of c.pins || []) if (p && typeof p.name === 'string' && p.name.startsWith('/')) p.activeLow = true;
     if (d.resources && d.resources.length) R.resources[d.brand.id] = d.resources;
     /* Cross-brand fitting: a machine may list a chip defined in another brand file. After every add(),
        make sure each listed chip knows every machine it is fitted in, and merge per-machine designators
