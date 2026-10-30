@@ -33,9 +33,15 @@ c16: { id: 'c16', brand: 'commodore', name: 'Commodore 16', aka: 'C16 / C116 (26
   chips: ['ted7360', 'cpu7501', ...],        // ids; order = display order (hottest first is fine)
   tagline: 'One sentence a tech would say about it.' }
 ```
-A chip fitted in several machines is defined once (in the brand where it first appears) and listed in each
-machine's `chips`; its `machines` array lists every machine and `location` gives the board designator per
-machine. Shared data (Plus/4 reusing C16) is handled in the app; do not duplicate.
+A chip fitted in several machines is defined once. If another brand file already defines it (the 6502 is in
+`apple.js`, the 4164 in `commodore.js`; grep `src/data/*.js` for the id before defining one), just list its id
+in your machine's `chips` and give its designator in `chipLocations: { vic20: { cpu6502: 'UE10' } }` at the top
+level of your `RCS.add({...})`; `core.js` merges the fit and location after load, whatever the file order.
+Do not edit another brand's file. Shared data (Plus/4 reusing C16) is handled in the app; do not duplicate.
+
+New glossary terms: check `core.js` first. If a term is genuinely missing, add it at the top of your brand
+file with `Object.assign(RCS.terms, { 'my-term': { term, short, long } });` before `RCS.add(...)`. Do not
+edit `core.js`.
 
 ### chip
 ```js

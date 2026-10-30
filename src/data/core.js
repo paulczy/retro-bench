@@ -257,6 +257,16 @@ window.RCS = (() => {
     Object.assign(R.chips, d.chips || {});
     for (const t of ['symptoms', 'connectors', 'power', 'quickref']) Object.assign(R[t], d[t] || {});
     if (d.resources && d.resources.length) R.resources[d.brand.id] = d.resources;
+    /* Cross-brand fitting: a machine may list a chip defined in another brand file. After every add(),
+       make sure each listed chip knows every machine it is fitted in, and merge per-machine designators
+       given as chipLocations: { machineId: { chipId: 'U7' } }. */
+    R._locations = Object.assign(R._locations || {}, d.chipLocations || {});
+    for (const m of Object.values(R.machines)) for (const cid of m.chips || []) {
+      const c = R.chips[cid]; if (!c) continue;
+      if (!c.machines.includes(m.id)) c.machines.push(m.id);
+      const loc = R._locations[m.id] && R._locations[m.id][cid];
+      if (loc) (c.location = c.location || {})[m.id] = loc;
+    }
   };
   return R;
 })();
