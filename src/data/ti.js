@@ -19,6 +19,14 @@ const TI_SM = p => `${TI_WHT}Hardware/Texas%20Instruments/TI994A_HC_Servicing_Ma
 const TI_SAMS = p => `${TI_WHT}Hardware/computerfacts/Sams%20TI994A%20ComputerFacts.pdf#page=${p}`;
 const TI_DS = (f, p) => `${TI_WHT}Datasheets%20-%20TI/${f}${p ? '#page=' + p : ''}`;
 const TI_URG = p => `${TI_WHT}99-4A%20Computer/userrefguide.pdf#page=${p}`;
+const TI_IA = n => `https://archive.org/details/cc_2_texasinst_ti99/page/n${n}/mode/1up`;
+/* Sams CC2 on archive.org: leaf n0 = p. 37, n1 = pp. 35-37, n2 = p. 2, n15 = p. 14, n16 = p. 15, n19 = p. 18, n21 = service checks */
+const SAMS_37 = { label: 'Sams CC2 TI-99/4A, main board schematic waveforms, p. 37', url: TI_IA(0), sams: true };
+const SAMS_36 = { label: 'Sams CC2 TI-99/4A, main board schematic waveforms, p. 36', url: TI_IA(1), sams: true };
+const SAMS_2 = { label: 'Sams CC2 TI-99/4A, keyboard and main board schematic waveforms (U600, U601), p. 2', url: TI_IA(2), sams: true };
+const SAMS_14 = { label: 'Sams CC2 TI-99/4A, Troubleshooting, Figures 3 and 4, crystal oscillators, sound, p. 14', url: TI_IA(15), sams: true };
+const SAMS_18 = { label: 'Sams CC2 TI-99/4A, parts list (semiconductors), p. 18', url: TI_IA(19), sams: true };
+const SAMS_SC = { label: 'Sams CC2 TI-99/4A, Service Checks 2(a)-(c) and 3(a), folder insert', url: TI_IA(21), sams: true };
 
 const ti9900Pins = [
   { n: 1, name: 'Vbb', type: 'power', dir: '-', desc: '-5 V supply (Vbb). The 9900 needs all three rails.', probe: 'About -5.15 V (Sams reading)' },
@@ -363,6 +371,12 @@ RCS.add({
         { label: 'TMS9918A/9928A/9929A Data Manual (Nov 1982), applefritter mirror', url: 'https://git.applefritter.com/Apple-1-Tools/apple1-videocard-lib/raw/branch/main/docs/TMS9918A_TMS9928A_TMS9929A_Video_Display_Processors_Data_Manual_Nov82.pdf' },
       ],
       pins: vdp9918Pins,
+      replacements: [
+        { part: 'TMS9928A / TMS9929A', kind: 'pin-compatible', note: 'Same socket, not a drop-in. Pins 35, 36 and 38 become B-Y, Y and R-Y, so there is no composite video and no 3.58 MHz CPUCLK, and the 9929A runs 50 Hz, 313 lines. A 9918A console needs a colour-difference video stage (the PAL boards use jumpers W201-W204 on J201) before either will make a picture.', source: { label: 'TMS9918A/9928A/9929A Data Manual, 3.7.2 TMS9928A/9929A terminal assignments, p. 3-11', url: TI_DS('9918a28a29a.pdf', 54) } },
+        { part: 'TMS9118 / TMS9128 / TMS9129', kind: 'pin-compatible', note: 'Not for the TI-99/4A: they have no GROMCLK on pin 37 (not connected on the 9118, CPUCLK on the 9128/9129), so the GROMs get no clock and the console never reaches the title screen. Only pins 35 to 38 differ from the 9918A family.', source: { label: 'F18A pin-out and compatibility (Matthew Hagerty, dnotq.io)', url: 'https://dnotq.io/f18a/pinout.html' } },
+        { part: 'F18A / F18A-MK2', kind: 'modern', note: 'FPGA 9918A with its own VRAM and VGA (MK2: also DVI) out. Pins 35 and 36 are not connected, so the console composite output goes dead and the cable has to leave the case. Set user jumpers 3 and 4 on for a TI-99/4A. /RESET does not do the 9918A external sync. The original F18A was made 2012 to 2017, about 550 boards; it is wider than the DIP-40.', source: { label: 'F18A pin-out, user jumpers and versions (Matthew Hagerty, dnotq.io)', url: 'https://dnotq.io/f18a/pinout.html' } },
+        { part: 'PICO9918 / PICO9918 PRO', kind: 'modern', note: 'Raspberry Pi Pico (RP2040) drop-in for the 9918A family, tested on the TI-99/4 and 4A. VGA by default; HDMI and SCART only through add-on dongles; no composite output. Early v0.2 boards needed an external Pico for GROMCLK; v0.3 and later make it on the board. Power off before you swap dongles.', source: { label: 'PICO9918 project README (visrealm, GitHub)', url: 'https://github.com/visrealm/pico9918' } },
+      ],
     },
     psg76489: {
       id: 'psg76489', name: 'SN76489 / SN94624 (TMS9919) sound generator', short: 'SN76489', family: 'TI I2L (sound)',
@@ -378,6 +392,11 @@ RCS.add({
         { label: 'TI-99/4A Servicing Manual, sound controller, printed pp. 73-76', url: TI_SM(82) },
       ],
       pins: psg76489Pins,
+      replacements: [
+        { part: 'TMS9919 = SN94624N', kind: 'pin-compatible', note: 'The same part under two numbers: Sams lists U511 as SN94624N / TMS9919. It has no divide-by-eight on the clock input, so it runs from the 447 kHz GROM clock.', source: SAMS_18 },
+        { part: 'SN76494N', kind: 'pin-compatible', note: 'TI: identical to the SN76489A but with the divide-by-eight stage removed and a 500 kHz clock limit, which matches the SN94624. Check pin 9 (AUDIO IN on the SN94624) before you rely on speech and cassette audio.', source: { label: 'SN76489AN data sheet, SN76494N footnote, p. 1', url: TI_DS('SN76489.pdf', 1) } },
+        { part: 'SN76489AN', kind: 'pin-compatible', note: 'Keeps the divide-by-eight stage and takes up to 4 MHz. Fed the 447 kHz GROM clock of an SN94624 board, every tone comes out three octaves low; it only fits a board that clocks the sound chip at 3.58 MHz. Pin 9 is N.C., so the speech and cassette audio mixed in there is lost.', source: { label: 'SN76489AN data sheet, features and SN76494N footnote, p. 1', url: TI_DS('SN76489.pdf', 1) } },
+      ],
     },
     tms9901: {
       id: 'tms9901', name: 'TMS9901 programmable systems interface', short: 'TMS9901', family: 'TI MOS (I/O)',
@@ -408,6 +427,9 @@ RCS.add({
         { label: 'TI-99/4A Servicing Manual, Fig. 35 SN74LS362 (TIM9904), printed p. 114', url: TI_SM(124) },
       ],
       pins: tim9904Pins,
+      replacements: [
+        { part: 'SN74LS362 / TIM9904A', kind: 'pin-compatible', note: 'The same clock generator: Sams lists U601 as TIM9904ANL / 74LS362 and TI\'s manual calls it a 74LS362. Keep the tank (L602, C603) matched to the crystal: the oscillator must run at 12 MHz for 3 MHz phases.', source: SAMS_18 },
+      ],
     },
     grom0430: {
       id: 'grom0430', name: 'TMC0430 GROM (graphics ROM)', short: 'GROM', family: 'TI PMOS (serial ROM)',
@@ -423,6 +445,9 @@ RCS.add({
         { label: 'GROM notes (Colin Hinson, blunham.com)', url: 'https://www.blunham.com/Misc/Texas/Mine/Groms.html' },
       ],
       pins: grom0430Pins,
+      replacements: [
+        { part: 'TI-GROMmy', kind: 'modern', note: 'Microcontroller board that replaces the three console GROMs (U500-U502); it takes the space of two GROM sockets and serves all three, 8 KB each. Its MCU must be programmed with the GROM images you want. A cartridge-port GROM device such as the FinalGROM 99 does not replace the console GROMs.', source: { label: 'AtariAge, "TI-GROMmy, the system GROM replacement" (Wayback copy, Nov 2024)', url: 'http://web.archive.org/web/20241112173905/https://forums.atariage.com/topic/341084-ti-grommy-the-system-grom-replacement/' } },
+      ],
     },
     romconsole: {
       id: 'romconsole', name: 'TMS4732 console ROM (4K x 8)', short: 'TMS4732', family: 'Mask ROM (NMOS)',
@@ -437,6 +462,9 @@ RCS.add({
         { label: 'TI-99/4A Technical Data, schematic sheet 60 (U610, U611)', url: TI_TD(62) },
       ],
       pins: rom4732Pins,
+      replacements: [
+        { part: 'TMS2532 EPROM', kind: 'pin-compatible', note: 'TI makes the TMS4732 pin-compatible with the TMS2532 and Sams lists TMS4732/2532 for U610 and U611. The 4732 selects on pins 20 and 21 are set in the mask (both active low on the TI), and an EPROM has programming functions on pins 18, 20 and 21: check them against the EPROM sheet and burn U610 (even byte) and U611 (odd byte) separately.', source: { label: 'TMS4732 data sheet, TI MOS Memory Data Book 1986, p. 7-15', url: TI_DS('MOSMemory-1986/MOSMemory-1986-07-ROMs.pdf', 15) } },
+      ],
     },
     sram6810: {
       id: 'sram6810', name: 'MCM6810 128 x 8 static RAM', short: 'MCM6810', family: 'Static RAM (NMOS)',
@@ -450,6 +478,9 @@ RCS.add({
         { label: 'TI-99/4A Technical Data, schematic sheet 60 (U608, U609 MCM6810P)', url: TI_TD(62) },
       ],
       pins: sram6810Pins,
+      replacements: [
+        { part: 'MCM6810P / NTE6810 / ECG6810', kind: 'pin-compatible', note: 'Sams cross-references U608 and U609 to these. Any 6810 from a 6800-family board fits; it must have the full six chip selects.', source: SAMS_18 },
+      ],
     },
   },
   symptoms: {
@@ -705,18 +736,39 @@ RCS.add({
         { rail: 'Unregulated B+', expect: 'about 21.5 V DC', where: 'L6 on the regulator board', note: 'Sams service check. Low or missing = transformer, bridge or C9.' },
       ],
       testPoints: [
-        { tp: 'CPU clocks (phi1-phi4)', where: 'TMS9900 pin 8', expect: '3 MHz, 0 to about 12 V. Also pins 9, 25 and 28.' },
+        { tp: 'CPU clocks (phi1-phi4)', where: 'TMS9900 pins 8, 9, 25, 28; TIM9904 pins 12, 11, 8, 9', expect: '3 MHz, 0 to about 12 V on each of the four pins, one phase after another.',
+          scope: { f: '3 MHz', low: '0 V', high: '17 V', shape: 'pulse', duty: '25%', basis: 'capture', source: SAMS_2,
+            note: 'Sams photographs all four MOS phases at 17 V p-p from a 0 V base, overshoot included; the TIM9904A manual gives a high level of Vdd - 2 V to Vdd (10 to 12 V), so a clean 12 V pulse with some ringing is good. Sams prints the time base as 2 µs/cm; its Figure 3 (p. 14) shows the same phases at 0.2 µs/cm, which matches 3 MHz. Each phase is high for about a quarter of the cycle (9904A manual Fig. 10), phi1, phi2, phi3, phi4 in turn. A phase stuck low, or only 5 V high: TIM9904, +12 V on its pin 13, or R600-R603.' } },
         { tp: 'CPU reset', where: 'TMS9900 pin 6', expect: 'LOW at power-on, HIGH once running.' },
         { tp: 'CPU READY', where: 'TMS9900 pin 62', expect: 'Toggling, never stuck low.' },
         { tp: 'Clock chip supplies', where: 'TIM9904 pin 13', expect: '+12 V; pin 20 +5 V; FFD pin 5 rises to +5 V after power-on.' },
-        { tp: 'VDP crystal', where: 'TMS9918A pin 39', expect: '10.738635 MHz.' },
+        { tp: 'CPU clock oscillator (tank)', where: 'TIM9904 pin 1', expect: '12.00 MHz on a frequency counter (Sams). Y600 is marked 48 MHz.',
+          scope: { f: '12 MHz', low: '-0.5 V', high: '0.5 V', shape: 'sine', basis: 'capture', source: SAMS_2,
+            note: 'Sams: 1 V p-p on a -0.5 V DC reference at pin 1, and 12.00 MHz on a counter (p. 14). Flat = dead oscillator: check the tank (L602, C603) and Y600, then the TIM9904 (TI chart p. 87).' } },
+        { tp: 'Oscillator out', where: 'TIM9904 pin 16', expect: '12 MHz, 4 V p-p (Sams). Not connected on the TI board.',
+          scope: { f: '12 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'capture', source: SAMS_2,
+            note: 'Sams: 4 V p-p from 0 V at OSCOUT. The TIM9904A manual (Fig. 10) runs OSCOUT at four times the phase rate, 12 MHz for 3 MHz phases. A clean OSCOUT with dead phases points at the 9904 output stage or the +12 V on pin 13.' } },
+        { tp: 'VDP crystal', where: 'TMS9918A pin 39', expect: '10.738635 MHz on a frequency counter (Sams adjustment; set with L100). DC about 1.5 V (Sams).' },
         { tp: 'Colour burst clock', where: 'TMS9918A pin 38', expect: '3.579545 MHz; the system runs from 3.579520 to 3.579548 MHz. Adjust L100.' },
-        { tp: 'GROM clock', where: 'TMS9918A pin 37', expect: 'About 447 kHz.' },
+        { tp: 'GROM clock', where: 'TMS9918A pin 37; GROM pin 13', expect: 'About 447 kHz (crystal / 24).',
+          scope: { f: '447.4 kHz', low: '0 V', high: '4.5 V', shape: 'square', basis: 'capture', source: SAMS_37,
+            note: 'Sams: 4.5 V p-p from 0 V. Sams prints the time base as 1 ms/cm, but the photo shows four cycles across the screen, which only fits about 1 µs/cm at 447 kHz (VDP manual: crystal / 24, 425 to 470 kHz). No clock here = no GROM access and no title screen.' } },
         { tp: 'VDP read / write strobes', where: 'TMS9918A pin 15', expect: '/CSR pulses; /CSW on pin 14 pulses.' },
+        { tp: 'Composite video at the VDP', where: 'TMS9918A pin 36', expect: 'Composite video, about 1.5 V p-p on a 2 V level (Sams). TMS9918A consoles only; Y on a 9929A.',
+          scope: { period: '63.7 µs', low: '2 V', high: '3.5 V', shape: 'video-line', basis: 'capture', source: SAMS_37,
+            note: 'Sams: 1.5 V p-p at 10 µs/cm on a 2 V DC reference. VDP manual (5.3): sync 2.0 V, black 2.3 V, white 3.0 V nominal into 470 ohms; the line is 342 pixel clocks (63.7 µs). No signal here: check the 10.7 MHz oscillator at pins 39 and 40, then the VDP (Sams p. 14).' } },
+        { tp: 'Video out (to monitor or modulator)', where: 'ti994a-video pin 4', expect: 'Composite video, about 1 V p-p (Sams).',
+          scope: { period: '63.7 µs', low: '0 V', high: '1 V', shape: 'video-line', basis: 'capture', source: SAMS_37,
+            note: 'Sams: 1 V p-p at 10 µs/cm from 0 V, after the Q200/Q201 amplifier; the RF modulator check (p. 15) asks for the same 1 V p-p on its video wire. Present at VDP pin 36 but not here: Q200, Q201 and their parts (Sams p. 14).' } },
         { tp: 'VRAM data out', where: '4116 pin 14', expect: 'Activity on every 4116.' },
         { tp: 'GROM select, ready, clock', where: 'GROM pin 10', expect: '/GS pulses; GREADY on pin 15 pulses; clock on pin 13.' },
-        { tp: '9901 TTL clock', where: 'TMS9901 pin 10', expect: '3 MHz TTL clock.' },
+        { tp: '9901 TTL clock', where: 'TMS9901 pin 10; TIM9904 pins 14, 15, 7, 6', expect: '3 MHz TTL clock (inverted phase 3 from TIM9904 pin 7). The other TTL phases are on TIM9904 pins 14, 15 and 6.',
+          scope: { f: '3 MHz', low: '0 V', high: '4.2 V', shape: 'square', duty: '75%', basis: 'capture', source: SAMS_2,
+            note: 'Sams: 4.2 V p-p from 0 V on all four inverted TTL phases (TIM9904 pins 14, 15, 7, 6); its Figure 4 (p. 14) shows them at 0.2 µs/cm. Each is low for a quarter of the cycle (9904A manual Fig. 10). Missing here but present at the MOS phases: the 9904 TTL outputs.' } },
         { tp: 'Sound clock', where: 'SN76489 pin 14', expect: 'About 447 kHz (SN94624 boards) or 3.58 MHz (SN76489 boards).' },
+        { tp: 'Sound out', where: 'SN76489 pin 7', expect: 'About 0.7 V p-p while CALL SOUND(-400,200,2) runs in a loop (Sams). DC about 2.6 V.',
+          scope: { f: '200 Hz', shape: 'square', basis: 'capture', source: SAMS_14,
+            note: 'Sams test: 1 CALL SOUND(-400,200,2) / 2 GOTO 1, then look for 0.7 V p-p at pin 7 (a 200 Hz tone; the chip makes square-wave tones). The schematic photo shows 0.4 V p-p on a 2.4 V level after FCTN =. Present here but silent: C502, C503, C206, C208 and L201. Absent: logic-probe pins 1 to 14 and the clock on pin 14.' } },
       ],
       sources: [
         { label: 'TI-99/4A Servicing Manual, Items to Check During Debug, printed p. 8', url: TI_SM(16) },
@@ -724,6 +776,35 @@ RCS.add({
         { label: 'TI-99/4A Servicing Manual, Power Supply Board, printed pp. 34-35', url: TI_SM(93) },
         { label: 'Sams ComputerFacts TI-99/4A, service checks with rail readings, p. 4', url: TI_SAMS(4) },
         { label: 'TI-99/4A Technical Data, schematic sheet 59 (rails to the logic board)', url: TI_TD(61) },
+      ],
+      firstTen: [
+        { step: 1, check: 'Transformer output, at the console plug', where: 'Power in (from the transformer) pin 1 to pin 2, then pin 2 to pin 4', expect: 'About 18 V AC across 1-2 and 8.5 V AC across 2-4 (about 26 V AC across 1-4)',
+          ifNot: 'No AC: replace the transformer (Sams 2(a)). On an original AC9500, look for the green safety label first.', verify: true, source: SAMS_SC },
+        { step: 2, check: 'Regulator board unloaded, -5 V first', where: 'Regulator board output (to the logic board) pin 1, then pin 2, then pin 4', expect: '-5 V on pin 1, +12 V on pin 2, +5 V on pin 4, with the plug off the logic board',
+          ifNot: 'Measure the unregulated B+ at L6 (about 21.5 V, Sams 2(c)). No -5 V: 79M05 (U2), D5, C8. No +12 V: 7812 (U1), the bridge, C9. No +5 V: the 723 switcher, which only runs with +12 V present. Do not plug a board in without -5 V: the 4116 VRAM must see -5 V first.', source: { label: 'TI-99/4A Servicing Manual, Power Supply Board (slow start, -5 V before +5 V), printed pp. 34-35', url: TI_SM(93) } },
+        { step: 3, check: 'Rails on the CPU, board connected', where: 'TMS9900 pin 1, then pin 27, then pins 2, 59', expect: '-5.15 V on pin 1, +11.84 V on pin 27, +5.14 V on pins 2 and 59 (Sams readings)',
+          ifNot: 'Good unloaded but low here: a short on the logic board. Unplug the supply, recheck, then hunt the short (TI chart p. 87). Check -5 V on 4116 pin 1 too.', source: SAMS_SC },
+        { step: 4, check: 'Power-on reset releases', where: 'TIM9904 pin 5, then TMS9900 pin 6', expect: 'FFD rises to +5 V after power-on; /RESET goes HIGH',
+          ifNot: 'Pin 5 stays low: R605, R606, C606. Pin 5 high but pin 6 low: TIM9904 pin 4 (FFQ), then the 9904.', source: { label: 'TI-99/4A Servicing Manual, troubleshooting chart (reset, READY, GROMs), printed p. 89', url: TI_SM(98) } },
+        { step: 5, check: 'CPU clock oscillator', where: 'TIM9904 pin 1', expect: '12.00 MHz on a frequency counter',
+          ifNot: 'Check +12 V on TIM9904 pin 13 and +5 V on pin 20, then the tank (C603, L602) and Y600. All good: the TIM9904.', source: SAMS_14 },
+        { step: 6, check: 'Four 12 V clocks to the CPU', where: 'TMS9900 pins 8, 9, 25, 28', expect: 'Pulses on all four, 3 MHz, 0 to about 12 V',
+          ifNot: 'Check the same phases at TIM9904 pins 12, 11, 8, 9 and the 22 ohm resistors R600-R603. Missing at the 9904: the 9904.', source: { label: 'TI-99/4A Servicing Manual, Items to Check During Debug (items 2-8), printed p. 8', url: TI_SM(16) } },
+        { step: 7, check: 'READY not locked up', where: 'TMS9900 pin 62', expect: 'Pulsing, never stuck low',
+          ifNot: 'Stuck low: pull the GROMs and the sound chip and recheck; refit the GROMs one at a time (TI chart p. 89).', source: { label: 'TI-99/4A Servicing Manual, Items to Check During Debug, item 3, printed p. 8', url: TI_SM(16) } },
+        { step: 8, check: 'VDP clock', where: 'TMS9918A pin 38', expect: '3.579545 MHz (runs from 3.579520 to 3.579548 MHz); 10.738635 MHz at pin 39',
+          ifNot: 'Adjust L100. No clock: +5 V on pin 33, then R102, L107, C100, Y100, L100, C101, R101; then the 9918A (TI chart p. 88).', source: { label: 'TI-99/4A Servicing Manual, troubleshooting start chart, printed p. 87', url: TI_SM(96) } },
+      ],
+      clocks: [
+        { name: 'CPU crystal Y600 (TI: 48 MHz third overtone)', where: 'TIM9904 pin 18 to pin 19', f: '48 MHz', verify: true, source: { label: 'TI-99/4A Servicing Manual, oscillator circuit (resonator part), printed p. 13', url: TI_SM(21) } },
+        { name: 'CPU clock oscillator', where: 'TIM9904 pin 1; TIM9904 pin 16', f: '12 MHz', source: SAMS_14 },
+        { name: 'CPU phases phi1-phi4, MOS 12 V', where: 'TIM9904 pins 12, 11, 8, 9 to TMS9900 pins 8, 9, 28, 25', f: '3 MHz', source: { label: 'TIM 9904A Data Manual, 3 Device operation (12 MHz = 4 x 3 MHz), p. 1', url: TI_DS('TIM9904.pdf', 4) } },
+        { name: 'CPU phases, TTL inverted', where: 'TIM9904 pins 14, 15, 7, 6; TMS9901 pin 10', f: '3 MHz', source: { label: 'TIM 9904A Data Manual, Fig. 10 phase relationships, p. 10', url: TI_DS('TIM9904.pdf', 13) } },
+        { name: 'VDP crystal Y100', where: 'TMS9918A pin 39 to pin 40', pal: '10.738635 MHz', ntsc: '10.738635 MHz', source: { label: 'TMS9918A/9928A/9929A Data Manual, 3.6 Oscillator and clock generation, p. 3-8', url: TI_DS('9918a28a29a.pdf', 51) } },
+        { name: 'CPUCLK, colour burst (9918A only; pin 38 is R-Y on a 9929A)', where: 'TMS9918A pin 38', ntsc: '3.579545 MHz', source: { label: 'TMS9918A/9928A/9929A Data Manual, 3.6 (crystal / 3, TMS9918A only), p. 3-8', url: TI_DS('9918a28a29a.pdf', 51) } },
+        { name: 'GROMCLK', where: 'TMS9918A pin 37 to GROM pin 13', pal: '447.4 kHz', ntsc: '447.4 kHz', source: { label: 'TMS9918A/9928A/9929A Data Manual, 5.5 fGROMCLK (crystal / 24), p. 5-5', url: TI_DS('9918a28a29a.pdf', 83) } },
+        { name: 'Line rate (342 pixel clocks)', where: 'TMS9918A pin 36', pal: '15.70 kHz', ntsc: '15.70 kHz', source: { label: 'TMS9918A/9928A/9929A Data Manual, Table 3-3 screen display parameters, p. 3-8', url: TI_DS('9918a28a29a.pdf', 51) } },
+        { name: 'Frame rate and VDP interrupt (262 / 313 lines)', where: 'TMS9918A pin 16', pal: '50.2 Hz', ntsc: '59.9 Hz', source: { label: 'TMS9918A/9928A/9929A Data Manual, 3.6.2 (262 lines, about 60 frames/s; 9929A 313 lines, about 50), p. 3-8', url: TI_DS('9918a28a29a.pdf', 51) } },
       ],
     },
   },
