@@ -68,15 +68,50 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
 `[{ symptom: 'Black screen', suspects: ['cpu7501'], note: 'Check +5 V and /RES at pin 40 first.' }]`
 
 ### connectors
-`[{ id: 'c16-iec', name: 'Serial (IEC)', kind: 'DIN-6', verify: false, summary: '...',
-   pins: [{ n: 1, name: '/SRQ', desc: '...' }], terms: ['iec'] }]`
+```js
+[{ id: 'c64-power', name: 'Power in', kind: 'DIN-7 (Commodore power)', geo: 'din7',
+   verify: false, verifiedAgainst: 'C64 Programmer\'s Reference Guide, App. I',
+   summary: 'What plugs in here, what to expect, what goes wrong.',
+   pins: [{ n: 1, name: '9 VAC', type: 'power', desc: 'One leg of the 9 V AC winding.', expect: '9–11 V AC' }, ...],
+   sources: [{ label: 'C64 PRG App. I, p. 395 (archive.org)', url: 'https://archive.org/details/.../page/n395' }],
+   terms: ['iec'] }]
+```
+- Every pin is numbered (`n`) the way the connector standard numbers it; `n` may be a string for lettered
+  contacts (`'A'`, `'B12'`). Never `'?'`: a pin whose position you cannot source is left out and the gap is
+  noted in `summary` with `verify: true`.
+- `type` is optional and uses the chip pin types (power, ground, video, audio, serial, ctrl, data, addr, io, nc).
+- `expect` is optional: what a meter or scope should show at that pin on a working machine, with units.
+- Pins are described **looking into the socket on the machine**. The app mirrors the drawing for the PLUG view
+  itself; never enter plug-view numbering.
+- `geo` picks the drawing. One of:
+  - round DIN: `din3`, `din4`, `din5-180`, `din5-240`, `din6`, `din7`, `din8-262`, `din8-270`, `mdin7`, `mdin8`
+  - D-sub: `de9`, `da15`, `db25`
+  - card edge: `edge-<top>x<bottom>-<scheme>`, scheme one of `seq` (1..N top, N+1..2N bottom), `cbm` (1..N top,
+    letters A B C D E F H J K L M N P R S T U V W X Y Z bottom), `ab` (A1..An top, B1..Bn bottom),
+    `odd-even` (odd numbers top, even bottom). Example: C64 user port `edge-12x12-cbm`, IBM I/O channel `edge-31x31-ab`,
+    Apple II slot `edge-25x25-seq`.
+  - single contact: `rca`, `f` (RF F-connector), `barrel` (pins `1` = centre, `2` = sleeve), `trs` (pins `T`, `R`, `S`), `ts`
+  - anything else: `custom`, with `pads: [{ n, x, y }]` in a 0–100 box as seen looking into the socket, plus an
+    optional `outline: '<svg path d>'` in the same box (Atari SIO, TI power plug, Coleco power, headers).
+- `sources` are the documents a human can open to check the table. Use the manual, schematic or standard, with
+  a page number in the label and, when the host supports it, a page anchor in the URL
+  (`archive.org/details/<id>/page/n<page>`, `...pdf#page=<n>`). Forum posts are allowed only as a second source.
 
 ### power
 ```js
-{ rails: [{ rail: '+5 V', expect: '4.9–5.2 V', where: '7805 output; TED pin 4; 7501 pin 5', note: '...' }],
-  testPoints: [{ tp: 'Master clock', where: 'TED pin 14', expect: '17.734 MHz PAL / 14.318 MHz NTSC' }] }
+{ supply: { external: true, name: 'Commodore 251053 "brick"', output: '+5 V DC 1.5 A and 9 V AC 1 A',
+            connector: 'c64-power',   // id in this machine's connectors; the app draws the PSU pinout from it
+            notes: ['Epoxy-potted. The 5 V regulator drifts high and kills RAM; test unloaded, replace if over 5.2 V.'],
+            sources: [{ label, url }] },
+  rails: [{ rail: '+5 V', expect: '4.9–5.2 V', where: '7805 output; TED pin 4; 7501 pin 5', note: '...' }],
+  testPoints: [{ tp: 'Master clock', where: 'TED pin 14', expect: '17.734 MHz PAL / 14.318 MHz NTSC' }],
+  sources: [{ label, url }] }
 ```
-Write `where` as `<chip short> pin <n>` so the app can link it to the drawing.
+- `supply.external: false` for machines with an internal supply (Apple II, PET, CoCo, IBM PC). Still fill
+  `name`, `output` and `notes`, and point `connector` at the internal PSU-to-board connector if you add one to
+  `connectors` (IBM P8/P9, Apple II 6-pin). The app says "Internal supply" and draws that connector.
+- `notes` holds the known problems of that supply and what to check before plugging it into a board.
+- Write `where` as `<chip short> pin <n>` so the app can link it to the drawing.
 
 ### quickref
 ```js
@@ -97,3 +132,19 @@ monitor is (HERO monitor commands, IBM Cassette BASIC / DOS commands) and keep t
 3. The printed cheat sheets in `paulczy/retro-computer-cheetsheets` (`chip-pinouts/*.pdf`, `basic-cheatsheets/*.pdf`; `pdftotext -layout` reads them).
 4. Well-known community references (zimmers.net, Apple II Documentation Project, bitsavers). Mark `verify: true`.
 5. Memory. Mark `verify: true` and say so in the summary.
+
+## Sources and verification
+
+Every block that a human might want to check carries a `sources` array (`connectors[]`, `power`, `quickref`,
+and `datasheets` on chips): `{ label: 'Doc title, page or section', url: 'https://…', verify?: true }`.
+Link the page, not the site. Prefer, in order: the manufacturer's manual or schematic on archive.org or
+bitsavers, the chip datasheet (bitsavers, datasheetarchive, the maker's own PDF), a long-standing community
+reference (zimmers.net, 6502.org, worldofspectrum.org, whtech.com, colorcomputerarchive.com,
+minuszerodegrees.net, mirrors.apple2.org.za, atariarchives.org), then forum posts. Wikipedia may be linked for
+connector standards, never as the only source for a pin table.
+
+`verify: true` means "not yet checked against a source". Clear it on a pin only when you have read the pin's
+name and function in a source you link; set `verifiedAgainst` on the chip or connector to that document's
+title. A pin that a source contradicts is corrected, and the old value, new value and source go in
+`docs/verification/<brand>.md`. A pin no source covers keeps `verify: true` and is listed there too.
+`conflict: 'text'` on a pin records a disagreement between two sources that you could not settle.
