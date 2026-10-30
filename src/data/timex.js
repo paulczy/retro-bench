@@ -9,6 +9,7 @@ const MEMO6 = { label: 'Timex Technical Memo #6, TS2068 Connector Pinouts, SYNTA
 const K1_1000 = { label: 'The Sinclair ZX Archive (k1.spdns.de), Timex Sinclair 1000 Connectors (community)', url: 'https://k1.spdns.de/Vintage/Sinclair/80/Timex%20Sinclair%201000/Connectors.html' };
 const UM1000 = { label: 'Timex Sinclair 1000 User Manual (1982), ch. 1 Setting up', url: 'https://archive.org/details/timex-sinclair-1000-user-manual' };
 const UM1500 = { label: 'Timex Sinclair 1500 User Manual (1983), ch. 1 How to set up', url: 'https://archive.org/details/timexsinclair-1500-user-manual' };
+const um15 = label => ({ label: `Timex Sinclair 1500 User Manual (1983), ${label}`, url: UM1500.url });
 const ZX81SM = { label: 'Sinclair ZX81 Service and Assembly Manual (transcribed), sec. 9 Power supply, p. 8', url: 'https://k1.spdns.de/Vintage/Sinclair/80/Sinclair%20ZX81/Service%20and%20Assembly%20Manual/ZX81%20Service%20and%20Assembly%20Manual%20(transcribed).pdf#page=8' };
 const SUBSET = { label: 'SYNTAX v4 n12 (Dec 1983) p. 1, ZX/TS subset of 2068 pins', url: 'https://archive.org/details/SyntaxMagazine/Syntax%20v4n12/page/n1' };
 const AYDM = { label: 'General Instrument AY-3-8910/8912 Data Manual (transcription), sec. 2.2-2.3 pin functions, p. 11-12', url: 'https://cdn.hackaday.io/files/1689687229126912/AY-3-8910-manual.pdf#page=11' };
@@ -37,7 +38,7 @@ RCS.add({
       tagline: 'The US ZX81: NTSC video, 2K RAM and a channel 2/3 switch.'
     },
     ts1500: {
-      id: 'ts1500', brand: 'timex', name: 'Timex Sinclair 1500', aka: 'TS1500 (ZX81 in a Spectrum-style case)', year: 1983, status: 'sheet',
+      id: 'ts1500', brand: 'timex', name: 'Timex Sinclair 1500', aka: 'TS1500 (ZX81 in a Spectrum-style case)', year: 1983, status: 'ready',
       cpu: 'Z80A @ 3.25 MHz', ram: '16 KB on board (eight 4116 DRAM)', rom: '8 KB BASIC (Timex revision of the ZX81 ROM)', video: 'NTSC, 60 Hz, 32 x 24 text, block graphics', sound: 'None', os: 'Sinclair BASIC 8K',
       chips: ['ula_ts1500', 'cpuz80', 'rom_zx81', 'dram4116'],
       tagline: 'A ZX81 with 16K on board in a Spectrum-style case.'
@@ -233,6 +234,15 @@ RCS.add({
       { symptom: 'Wobbly RAM pack (crashes when touched)', suspects: ['sram6116'], note: 'Clean the rear edge connector and reseat the pack.' },
       { symptom: 'Dead keys', suspects: ['ula_zx81'], note: 'Check the membrane and its ribbon before blaming the ULA.' },
       { symptom: 'No boot, dead screen', suspects: ['cpuz80', 'rom_zx81'], note: 'Check /RESET at Z80A pin 26 and the clock at pin 6.' }
+    ],
+    // TS1500: user manual only. No Timex service manual or schematic for the 1500 has been found.
+    ts1500: [
+      { symptom: 'Nothing on the TV', suspects: [], note: 'No power switch: plugging the adapter into 9V DC turns it on. It sends on VHF channel 2 unless 3 is the first key pressed after power-up; unplug, plug in again and press 3 for channel 3, then ENTER to clear the 3 (user manual ch. 1).' },
+      { symptom: 'Interference or poor picture', suspects: [], note: 'In order: TV fine tuning, brightness, contrast and horizontal hold; same channel on both; move the computer away from or below the set; another mains circuit (user manual ch. 1).' },
+      { symptom: 'Will not LOAD', suspects: [], note: 'Find the working volume range with a short program and set the middle; connect only EAR while loading (a MIC lead can make a feedback loop); run the recorder on batteries to lose 60 Hz hum; ease the EAR plug out a little; suspect head alignment if only one recorder loads it (user manual ch. 3, pp. 25-26).' },
+      { symptom: 'Locked up, BREAK does nothing', suspects: [], note: 'BREAK (the SPACE key) is checked at the end of each program line and stops a misfired LOAD; if it does not work, pull the plug and the program is lost (user manual ch. 5).' },
+      { symptom: 'Crashes with a 16K RAM pack fitted', suspects: [], note: 'The pack is not detected: POKE 16386,0: POKE 16389,192: NEW. With RAMTOP above 32768 the display file can cross 32767 while lines are typed and the system misbehaves (user manual Appendix D, pp. 153-154).' },
+      { symptom: 'Dead: no K cursor with the TV tuned', suspects: ['ula_ts1500', 'cpuz80', 'dram4116'], note: 'No TS1500 service data has been found. Measure the adapter, then +5 V, +12 V and -5 V at the 4116s (U8-U15) before pulling chips: the rail values on the power page are not sourced for this board.' }
     ],
     ts2068: [
       { symptom: 'No picture', suspects: ['scld_tx2068'], note: 'The SCLD makes the video and runs hot. Check +5 V at SCLD pin 43 and 14.112 MHz at pins 13/14 first.' },
@@ -569,6 +579,57 @@ RCS.add({
         { range: '16388/16389', what: 'RAMTOP.' }
       ],
       sources: [UM1000]
+    },
+    ts1500: {
+      firstLook: [
+        'ZX81-family 8K BASIC with keyword-per-key entry, and 16K RAM on the board (16384-32767).',
+        'No on/off switch: plugging the 9 V DC adapter in turns it on.',
+        'Video on VHF channel 2; press 3 as the first key after power-up for channel 3 (ENTER clears the 3).',
+        'A 16K RAM pack is not detected: POKE 16386,0: POKE 16389,192: NEW to use it.',
+        'Connect only EAR to load and only MIC to save.'
+      ],
+      keys: [
+        { keys: '3 (first key after power-up)', does: 'Switch the RF output to channel 3.' },
+        { keys: 'SHIFT + ENTER', does: 'Function mode: the function under the key.' },
+        { keys: 'SHIFT + 9', does: 'Graphics mode on and off.' },
+        { keys: 'SHIFT + 0', does: 'DELETE: erase one entry to the left.' },
+        { keys: 'SHIFT + 1', does: 'EDIT: bring the current line down.' },
+        { keys: 'SHIFT + 5 / 8', does: 'Cursor left / right in the line.' },
+        { keys: 'SHIFT + 6 / 7', does: 'Move the program cursor down / up the listing.' },
+        { keys: 'BREAK (SPACE)', does: 'Stop a program or a LOAD; report D.' }
+      ],
+      basic: {
+        dialect: 'Timex Sinclair 1500 BASIC (8K ROM, ZX81 family)',
+        essentials: [
+          { cmd: 'LOAD ""', does: 'J, then SHIFT P twice: load the next program from tape.' },
+          { cmd: 'LOAD "name" / SAVE "name"', does: 'Tape by name.' },
+          { cmd: 'RUN (key R) then ENTER', does: 'Run the program.' },
+          { cmd: 'LIST / NEW', does: 'Show the listing / clear memory.' },
+          { cmd: 'PRINT AT r,c', does: 'Print at a screen position.' },
+          { cmd: 'PLOT x,y / UNPLOT x,y', does: 'Block graphics.' },
+          { cmd: 'SLOW / FAST', does: 'SLOW (normal) keeps the picture; FAST runs about four times faster with a grey screen while it computes.' },
+          { cmd: 'PAUSE n / INKEY$', does: 'Wait / read the key held.' },
+          { cmd: 'POKE 16389,192', does: 'With POKE 16386,0 and NEW: let BASIC use a 16K pack.' }
+        ],
+        groups: [
+          { group: 'Program control', items: ['RUN [line]', 'LIST [line]', 'NEW', 'CONT', 'STOP', 'GOTO / GOSUB / RETURN', 'SAVE', 'LOAD'] },
+          { group: 'Statements', items: ['LET', 'PRINT', 'INPUT', 'IF..THEN', 'FOR..NEXT', 'REM', 'DIM', 'PAUSE', 'SCROLL', 'CLS', 'POKE'] },
+          { group: 'Functions', items: ['ABS SGN INT SQR', 'SIN COS TAN', 'LN EXP PI RND', 'LEN CODE VAL STR$ CHR$', 'INKEY$ PEEK USR'] }
+        ],
+        quirks: [
+          'A line with the inverse S syntax marker will not ENTER: fix it first.',
+          'Reports: 0 OK, 5 screen full, D BREAK, followed by the line number.',
+          'BREAK is checked only at the end of each line; if it fails, pull the plug.',
+          'With RAMTOP above 32768 the display file can cross 32767 while typing and the system misbehaves.'
+        ]
+      },
+      memory: [
+        { range: '0-8191', what: '8K ROM (operating system and BASIC).' },
+        { range: '16384-16508', what: 'System variables.' },
+        { range: '16384-32767', what: '16K RAM on the board (eight 4116s).' },
+        { range: '16388/16389', what: 'RAMTOP.' }
+      ],
+      sources: [um15('ch. 1 How to set up (no switch, channel 2/3, interference), pp. 5-9'), um15('ch. 2 Moving around the keyboard, summary, p. 19'), um15('ch. 3 Using ready-to-run programs (LOAD faults), pp. 25-26'), um15('ch. 12 Graphics and other wonders (SLOW and FAST)'), um15('Appendix D Organization of Storage, pp. 153-154'), um15('Appendix E The System Variables, p. 159'), um15('Appendix H Report Codes, p. 175')]
     },
     ts2068: {
       firstLook: [

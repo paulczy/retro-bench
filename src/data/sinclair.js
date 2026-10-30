@@ -51,6 +51,11 @@ const Z80PS = 'http://www.bitsavers.org/components/zilog/z80/03-0027-02_Z80_CPU_
 const RETRO_REPAIR = 'https://blog.retroleum.co.uk/electronics-articles/repairing-a-zx-spectrum';
 const RETRO_CHIPS = 'https://retroleum.co.uk/zx-spectrum-chips';
 const SFE_ULA = 'https://www.spectrumforeveryone.com/?p=59';
+const ZX80OMP = p => `${K1}/80/Sinclair%20ZX80/ZX80%20Operating%20Manual.pdf#page=${p}`;
+const UM128P = n => `https://worldofspectrum.net/ZXSpectrum128Manual/sp128p${n}.html`;
+const P2MAN = p => `https://archive.org/download/sinclair-zx-spectrum-plus-2-manual/Sinclair-ZX-Spectrum-Plus-2-Manual.pdf#page=${p}`;
+const P2SM = p => `${K1}/86/ZX%20Spectrum%2B2/Repair/Service%20Manual%20%2B2.pdf#page=${p}`;
+const P3MANC = c => `https://worldofspectrum.org/ZXSpectrum128+3Manual/${c}.html`;
 /* Z80A clock input as a datasheet trace: levels from the Zilog D.C. characteristics, frequency from the machine's diagram */
 const z80clk = (f, from) => ({ f, low: '0.45 V', high: '4.4 V', shape: 'square', basis: 'datasheet',
   source: S('Zilog Z80 CPU Product Specification 03-0027-02 (Mar 1978), D.C. characteristics: clock input LOW max 0.45 V, HIGH min VCC - 0.6 V, p. 8', Z80PS),
@@ -59,6 +64,12 @@ const z80clk = (f, from) => ({ f, low: '0.45 V', high: '4.4 V', shape: 'square',
 /* ---------- helpers ---------- */
 const P = (n, name, type, desc, extra) => Object.assign({ n, name, type, desc }, extra || {});
 const S = (label, url, extra) => Object.assign({ label, url }, extra || {});
+const P2SM_FLOW = S('Spectrum +2 Service Manual, flow chart, p. 3', P2SM(8));
+const P2SM_SPEC = S('Spectrum +2 Service Manual, technical specification (Z80A running at 3.54690 MHz), p. 2', P2SM(2));
+const P2SM_PARTS = S('Spectrum +2 Service Manual, electrical parts list, p. 5', P2SM(7));
+const P3SM_FLOW = S('Spectrum +2A/+3 Service Manual, diagnostic flow chart', P3SM);
+const P3SM_PARTS = S('Spectrum +2A/+3 Service Manual, electrical parts list', P3SM);
+const P3SM_SPEC = S('Spectrum +2A/+3 Service Manual, technical specification (Z80A running at 3.54690 MHz)', P3SM);
 /* custom pads for card edges whose numbering no edge-* scheme can express; x and y in a 0-100 box looking into the socket */
 const rowPads = (names, y, x0, step) => names.map((n, i) => ({ n: String(n), x: Math.round((x0 + i * step) * 10) / 10, y }));
 const edgeOutline = slotX => `M 1 30 L 99 30 L 99 70 L 1 70 Z M ${slotX} 30 L ${slotX} 70`;
@@ -172,7 +183,7 @@ RCS.add({
   brand: { id: 'sinclair', name: 'Sinclair', blurb: 'ZX80 to ZX Spectrum +3. Z80 and Ferranti ULA, with the Spectrum multi-rail supply.' },
   machines: {
     zx80: {
-      id: 'zx80', brand: 'sinclair', name: 'ZX80', aka: 'Sinclair ZX80 (1980)', year: 1980, status: 'sheet',
+      id: 'zx80', brand: 'sinclair', name: 'ZX80', aka: 'Sinclair ZX80 (1980)', year: 1980, status: 'ready',
       cpu: 'Z80A (NEC 780-1) @ 3.25 MHz', ram: '1 KB (2 x 2114)', rom: '4 KB Integer BASIC', video: 'Monochrome, 32 x 24 text, no graphics', sound: 'None', os: 'Sinclair BASIC (integer only)',
       chips: ['cpuz80', 'sram2114'],
       tagline: 'The cheap integer-only first Sinclair. No floating point, no sound, no graphics.'
@@ -190,21 +201,21 @@ RCS.add({
       tagline: 'ULA, 4116 lower RAM, multi-rail PSU.'
     },
     spectrum128: {
-      id: 'spectrum128', brand: 'sinclair', name: 'ZX Spectrum 128', aka: 'Toastrack 128K', year: 1986, status: 'sheet',
+      id: 'spectrum128', brand: 'sinclair', name: 'ZX Spectrum 128', aka: 'Toastrack 128K', year: 1986, status: 'ready',
       cpu: 'Z80A @ 3.5 MHz', ram: '128 KB (banked)', rom: 'Two 16 KB ROM banks', video: 'ULA: 256 x 192, 8 colours', sound: 'AY-3-8912 (3 voices) + beeper', os: '128K BASIC',
       chips: ['cpuz80', 'ula_128', 'ay8912'],
       tagline: 'The toastrack: 128K, AY sound and a second ROM bank.'
     },
     spectrumplus2: {
-      id: 'spectrumplus2', brand: 'sinclair', name: 'ZX Spectrum +2', aka: 'Spectrum +2 (grey)', year: 1986, status: 'sheet',
+      id: 'spectrumplus2', brand: 'sinclair', name: 'ZX Spectrum +2', aka: 'Spectrum +2 (grey)', year: 1986, status: 'ready',
       cpu: 'Z80A @ 3.5 MHz', ram: '128 KB (banked)', rom: 'Two 16 KB ROM banks', video: 'Gate array: 256 x 192, 8 colours', sound: 'AY-3-8912 + beeper', os: '128K BASIC, built-in tape deck',
-      chips: ['cpuz80', 'ula_128', 'ay8912'],
+      chips: ['cpuz80', 'ula_128', 'ay8912', 'dram4164'],
       tagline: 'The grey 128 with a built-in cassette deck.'
     },
     spectrumplus3: {
-      id: 'spectrumplus3', brand: 'sinclair', name: 'ZX Spectrum +3', aka: 'Spectrum +3 (disc)', year: 1987, status: 'sheet',
+      id: 'spectrumplus3', brand: 'sinclair', name: 'ZX Spectrum +3', aka: 'Spectrum +3 (disc)', year: 1987, status: 'ready',
       cpu: 'Z80A @ 3.5469 MHz', ram: '128 KB (banked, four 41464)', rom: '64 KB (two 32K ROMs, four 16K pages, +3DOS)', video: 'Gate array: 256 x 192, 8 colours', sound: 'AY-3-8912 + beeper', os: '128K BASIC, +3DOS',
-      chips: ['cpuz80', 'ula_128', 'ay8912'],
+      chips: ['cpuz80', 'ula_128', 'ay8912', 'dram4464'],
       tagline: 'The +3: built-in disc drive and an Amstrad-made gate array.'
     }
   },
@@ -554,6 +565,47 @@ RCS.add({
       { symptom: 'No beep or tape', suspects: ['ula_spectrum'], note: 'The beeper and tape run through the ULA. Check SOUND at ULA pin 28.' },
       { symptom: 'Keyboard membrane: dead keys', suspects: ['ula_spectrum'], note: 'The membrane and its ribbon are the usual cause. Clean the contacts before blaming the ULA.' },
       { symptom: 'Hot ULA runs slow or crashes', suspects: ['ula_spectrum'], note: 'Socket the ULA and add a heatsink. Check the crystal.' }
+    ],
+    // ZX80: operating manual pages and the circuit diagram; there is no ZX80 service manual.
+    zx80: [
+      { symptom: 'Grey mess on the TV, no K cursor', suspects: [], note: 'Tune the TV to about UHF channel 36 and turn the brightness up until the inverse K shows at the bottom left (operating manual p. 7). Still nothing: do the bench checks.' },
+      { symptom: 'Will not start at all', suspects: [], note: 'The power plug also fits MIC and EAR; in the wrong socket the ZX80 just does not start, with no damage (manual p. 6). The supply is 9 V DC, tip positive.' },
+      { symptom: 'Dead with the supply good', suspects: ['cpuz80', 'sram2114'], note: '+5 V from the 7805 (IC22) at Z80A pin 11, then about 3.25 MHz at Z80A pin 6 (6.5 MHz crystal X1 / 2; circuit diagram). Then the Z80A (IC1) and the 2114s (IC3, IC4).' },
+      { symptom: 'Locked up, BREAK does nothing', suspects: [], note: 'An endless loop or a failed LOAD leaves the screen grey or black. BREAK is SHIFT + SPACE; if that fails, switch off for a few seconds and the program is lost (manual pp. 8, 74).' },
+      { symptom: 'LOAD fails', suspects: [], note: 'Recorder tone to maximum (treble up, bass down), volume 1/2 to 3/4, run the recorder on batteries, then check the MIC and EAR leads (manual pp. 8-9).' },
+      { symptom: 'Listing shrinks or vanishes as the program grows', suspects: ['sram2114'], note: 'Normal: each character on screen takes a byte of the 1K RAM, so the display shrinks when RAM runs short (manual Appendix 2, p. 89). Report 4/n means it ran out of space (p. 19).' }
+    ],
+    // Spectrum 128: service manual section 4 basic checks (the symptomatic fault table was never filled in: "TBD").
+    spectrum128: [
+      { symptom: 'No menu, no picture', suspects: ['ula_128', 'cpuz80'], note: 'Service manual 2.3: +9 V ±2 V at C50, +5 V ±0.25 V at C34 and IC15 pin 8, 17.73447 MHz at IC37 pin 6 (oscillogram C), 3.54689 MHz at Z80A pin 6 (oscillogram D).' },
+      { symptom: 'RS232, MIDI and keypad dead', suspects: [], note: '+12 V at IC33 pin 14 and -12 V at IC34 pin 1 come from the TR4/TR5 inverter and its charge pump; a dead inverter loses both and the -5 V (service manual 2.3, 6.1).' },
+      { symptom: 'No colour or wrong colour', suspects: ['ula_128'], note: '8.8 MHz with no jitter on ULA pins 46 and 47 (colour encoder clocks), then the RGB connector outputs and LUMO at IC36 pin 7, oscillogram G (service manual 2.3-2.4).' },
+      { symptom: 'Picture but no sound on the TV', suspects: [], note: 'Sound carrier at IC38 pin 4: 6.0 MHz UK or 5.5 MHz Europe, within 2 kHz; adjust per Setting Up (service manual 2.4 g). There is no speaker, and most monitors have no sound (Introduction p. 2).' },
+      { symptom: 'Crashes or garbage after reset', suspects: ['cpuz80', 'ula_128'], note: 'Service manual 2.4: /RD, /WR, /MREQ, data and address active after reset; /RAS and /CAS at uncontended RAM IC15-IC22 and contended RAM IC6-IC13 (oscillograms E, F); ROM IC5 selected by a LOW on pin 20; bank register outputs LOW after reset.' },
+      { symptom: 'No AY music, beeper works', suspects: ['ay8912', 'ula_128'], note: 'The AY (IC32) takes its master clock from the ULA and its register select and data from writes to $FFFD and $BFFD (service manual 5.6). Test in 128 BASIC with LET a$="cdefgab": PLAY a$.' },
+      { symptom: 'TV will not tune in', suspects: [], note: 'Hold BREAK and press RESET for the test screen; tune for the colour bars and the intermittent tone with AFC off, then turn AFC back on (Introduction p. 2).' }
+    ],
+    // Grey +2: the service manual flow chart and test software pages, and the user manual check list.
+    spectrumplus2: [
+      { symptom: 'ON lamp not lit', suspects: [], note: 'PSU plug in the 9V DC socket, mains plug and its fuse (user manual p. 13). Service flow chart: mains fuse, then the LED and its PCB connector (service manual p. 3).' },
+      { symptom: 'No picture at all', suspects: [], note: 'Service flow chart (p. 3): the modulator and the DC-DC converter.' },
+      { symptom: 'Picture garbled, sound present', suspects: ['ula_128', 'cpuz80', 'dram4164'], note: 'Service flow chart (p. 3): the ULA, the CPU (IC9), the RAM (IC17-IC32) and the TEA2000 encoder (IC2).' },
+      { symptom: 'Picture but no sound', suspects: [], note: 'Service flow chart (p. 3): the modulator and its sound coil tuning.' },
+      { symptom: 'No menu after RESET', suspects: [], note: 'Service flow chart (p. 3): the ROM (IC8, 27256).' },
+      { symptom: 'Menu bar will not move, dead keys', suspects: ['ula_128'], note: 'Service flow chart (p. 3): the keyboard connectors, then the ULA.' },
+      { symptom: 'Test ROM shows only a coloured border', suspects: ['dram4164'], note: 'Steady border: black IC17, blue IC18, red IC19, magenta IC20, green IC21, cyan IC22, yellow IC23, white IC24. Flashing: black IC32 down to white IC25. A RAM error at address zero is paging hardware, not RAM (service manual p. 4).' },
+      { symptom: 'Tape will not load, or loads with odd results', suspects: ['dram4164', 'ula_128'], note: 'Tape deck connections, clean and check the head, the cassette key switches and the motor. Software that loads but runs oddly: RAM or ULA; damaged tape does not half-load (service manual p. 3).' }
+    ],
+    // +3: the +2A/+3 service manual (k1 transcription) and the +3 manual chapter 2 check list.
+    spectrumplus3: [
+      { symptom: 'Power lamp not lit', suspects: [], note: '6-pin DIN plug in the PSU socket, mains plug and fuse (manual chapter 2). Service flow chart: mains fuse, then the LED and its PCB connector.' },
+      { symptom: 'No picture at all', suspects: [], note: 'Service flow chart: the modulator and the DC-DC converter.' },
+      { symptom: 'Picture garbled, sound present', suspects: ['ula_128', 'cpuz80', 'dram4464'], note: 'Service flow chart: the gate array (IC1, 40077), the CPU (IC2), the RAM (IC3-IC6) and the TEA2000 (IC9).' },
+      { symptom: 'Picture but no sound', suspects: [], note: 'Service flow chart: the modulator and its sound coil tuning.' },
+      { symptom: 'No menu after RESET', suspects: [], note: 'Service flow chart: the ROMs (IC7, IC8).' },
+      { symptom: 'Menu bar will not move, dead keys', suspects: ['ula_128'], note: 'Service flow chart: the keyboard connectors, then the gate array.' },
+      { symptom: 'Test ROM shows only a coloured border', suspects: ['dram4464'], note: 'The service manual colour table names IC17-IC32, copied from the +2; the +3 parts list has its RAM at IC3-IC6, so use the RAM test report instead: fault address and bank. Address zero means paging hardware, not RAM.' },
+      { symptom: 'Drive A: not ready', suspects: [], note: 'Usually no disk in the drive (manual chapter 8 part 20). Drive checks: index period 200 ±5 ms (motor speed, VR201), then read and write tests; the mechanism and its PCB (270312) go back to Amstrad, not repaired by agents (service manual).' }
     ]
   },
   connectors: {
@@ -860,6 +912,14 @@ RCS.add({
         { tp: 'CPU clock', where: 'Z80A pin 6', expect: 'About 3.25 MHz (6.5 MHz crystal X1 / 2; the diagram says 3.2 MHz)', scope: z80clk('3.25 MHz', '6.5 MHz crystal X1 / 2 (ZX80 circuit diagram)') },
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW at power-on, then HIGH.' }
       ],
+      firstTen: [
+        { step: 1, check: 'Supply', where: 'Power in (9V DC IN) pin T to pin S', expect: '+9 V DC on load, tip positive; about 14 V with no load', ifNot: 'Wrong polarity or no output: replace the supply before you plug it in.', source: S('ZX80 Operating Manual, Getting Started (9 V DC 600 mA, tip positive), p. 6', ZX80OMP(6)) },
+        { step: 2, check: 'Plug in the right socket', where: 'Power in (9V DC IN)', expect: 'Power plug in 9V DC IN, not MIC or EAR', ifNot: 'In the wrong socket the ZX80 does not start; no damage.', source: S('ZX80 Operating Manual, Getting Started, p. 6', ZX80OMP(6)) },
+        { step: 3, check: '+5 V', where: 'Z80A pin 11', expect: '+5 V from the 7805 (IC22)', ifNot: 'Low or missing: the 7805 or a short on the 5 V rail.', source: S('ZX80 circuit diagram (7805 at IC22)', ZX80SCH) },
+        { step: 4, check: 'CPU clock', where: 'Z80A pin 6', expect: 'About 3.25 MHz (6.5 MHz crystal X1 / 2)', ifNot: 'Flat: crystal X1 and its divider.', source: S('ZX80 circuit diagram (X1 6.5 MHz)', ZX80SCH) },
+        { step: 5, check: 'Picture', where: 'TV (UHF RF out)', expect: 'Inverse K cursor at the bottom left after tuning to about UHF channel 36', ifNot: 'Turn the TV brightness up; a grey mess means it is not tuned yet.', source: S('ZX80 Operating Manual, Getting Started, pp. 6-7', ZX80OMP(7)) },
+        { step: 6, check: 'Keyboard and BASIC', where: 'Keyboard', expect: 'Q gives NEW; NEW then NEWLINE clears', ifNot: 'No response with the K cursor showing: the keyboard.', source: S('ZX80 Operating Manual, the keyboard, p. 17', ZX80OMP(17)) }
+      ],
       clocks: [
         { name: 'Crystal X1', where: 'X1', f: '6.5 MHz', source: S('ZX80 circuit diagram (X1 6.5 MHz)', ZX80SCH) },
         { name: 'CPU clock', where: 'Z80A pin 6', f: '3.25 MHz', source: S('ZX80 circuit diagram (X1 / 2; the drawing rounds it to 3.2 MHz)', ZX80SCH) }
@@ -1032,11 +1092,29 @@ RCS.add({
     },
     spectrumplus2: {
       supply: { external: true, name: 'Grey +2 power pack (rating not sourced)', output: 'Not sourced yet', connector: 'spectrumplus2-power',
-        notes: ['No grey +2 document with the supply rating or polarity was found (the k1 +2 service manual is an image scan). Read the pack label and measure its polarity before connecting.'],
-        sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (ports)', P2REV)] },
+        notes: [
+          'No grey +2 document with the supply rating or polarity was found. Read the pack label and measure its polarity before connecting.',
+          'The service manual parts list names the pack only as "Power Adaptor" (172068) and puts an L78S05CV 5 V regulator at PL11 on the board.'
+        ],
+        sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (ports)', P2REV), P2SM_PARTS, S('Spectrum +2 user manual, chapter 1 (9V DC socket), p. 8', P2MAN(9))] },
       rails: [],
-      testPoints: [],
-      sources: [S('Sinclair ZX Archive, +2 service manual scan (no text layer)', `${K1}/86/ZX%20Spectrum%2B2/Repair/Service%20Manual%20%2B2.pdf`)]
+      testPoints: [
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '3.5469 MHz', scope: z80clk('3.5469 MHz', '3.54690 MHz from the +2 service manual specification') }
+      ],
+      firstTen: [
+        { step: 1, check: 'TV tuned', where: 'TV (RF out)', expect: 'UHF channel 36, volume up', ifNot: 'Hold BREAK and press RESET for the test screen, then tune for bars and tone (user manual p. 12).', source: P2SM_FLOW },
+        { step: 2, check: 'Power lamp', where: 'Power in', expect: 'Red LED lights when the 9 V lead goes in with BREAK held', ifNot: 'The mains fuse, then the LED and its PCB connector.', source: P2SM_FLOW },
+        { step: 3, check: 'Test screen', where: 'TV (RF out)', expect: 'Colour bars and a repeating tone', ifNot: 'No picture: modulator and DC-DC converter. No sound: modulator sound coil. Garbled with sound: ULA, CPU, RAM, TEA2000.', source: P2SM_FLOW },
+        { step: 4, check: 'CPU clock', where: 'Z80A pin 6', expect: '3.5469 MHz', ifNot: 'Look at crystal X1, 35.4690 MHz on the parts list (ten times the CPU clock).', source: P2SM_SPEC },
+        { step: 5, check: 'Menu', where: 'RESET button', expect: 'Opening menu after RESET', ifNot: 'The ROM (IC8).', source: P2SM_FLOW },
+        { step: 6, check: 'Keyboard', where: 'Cursor down key', expect: 'Menu bar moves; then every key in 128 BASIC', ifNot: 'The keyboard connectors, then the ULA.', source: P2SM_FLOW },
+        { step: 7, check: 'Tape', where: 'Built-in datacorder', expect: 'A known-good tape loads', ifNot: 'Deck connections, head (clean, check), key switches, motor. Loads but runs oddly: RAM or ULA.', source: P2SM_FLOW }
+      ],
+      clocks: [
+        { name: 'Crystal X1', where: 'X1', f: '35.469 MHz', source: S('Spectrum +2 Service Manual, electrical parts list (X1 crystal 35.4690 MHz), p. 5', P2SM(7)) },
+        { name: 'CPU clock', where: 'Z80A pin 6', f: '3.5469 MHz', source: P2SM_SPEC }
+      ],
+      sources: [S('Sinclair ZX Archive, +2 service manual scan (no text layer; read from the page images)', P2SM(1)), P2SM_SPEC, P2SM_FLOW, P2SM_PARTS]
     },
     spectrumplus3: {
       supply: { external: true, name: 'Amstrad +3 power supply unit (6-pin DIN)', output: 'Not sourced yet', connector: 'spectrumplus3-power',
@@ -1050,7 +1128,19 @@ RCS.add({
         { tp: 'CPU clock', where: 'Z80A pin 6', expect: '3.5469 MHz', scope: z80clk('3.5469 MHz', '3.5469 MHz from the +3 manual, chapter 8 part 30') },
         { tp: 'AY clock', where: 'AY-3-8912 pin 15', expect: '1.7734 MHz' }
       ],
+      firstTen: [
+        { step: 1, check: 'TV tuned', where: 'TV (UHF RF out)', expect: 'UHF channel 36, volume up', ifNot: 'Hold BREAK and press RESET for the test screen, then tune for bars and tone (manual chapter 2).', source: P3SM_FLOW },
+        { step: 2, check: 'Power lamp', where: 'PSU in', expect: 'Red LED lights when the PSU lead goes in with BREAK held', ifNot: 'The mains fuse, then the LED and its PCB connector.', source: P3SM_FLOW },
+        { step: 3, check: 'Test screen', where: 'TV (UHF RF out)', expect: 'Colour bars and a repeating tone', ifNot: 'No picture: modulator and DC-DC converter. No sound: modulator sound coil. Garbled with sound: gate array, CPU, RAM, TEA2000.', source: P3SM_FLOW },
+        { step: 4, check: 'CPU clock', where: 'Z80A pin 6', expect: '3.5469 MHz', ifNot: 'Look at crystal X1, 35.4690 MHz on the parts list (ten times the CPU clock).', source: P3SM_SPEC },
+        { step: 5, check: 'Menu', where: 'RESET button', expect: 'Opening menu; drives A: and M: listed', ifNot: 'The ROMs (IC7, IC8).', source: P3SM_FLOW },
+        { step: 6, check: 'Keyboard', where: 'Cursor down key', expect: 'Menu bar moves; then every key in +3 BASIC', ifNot: 'The keyboard connectors, then the gate array.', source: P3SM_FLOW },
+        { step: 7, check: 'Service diagnostics', where: 'BREAK held during RESET, then Q A Z M L P held', expect: 'Test card, then the diagnostic title and on-screen steps', ifNot: 'No test card: use the RAM test report (fault address and bank).', source: S('Spectrum +2A/+3 Service Manual, self-test activation', P3SM) }
+      ],
       clocks: [
+        { name: 'Crystal X1', where: 'X1', f: '35.469 MHz', source: P3SM_PARTS },
+        { name: 'Ceramic resonator X2', where: 'X2', f: '16 MHz', source: P3SM_PARTS },
+        { name: 'Ceramic resonator X3', where: 'X3', f: '6 MHz', source: P3SM_PARTS },
         { name: 'CPU clock', where: 'Z80A pin 6', f: '3.5469 MHz', source: S('Spectrum +3 manual, chapter 8 part 30 (Z80A 3.5469 MHz)', 'https://worldofspectrum.org/ZXSpectrum128+3Manual/chapter8pt30.html') },
         { name: 'AY clock', where: 'AY-3-8912 pin 15', f: '1.7734 MHz', source: S('Spectrum +3 manual, chapter 8 part 30 (AY clock 1.7734 MHz)', 'https://worldofspectrum.org/ZXSpectrum128+3Manual/chapter8pt30.html') }
       ],
@@ -1177,6 +1267,205 @@ RCS.add({
         { range: '$5C00+ (23552+)', what: 'System variables. CHARS 23606/7, FRAMES 23672-4, RAMTOP 23730/1.' },
         { range: '$4000-$FFFF', what: 'The 48K RAM. Lower 16K is 4116 DRAM; upper 32K is 4532-class.' }
       ]
+    },
+    zx80: {
+      sources: [S('ZX80 Operating Manual, chapter 1 Getting started, pp. 6-9', ZX80OMP(6)), S('ZX80 Operating Manual, the keyboard and editing, pp. 17-22', ZX80OMP(17)), S('ZX80 Operating Manual, chapter 12 Help, pp. 74-75', ZX80OMP(74)), S('ZX80 Operating Manual, Appendix 1 error codes, p. 87', ZX80OMP(87)), S('ZX80 Operating Manual, Appendix 2 4K BASIC for ZX-80, pp. 89-101', ZX80OMP(89)), S('ZX80 Operating Manual, Appendix 3 system variables, pp. 105-107', ZX80OMP(105))],
+      firstLook: [
+        'Integer BASIC only: whole numbers from -32768 to 32767.',
+        'The screen goes blank while a command or program runs and comes back when it stops.',
+        'Power: 9 V DC 600 mA unregulated, 3.5 mm jack, tip positive. The power, MIC and EAR sockets take the same plug.',
+        'Single-key keywords: with the inverse K cursor a letter key gives the keyword above it; L means letters.',
+        '1K of RAM holds the program, the variables and the display, so the listing shrinks as the program grows.'
+      ],
+      keys: [
+        { keys: 'SHIFT + SPACE', does: 'BREAK: stop a program or a LOAD.' },
+        { keys: 'SHIFT + 0', does: 'RUBOUT: delete the symbol or keyword left of the cursor.' },
+        { keys: 'SHIFT + NEWLINE', does: 'EDIT: bring the current line (marked >) down to edit.' },
+        { keys: 'SHIFT + 7 / SHIFT + 6', does: 'Move the current-line pointer up / down the listing.' },
+        { keys: 'SHIFT + 5 / SHIFT + 8', does: 'Move the cursor left / right in the line being typed.' },
+        { keys: 'SHIFT + 9', does: 'HOME: set the line pointer to line 0.' },
+        { keys: 'Any key after a run', does: 'Back to command mode and the listing.' }
+      ],
+      basic: {
+        dialect: 'ZX80 4K integer BASIC',
+        essentials: [
+          { cmd: 'NEW (key Q)', does: 'Clear the program and variables.' },
+          { cmd: 'RUN (key R)', does: 'CLEAR then GO TO 1; RUN n starts at line n.' },
+          { cmd: 'LIST n (key A)', does: 'Make n the current line and show the listing.' },
+          { cmd: 'SAVE (key E)', does: 'Program and variables to tape; start the tape first.' },
+          { cmd: 'LOAD (key W)', does: 'Load from tape; BREAK during the lead-in keeps the old program.' },
+          { cmd: 'CONTINUE (key T)', does: 'Carry on after STOP or BREAK.' },
+          { cmd: 'GO TO 1', does: 'Run a loaded program without clearing its variables.' },
+          { cmd: 'PRINT a, b; c', does: 'Comma tabs to columns 9, 17, 25.' },
+          { cmd: 'PEEK(n) / POKE n,v', does: 'Read / write one byte.' },
+          { cmd: 'USR(n)', does: 'Call machine code at n; the result is HL.' },
+          { cmd: 'RANDOMISE n / RND(n)', does: 'Seed / random number 1 to n.' },
+          { cmd: 'CLS', does: 'Clear the upper screen.' }
+        ],
+        groups: [
+          { group: 'Statements', items: ['LET', 'PRINT', 'INPUT', 'IF..THEN', 'FOR a=n TO n / NEXT a', 'GO TO / GO SUB / RETURN', 'DIM a(n)', 'REM', 'STOP', 'CLEAR', 'CLS', 'POKE n,v', 'RANDOMISE'] },
+          { group: 'Functions', items: ['ABS', 'PEEK', 'CODE', 'CHR$', 'STR$', 'TL$', 'RND', 'USR'] },
+          { group: 'Operators', items: ['**  power', '* / + -', '= < >', 'NOT AND OR (bitwise; true is -1)'] },
+          { group: 'Reports n/m (m = line)', items: ['0 BREAK, or end of program', '2 variable not found', '4 out of space', '5 no more room on screen', '6 arithmetic overflow', '7 RETURN without GO SUB', '8 INPUT used as a command', '9 STOP executed'] }
+        ],
+        quirks: [
+          'True is -1 and false 0; AND, OR and NOT work on the bits.',
+          'FOR and NEXT pair up at run time: NEXT a is LET a=a+1 and a test, not a block.',
+          'When RAM is short only the first digit of the line number may show: 4/2 can mean line 250.',
+          'INPUT cannot be a command (report 8); use LET instead.'
+        ]
+      },
+      memory: [
+        { range: '$4000-$43FF', what: '1K RAM (two 2114s). Starts with 40 bytes of system variables at 16384.' },
+        { range: '16392-16401', what: 'VARS, E_LINE, D_LINE, DF_EA, DF_END: pointers to the variables, input line and display file.' },
+        { range: '16414-16415', what: 'Frames since switch-on (50 a second UK, 60 US).' },
+        { range: 'After the system variables', what: 'Program, variables, working space, display file (25 NEWLINEs, up to 32 characters a line), stack at the top of RAM.' }
+      ]
+    },
+    spectrum128: {
+      sources: [S('Spectrum 128 Introduction, setting up and the TV test screen, p. 2 (WoS)', UM128P('02')), S('Spectrum 128 Introduction, main menu, p. 4', UM128P('04')), S('Spectrum 128 Introduction, 128 BASIC and the editor, pp. 6-8', UM128P('06')), S('Spectrum 128 Introduction, RAM disk and PLAY, p. 9', UM128P('09')), S('Spectrum 128 Introduction, PLAY strings, pp. 10-14', UM128P('10')), S('Spectrum 128 Service Manual 4.1-4.4 memory organisation and bank register, pp. 1.5-1.6', SM128(6)), S('Spectrum 128 Service Manual 5.5-5.6 ULA sound and programmable sound generator, p. 1.17', SM128(20))],
+      firstLook: [
+        'Switch on or press RESET (left end) for the main menu: Tape Loader, 128 BASIC, Calculator, 48 BASIC, Tape Tester.',
+        'Hold BREAK while pressing RESET or switching on for the TV test screen: colour bars and an intermittent tone.',
+        'No internal speaker: beeper and AY sound go out through the TV or the sound output.',
+        'Taped 48K and 16K programs load from 48 BASIC; only RESET gets back to 128 BASIC.',
+        'The RAM disk (SAVE! LOAD! CAT! ERASE!) is lost on RESET, switch-off or SPECTRUM.'
+      ],
+      keys: [
+        { keys: 'BREAK held + RESET', does: 'TV test screen (colour bars and tone) for tuning.' },
+        { keys: 'RESET button', does: 'Back to the main menu; the program is lost.' },
+        { keys: 'Cursor keys + ENTER', does: 'Move the menu bar and pick (CMND on the keypad).' },
+        { keys: 'EDIT', does: 'Options menu in 128 BASIC: 128 BASIC, Renumber, Screen, Print, Exit.' },
+        { keys: 'DELETE', does: 'Delete the character left of the cursor.' },
+        { keys: 'BREAK', does: 'Stop a program; also clears a stuck Print.' },
+        { keys: 'EXTEND MODE then SYMBOL SHIFT + key', does: 'The few symbols above the letters, in 128 BASIC.' }
+      ],
+      basic: {
+        dialect: '128 BASIC (keywords typed in full) and 48 BASIC (keyword keys)',
+        essentials: [
+          { cmd: 'SPECTRUM', does: 'Drop to 48 BASIC keeping the program; 128-only commands are then refused.' },
+          { cmd: 'PLAY a$,b$,c$', does: 'Play up to three AY channels from strings (up to eight strings to MIDI).' },
+          { cmd: 'SAVE! "name" / LOAD! "name"', does: 'Save / load on the RAM disk.' },
+          { cmd: 'CAT!', does: 'List the RAM disk.' },
+          { cmd: 'ERASE! "name"', does: 'Delete a RAM disk file.' },
+          { cmd: 'MERGE! "name"', does: 'Merge from the RAM disk.' },
+          { cmd: 'SAVE "name" / LOAD "name"', does: 'Tape, as on the 48K.' },
+          { cmd: 'BEEP d,p', does: 'Beeper tone, through the TV sound.' },
+          { cmd: 'OUT 32765,n', does: 'Bank register $7FFD: bits 0-2 RAM page at $C000, bit 3 screen in page 7, bit 4 48K ROM, bit 5 locks paging.' }
+        ],
+        groups: [
+          { group: 'PLAY string', items: ['c-b, C-B notes; # sharp, $ flat', 'O0-O8 octave (5 = middle C)', '1-12 note length', '& rest', 'V0-V15 volume', 'U with W0-W7 envelope, X0-X65535 length', 'T60-T240 tempo (channel A only)', '( ) repeat, H stop', 'M channel mix: 1/2/4 tone, 8/16/32 noise', 'Y1-Y16 MIDI channel', '!comment!'] },
+          { group: 'RAM disk', items: ['SAVE! "f" [LINE n | SCREEN$ | DATA a()]', 'LOAD! / MERGE!', 'CAT!', 'ERASE! "f"'] },
+          { group: 'Options menu (EDIT)', items: ['128 BASIC (back)', 'Renumber (from 10, step 10)', 'Screen (edit in the bottom two lines)', 'Print (list to printer)', 'Exit (to the menu, program kept)'] },
+          { group: 'Ports', items: ['$7FFD (32765) bank register', '$FFFD AY register select', '$BFFD AY data', '254 ULA (BEEP writes bit 4)'] }
+        ],
+        quirks: [
+          '128 BASIC wants keywords typed letter by letter; >=, <= and <> are two characters.',
+          'Programs that PEEK or POKE may fail in 128 BASIC: run them in 48 BASIC.',
+          'VERIFY does not work on the RAM disk.',
+          'Bit 5 of $7FFD locks paging until RESET.'
+        ]
+      },
+      memory: [
+        { range: '$0000-$3FFF', what: 'ROM 0 (128K editor) or ROM 1 (48K BASIC), picked by bit 4 of $7FFD. ROM is IC5.' },
+        { range: '$4000-$7FFF', what: 'RAM page 5 (contended): the normal screen.' },
+        { range: '$8000-$BFFF', what: 'RAM page 2.' },
+        { range: '$C000-$FFFF', what: 'RAM page 0-7 from bits 0-2 of $7FFD (page 0 after reset); page 7 holds the second screen.' },
+        { range: 'Pages 0-3 / 4-7', what: 'Uncontended RAM IC15-IC22 / contended RAM IC6-IC13, shared with the ULA.' }
+      ]
+    },
+    spectrumplus2: {
+      sources: [S('Spectrum +2 user manual, chapter 2 operating the +2 and Having problems, pp. 11-16', P2MAN(12)), S('Spectrum +2 user manual, chapters 3-4 loading 128 and 48 software, pp. 17-20', P2MAN(18)), S('Spectrum +2 user manual, chapter 6 using 128 BASIC and the edit menu, pp. 23-28', P2MAN(24)), S('Spectrum +2 Service Manual, test software, p. 4', P2SM(9)), S('Spectrum 128 Introduction, RAM disk and PLAY, p. 9', UM128P('09'))],
+      firstLook: [
+        'A 128 with a built-in datacorder: the opening menu offers Tape Loader, 128 BASIC, Calculator and 48 BASIC.',
+        'Hold BREAK and press RESET (left side) for the test signal: sixteen colour bars and a repeating tone.',
+        'Tape Loader loads 128 software; 48K software loads from 48 BASIC with J, "" and ENTER.',
+        'RESET clears memory and returns to the menu. 48 BASIC has no way back except RESET or switch-off.',
+        'In 48 BASIC the sound, RS232/MIDI and keypad interfaces cannot be used; the joystick sockets still work.'
+      ],
+      keys: [
+        { keys: 'BREAK held + RESET', does: 'Test signal for tuning the TV.' },
+        { keys: 'RESET button', does: 'Opening menu; memory cleared.' },
+        { keys: 'Cursor keys + ENTER', does: 'Move the menu bar and select.' },
+        { keys: 'EDIT', does: 'Edit menu in 128 BASIC: 128 BASIC, Renumber, Screen, Print, Exit.' },
+        { keys: 'BREAK (held)', does: 'Abandon a tape load.' },
+        { keys: 'BREAK twice', does: 'Out of a Print that cannot finish.' },
+        { keys: 'SYMB SHIFT + L / Z / J', does: '= / : / - while typing in 128 BASIC.' }
+      ],
+      basic: {
+        dialect: '128 BASIC (keywords typed in full) and 48 BASIC',
+        essentials: [
+          { cmd: 'J then "" then ENTER', does: 'LOAD "" in 48 BASIC: load the next program from tape.' },
+          { cmd: 'RUN', does: 'Run the program in memory.' },
+          { cmd: 'SPECTRUM', does: 'Drop to 48 BASIC keeping the program.' },
+          { cmd: 'PLAY a$,b$,c$', does: 'AY music from strings.' },
+          { cmd: 'SAVE! / LOAD! / CAT! / ERASE!', does: 'RAM disk commands, as on the 128.' },
+          { cmd: 'POKE 23444-23447', does: 'Start line and step for the Renumber option.' }
+        ],
+        groups: [
+          { group: 'Edit menu', items: ['128 BASIC (back)', 'Renumber (from 10, step 10)', 'Screen (edit in the bottom two lines)', 'Print', 'Exit (to the menu, program kept)'] },
+          { group: 'Tape', items: ['Tape Loader (128 software)', '48 BASIC then LOAD "" (48 software)', 'BREAK to abandon'] }
+        ],
+        quirks: [
+          'A wrongly typed line stays in lower case with a low bleep and a red cursor; fix it before ENTER is accepted.',
+          'Selecting 48 BASIC, RESET or switch-off loses the program; Calculator does not.',
+          'Renumber gives up with a low bleep if lines would pass 9999.'
+        ]
+      },
+      memory: [
+        { range: 'ROM', what: 'IC8, a 27256 (32K), on the parts list.' },
+        { range: 'RAM', what: '128K: sixteen 4164s at IC17-IC32 on the parts list.' }
+      ]
+    },
+    spectrumplus3: {
+      sources: [S('Spectrum +3 manual, chapter 2 operating the +3 (test signal, menu, Having problems)', P3MANC('chapter2')), S('Spectrum +3 manual, chapter 3 loading disk software', P3MANC('chapter3')), S('Spectrum +3 manual, chapter 5 the disk drive', P3MANC('chapter5')), S('Spectrum +3 manual, chapter 8 part 20 file operations', P3MANC('chapter8pt20')), S('Spectrum +3 manual, chapter 8 part 24 the memory (ports $7FFD and $1FFD)', P3MANC('chapter8pt24')), S('Spectrum +2A/+3 Service Manual, self-test activation', P3SM)],
+      firstLook: [
+        'Opening menu: Loader, +3 BASIC, Calculator, 48 BASIC. It lists the drives: A: built-in, B: a second drive, M: the RAMdisk.',
+        'Loader boots +3, +2 and 128 software from the disk in A:. 48K tape software loads from 48 BASIC.',
+        'Power comes from the separate PSU on a 6-pin DIN; there is no power switch.',
+        'Hold BREAK and press RESET for the TV test signal; then hold Q A Z M L P for the service diagnostics.',
+        '3 inch CF-2 disks, one side at a time, label outward; an open write-protect hole means protected.'
+      ],
+      keys: [
+        { keys: 'BREAK held + RESET', does: 'TV test signal (colour bars and tone).' },
+        { keys: 'BREAK + RESET, then Q A Z M L P held', does: 'Service diagnostic title; follow the screen.' },
+        { keys: 'RESET button', does: 'Opening menu; RAM and the RAMdisk are cleared.' },
+        { keys: 'Cursor keys + ENTER', does: 'Move the menu bar and select.' },
+        { keys: 'EDIT', does: 'Edit menu in +3 BASIC.' },
+        { keys: 'R / I / C', does: 'Answer "Retry, Ignore or Cancel ?" after a disk error.' }
+      ],
+      basic: {
+        dialect: '+3 BASIC with +3DOS, and 48 BASIC',
+        essentials: [
+          { cmd: 'FORMAT "a:"', does: 'Prepare a new disk; erases it.' },
+          { cmd: 'CAT  /  CAT "m:"', does: 'List the default drive / the RAMdisk.' },
+          { cmd: 'SAVE "name" / LOAD "name"', does: 'Disk on the default drive (A: after switch-on). LOAD needs a name.' },
+          { cmd: 'LOAD "m:" / SAVE "m:"', does: 'Make M: (or A:, B:) the default drive.' },
+          { cmd: 'LOAD "t:" / SAVE "t:"', does: 'Send later LOAD and MERGE, or SAVE, to tape.' },
+          { cmd: 'ERASE "file"', does: 'Delete; wildcards * and ? allowed. ERASE "m:*.*" empties the RAMdisk.' },
+          { cmd: 'MOVE "old" TO "new"', does: 'Rename on one drive; no wildcards.' },
+          { cmd: 'COPY "a:*.bas" TO "m:"', does: 'Copy files between drives.' },
+          { cmd: 'SPECTRUM then OUT 32765,48', does: 'Lock paging for a 48K game that will not run.' }
+        ],
+        groups: [
+          { group: '+3DOS', items: ['FORMAT', 'CAT', 'LOAD / SAVE / MERGE', 'ERASE', 'MOVE ... TO', 'COPY ... TO', 'drive letters A: B: M: (T: for tape)'] },
+          { group: 'Port $7FFD (32765)', items: ['bits 0-2 RAM page at $C000', 'bit 3 screen select', 'bit 4 ROM select', 'bit 5 disable paging'] },
+          { group: 'Port $1FFD', items: ['bits 0-1 ROM/RAM switching', 'bit 2 ROM select (with $7FFD bit 4)', 'bit 3 disk motor', 'bit 4 printer strobe (active low)'] }
+        ],
+        quirks: [
+          'There is no "next program" on disk: LOAD "" reports an error; use CAT and a name.',
+          '"Drive A: not ready" nearly always means no disk in the drive.',
+          'FORMAT, COPY, MOVE, CAT and ERASE do not work on tape.',
+          'The RAMdisk survives NEW but not RESET or switch-off.'
+        ]
+      },
+      memory: [
+        { range: '$0000-$3FFF', what: 'ROM 0-3 (64K in IC7, IC8), picked by $7FFD bit 4 and $1FFD bit 2.' },
+        { range: '$4000-$7FFF', what: 'RAM page 5: screen at $4000, attributes $5800, system variables from $5B00.' },
+        { range: '$8000-$BFFF', what: 'RAM page 2.' },
+        { range: '$C000-$FFFF', what: 'RAM page 0-7; page 7 holds the second screen and +3DOS buffers.' },
+        { range: 'Pages 0-3 / 4-7', what: 'Uncontended / contended (shared with video; code runs about 25% slower there).' }
+      ]
     }
   },
   resources: [
@@ -1186,6 +1475,8 @@ RCS.add({
     { name: 'ZX Spectrum Service Manual (Spectrum For Everyone edition)', url: SM48(1), what: 'Official 16K/48K service manual: power, RAM, ULA checks, fault tables, parts lists.' },
     { name: 'Spectrum +3 manual, chapter 10 (World of Spectrum)', url: P3MAN, what: 'Pin tables for every +3 socket.' }
   ],
-  chipLocations: { spectrum: { rom23128: 'IC5' }, spectrum128: { ay8912: 'IC32' } }
+  chipLocations: { spectrum: { rom23128: 'IC5' }, spectrum128: { ay8912: 'IC32' },
+    spectrumplus2: { cpuz80: 'IC9', ay8912: 'IC4 (AY-3-8912A)', dram4164: 'IC17-IC32 (KM4164B-15P)' },
+    spectrumplus3: { cpuz80: 'IC2', ay8912: 'IC11 (AY-3-8912A)', dram4464: 'IC3-IC6 (64K x 4)' } }
 });
 })();

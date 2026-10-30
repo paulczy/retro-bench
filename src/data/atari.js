@@ -332,7 +332,7 @@ const chipsAtari = {
     id: 'dram4464', name: '4464 / 41464 DRAM 64K x 4', short: '4464', family: 'JEDEC DRAM (TMS4416 pinout)',
     role: 'Dynamic RAM, 64K x 4. Main RAM on the BBC Master; reported on later 130XE boards.', pkg: 'DIP-18',
     machines: ['atari130xe'], location: {},
-    summary: 'Four bits wide, 64K deep, +5 V only, with an output enable (/G) on pin 1. Same pinout as the 16K x 4 4416, plus A7 on pin 10. Eight address bits are multiplexed on A0-A7; refresh is all 256 rows every 4 ms. It is not a 4164 substitute (18 pins, 4 bits wide). Pin table from the TI TMS4464 data sheet. Atari: some later 130XE boards are reported to use 64K x 4 DRAMs, but the 1986 Sams data shows sixteen 4164s (U9-U16, U26-U33), so look at the board before ordering parts (verify).',
+    summary: 'Four bits wide, 64K deep, +5 V only, with an output enable (/G) on pin 1. Same pinout as the 16K x 4 4416, plus A7 on pin 10. Eight address bits are multiplexed on A0-A7; refresh is all 256 rows every 4 ms. It is not a 4164 substitute (18 pins, 4 bits wide). Pin table from the TI TMS4464 data sheet. Atari: some later 130XE boards are reported to use 64K x 4 DRAMs, but Sams CC16 (1986) shows sixteen 64K x 1 DRAMs: U9-U16 main and U26-U33 extra RAM, with MT4264-15 and D4164-15 in its terminal guides and no 4464 anywhere. No Atari or Sams document read shows a 4464 130XE, so look at the board before ordering parts (verify).',
     fails: ['Red or garbled screen', 'Random crashes or lost RAM'],
     heat: 'warm',
     verify: true,

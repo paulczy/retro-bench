@@ -134,8 +134,10 @@ const vdp9918Pins = [
   { n: 36, name: 'COMVID', type: 'video', dir: 'out', desc: 'TMS9918A: composite video output (needs an external pull-down resistor). TMS9928A/9929A: Y, luminance with composite sync.', terms: ['luma-chroma'] },
   { n: 37, name: 'GROMCLK', type: 'clock', dir: 'out', desc: 'Clock output = crystal / 24 (about 447 kHz with a 10.738635 MHz crystal).', terms: ['clock'], probe: 'About 447 kHz' },
   { n: 38, name: 'CPUCLK', type: 'clock', dir: 'out', desc: 'TMS9918A: colour burst clock = crystal / 3 (3.579545 MHz). TMS9928A/9929A: R-Y colour-difference output.', terms: ['clock'], probe: '3.579545 MHz on a 9918A' },
-  { n: 39, name: 'XTAL1', type: 'clock', dir: 'in', desc: 'Crystal input, 10.738635 MHz. If driven externally, both XTAL pins must be driven.', terms: ['clock'], probe: '10.738635 MHz oscillation' },
-  { n: 40, name: 'XTAL2', type: 'clock', dir: 'in', desc: 'Crystal input (the other side of the crystal).', terms: ['clock'] },
+  { n: 39, name: 'XTAL2', type: 'clock', dir: 'in', desc: 'Crystal input (the other side of the crystal). If driven externally, both XTAL pins must be driven. Sams counts the 10.738635 MHz oscillator here.', terms: ['clock'], probe: '10.738635 MHz oscillation',
+    conflict: 'The data manual pin drawing on p. 3-9 labels pin 39 XTAL1 and pin 40 XTAL2; the terminal table on the same page (XTAL1, XTAL2 = 40, 39) and Figure 4-2 (p. 4-2) give pin 40 XTAL1 and pin 39 XTAL2, as does the ColecoVision redraw. Table and figure win.' },
+  { n: 40, name: 'XTAL1', type: 'clock', dir: 'in', desc: 'Crystal input, 10.738635 MHz. If driven externally, both XTAL pins must be driven.', terms: ['clock'], probe: '10.738635 MHz oscillation',
+    conflict: 'The data manual pin drawing on p. 3-9 labels pin 40 XTAL2; the terminal table on the same page and Figure 4-2 (p. 4-2) give XTAL1. Table and figure win.' },
 ];
 
 const psg76489Pins = [
@@ -367,6 +369,8 @@ RCS.add({
       datasheets: [
         { label: 'TMS9918A/9928A/9929A VDP Data Manual (1982), 3.7.1 TMS9918A terminal assignments, pp. 3-9 to 3-10', url: TI_DS('9918a28a29a.pdf', 52) },
         { label: 'Same manual, 3.7.2 TMS9928A/9929A terminal assignments, p. 3-11', url: TI_DS('9918a28a29a.pdf', 54) },
+        { label: 'TMS9918A/9928A/9929A VDP Data Manual (Nov 1982, bitsavers), 3.7.1 terminal table: XTAL1, XTAL2 = pins 40, 39, p. 3-9', url: 'http://www.bitsavers.org/components/ti/TMS9900/TMS9918A_TMS9928A_TMS9929A_Video_Display_Processors_Data_Manual_Nov82.pdf#page=52' },
+        { label: 'Same manual (bitsavers), Figure 4-2 VDP interface: crystal on pin 40 XTAL1 and pin 39 XTAL2, p. 4-2', url: 'http://www.bitsavers.org/components/ti/TMS9900/TMS9918A_TMS9928A_TMS9929A_Video_Display_Processors_Data_Manual_Nov82.pdf#page=57' },
         { label: 'TI-99/4A Servicing Manual, VDP description (oscillator, GROM clock, CPU clock), printed pp. 67-68', url: TI_SM(76) },
         { label: 'ColecoVision Technical Manual (Coleco, 1983), VII signal pictures: U9 (TMS9928A) pin 35 B-Y, pin 36 Y, pin 38 R-Y video outputs, PDF pp. 70-71', url: 'https://cvaddict.com/manuals/Colecovision_Technical_Manual.pdf#page=70' },
         { label: 'TMS9918A/9928A/9929A Data Manual (Nov 1982), applefritter mirror', url: 'https://git.applefritter.com/Apple-1-Tools/apple1-videocard-lib/raw/branch/main/docs/TMS9918A_TMS9928A_TMS9929A_Video_Display_Processors_Data_Manual_Nov82.pdf' },

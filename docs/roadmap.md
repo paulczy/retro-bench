@@ -82,3 +82,10 @@ and 8 last. Cross-model review and a push to GitHub Pages after each group.
 - ti.js `vdp9918`: pin 39 is named XTAL1 but the ColecoVision redraw labels pin 40 XTAL1; check against the TI 9918A data manual.
 - 57 clock pins have no fixed or sourced frequency (software baud clocks, PLL/data-separator clocks, RC oscillators, unreadable scans); listed in docs/verification/clock-pins.md.
 - Apple IIe: MMU part number prints as 344-0100 on Apple's schematic (data says 344-0010); IOU designator E5 unconfirmed. Atari 130XE 4464 fit unsourced.
+
+## Resolved 2026-10-30 (finish-sheets pass)
+
+- TMS9918A XTAL1 is pin 40 (data manual pin table and Figure 4-2); pins 39/40 swapped in ti.js, the small pin drawing's swap noted as a conflict.
+- Apple IIe MMU kept as 344-0010 (Sams lists 344-0010-B); Apple's schematic print 344-0100 noted. IOU is at UE5.
+- Atari 130XE: Sams CC16 shows only 64K x 1 (4164-type) RAM; the 4464 fit stays `verify` and probably should be removed.
+- Apple IIc, ZX80, Spectrum 128, +2, +3, TS1500, PCjr and Portable 5155 are now ready. Open: TS1500 has no service manual (no first ten minutes or clocks); +2 supply voltages unreadable; AY clock on the 128/+2 unsourced.
