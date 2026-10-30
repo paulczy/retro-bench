@@ -1,4 +1,14 @@
 /* Retro Bench data: Heathkit HERO robots (HERO 1 ET-18, HERO Jr RT-1, HERO 2000 ET-19). */
+(() => {
+// Custom pad helpers. Heathkit numbers header pins board-wide, so a header can run 109-118.
+const hkSeq = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+const hkRow = ns => ns.map((n, i) => ({ n, x: Math.round((4 + i * (92 / Math.max(1, ns.length - 1))) * 10) / 10, y: 50 }));
+const hkRowOutline = n => { const d = 92 / Math.max(1, n - 1), h = Math.round(d * 7) / 10, l = Math.round((4 - d * 0.7) * 10) / 10, r = Math.round((96 + d * 0.7) * 10) / 10; return `M${l} ${50 - h} H${r} V${50 + h} H${l} Z`; };
+// HERO 1 charger socket: 4 columns of 3 as on the P101 wire-side drawing (3/6/9/12 top, 1/4/7/10 bottom).
+const H1_CHG_PADS = [[3, 6, 9, 12], [2, 5, 8, 11], [1, 4, 7, 10]].flatMap((row, r) => row.map((n, c) => ({ n, x: 20 + c * 20, y: 25 + r * 25 })));
+// HERO Jr J1: round 4-pin, key at top, 1 4 over 2 3 as drawn on schematic sheet 1.
+const JR_J1_PADS = [{ n: 1, x: 35, y: 38 }, { n: 4, x: 65, y: 38 }, { n: 2, x: 35, y: 66 }, { n: 3, x: 65, y: 66 }];
+
 Object.assign(RCS.terms, {
   'crystal': { term: 'Crystal oscillator', short: 'Quartz crystal that sets the clock.', long: 'The crystal sets the CPU clock. The 6808 divides it by four for its E clock, so a 4 MHz crystal gives 1 MHz E. A dead or wrong crystal stops the robot or slows timing and speech.' },
   'phoneme': { term: 'Phoneme', short: 'One speech sound the synthesizer makes.', long: 'The SC-01 has 64 phonemes. The CPU puts a six-bit code on the bus, strobes it, and waits for the request line before sending the next. A request line stuck low stops speech after one sound.' },
@@ -34,27 +44,30 @@ RCS.add({
       tagline: 'A 6808 robot with a hex keypad, speech, sonar and 2K of RAM as shipped.' },
 
     hero2000: { id: 'hero2000', brand: 'heathkit', name: 'HERO 2000', aka: 'ET-19', status: 'planned',
-      cpu: '8088 main CPU, with 6808 sub-processors (verify)',
-      chips: ['cpu8088', 'cpu6808', 'pal-mem', 'pal-io', 'sc02', 'epci2661'],
-      tagline: 'The 8088 is a 16-bit CPU on an 8-bit bus; 6808s run the drives and sensors.' }
+      cpu: '8088 (U311, CPU board) clocked by U304 from a 15 MHz crystal; six slave processors (11 with the arm), type not read',
+      ram: '24 KB, expandable to 576 KB with memory cards (HERO FAQ, verify)',
+      rom: '64 KB with BASIC (HERO FAQ, verify)',
+      sound: 'SSI 263 (Votrax SC-02 compatible) speech at I/O $50-$57',
+      chips: ['cpu8088', 'pal-mem', 'pal-io', 'sc02', 'epci2661'],
+      tagline: 'An 8088 robot with a 12-slot passive backplane, two serial ports and one 12 V 24 Ah battery.' }
   },
 
   chips: {
     cpu6808: { id: 'cpu6808', name: 'MC6808 microprocessor', short: '6808', family: 'Motorola 6800 family (NMOS)',
       role: 'Main CPU. Runs the monitor, ROM and speech and motion code. No on-chip RAM.', pkg: 'DIP-40',
       machines: ['hero1', 'herojr'], location: { hero1: 'U401', herojr: 'U201' },
-      summary: 'The 6800-family CPU with no internal RAM. Its own oscillator divides the crystal by four to make the E clock. HERO Jr ties HALT and MR high. HERO 1 ties RE to ground as the datasheet requires. A dead CPU shows as a dead display and no speech; check the crystal, RESET and Vcc first.',
+      summary: 'The 6800-family CPU with no internal RAM. Its own oscillator divides the crystal by four to make the E clock. HERO Jr ties /HALT and MR high and pulls /IRQ up with R202; the HERO 1 ABORT switch drives /NMI (P403 pin 23). HERO 1 ties RE to ground as the datasheet requires. HERO Jr: 4 MHz crystal Y201, E = 1 MHz; HERO 1: 3.58 MHz (ROM 1.0) or 4 MHz. A dead CPU shows as a dead display and no speech; check the crystal, RESET and Vcc first.',
       fails: ['Dead robot: no display, no speech, no response to keys', 'Random crashes or wrong results after power-up', 'Robot resets itself or never leaves reset'],
       heat: 'warm',
-      datasheets: [{ label: 'Motorola MC6802/6808 datasheet DS9818-R3 (1984)', url: 'https://alshapton.github.io/MC6800Catalogue/_downloads/b25ee82e53f4fdcaf7ce3b25eca70a01/DS-MC6802-6808-6802NS.pdf' }],
-      verifiedAgainst: 'Motorola DS9818-R3 pin assignment (datasheet page 1 read). HERO Jr TM printed p. 25-26 (pins 2-6, 26-33, 34). HERO 1 TM printed p. 78 (U401).',
+      datasheets: [{ label: 'Motorola MC6802/6808 datasheet DS9818-R3 (1984), pin assignment p. 1, signals p. 7-8', url: 'https://alshapton.github.io/MC6800Catalogue/_downloads/b25ee82e53f4fdcaf7ce3b25eca70a01/DS-MC6802-6808-6802NS.pdf#page=1' }],
+      verifiedAgainst: 'Motorola DS9818-R3 (pin assignment p. 1, signal descriptions p. 7-8, MR p. 11). HERO Jr TM printed p. 25-26; HERO 1 TM printed p. 78 (U401).',
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
-        { n: 2, name: '/HALT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Halt: pulled low stops the CPU. Tied high on HERO Jr (TM).', terms: ['active-low'] },
-        { n: 3, name: '/MR', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Memory ready: pulled low to add wait states for slow RAM. Tied high on HERO Jr (TM).', terms: ['active-low'] },
-        { n: 4, name: '/IRQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Interrupt request. Peripherals pull it low. Pulled up on HERO Jr by R202 (TM).', terms: ['irq'] },
+        { n: 2, name: '/HALT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Halt: pulled low stops the CPU after the current instruction.', terms: ['active-low'] },
+        { n: 3, name: 'MR', type: 'ctrl', dir: 'in', desc: 'Memory ready, active high. High for normal cycles; pulled low it stretches E for slow memory.' },
+        { n: 4, name: '/IRQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Interrupt request. Peripherals pull it low; needs a pull-up.', terms: ['irq'] },
         { n: 5, name: 'VMA', type: 'ctrl', dir: 'out', desc: 'Valid memory address: high when the address bus holds a valid address.' },
-        { n: 6, name: '/NMI', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Non-maskable interrupt. Software cannot disable it. HERO Abort uses it (TM).', terms: ['nmi'] },
+        { n: 6, name: '/NMI', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Non-maskable interrupt. Software cannot disable it.', terms: ['nmi'] },
         { n: 7, name: 'BA', type: 'ctrl', dir: 'out', desc: 'Bus available: high when the CPU has stopped and freed the bus.', terms: ['ba'] },
         { n: 8, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'] },
         { n: 9, name: 'A0', type: 'addr', dir: 'out', desc: 'Address bus bit 0.' },
@@ -70,11 +83,11 @@ RCS.add({
         { n: 19, name: 'A10', type: 'addr', dir: 'out', desc: 'Address bus bit 10.' },
         { n: 20, name: 'A11', type: 'addr', dir: 'out', desc: 'Address bus bit 11.' },
         { n: 21, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground (second pin).', terms: ['gnd'] },
-        { n: 22, name: 'A12', type: 'addr', dir: 'out', desc: 'Address bus bit 12. The decoder uses it (U202 on HERO Jr, U403 on HERO 1).' },
+        { n: 22, name: 'A12', type: 'addr', dir: 'out', desc: 'Address bus bit 12.' },
         { n: 23, name: 'A13', type: 'addr', dir: 'out', desc: 'Address bus bit 13.' },
         { n: 24, name: 'A14', type: 'addr', dir: 'out', desc: 'Address bus bit 14.' },
         { n: 25, name: 'A15', type: 'addr', dir: 'out', desc: 'Address bus bit 15.' },
-        { n: 26, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7. Pins 26-33 are the data bus (HERO Jr TM).' },
+        { n: 26, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7 (MSB).' },
         { n: 27, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
         { n: 28, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
         { n: 29, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
@@ -82,26 +95,26 @@ RCS.add({
         { n: 31, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
         { n: 32, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
         { n: 33, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
-        { n: 34, name: 'R/W', type: 'ctrl', dir: 'out', desc: 'Read/write: high = read, low = write (HERO Jr TM).', terms: ['rw'] },
-        { n: 35, name: 'VCC STBY', type: 'nc', dir: '-', desc: 'Standby supply: must be tied to 5 V only on the MC6802NS. Not used on the MC6808.' },
+        { n: 34, name: 'R/W', type: 'ctrl', dir: 'out', desc: 'Read/write: high = read, low = write.', terms: ['rw'] },
+        { n: 35, name: 'VCC STBY', type: 'nc', dir: '-', desc: 'Standby supply for the internal RAM of the MC6802; the datasheet says tie it to 5 V on the MC6802NS. It gives no use on the MC6808.', verify: true },
         { n: 36, name: 'RE', type: 'ctrl', dir: 'in', desc: 'Must be tied to ground on the MC6808 (datasheet note).' },
-        { n: 37, name: 'E', type: 'clock', dir: 'out', desc: 'E clock output: crystal divided by four (HERO Jr: 4 MHz gives 1 MHz).', terms: ['clock'], probe: 'About 1 MHz on HERO Jr, about 0.895 MHz on the 3.58 MHz HERO 1 board. Verify on a scope.', verify: true },
+        { n: 37, name: 'E', type: 'clock', dir: 'out', desc: 'E clock output: the crystal frequency divided by four.', terms: ['clock'], probe: 'Crystal / 4: 1 MHz from a 4 MHz crystal, about 0.895 MHz from 3.58 MHz.' },
         { n: 38, name: 'XTAL', type: 'clock', dir: 'in', desc: 'Crystal pin 1. Crystal runs between XTAL and EXTAL.', terms: ['crystal'] },
         { n: 39, name: 'EXTAL', type: 'clock', dir: 'in', desc: 'Crystal pin 2 (or external clock input).', terms: ['crystal'] },
-        { n: 40, name: '/RESET', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Reset: held low at power-up and by the RESET key, then released so the CPU reads its vector.', terms: ['reset'] }
+        { n: 40, name: '/RESET', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Reset: held low at power-up, then released so the CPU fetches the vector at $FFFE-$FFFF.', terms: ['reset'] }
       ] },
 
     pia6821: { id: 'pia6821', name: 'MC6821 peripheral interface adapter', short: '6821 PIA', family: 'Motorola 6800 family (NMOS)',
       role: 'Two 8-bit parallel ports with handshake lines. Keypad, sensor, motor and speech control on HERO Jr.', pkg: 'DIP-40',
       machines: ['herojr'], location: { herojr: 'U214, U215' },
-      summary: 'Two 6821s on HERO Jr. U214 scans the hex keypad and drives motor and steering lines ($D820-$D83F). U215 carries the speech data (port A, $D840), speech power (port B bit 1, $D841), sensor select and the sonar echo (CB1). CA1, CA2 and CB1 are the speech and sonar handshakes. HERO 1 has no 6821 on its parts list; MAME uses PIA scaffolds for it, so the HERO 1 entry is left off.',
+      summary: 'Two 6821s on HERO Jr. U214 ($D820-$D83F) scans the hex keypad on port A (pins 2-9), drives the motor and steering lines on port B, takes the wheel encoder on CB1 and sends sonar INIT on CB2 (pin 19). U215 ($D840-$D85F) carries the speech code on port A, speech power, sense enable, sound/light select and the serial ADC lines on port B, the sonar echo on CB1 (pin 18), speech strobe on CA2 (pin 39) and speech request on CA1 (pin 40). HERO 1 has no 6821 on its parts list.',
       fails: ['No keypad keys respond', 'No speech, or speech that never stops', 'Drive wheel dead or turns only in reverse', 'Sonar gives no echo'],
       heat: 'cool',
-      datasheets: [{ label: 'Motorola MC6821 datasheet DS9435-R3 (1983)', url: 'https://git.applefritter.com/Apple-1-HW/RC6502-Apple-1-Replica/raw/branch/master/documentation/datasheets/MC6821.pdf' }],
-      verifiedAgainst: 'Motorola DS9435-R3 pin assignment (datasheet page 1 read). HERO Jr TM printed p. 27 (U215 pin 39 = CA2, port $D842); HERO Jr sonar spec (CB1 = pin 18, CB2 = pin 19, CA1 = 40, CA2 = 39).',
+      datasheets: [{ label: 'Motorola MC6821 datasheet DS9435-R3, pin assignment p. 1 (bitsavers)', url: 'https://bitsavers.org/components/motorola/_dataSheets/6821.pdf#page=1' }],
+      verifiedAgainst: 'Motorola MC6821 DS9435-R3, pin assignment p. 1. HERO Jr roles: TM printed p. 20-27 (U214 keypad $D820, U215 speech/sense $D840; U214 pin 19 sonar INIT, U215 pin 18 echo, U215 pins 39/40 speech).',
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
-        { n: 2, name: 'PA0', type: 'io', dir: 'bidir', desc: 'Port A bit 0. Keypad column line on U214.', terms: ['pia'] },
+        { n: 2, name: 'PA0', type: 'io', dir: 'bidir', desc: 'Port A bit 0.', terms: ['pia'] },
         { n: 3, name: 'PA1', type: 'io', dir: 'bidir', desc: 'Port A bit 1.', terms: ['pia'] },
         { n: 4, name: 'PA2', type: 'io', dir: 'bidir', desc: 'Port A bit 2.', terms: ['pia'] },
         { n: 5, name: 'PA3', type: 'io', dir: 'bidir', desc: 'Port A bit 3.', terms: ['pia'] },
@@ -109,16 +122,16 @@ RCS.add({
         { n: 7, name: 'PA5', type: 'io', dir: 'bidir', desc: 'Port A bit 5.', terms: ['pia'] },
         { n: 8, name: 'PA6', type: 'io', dir: 'bidir', desc: 'Port A bit 6.', terms: ['pia'] },
         { n: 9, name: 'PA7', type: 'io', dir: 'bidir', desc: 'Port A bit 7.', terms: ['pia'] },
-        { n: 10, name: 'PB0', type: 'io', dir: 'bidir', desc: 'Port B bit 0. Motor and steering output on U214 ($D821).', terms: ['pia'] },
-        { n: 11, name: 'PB1', type: 'io', dir: 'bidir', desc: 'Port B bit 1. Speech power on U215 ($D841 bit 1).', terms: ['pia'] },
-        { n: 12, name: 'PB2', type: 'io', dir: 'bidir', desc: 'Port B bit 2. Sound/light select on U215.', terms: ['pia'] },
-        { n: 13, name: 'PB3', type: 'io', dir: 'bidir', desc: 'Port B bit 3. A/D converter select on U215.', terms: ['pia'] },
-        { n: 14, name: 'PB4', type: 'io', dir: 'bidir', desc: 'Port B bit 4. Serial ADC data input on U215.', terms: ['pia'] },
-        { n: 15, name: 'PB5', type: 'io', dir: 'bidir', desc: 'Port B bit 5. Sonar blanking and A/D clock line (TM).', terms: ['pia'] },
-        { n: 16, name: 'PB6', type: 'io', dir: 'bidir', desc: 'Port B bit 6. Sleep/Norm switch input on U215 (TM).', terms: ['pia'] },
+        { n: 10, name: 'PB0', type: 'io', dir: 'bidir', desc: 'Port B bit 0.', terms: ['pia'] },
+        { n: 11, name: 'PB1', type: 'io', dir: 'bidir', desc: 'Port B bit 1.', terms: ['pia'] },
+        { n: 12, name: 'PB2', type: 'io', dir: 'bidir', desc: 'Port B bit 2.', terms: ['pia'] },
+        { n: 13, name: 'PB3', type: 'io', dir: 'bidir', desc: 'Port B bit 3.', terms: ['pia'] },
+        { n: 14, name: 'PB4', type: 'io', dir: 'bidir', desc: 'Port B bit 4.', terms: ['pia'] },
+        { n: 15, name: 'PB5', type: 'io', dir: 'bidir', desc: 'Port B bit 5.', terms: ['pia'] },
+        { n: 16, name: 'PB6', type: 'io', dir: 'bidir', desc: 'Port B bit 6.', terms: ['pia'] },
         { n: 17, name: 'PB7', type: 'io', dir: 'bidir', desc: 'Port B bit 7.', terms: ['pia'] },
-        { n: 18, name: 'CB1', type: 'ctrl', dir: 'in', desc: 'Interrupt input B1. Wheel encoder on U214; sonar echo on U215 (pin 18, TM).', terms: ['irq'] },
-        { n: 19, name: 'CB2', type: 'ctrl', dir: 'out', desc: 'Control B2. Sonar INIT output on U214 (pin 19, TM).' },
+        { n: 18, name: 'CB1', type: 'ctrl', dir: 'in', desc: 'Interrupt input B1, edge-sensitive.', terms: ['irq'] },
+        { n: 19, name: 'CB2', type: 'ctrl', dir: 'bidir', desc: 'Control B2: interrupt input or handshake/control output, set by the B control register.' },
         { n: 20, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'] },
         { n: 21, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
         { n: 22, name: 'CS0', type: 'ctrl', dir: 'in', desc: 'Chip select 0, active high.', terms: ['cs'] },
@@ -137,9 +150,9 @@ RCS.add({
         { n: 35, name: 'RS1', type: 'ctrl', dir: 'in', desc: 'Register select 1.' },
         { n: 36, name: 'RS0', type: 'ctrl', dir: 'in', desc: 'Register select 0.' },
         { n: 37, name: '/IRQB', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Interrupt request B. Open drain.', terms: ['irq', 'open-drain'] },
-        { n: 38, name: '/IRQA', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Interrupt request A. On HERO Jr, U215 IRQA is the shared CPU IRQ (TM).', terms: ['irq', 'open-drain'] },
-        { n: 39, name: 'CA2', type: 'ctrl', dir: 'bidir', desc: 'Control A2. Speech strobe to U223 (pin 7) on HERO Jr (TM).' },
-        { n: 40, name: 'CA1', type: 'ctrl', dir: 'in', desc: 'Control A1. Speech request from U223 (TM).' }
+        { n: 38, name: '/IRQA', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Interrupt request A. Open drain.', terms: ['irq', 'open-drain'] },
+        { n: 39, name: 'CA2', type: 'ctrl', dir: 'bidir', desc: 'Control A2: interrupt input or handshake/control output.' },
+        { n: 40, name: 'CA1', type: 'ctrl', dir: 'in', desc: 'Interrupt input A1, edge-sensitive.', terms: ['irq'] }
       ] },
 
     sc01a: { id: 'sc01a', name: 'SC-01 / SC-01A speech synthesizer', short: 'SC-01A', family: 'Votrax CMOS',
@@ -148,15 +161,15 @@ RCS.add({
       summary: 'A CMOS chip with 64 phonemes. The CPU puts a six-bit code on P0-P5, pulses STB to latch it, and waits for A/R to go high before the next. Audio leaves on AF and AO. The chip draws little current. On HERO 1 its supply is switched by $C2E0 bit 3 through P501 pin 11. A dead chip gives no speech; a stuck A/R gives one sound and then silence.',
       fails: ['No speech at all', 'Speech stops after one sound (A/R stuck)', 'Garbled or buzzing speech (clock or supply)'],
       heat: 'cool',
-      datasheets: [{ label: 'Votrax SC-01 speech synthesizer data sheet (1980)', url: 'https://www.redcedar.com/sc01/sc01.pdf' }],
-      verifiedAgainst: 'Votrax SC-01 data sheet 1980, pin footprint on page 2. HERO 1 TM printed p. 78-79 (P501 pins, U501 pins 21-22, STB and A/R). HERO Jr TM printed p. 27 (U223 pins 7, 9, 21, 22).',
+      datasheets: [{ label: 'Votrax SC-01 speech synthesizer data sheet (1980), pinout p. 2, signals p. 4', url: 'https://www.redcedar.com/sc01/sc01.pdf#page=2' }],
+      verifiedAgainst: 'Votrax SC-01 data sheet 1980 (pinout p. 2, signal descriptions p. 4). HERO 1 speech accessory schematic (U501, P501). HERO Jr TM printed p. 27 (U223).',
       pins: [
         { n: 1, name: 'VP', type: 'power', dir: '-', desc: 'Positive supply (+5 V). Switched on HERO 1 by $C2E0 bit 3 through P501 pin 11.', terms: ['vcc'] },
         { n: 2, name: 'I2', type: 'io', dir: 'in', desc: 'Pitch/inflection input bit 2. On HERO 1 this comes from P501 pins 1-2.' },
         { n: 3, name: 'I1', type: 'io', dir: 'in', desc: 'Pitch/inflection input bit 1.' },
         { n: 4, name: 'NC', type: 'nc', dir: '-', desc: 'No connection.' },
-        { n: 5, name: 'TP3', type: 'nc', dir: '-', desc: 'Test pin on the datasheet footprint. Leave open.', verify: true },
-        { n: 6, name: 'TP2', type: 'nc', dir: '-', desc: 'Test pin on the datasheet footprint. Leave open.', verify: true },
+        { n: 5, name: 'TP3', type: 'nc', dir: '-', desc: 'Test pin; the datasheet lists TPx as no connection.' },
+        { n: 6, name: 'TP2', type: 'nc', dir: '-', desc: 'Test pin; the datasheet lists TPx as no connection.' },
         { n: 7, name: 'STB', type: 'ctrl', dir: 'in', desc: 'Strobe: latches the phoneme code. HERO 1 P501 pin 3; HERO Jr CA2.', terms: ['strobe'], probe: 'A short high pulse for each phoneme.' },
         { n: 8, name: 'A/R', type: 'ctrl', dir: 'out', desc: 'Acknowledge/request: goes high when ready for the next phoneme. HERO 1 P501 pin 4; HERO Jr CA1.', probe: 'High between phonemes; stuck low means no speech.' },
         { n: 9, name: 'P5', type: 'data', dir: 'in', desc: 'Phoneme code bit 5 (six-bit code). HERO Jr: port $D840 (TM names U223-9).' },
@@ -165,24 +178,24 @@ RCS.add({
         { n: 12, name: 'P2', type: 'data', dir: 'in', desc: 'Phoneme code bit 2.' },
         { n: 13, name: 'P1', type: 'data', dir: 'in', desc: 'Phoneme code bit 1.' },
         { n: 14, name: 'P0', type: 'data', dir: 'in', desc: 'Phoneme code bit 0.' },
-        { n: 15, name: 'MCX', type: 'clock', dir: 'in', desc: 'Master clock: optional external clock input, or the timing resistor node.', terms: ['clock'] },
-        { n: 16, name: 'MCRC', type: 'clock', dir: 'bidir', desc: 'Master clock RC node. The on-chip oscillator uses an external R and C here. HERO 1 R15 sets the clock.', terms: ['clock'] },
-        { n: 17, name: 'TP1', type: 'nc', dir: '-', desc: 'Test pin on the datasheet footprint. Leave open.', verify: true },
+        { n: 15, name: 'MCX', type: 'clock', dir: 'in', desc: 'Master clock input for an external clock. Tied to MCRC to use the internal RC oscillator, as HERO 1 does (R515 pitch pot, C501 300 pF).', terms: ['clock'] },
+        { n: 16, name: 'MCRC', type: 'clock', dir: 'in', desc: 'Master clock RC input: the R and C that set the internal clock. Grounded when an external clock drives MCX.', terms: ['clock'] },
+        { n: 17, name: 'TP1', type: 'nc', dir: '-', desc: 'Test pin; the datasheet lists TPx as no connection.' },
         { n: 18, name: 'VG', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
         { n: 19, name: 'NC', type: 'nc', dir: '-', desc: 'No connection.' },
-        { n: 20, name: 'CB', type: 'audio', dir: 'out', desc: 'Audio output group (CB). Leave open unless the board uses it.', verify: true },
-        { n: 21, name: 'AF', type: 'audio', dir: 'out', desc: 'Audio output (filter). HERO Jr couples pins 21 and 22 to the amplifier through R233/R234 (TM).' },
+        { n: 20, name: 'CB', type: 'audio', dir: 'out', desc: 'Class B: current source for a class B transistor audio amplifier. Open on HERO 1.' },
+        { n: 21, name: 'AF', type: 'audio', dir: 'in', desc: 'Audio feedback from a class A/B amplifier. HERO 1 ties 21 to 22; HERO Jr feeds the amplifier through R233/R234 (TM).' },
         { n: 22, name: 'AO', type: 'audio', dir: 'out', desc: 'Audio output. Goes to the volume control and amplifier (HERO 1 P502 pin 15 path, TM).' }
       ] },
 
     sram6116: { id: 'sram6116', name: '6116 2K x 8 static RAM', short: '6116', family: 'CMOS/NMOS SRAM',
       role: 'Program and data RAM. Stock RAM on both robots.', pkg: 'DIP-24',
       machines: ['hero1', 'herojr'], location: { hero1: 'U415, U416', herojr: 'U203' },
-      summary: 'A 2K x 8 static RAM, the stock RAM on both robots. HERO 1 has two (U416 at $0000-$07FF, U415 at $0800-$0FFF). HERO Jr has one at U203 and takes 8K parts in U204/U205 for BASIC. On HERO Jr, the sleep jumpers decide whether RAM keeps its contents during sleep. A bad bit shows as a program that fails in one place.',
+      summary: 'A 2K x 8 static RAM, the stock RAM on both robots. HERO 1 has two (U416 at $0000-$07FF, U415 at $0800-$0FFF) on the retained VSB rail during sleep. HERO Jr has one at U203 and takes 8K parts in U204/U205 for BASIC; its supply jumpers (J202, J204, J206) decide whether RAM keeps its contents during sleep. A bad bit shows as a program that fails in one place.',
       fails: ['Program or data corrupted in one place', 'RAM lost after sleep (jumper or retained rail)', 'Self-test memory fault'],
-      heat: 'cool', verify: true,
-      datasheets: [{ label: 'Search: 6116 2K x 8 SRAM datasheet', url: 'https://www.datasheetarchive.com/', verify: true }],
-      verifiedAgainst: 'Pinout from the standard 6116 layout (not opened). Designators: HERO 1 TM printed p. 96-97 parts list (U415, U416 = 443-1027); HERO Jr TM parts list (U203 = 443-1027).',
+      heat: 'cool',
+      datasheets: [{ label: 'Hitachi HM6116, 1984 IC Memory Data Book, printed p. 65 (bitsavers)', url: 'https://bitsavers.org/components/hitachi/_dataBooks/1984_Hitachi_IC_Memory_Data_Book_Mar84.pdf#page=67' }],
+      verifiedAgainst: 'Hitachi HM6116 pin arrangement, 1984 IC Memory Data Book p. 65 (I/O1-I/O8 named D0-D7 here). Designators: HERO 1 TM parts list (U415, U416 = 443-1027); HERO Jr TM parts list (U203).',
       pins: [
         { n: 1, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bit 7.' },
         { n: 2, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6.' },
@@ -215,9 +228,9 @@ RCS.add({
       machines: ['hero1'], location: { hero1: 'U418' },
       summary: 'The 8K x 8 monitor ROM (Heath 444-198-1, available only from Heath). It sits at $E000-$FFFF. Jumpers J2, J4 and J6 must be set for the 8K part, and J12 keeps the optional U417 ROM from overlapping. A bad ROM gives a dead robot or a wrong banner. The monitor version must match the drive board.',
       fails: ['Dead robot, no banner', 'Wrong or garbled display at power-up', 'Crashes in one routine'],
-      heat: 'cool', verify: true,
-      datasheets: [{ label: 'Search: Intel 2764 EPROM datasheet', url: 'https://bitsavers.org/', verify: true }],
-      verifiedAgainst: 'Pinout from the standard 2764 layout (not opened). Socket and jumpers: HERO 1 TM printed p. 118 (J2, J4, J6, J12 for the 8K U418) and parts list (U418 444-198-1, 8K x 8).',
+      heat: 'cool',
+      datasheets: [{ label: 'Intel 2764, 1983 Memory Component Handbook p. 4-19 (bitsavers)', url: 'https://bitsavers.org/components/intel/_dataBooks/1983_Memory_Component_Handbook.pdf#page=401' }],
+      verifiedAgainst: 'Intel 2764 pin configuration, 1983 Memory Component Handbook p. 4-19 (outputs named O0-O7 there). Socket and jumpers: HERO 1 TM printed p. 118 and parts list (U418 444-198-1).',
       pins: [
         { n: 1, name: 'VPP', type: 'power', dir: '-', desc: 'Programming voltage. Tie to Vcc in normal use.', terms: ['vpp'] },
         { n: 2, name: 'A12', type: 'addr', dir: 'in', desc: 'Address bit 12.' },
@@ -244,7 +257,7 @@ RCS.add({
         { n: 23, name: 'A11', type: 'addr', dir: 'in', desc: 'Address bit 11.' },
         { n: 24, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9.' },
         { n: 25, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bit 8.' },
-        { n: 26, name: 'A13', type: 'addr', dir: 'in', desc: 'Address bit 13 (not used on the 8K part).' },
+        { n: 26, name: 'NC', type: 'nc', dir: '-', desc: 'No connection on the 2764. (A13 on the 27128 and larger parts.)' },
         { n: 27, name: '/PGM', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Program pulse. Not used in reading; tie high.', terms: ['active-low'] },
         { n: 28, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'] }
       ] },
@@ -254,9 +267,9 @@ RCS.add({
       machines: ['herojr'], location: { herojr: 'U207, U208' },
       summary: 'The two 16K x 8 monitor ROMs. U207 is 444-283 and U208 is 444-254; errata notice 591-4523 revises both. The decoder U202 selects them across $8000-$BFFF and $E000-$FFFF (U208). A bad ROM gives a robot that will not boot, or a boot that stops at the same point each time. Check the errata revision before swapping.',
       fails: ['Robot will not boot, or boot stops at the same point each time', 'Spoken self-test fails on the same routine', 'Corrupted monitor after an upgrade with the wrong revision'],
-      heat: 'cool', verify: true,
-      datasheets: [{ label: 'Search: 27128 16K EPROM datasheet', url: 'https://bitsavers.org/', verify: true }],
-      verifiedAgainst: 'Pinout from the standard 27128 layout (not opened). Sizes and designators: HERO Jr TM printed p. 27 and parts list (U207, U208); errata notice 591-4523 (HeroJr Errata).',
+      heat: 'cool',
+      datasheets: [{ label: 'Intel 27128, 1983 Memory Component Handbook p. 4-29 (bitsavers)', url: 'https://bitsavers.org/components/intel/_dataBooks/1983_Memory_Component_Handbook.pdf#page=411' }],
+      verifiedAgainst: 'Intel 27128 pin configuration, 1983 Memory Component Handbook p. 4-29. Sizes and designators: HERO Jr TM printed p. 27 and parts list (U207, U208); errata notice 591-4523.',
       pins: [
         { n: 1, name: 'VPP', type: 'power', dir: '-', desc: 'Programming voltage. Tie to Vcc in normal use.', terms: ['vpp'] },
         { n: 2, name: 'A12', type: 'addr', dir: 'in', desc: 'Address bit 12.' },
@@ -284,18 +297,18 @@ RCS.add({
         { n: 24, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9.' },
         { n: 25, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bit 8.' },
         { n: 26, name: 'A13', type: 'addr', dir: 'in', desc: 'Address bit 13.' },
-        { n: 27, name: 'A14', type: 'addr', dir: 'in', desc: 'Address bit 14.' },
+        { n: 27, name: '/PGM', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Program pulse. Not used in reading; tie high. (A14 on the 27256.)', terms: ['active-low'] },
         { n: 28, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'] }
       ] },
 
     rtc146818: { id: 'rtc146818', name: 'MC146818A real-time clock with RAM', short: 'RTC', family: 'Motorola CMOS',
       role: 'Clock, calendar, alarm and 50 bytes of battery-backed RAM. HERO Jr U213.', pkg: 'DIP-24',
       machines: ['herojr'], location: { herojr: 'U213' },
-      summary: 'The clock chip at $D810-$D81F. It is multiplexed: the CPU puts an address on AD0-AD7, strobes AS, then reads or writes the data. It keeps time on a 32.768 kHz crystal, and its battery input keeps it running in sleep. Its IRQ and SQW lines feed the CPU and the sleep wake path. A dead RTC gives a wrong or stopped clock and failed boot checks.',
+      summary: 'The clock chip at $D810-$D81F. It is multiplexed: the CPU puts an address on AD0-AD7, strobes AS, then reads or writes the data. It keeps time on a 32.768 kHz crystal. It has no battery pin: on HERO Jr its VDD comes from U209 (Vca), which stays on in sleep while SW1 is ON, so turning POWER off loses the time. /STBY blocks bus access while the main supply is down. Its IRQ pulses the sleep wake path every 5 s. A dead RTC gives a wrong or stopped clock and failed boot checks.',
       fails: ['Clock stopped or wrong after power-up', 'Boot check fails or asks for date every time', 'Alarm never fires, or wakes at wrong time'],
       heat: 'cool',
-      datasheets: [{ label: 'Motorola MC146818A datasheet ADI-1026 (1984)', url: 'https://www.scs.stanford.edu/22wi-cs212/pintos/specs/mc146818a.pdf' }],
-      verifiedAgainst: 'Motorola MC146818A advance datasheet ADI-1026 (page 1 read). HERO Jr TM printed p. 28 (RESET, IRQ) and parts list (U213 = 443-1139).',
+      datasheets: [{ label: 'Motorola MC146818A datasheet ADI-1026 (1984), pinout p. 1, signals p. 8-10', url: 'https://www.scs.stanford.edu/22wi-cs212/pintos/specs/mc146818a.pdf#page=1' }],
+      verifiedAgainst: 'Motorola MC146818A ADI-1026 (pin assignment p. 1, signal descriptions p. 8-10). HERO Jr TM printed p. 25 and 28 (U209 Vca supply, RESET, IRQ) and parts list (U213 = 443-1139).',
       pins: [
         { n: 1, name: 'MOT', type: 'ctrl', dir: 'in', desc: 'Bus timing select: high = Motorola-style timing (AS, DS). Tie high on HERO Jr.' },
         { n: 2, name: 'OSC1', type: 'clock', dir: 'in', desc: 'Crystal pin 1 (32.768 kHz on HERO Jr).', terms: ['crystal'] },
@@ -312,13 +325,13 @@ RCS.add({
         { n: 13, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select, active low. Decoded from the $D810 region.', terms: ['cs', 'active-low'] },
         { n: 14, name: 'AS', type: 'ctrl', dir: 'in', desc: 'Address strobe: latches the address on the falling edge.' },
         { n: 15, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
-        { n: 16, name: 'STBY', type: 'power', dir: '-', desc: 'Battery input. Keeps the clock and RAM alive when Vcc is off.' },
+        { n: 16, name: '/STBY', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Standby, active low: blocks AS, DS, R/W and AD0-AD7 so the bus cannot corrupt the clock while the main supply is off. Not a battery input.', terms: ['active-low'] },
         { n: 17, name: 'DS', type: 'ctrl', dir: 'in', desc: 'Data strobe (E clock in Motorola mode).' },
         { n: 18, name: '/RESET', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Reset: clears the interrupt enables but not time or RAM. The RESET key drives it on HERO Jr.', terms: ['reset', 'active-low'] },
         { n: 19, name: '/IRQ', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Interrupt, open drain. On HERO Jr it feeds the sleep wake path, not the CPU.', terms: ['irq', 'open-drain'] },
         { n: 20, name: 'CKFS', type: 'ctrl', dir: 'in', desc: 'Clock output frequency select.' },
         { n: 21, name: 'CKOUT', type: 'clock', dir: 'out', desc: 'Clock output (divided time base).', terms: ['clock'] },
-        { n: 22, name: 'PS', type: 'ctrl', dir: 'out', desc: 'Power sense: indicates Vdd is valid.' },
+        { n: 22, name: 'PS', type: 'ctrl', dir: 'in', desc: 'Power sense input: held low at power-up it clears the VRT (valid RAM and time) bit.' },
         { n: 23, name: 'SQW', type: 'ctrl', dir: 'out', desc: 'Square-wave output. Rate set by register A; the HERO Jr ROM programs it to 256 Hz (JR spec).' },
         { n: 24, name: 'VDD', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'] }
       ] },
@@ -326,23 +339,23 @@ RCS.add({
     acia6850: { id: 'acia6850', name: 'MC6850 asynchronous comms adapter', short: 'ACIA', family: 'Motorola 6800 family (NMOS)',
       role: 'Serial port for the RS-232 accessory (RTA-1-3). HERO Jr U216.', pkg: 'DIP-24',
       machines: ['herojr'], location: { herojr: 'U216 (accessory)' },
-      summary: 'The serial chip for the RS-232 accessory. It answers at $D880-$DFFF with A7 as the select and A0 as the register select. The ROM sets it to 7 data bits, even parity, 1 stop bit at boot. Baud rate comes from U217, U218 and jumper SW201 on the CPU board. CTS and DCD are strapped to ground, so the ACIA always sees a terminal. With no accessory fitted, nothing answers at $D880.',
+      summary: 'The serial chip for the HERO Jr RS-232 accessory (U216). It answers at $D880-$DFFF with A7 on CS0 and A0 on RS; /CS2 comes from the U202 decode and CS1 from the reset net. Rx Data comes from level shifter Q201, Tx Data goes out through driver U219. /CTS and /DCD are strapped to ground and /RTS is unused. The ROM sets 7 data bits, even parity, 1 stop bit; baud rate comes from U217, U218 and jumper SW201 dividing the 1 MHz E clock. With no accessory fitted, nothing answers at $D880.',
       fails: ['No RS-232 traffic, or garbled text', 'Wrong baud rate (check SW201 jumper)', 'Accessory boot probe reports no terminal'],
       heat: 'warm',
-      datasheets: [{ label: 'Motorola MC6850 datasheet DS9493R4 (1985)', url: 'https://ipv4.pccomponents.com/datasheets/MOTOR-MC6850P.pdf' }],
-      verifiedAgainst: 'Motorola DS9493R4 pin assignment (datasheet page 1 read). HERO Jr RS-232 notes (CTS and DCD strapped, IRQ pin 7, RXDT pin 2, TXDT pin 6) match the datasheet pins.',
+      datasheets: [{ label: 'Motorola MC6850 datasheet DS9493R4 (1985), pin assignment p. 1', url: 'https://ipv4.pccomponents.com/datasheets/MOTOR-MC6850P.pdf#page=1' }],
+      verifiedAgainst: 'Motorola MC6850 DS9493R4, pin assignment p. 1. HERO Jr use: TM printed p. 25 (U216 at $D880, serial out pin 6 through U219, input pin 2 from Q201, SW201 baud jumper).',
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
-        { n: 2, name: 'Rx Data', type: 'serial', dir: 'in', desc: 'Receive data (RXDT, from the level shifter Q201).', terms: ['acia'] },
-        { n: 3, name: 'Rx CLK', type: 'clock', dir: 'in', desc: 'Receive clock: tied to the baud clock.', terms: ['clock'] },
-        { n: 4, name: 'Tx CLK', type: 'clock', dir: 'in', desc: 'Transmit clock: tied to the baud clock.', terms: ['clock'] },
-        { n: 5, name: '/RTS', type: 'serial', dir: 'out', activeLow: true, desc: 'Request to send. Unconnected stub on HERO Jr.', terms: ['active-low'] },
-        { n: 6, name: 'Tx Data', type: 'serial', dir: 'out', desc: 'Transmit data (TXDT, to the driver U219).', terms: ['acia'] },
-        { n: 7, name: '/IRQ', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Interrupt. On the shared CPU IRQ net; the ROM leaves ACIA interrupts off.', terms: ['irq', 'open-drain'] },
-        { n: 8, name: 'CS0', type: 'ctrl', dir: 'in', desc: 'Chip select 0. HERO Jr: A7.', terms: ['cs'] },
-        { n: 9, name: '/CS2', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select 2, active low. HERO Jr: the U202 region select.', terms: ['cs', 'active-low'] },
-        { n: 10, name: 'CS1', type: 'ctrl', dir: 'in', desc: 'Chip select 1. HERO Jr: the reset net.', terms: ['cs'] },
-        { n: 11, name: 'RS', type: 'ctrl', dir: 'in', desc: 'Register select. HERO Jr: A0.' },
+        { n: 2, name: 'Rx Data', type: 'serial', dir: 'in', desc: 'Receive serial data in.', terms: ['acia'] },
+        { n: 3, name: 'Rx CLK', type: 'clock', dir: 'in', desc: 'Receive clock (1, 16 or 64 times the bit rate).', terms: ['clock'] },
+        { n: 4, name: 'Tx CLK', type: 'clock', dir: 'in', desc: 'Transmit clock (1, 16 or 64 times the bit rate).', terms: ['clock'] },
+        { n: 5, name: '/RTS', type: 'serial', dir: 'out', activeLow: true, desc: 'Request to send, set by the control register.', terms: ['active-low'] },
+        { n: 6, name: 'Tx Data', type: 'serial', dir: 'out', desc: 'Transmit serial data out.', terms: ['acia'] },
+        { n: 7, name: '/IRQ', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Interrupt request, open drain.', terms: ['irq', 'open-drain'] },
+        { n: 8, name: 'CS0', type: 'ctrl', dir: 'in', desc: 'Chip select 0, active high.', terms: ['cs'] },
+        { n: 9, name: '/CS2', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select 2, active low.', terms: ['cs', 'active-low'] },
+        { n: 10, name: 'CS1', type: 'ctrl', dir: 'in', desc: 'Chip select 1, active high.', terms: ['cs'] },
+        { n: 11, name: 'RS', type: 'ctrl', dir: 'in', desc: 'Register select: low = control/status, high = data.' },
         { n: 12, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'] },
         { n: 13, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
         { n: 14, name: 'E', type: 'clock', dir: 'in', desc: 'Enable clock from the CPU.', terms: ['clock'] },
@@ -354,8 +367,8 @@ RCS.add({
         { n: 20, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bit 2.' },
         { n: 21, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bit 1.' },
         { n: 22, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bit 0.' },
-        { n: 23, name: '/DCD', type: 'serial', dir: 'in', activeLow: true, desc: 'Data carrier detect. Strapped to ground on HERO Jr.', terms: ['active-low'] },
-        { n: 24, name: '/CTS', type: 'serial', dir: 'in', activeLow: true, desc: 'Clear to send. Strapped to ground on HERO Jr.', terms: ['active-low'] }
+        { n: 23, name: '/DCD', type: 'serial', dir: 'in', activeLow: true, desc: 'Data carrier detect input; high stops the receiver and can interrupt.', terms: ['active-low'] },
+        { n: 24, name: '/CTS', type: 'serial', dir: 'in', activeLow: true, desc: 'Clear to send input; high inhibits the transmit-data-register-empty flag.', terms: ['active-low'] }
       ] },
 
     ls138: { id: 'ls138', name: '74LS138 3-to-8 decoder', short: 'LS138', family: 'TTL (LS)',
@@ -363,9 +376,9 @@ RCS.add({
       machines: ['hero1'], location: { hero1: 'U403, U406, U421, U422' },
       summary: 'A 3-to-8 line decoder with three enables. On HERO 1 the four copies pick the 8K memory blocks and the $C200-$C300 I/O ports from the upper address lines. A stuck output means one block is always selected or never selected, so the ROM or RAM there will not answer.',
       fails: ['One 8K block never answers (RAM or ROM missing)', 'A block always selected, bus fights', 'I/O port dead at one address'],
-      heat: 'cool', verify: true,
-      datasheets: [{ label: 'TI SN74LS138 datasheet (search)', url: 'https://www.datasheetarchive.com/', verify: true }],
-      verifiedAgainst: 'Pinout from the standard 74LS138 layout (not opened). Designators: HERO 1 TM printed p. 96-97 parts list (U403, U406, U421, U422 = 443-877 74LS138); decode role from TM printed p. 79.',
+      heat: 'cool',
+      datasheets: [{ label: 'TI SN54/74LS138 datasheet SDLS014, p. 1', url: 'https://www.ti.com/lit/ds/symlink/sn74ls138.pdf#page=1' }],
+      verifiedAgainst: 'TI SDLS014 pin diagram p. 1 (outputs Y0-Y7 are active low). Designators: HERO 1 TM parts list (U403, U406, U421, U422 = 443-877); decode role from TM printed p. 79.',
       pins: [
         { n: 1, name: 'A', type: 'addr', dir: 'in', desc: 'Select input A (lowest address bit of the group).' },
         { n: 2, name: 'B', type: 'addr', dir: 'in', desc: 'Select input B.' },
@@ -390,9 +403,9 @@ RCS.add({
       machines: ['hero1'], location: { hero1: 'U602 (sense board)' },
       summary: 'An 8-bit converter on the HERO 1 sense board. Its output reaches the CPU on $C240. The sound/light switch picks which analog source feeds it, and the converter is powered only through the sense rail. An unpowered converter reads all ones, so a constant $FF usually means no supply.',
       fails: ['Constant $FF reading (no supply on the sense rail)', 'Reading stuck at one value', 'Sensor readings wrong after a board swap'],
-      heat: 'cool', verify: true,
-      datasheets: [{ label: 'Search: ADC0804 datasheet', url: 'https://www.datasheetarchive.com/', verify: true }],
-      verifiedAgainst: 'Pinout from the standard ADC0804 layout (not opened). Designator: HERO 1 TM sense-board parts list (U602 = 443-949 ADC0804). Data read on $C240 per the MAME hero1.cpp comment.',
+      heat: 'cool',
+      datasheets: [{ label: 'TI ADC080x (National heritage) SNOSBI1C, pinout p. 3', url: 'https://www.ti.com/lit/ds/symlink/adc0804-n.pdf#page=3' }],
+      verifiedAgainst: 'TI/National ADC0804 SNOSBI1C pin configuration p. 3. Designator: HERO 1 TM sense-board parts list (U602 = 443-949). Sense data reaches the I/O board on P312 (Advanced Programming printed p. 104).',
       pins: [
         { n: 1, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select, active low.', terms: ['cs', 'active-low'] },
         { n: 2, name: '/RD', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Read output, active low.', terms: ['active-low'] },
@@ -421,9 +434,9 @@ RCS.add({
       machines: ['herojr'], location: { herojr: 'U306' },
       summary: 'A serial 8-bit converter with one input. HERO Jr switches the sound or light circuit to it and clocks it from U215 port B. Its reference is a divider from the switched 5 V rail, about 3.79 V, so one step is about 14.8 mV. Pin 3 is grounded for single-ended use. A stuck reading means the converter or its switch transistors.',
       fails: ['Light or sound reading stuck at one value', 'No response to light or sound', 'Reading changes only with the switched rail'],
-      heat: 'cool', verify: true,
-      datasheets: [{ label: 'Search: National ADC0831 datasheet', url: 'https://www.datasheetarchive.com/', verify: true }],
-      verifiedAgainst: 'Pins 1-7 from the HERO Jr schematic sheet 4 (A/D block), read visually (hero-jr-adc-encoder-spec.md section 1.1). Pin 8 and the rest of the pinout from the standard ADC0831 layout (verify). Designator: HERO Jr TM printed p. 22 and parts list (U306 = 443-1189).',
+      heat: 'cool',
+      datasheets: [{ label: 'TI/National ADC0831-N SNAS531B, Figure 4 (PDIP-8) p. 2', url: 'https://www.ti.com/lit/ds/symlink/adc0831-n.pdf#page=2' }],
+      verifiedAgainst: 'TI/National ADC0831-N SNAS531B pinout p. 2. HERO Jr schematic sheet 1 (U306 pin 8 = +5SW, pin 4 = GND) and sheet 4 (A/D block). Designator: HERO Jr TM printed p. 22 (U306 = 443-1189).',
       pins: [
         { n: 1, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select, active low. From U215 port B bit 3 ($D841).', terms: ['cs', 'active-low'] },
         { n: 2, name: 'VIN+', type: 'ctrl', dir: 'in', desc: 'Analog input (from the sound or light path, through Q308).' },
@@ -432,81 +445,185 @@ RCS.add({
         { n: 5, name: 'VREF', type: 'ctrl', dir: 'in', desc: 'Reference: 1500 ohm to +5SW and 4700 ohm to ground (R354/R355), about 3.79 V.' },
         { n: 6, name: 'DO', type: 'data', dir: 'out', desc: 'Serial data output. Read on U215 port B bit 4.', terms: ['tristate'] },
         { n: 7, name: 'CLK', type: 'clock', dir: 'in', desc: 'Serial clock from U215.', terms: ['clock'] },
-        { n: 8, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply on the switched rail (+5SW).', terms: ['vcc'], verify: true }
+        { n: 8, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply on the switched rail (+5SW).', terms: ['vcc'] }
       ] },
 
     tl851: { id: 'tl851', name: 'TL851CN sonar ranging control', short: 'TL851', family: 'Texas Instruments',
-      role: 'Sonar transmit control (ranging). HERO Jr U307 on the power/sense board.', pkg: 'DIP (count not read)',
+      role: 'Sonar transmit control (ranging). HERO Jr U307 on the power/sense board.', pkg: 'DIP-16',
       machines: ['herojr'], location: { herojr: 'U307' },
-      summary: 'Drives the 420 kHz transmit burst through Q313 and T301 to the transducer, and gates the echo. Its resonator is Y301 at 420 kHz. The sonar board is powered from Sense Enable (P301 pin 20). No echo at all usually means the transmit burst or the sense rail is missing. Pinout not transcribed.',
+      summary: 'Runs the ranging cycle: INIT (pin 14) starts a 16-pulse burst out of XMIT (pin 2) through Q313 and T301 to the transducer, then it steps the TL852 gain (GCA-GCD) and raises ECHO (pin 9) when REC sees an echo. Its resonator is Y301 at 420 kHz. On HERO Jr it runs from +5SW (pin 1), so no Sense Enable means no sonar. No echo at all usually means the transmit burst or the sense rail is missing.',
       fails: ['Sonar malfunction; no sound from the transducer', 'Range always the same or always zero'],
       heat: 'warm',
-      verifiedAgainst: 'HERO Jr TM printed p. 23 (sonar board description) and parts list (U307 = 443-1188). Pinout not read.',
-      pins: null },
+      datasheets: [{ label: 'TI TL851 Sonar Ranging Control, SLSS004 (1988), p. 1', url: 'https://www.ti.com/lit/ds/symlink/tl851.pdf#page=1' }],
+      verifiedAgainst: 'TI TL851 SLSS004 terminal assignments p. 1 (output schematics p. 4). HERO Jr schematic sheet 1 (U307 pin 1 = +5SW, pin 3 = GND); TM printed p. 23 and parts list (U307 = 443-1188).',
+      pins: [
+        { n: 1, name: 'VCC', type: 'power', dir: '-', desc: 'Supply, 4.5-6.8 V.', terms: ['vcc'] },
+        { n: 2, name: 'XMIT', type: 'io', dir: 'out', desc: 'Transmit drive output (Darlington emitter follower, about 140 mA); sends a 16-pulse burst after each INIT.', probe: 'A burst of 16 pulses (about 49.4 kHz) after each INIT.' },
+        { n: 3, name: 'GND', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
+        { n: 4, name: 'GCD', type: 'ctrl', dir: 'out', desc: 'Gain control bit D (MSB), open collector, to the receiver.' },
+        { n: 5, name: 'GCA', type: 'ctrl', dir: 'out', desc: 'Gain control bit A (LSB), open collector.' },
+        { n: 6, name: 'GCB', type: 'ctrl', dir: 'out', desc: 'Gain control bit B, open collector.' },
+        { n: 7, name: 'GCC', type: 'ctrl', dir: 'out', desc: 'Gain control bit C, open collector.' },
+        { n: 8, name: 'REC', type: 'io', dir: 'in', desc: 'Receive input from the receiver chip; internal 1.2 V level detector.' },
+        { n: 9, name: 'ECHO', type: 'ctrl', dir: 'out', desc: 'Echo output, open collector; goes high when an echo is detected.' },
+        { n: 10, name: 'OSC', type: 'clock', dir: 'out', desc: 'Oscillator output, enabled by INIT: resonator / 8.5 during transmit, then resonator / 4.5.', terms: ['clock'] },
+        { n: 11, name: 'XTAL1', type: 'clock', dir: 'in', desc: 'Ceramic resonator connection (420 kHz typical).', terms: ['crystal'] },
+        { n: 12, name: 'XTAL2', type: 'clock', dir: 'in', desc: 'Ceramic resonator connection.', terms: ['crystal'] },
+        { n: 13, name: 'FILT', type: 'power', dir: '-', desc: 'Internal filtered-supply node. The datasheet does not name the external part.', verify: true },
+        { n: 14, name: 'INIT', type: 'ctrl', dir: 'in', desc: 'Initiate: a high starts a ranging cycle (at least 5 ms after power-up).' },
+        { n: 15, name: 'BINH', type: 'ctrl', dir: 'in', desc: 'Blanking inhibit: high ends internal blanking early so near echoes are seen.' },
+        { n: 16, name: 'BLNK', type: 'ctrl', dir: 'in', desc: 'Blanking: high disables REC and resets ECHO low.' }
+      ] },
 
     tl852: { id: 'tl852', name: 'TL852CN sonar receiver', short: 'TL852', family: 'Texas Instruments',
-      role: 'Sonar echo receiver and amplifier. HERO Jr U308.', pkg: 'DIP (count not read)',
+      role: 'Sonar echo receiver and amplifier. HERO Jr U308.', pkg: 'DIP-16',
       machines: ['herojr'], location: { herojr: 'U308' },
-      summary: 'Amplifies the echo from the transducer under gain control from U307 and feeds the echo back to the CPU through U304 and U215 pin 18 (CB1). A weak or missing echo points here or at the transducer leads. Pinout not transcribed.',
+      summary: 'Amplifies the echo from the transducer under gain control (GCA-GCD) from U307 and hands it back to U307 on REC; the echo then reaches the CPU through U304 and U215 pin 18 (CB1). R358 sets the bias, R359 the gain, R361 the detect level, and L302/C337 tune it. On HERO Jr it runs from +5SW (pin 5). A weak or missing echo points here or at the transducer leads.',
       fails: ['No echo: sonar reads the blind-zone value', 'Echo always present (noise)'],
       heat: 'cool',
-      verifiedAgainst: 'HERO Jr TM printed p. 23 and parts list (U308 = 442-765). Pinout not read.',
-      pins: null },
+      datasheets: [{ label: 'TI TL852 Sonar Ranging Receiver, SLSS003 (1988), p. 1', url: 'https://www.ti.com/lit/ds/symlink/tl852.pdf#page=1' }],
+      verifiedAgainst: 'TI TL852 SLSS003 terminal assignments p. 1. HERO Jr schematic sheet 1 (U308 pin 5 = +5SW, pin 16 = GND); TM printed p. 23-24 and parts list (U308 = 442-765).',
+      pins: [
+        { n: 1, name: 'G1IN', type: 'io', dir: 'in', desc: 'First-stage amplifier input; a resistor from G1IN to GADJ sets gain.' },
+        { n: 2, name: 'XIN', type: 'io', dir: 'in', desc: 'Clamp input for the transducer transformer secondary during transmit.' },
+        { n: 3, name: 'GADJ', type: 'io', dir: 'in', desc: 'Gain adjust: the gain resistor connects here from G1IN.' },
+        { n: 4, name: 'LC', type: 'io', dir: '-', desc: 'Parallel LC tank to VCC sets the tuned gain and Q.' },
+        { n: 5, name: 'VCC', type: 'power', dir: '-', desc: 'Supply, 4.5-6.8 V.', terms: ['vcc'] },
+        { n: 6, name: 'G1OUT', type: 'io', dir: 'out', desc: 'First-stage output; AC-coupled (0.01 µF) to G2IN.' },
+        { n: 7, name: 'G2IN', type: 'io', dir: 'in', desc: 'Second-stage amplifier input.' },
+        { n: 8, name: 'BIAS', type: 'io', dir: '-', desc: 'Bias reference: 68 kohm 5% to ground.' },
+        { n: 9, name: 'REC', type: 'io', dir: 'out', desc: 'Receive output; 1000 pF to ground integrates the received signal.' },
+        { n: 10, name: 'NC', type: 'nc', dir: '-', desc: 'No internal connection.' },
+        { n: 11, name: 'NC', type: 'nc', dir: '-', desc: 'No internal connection.' },
+        { n: 12, name: 'GCC', type: 'ctrl', dir: 'in', desc: 'Gain control bit C.' },
+        { n: 13, name: 'GCB', type: 'ctrl', dir: 'in', desc: 'Gain control bit B.' },
+        { n: 14, name: 'GCA', type: 'ctrl', dir: 'in', desc: 'Gain control bit A (LSB).' },
+        { n: 15, name: 'GCD', type: 'ctrl', dir: 'in', desc: 'Gain control bit D (MSB); all four gain inputs must change together.' },
+        { n: 16, name: 'GND', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] }
+      ] },
 
     msm5832: { id: 'msm5832', name: 'MSM5832 real-time clock', short: 'MSM5832', family: 'OKI CMOS',
-      role: 'Clock and calendar for HERO 1 (U315). Driven through ports $C2C0 and $C300.', pkg: 'DIP (count not read)',
+      role: 'Clock and calendar for HERO 1 (U315 on the I/O board).', pkg: 'DIP-18',
       machines: ['hero1'], location: { hero1: 'U315' },
-      summary: 'The HERO 1 clock. Address nibbles go out on $C2C0 and data on $C300, so a faulty clock shows as a wrong or stopped time. Pinout not transcribed.',
+      summary: 'The HERO 1 clock. It has a 4-bit register address (A0-A3) and a 4-bit open-drain data bus (D0-D3), on a 32.768 kHz crystal. HOLD freezes the counters while the CPU reads or sets them; keep it under 1 s or the clock loses time. The HERO 1 drives the address nibbles from $C2C0 and the data through $C300. A faulty clock shows as a wrong or stopped time.',
       fails: ['Clock stopped or wrong time', 'Time reads back as fixed data'],
-      heat: 'cool', verify: true,
-      verifiedAgainst: 'HERO 1 TM printed p. 96-97 parts list (U315 = 443-1055 MSM5832). Port roles: hardware-notes (Tape, RTC, Serial). Pinout not read.',
-      pins: null },
-
-    cpu8088: { id: 'cpu8088', name: '8088 microprocessor', short: '8088', family: 'Intel x86',
-      role: 'Main CPU of the HERO 2000. 16-bit core on an 8-bit external bus.', pkg: 'DIP-40',
-      machines: ['hero2000'], location: { hero2000: 'designator not read' },
-      summary: 'The HERO 2000 main CPU. It is a 16-bit core with an 8-bit external bus, so 16-bit operations take two bus cycles. The 6808s handle motors and sensors. Memory and I/O are decoded by the two PALs, so a bus fault and a PAL fault look alike.',
-      fails: ['Dead robot, no response', 'Boot loop after power-up (check the PAL decode)'],
-      heat: 'warm', verify: true,
-      verifiedAgainst: 'Not sourced from a manual. Chip identity from the HERO 2000 PAL notes (verify).',
-      pins: null },
+      heat: 'cool',
+      datasheets: [{ label: 'OKI MSM5832RS, 1986 OKI Microprocessor Data Book, printed p. 251 (pins p. 256-257)', url: 'https://bitsavers.org/components/oki/_dataBooks/1986_OKI_Microprocessor_Databook.pdf#page=254' }],
+      verifiedAgainst: 'OKI MSM5832RS pin configuration, 1986 OKI Microprocessor Data Book p. 251 and pin descriptions p. 256-257. Designator: HERO 1 TM parts list (U315 = 443-1055); schematic sheet 3 (REAL TIME CLOCK).',
+      pins: [
+        { n: 1, name: 'VDD', type: 'power', dir: '-', desc: '+5 V supply; keeps counting with backup down to 2.2 V.', terms: ['vcc'] },
+        { n: 2, name: 'WRITE', type: 'ctrl', dir: 'in', desc: 'Write enable, active high; writes when CS, HOLD and WRITE are all high.' },
+        { n: 3, name: 'READ', type: 'ctrl', dir: 'in', desc: 'Read enable, active high; reads when CS and READ are high.' },
+        { n: 4, name: 'A0', type: 'addr', dir: 'in', desc: 'Register address bit 0.' },
+        { n: 5, name: 'A1', type: 'addr', dir: 'in', desc: 'Register address bit 1.' },
+        { n: 6, name: 'A2', type: 'addr', dir: 'in', desc: 'Register address bit 2.' },
+        { n: 7, name: 'A3', type: 'addr', dir: 'in', desc: 'Register address bit 3.' },
+        { n: 8, name: 'CS', type: 'ctrl', dir: 'in', desc: 'Chip select, active high, with a raised threshold so the bus is locked out on power fail.', terms: ['cs'] },
+        { n: 9, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bit 0 (LSB), open drain, needs a 4.7 kohm or larger pull-up. With all address lines high it outputs 1024 Hz.' },
+        { n: 10, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bit 1, open drain; 1 Hz reference output in that mode.' },
+        { n: 11, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bit 2, open drain; 1/60 Hz reference output in that mode.' },
+        { n: 12, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bit 3 (MSB), open drain; 1/3600 Hz reference output in that mode.' },
+        { n: 13, name: 'GND', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
+        { n: 14, name: 'TEST', type: 'ctrl', dir: 'in', desc: 'Test input; leave open or grounded. Pulses here clock the counters directly.' },
+        { n: 15, name: '±30 ADJ', type: 'ctrl', dir: 'in', desc: '±30 s correction: a high pulse of at least 31.25 ms rounds the seconds to zero.' },
+        { n: 16, name: 'XT', type: 'clock', dir: 'in', desc: '32.768 kHz crystal pin, or external clock input.', terms: ['crystal'] },
+        { n: 17, name: '/XT', type: 'clock', dir: 'out', desc: 'Crystal pin; left open with an external clock.', terms: ['crystal'] },
+        { n: 18, name: 'HOLD', type: 'ctrl', dir: 'in', desc: 'Count hold, active high, internal pull-down; freezes the counters for a safe read or write (keep under 1 s).' }
+      ] },
 
     'pal-mem': { id: 'pal-mem', name: 'Memory address decoder PAL (PAL10L8)', short: 'MemPAL', family: 'Programmable logic',
-      role: 'Decodes the 8088 address into RAM, ROM and I/O enable selects.', pkg: 'PAL10L8 DIP-20',
+      role: 'Decodes the 8088 address into RAM, ROM and I/O enable selects.', pkg: 'DIP-20',
       machines: ['hero2000'], location: { hero2000: 'designator not read' },
-      summary: 'The memory decoder equations are in Hero2_MemPal.html. RAM0-RAM2 and ROM0-ROM2 selects are driven from A19-A13 with the memory and I/O cycle signals. The HTML copy is partly garbled, so exact address ranges are not transcribed here.',
+      summary: 'A PAL10L8 on the HERO 2000 CPU side. The Hero2_MemPal notes give the outputs: ROM2 pin 19, ROM1 pin 18, ROM0 pin 17, RAM2 pin 16, RAM1 pin 15, RAM0 pin 14, ENABLE pin 13; inputs are A19-A13, HI, IODEC and MEMCYC (input pin numbers not given). ROM 0 is $F8000-$FFFFF and ROM 1 $F0000-$F7FFF; memory cards take 64 KB banks from $08000 up. The HTML copy is partly garbled, so the full pin table is not entered.',
       fails: ['A RAM or ROM bank never selected', 'Boot loop or bus fault on one bank'],
       heat: 'cool', verify: true,
-      verifiedAgainst: 'Hero-ROMS Hero2_MemPal.html (equations, partly garbled). Not checked against a board.',
+      verifiedAgainst: 'Hero-ROMS Hero2_MemPal.html (equations and output pins, partly garbled). Not checked against a board.',
       pins: null },
 
     'pal-io': { id: 'pal-io', name: 'I/O address decoder PAL (PAL10L8)', short: 'IOPAL', family: 'Programmable logic',
-      role: 'Decodes I/O ports to the RTC, serial, display, sonar, speech and the 2661 chips.', pkg: 'PAL10L8 DIP-20',
+      role: 'Decodes I/O ports to the RTC, serial, display, sonar, ADC, speech and the two 2661 chips.', pkg: 'DIP-20',
       machines: ['hero2000'], location: { hero2000: 'designator not read' },
-      summary: 'Port decoder for the HERO 2000 board devices: RTC, COM (serial), DISP, SONAR, SC-02 speech and two 2661 chips (2661A, 2661B). Expansion and reserved port ranges are listed in Hero2_IOPal.html. The device-to-port map is not fully transcribed; verify against the board.',
+      summary: 'A PAL10L8 from A7-A0 and IO. Output pins in the Hero2_IOPal notes: RTC 12, COM 13, DISP 14, SONAR 15, SC-02 17, 2661A 18, 2661B 19 (ADC has a column but no pin shown). The port map with it: base controller $30-$39, arm controller $40-$49, SSI-263 speech $50-$57, NMI latch $58-$59, sonar $5A-$5B, remote link $5C-$5D, RTC $5E-$5F, 8253 timer $E4-$E7, serial A $E8-$EB, serial B $EC-$EF, 8259A $F2-$F3. NMI is low battery; VI1 remote link, VI2 timer, VI4/VI5 EPCI A/B.',
       fails: ['One device dead at its port', 'Serial or speech silent with the CPU alive'],
       heat: 'cool', verify: true,
-      verifiedAgainst: 'Hero-ROMS Hero2_IOPal.html (equations, partly garbled). Not checked against a board.',
+      verifiedAgainst: 'Hero-ROMS Hero2_IOPal.html (equations, port and interrupt maps, partly garbled). Not checked against a board.',
       pins: null },
 
-    sc02: { id: 'sc02', name: 'SC-02 speech synthesizer', short: 'SC-02', family: 'Votrax',
-      role: 'Speech on the HERO 2000 (per the I/O PAL decode).', pkg: 'DIP (count not read)',
+    sc02: { id: 'sc02', name: 'SC-02 / SSI 263A speech synthesizer', short: 'SC-02', family: 'Votrax / Silicon Systems CMOS',
+      role: 'Speech on the HERO 2000 (SSI-263 at I/O $50-$57).', pkg: 'DIP-24',
       machines: ['hero2000'], location: { hero2000: 'designator not read' },
-      summary: 'The HERO 2000 speech device, named SC-02 in the I/O PAL. HERO 1 and HERO Jr use the SC-01A. Pinout and speech protocol not read for this machine.',
-      fails: ['No speech with the CPU alive'],
-      heat: 'cool', verify: true,
-      verifiedAgainst: 'Hero-ROMS Hero2_IOPal.html device label only (verify).',
-      pins: null },
+      summary: 'A phoneme synthesizer with five write registers picked by RS0-RS2; the HERO 2000 I/O map calls it SSI-263 and the I/O PAL calls its select SC02. Pin data is from the Silicon Systems SSI 263A sheet, which the same data book lists as Votrax SC-02 compatible. A/R goes low to ask for the next phoneme. Audio leaves on AO biased at half supply and needs an external amplifier.',
+      fails: ['No speech with the CPU alive', 'One phoneme then silence (A/R or interrupt path)'],
+      heat: 'cool',
+      datasheets: [{ label: 'Silicon Systems SSI 263A, 1985 Silicon Systems Data Book, printed p. 1-42', url: 'https://bitsavers.org/components/siliconSystems/_dataBooks/1985_Silicon_Systems_Data_Book.pdf#page=50' }],
+      verifiedAgainst: 'Silicon Systems SSI 263A pinout and pin descriptions, 1985 Data Book p. 1-42 (PDF p. 50-53); selection guide lists it as Votrax SC-02 compatible. Not checked against a HERO 2000 board.',
+      pins: [
+        { n: 1, name: 'AO', type: 'audio', dir: 'out', desc: 'Analog audio output, biased at VDD/2; needs an external amplifier.' },
+        { n: 2, name: 'AGND', type: 'ground', dir: '-', desc: 'Analog ground.', terms: ['gnd'] },
+        { n: 3, name: 'TP1', type: 'nc', dir: '-', desc: 'Test pin; do not use.' },
+        { n: 4, name: 'A/R', type: 'ctrl', dir: 'out', desc: 'Acknowledge/request, open collector; goes low to request new data (the bar is over R only).' },
+        { n: 5, name: 'TP2', type: 'nc', dir: '-', desc: 'Test pin; do not use.' },
+        { n: 6, name: 'RS2', type: 'addr', dir: 'in', desc: 'Register select bit 2 (one of five registers).' },
+        { n: 7, name: 'RS1', type: 'addr', dir: 'in', desc: 'Register select bit 1.' },
+        { n: 8, name: 'RS0', type: 'addr', dir: 'in', desc: 'Register select bit 0.' },
+        { n: 9, name: 'D0', type: 'data', dir: 'in', desc: 'Data bit 0 (LSB), input only.' },
+        { n: 10, name: 'D1', type: 'data', dir: 'in', desc: 'Data bit 1, input only.' },
+        { n: 11, name: 'D2', type: 'data', dir: 'in', desc: 'Data bit 2, input only.' },
+        { n: 12, name: 'DGND', type: 'ground', dir: '-', desc: 'Digital ground.', terms: ['gnd'] },
+        { n: 13, name: 'D3', type: 'data', dir: 'in', desc: 'Data bit 3, input only.' },
+        { n: 14, name: 'D4', type: 'data', dir: 'in', desc: 'Data bit 4, input only.' },
+        { n: 15, name: 'D5', type: 'data', dir: 'in', desc: 'Data bit 5, input only.' },
+        { n: 16, name: 'D6', type: 'data', dir: 'in', desc: 'Data bit 6, input only.' },
+        { n: 17, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bit 7 (MSB); on a read it outputs the inverse of A/R.' },
+        { n: 18, name: '/PD /RST', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Power-down/reset, active low: silences audio, keeps the registers, disables A/R.', terms: ['active-low'] },
+        { n: 19, name: 'CS0', type: 'ctrl', dir: 'in', desc: 'Chip select, active high.', terms: ['cs'] },
+        { n: 20, name: '/CS1', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select, active low.', terms: ['cs', 'active-low'] },
+        { n: 21, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Low writes the registers; high reads D7 only.', terms: ['rw'] },
+        { n: 22, name: 'XCK', type: 'clock', dir: 'in', desc: 'Clock input (about 1 or 2 MHz).', terms: ['clock'] },
+        { n: 23, name: 'DIV2', type: 'ctrl', dir: 'in', desc: 'High divides XCK by two (for a 2 MHz clock).' },
+        { n: 24, name: 'VDD', type: 'power', dir: '-', desc: '+5 V supply (drawn Vs on the pinout).', terms: ['vcc'] }
+      ] },
 
-    epci2661: { id: 'epci2661', name: 'Signetics 2661 EPCI (serial)', short: '2661', family: 'Signetics',
-      role: 'Serial channel on the HERO 2000; two devices (2661A, 2661B) decoded by the I/O PAL.', pkg: 'DIP-28',
-      machines: ['hero2000'], location: { hero2000: 'designator not read' },
-      summary: 'Two 2661 serial chips are decoded by the I/O PAL and carry the robot serial links. Pinout not transcribed; the package size is from memory (verify).',
-      fails: ['Serial link silent', 'Garbled serial text'],
-      heat: 'warm', verify: true,
-      verifiedAgainst: 'Hero-ROMS Hero2_IOPal.html device labels (verify). Package from memory (verify).',
-      pins: null }
+    epci2661: { id: 'epci2661', name: 'Signetics 2661 EPCI (serial)', short: '2661', family: 'Signetics NMOS',
+      role: 'The two HERO 2000 serial channels (serial A at $E8, serial B at $EC).', pkg: 'DIP-28',
+      machines: ['hero2000'], location: { hero2000: 'U427, U428 (I/O board, verify)' },
+      summary: 'An enhanced programmable communications interface with its own baud-rate generator clocked on BRCLK. The HERO 2000 has two, decoded by the I/O PAL as 2661A ($E8-$EB, interrupt VI4) and 2661B ($EC-$EF, VI5); they drive the two 25-pin RS-232 connectors P410 and P412 (terminal and printer). /DCD and /CTS must be low or the receiver and transmitter stay off.',
+      fails: ['Serial link silent', 'Garbled serial text (BRCLK or baud setting)'],
+      heat: 'warm',
+      datasheets: [{ label: 'Signetics SC2661 EPCI, 1982 MOS Microprocessor Data Manual, printed p. 1-52', url: 'https://bitsavers.org/components/signetics/_dataBooks/1982_Signetics_MOS_Microprocessor_Data_Manual.pdf#page=57' }],
+      verifiedAgainst: 'Signetics SC2661 pin configuration and descriptions, 1982 MOS Microprocessor Data Manual p. 1-52 (PDF p. 57-61). HERO 2000 roles: Hero2_IOPal.html; I/O board schematic page 8 (U427, U428, P410, P412), designators read from a low-resolution scan.',
+      pins: [
+        { n: 1, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 2, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 3, name: 'RxD', type: 'serial', dir: 'in', desc: 'Serial receive data (mark = high).' },
+        { n: 4, name: 'GND', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
+        { n: 5, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 6, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 7, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 8, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7 (MSB).' },
+        { n: 9, name: '/TxC /XSYNC', type: 'clock', dir: 'bidir', desc: 'Transmit clock in (1x, 16x, 64x), or with the internal clock a 1x/16x clock out or external sync input.', terms: ['clock'] },
+        { n: 10, name: 'A1', type: 'addr', dir: 'in', desc: 'Register select bit 1.' },
+        { n: 11, name: '/CE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip enable, active low; high floats D0-D7.', terms: ['cs', 'active-low'] },
+        { n: 12, name: 'A0', type: 'addr', dir: 'in', desc: 'Register select bit 0.' },
+        { n: 13, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read when low, write when high (the reverse of the 6800 sense).', terms: ['rw'] },
+        { n: 14, name: '/RxRDY', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Receiver ready, open drain; low when a character is waiting.', terms: ['open-drain'] },
+        { n: 15, name: '/TxRDY', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Transmitter ready, open drain; low when the holding register can take a character.', terms: ['open-drain'] },
+        { n: 16, name: '/DCD', type: 'serial', dir: 'in', activeLow: true, desc: 'Data carrier detect; must be low for the receiver to run.', terms: ['active-low'] },
+        { n: 17, name: '/CTS', type: 'serial', dir: 'in', activeLow: true, desc: 'Clear to send; must be low for the transmitter to run.', terms: ['active-low'] },
+        { n: 18, name: '/TxEMT /DSCHG', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Transmitter empty, or DSR/DCD change; open drain.', terms: ['open-drain'] },
+        { n: 19, name: 'TxD', type: 'serial', dir: 'out', desc: 'Serial transmit data; held at mark when disabled.' },
+        { n: 20, name: 'BRCLK', type: 'clock', dir: 'in', desc: 'Baud-rate generator clock (4.9152 or 5.0688 MHz depending on version).', terms: ['clock'] },
+        { n: 21, name: 'RESET', type: 'ctrl', dir: 'in', desc: 'Master reset, active high.', terms: ['reset'] },
+        { n: 22, name: '/DSR', type: 'serial', dir: 'in', activeLow: true, desc: 'Data set ready, general-purpose input.', terms: ['active-low'] },
+        { n: 23, name: '/RTS', type: 'serial', dir: 'out', activeLow: true, desc: 'Request to send, general-purpose output.', terms: ['active-low'] },
+        { n: 24, name: '/DTR', type: 'serial', dir: 'out', activeLow: true, desc: 'Data terminal ready, general-purpose output.', terms: ['active-low'] },
+        { n: 25, name: '/RxC /BKDET', type: 'clock', dir: 'bidir', desc: 'Receive clock in, or with the internal clock a 1x/16x clock out or break-detect output.', terms: ['clock'] },
+        { n: 26, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'] },
+        { n: 27, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0 (LSB).' },
+        { n: 28, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' }
+      ] }
   },
+
 
   symptoms: {
     hero1: [
@@ -533,102 +650,878 @@ RCS.add({
 
   connectors: {
     hero1: [
-      { id: 'hero1-p501', name: 'Speech board (P501, 12-pin)', kind: '12-pin connector', verify: true,
-        summary: 'Speech accessory board to the main board. Pins 1-2 set pitch, 3 strobes the phoneme, 4 is the request back, 5-10 carry the six-bit code, 11 switches speech power. Pin 12 is not listed in the text read.',
+      { id: 'hero1-charger', name: 'Charger socket (12-pin, base; charger plug P101)', kind: '12-pin power connector, 3 rows of 4 (Molex-style)', geo: 'custom', pads: H1_CHG_PADS, outline: 'M8 10 H92 V90 H8 Z', verify: true,
+        verifiedAgainst: 'ET-18 Block Interconnect Diagram (P101 to P202 wiring); ET-18 Schematics sheet 2 (charger, P101 wire side); HERO Robot FAQ 3.8',
+        summary: 'The charger plug P101 mates here. The plug carries +25 V on pins 8-9 (white or red wire) and ground on pins 1-4 (black), and three jumpers (1-4, 2-3, 5-6) that close the charge paths: with the plug out the batteries are cut off from the charge regulators so they do not drain through them. A plug with a broken jumper charges nothing on that side. Pad layout is the wire-side drawing of the plug, which matches the view into this socket; check on the robot.',
         pins: [
-          { n: 1, name: 'PITCH 1', desc: 'Pitch/inflection line (TM: pins 1 and 2 control pitch).' },
-          { n: 2, name: 'PITCH 2', desc: 'Pitch/inflection line.' },
-          { n: 3, name: 'STROBE', desc: 'Strobe to SC-01A pin 7; a momentary high latches the phoneme.' },
-          { n: 4, name: 'REQUEST', desc: 'Request from SC-01A pin 8; high = ready for the next phoneme.' },
-          { n: 5, name: 'PH1', desc: 'Six-bit phoneme code line from $C240 (bit order not traced).' },
-          { n: 6, name: 'PH2', desc: 'Six-bit phoneme code line.' },
-          { n: 7, name: 'PH3', desc: 'Six-bit phoneme code line.' },
-          { n: 8, name: 'PH4', desc: 'Six-bit phoneme code line.' },
-          { n: 9, name: 'PH5', desc: 'Six-bit phoneme code line.' },
-          { n: 10, name: 'PH6', desc: 'Six-bit phoneme code line.' },
-          { n: 11, name: 'POWER', desc: 'Speech board power control from $C2E0 bit 3 (through Q502).' }
-        ], terms: ['phoneme', 'strobe'] },
-      { id: 'hero1-p1201', name: 'Display board (P1201)', kind: 'connector', verify: true,
-        summary: 'Display board power control. Pin 8 high turns on Q1202 and Q1201, which feed +5 V to the whole display and keypad board. Other pins are not listed in the text read.',
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground. The plug jumpers it to pin 4.', expect: '0 V' },
+          { n: 2, name: 'LOGIC BATT +', type: 'power', desc: 'Logic battery + (after fuse F1 3 A). The plug jumper 2-3 feeds it from the logic charge regulator.', expect: '10-13.9 V DC (13.9 V float on charge)' },
+          { n: 3, name: 'LOGIC CHG OUT', type: 'power', desc: 'Logic charge regulator output, from power supply board P202 pin 15.', expect: 'About 13.9 V DC with the charger on' },
+          { n: 4, name: 'CHG GND', type: 'ground', desc: 'Charger ground return to P202 pin 13; grounded only through the plug jumper 1-4.' },
+          { n: 5, name: 'MOTOR CHG OUT', type: 'power', desc: 'Motor charge regulator output, from P202 pin 22.', expect: 'About 13.9 V DC with the charger on' },
+          { n: 6, name: 'MOTOR BATT +', type: 'power', desc: 'Motor battery + (after fuse F2 4 A). The plug jumper 5-6 feeds it from the motor charge regulator.', expect: '10-13.9 V DC (13.9 V float on charge)' },
+          { n: 7, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 8, name: 'CHG IN (LOGIC)', type: 'power', desc: 'Charger + to logic regulator U201 input (P202 pin 14). The plug joins 8 and 9.', expect: '+25 to +27 V DC with the charger on' },
+          { n: 9, name: 'CHG IN (MOTOR)', type: 'power', desc: 'Charger + to motor regulator U204 input (P202 pin 23).', expect: '+25 to +27 V DC with the charger on' },
+          { n: 10, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 11, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 12, name: 'NC', type: 'nc', desc: 'Not connected.' }
+        ],
+        sources: [
+          { label: 'ET-18 Block Interconnect Diagram, charger and power supply corner (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Block%20Interconnect%20Diagram.pdf' },
+          { label: 'ET-18 Schematics sheet 2 of 4, charger and P101 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Schematics%20sheet%202%20of%204%20%28arm%20drive%2C%20cpu%2C%20charger%29.pdf' },
+          { label: 'HERO Robot FAQ 3.8, Hero-1 charger plug wiring (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html' }
+        ] },
+
+      { id: 'hero1-p201', name: 'Power supply board output (P201, pins 1-12)', kind: '12-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 12)), outline: hkRowOutline(12), verify: true,
+        verifiedAgainst: 'ET-18 Schematics sheet 3 (power supply board); ET-18 Block Interconnect Diagram',
+        summary: 'Battery, +5 V logic and status lines leaving the power supply board. Pads are drawn in number order along one row (layout assumed).',
         pins: [
-          { n: 8, name: 'DISPLAY POWER', desc: 'High = display board +5 V on (Q1202, Q1201). From $C2E0 bit 4.' }
-        ], terms: [] },
-      { id: 'hero1-p1302', name: 'Experimental board Abort (P1302)', kind: 'connector', verify: false,
-        summary: 'Abort switch on the experimental board. Pulled low, it drives the CPU NMI and stops the program.',
+          { n: 1, name: 'LOGIC GND', type: 'ground', desc: 'Logic battery ground (joined to 7, 8, 9).', expect: '0 V' },
+          { n: 2, name: 'LOW LOGIC BATT', type: 'ctrl', desc: 'Low logic battery detector output (comparator U205 type); low while the battery is above 10 V.' },
+          { n: 3, name: 'LOGIC BATT +', type: 'power', desc: 'Logic battery + (+12 V system).', expect: '10-13.9 V DC' },
+          { n: 4, name: '+5V', type: 'power', desc: '+5 V logic from the switching regulator (joined to 5).', expect: '4.9-5.1 V DC', verify: true },
+          { n: 5, name: '+5V', type: 'power', desc: '+5 V logic.', expect: '4.9-5.1 V DC', verify: true },
+          { n: 6, name: 'CHIP SHUTOFF', type: 'ctrl', desc: '+5 V shut-off from the sleep circuit (U321/Q301): removes main logic power for about 10 s.' },
+          { n: 7, name: 'LOGIC GND', type: 'ground', desc: 'Logic ground.' },
+          { n: 8, name: 'LOGIC GND', type: 'ground', desc: 'Logic ground.' },
+          { n: 9, name: 'LOGIC GND', type: 'ground', desc: 'Logic ground.' },
+          { n: 10, name: 'MOTOR BATT +', type: 'power', desc: 'Motor battery + (+12 V system).', expect: '10-13.9 V DC' },
+          { n: 11, name: 'LOW MOTOR BATT', type: 'ctrl', desc: 'Low motor battery detector output.' },
+          { n: 12, name: 'MOTOR GND', type: 'ground', desc: 'Motor battery ground.' }
+        ],
+        sources: [
+          { label: 'ET-18 Schematics sheet 3 of 4, power supply circuit board (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Schematics%20sheet%203%20of%204%20%28io%2C%20main%20drive%2C%20power%20supply%29.pdf' },
+          { label: 'ET-18 Block Interconnect Diagram (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Block%20Interconnect%20Diagram.pdf' }
+        ] },
+
+      { id: 'hero1-p202', name: 'Power supply board charge and battery input (P202, pins 13-24)', kind: '12-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(13, 24)), outline: hkRowOutline(12), verify: true,
+        verifiedAgainst: 'ET-18 Schematics sheet 3 (power supply board); ET-18 Block Interconnect Diagram',
+        summary: 'Charger and battery wiring into the two charge regulators (U201 logic, U204 motor). Heathkit numbers pins board-wide, so this header runs 13-24. Pads in number order along one row (layout assumed). Wire colours differ between the two drawings; pin roles agree.',
         pins: [
-          { n: 9, name: 'ABORT', desc: 'Low = abort switch pressed; drives NMI (CPU pin 6).' }
-        ], terms: ['nmi'] },
-      { id: 'hero1-p1304', name: 'Experimental board Sleep (P1304)', kind: 'connector', verify: false,
-        summary: 'Sleep switch on the experimental board. Pulled low when the switch is in SLEEP.',
+          { n: 13, name: 'CHG GND', type: 'ground', desc: 'Charger ground return (from charger socket pin 4).' },
+          { n: 14, name: 'LOGIC REG IN', type: 'power', desc: 'Charger + into logic regulator U201 (from socket pin 8).', expect: '+25 to +27 V DC with the charger on' },
+          { n: 15, name: 'LOGIC REG OUT', type: 'power', desc: 'Logic regulator output through D201, to socket pin 3.', expect: 'About 13.9 V DC on charge' },
+          { n: 16, name: 'LOGIC BATT', type: 'power', desc: 'Logic battery + node; joined to pin 17 on the board.', conflict: 'The power supply schematic brackets 15-16 as "charger jumper" and gives 17 as "to ON/OFF switch and logic batteries"; the block diagram runs SW2 to 16. 16 and 17 are one node on the board.' },
+          { n: 17, name: 'LOGIC BATT', type: 'power', desc: 'To the ON/OFF switch and logic batteries; joined to 16.' },
+          { n: 18, name: 'GND', type: 'ground', desc: 'Ground (large black wire); joined to 19.' },
+          { n: 19, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 20, name: '+12V STEERING', type: 'power', desc: '+12 V for the steering motor; joined to 21 (motor battery via SW2).', expect: '10-13.9 V DC' },
+          { n: 21, name: 'MOTOR BATT', type: 'power', desc: 'Motor battery + node from the ON/OFF switch.' },
+          { n: 22, name: 'MOTOR REG OUT', type: 'power', desc: 'Motor regulator U204 output through D205, to socket pin 5.', expect: 'About 13.9 V DC on charge' },
+          { n: 23, name: 'MOTOR REG IN', type: 'power', desc: 'Charger + into U204 (from socket pin 9). About 27 V here near full charge (TM).', expect: '+25 to +27 V DC with the charger on' },
+          { n: 24, name: 'GND', type: 'ground', desc: 'Ground.' }
+        ],
+        sources: [
+          { label: 'ET-18 Schematics sheet 3 of 4, power supply circuit board (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Schematics%20sheet%203%20of%204%20%28io%2C%20main%20drive%2C%20power%20supply%29.pdf' },
+          { label: 'ET-18 Technical Manual, charger regulating circuits, printed p. 73 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=84' }
+        ] },
+
+      { id: 'hero1-p401', name: 'CPU board display connector (P401, pins 1-10)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 10)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-2, printed p. 97',
+        summary: 'CPU board to the display board: reset button, segment data and addresses, display power and select. Heathkit numbers pins board-wide (P401 1-10, P402 11-20). Bit order within BA0-BA2 and BA4-BA6 assumed ascending; pads in number order (layout assumed).',
         pins: [
-          { n: 10, name: 'SLEEP', desc: 'Low = Sleep switch in the SLEEP position.' }
-        ], terms: [] }
+          { n: 1, name: 'RESET', type: 'ctrl', desc: 'One side of the RESET button; the other side is ground. Pressing it sends a reset pulse to the 6808.' },
+          { n: 2, name: '/D0', type: 'data', desc: 'Inverted data bus D0: the segment on/off bit for the display latches.' },
+          { n: 3, name: 'BA0', type: 'addr', desc: 'Buffered address: selects the segment within a digit.' },
+          { n: 4, name: 'BA1', type: 'addr', desc: 'Buffered address: segment select.' },
+          { n: 5, name: 'BA2', type: 'addr', desc: 'Buffered address: segment select.' },
+          { n: 6, name: 'DISPLAY POWER', type: 'power', desc: 'Display power control from $C2E0 bit 4; logic 1 turns the display board on.' },
+          { n: 7, name: 'BA4', type: 'addr', desc: 'Buffered address: selects the digit.' },
+          { n: 8, name: 'BA5', type: 'addr', desc: 'Buffered address: digit select.' },
+          { n: 9, name: 'BA6', type: 'addr', desc: 'Buffered address: digit select.' },
+          { n: 10, name: '/DISP SEL', type: 'ctrl', desc: 'Display address select; low at $C110 enables the 74LS42 digit selector.' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-2, p. 97 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/97' }] },
+
+      { id: 'hero1-p402', name: 'CPU board keypad connector (P402, pins 11-20)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(11, 20)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-3, printed p. 97',
+        summary: 'Keypad rows from the display board, and display board power. Any read of $C000-$C0FF enables U420 and puts the six row bits on the data bus; $3F means no key. Pads in number order (layout assumed).',
+        pins: [
+          { n: 11, name: 'ROW', type: 'kbd', desc: 'Key sense row input (one of six; bit order not given).' },
+          { n: 12, name: 'ROW', type: 'kbd', desc: 'Key sense row input.' },
+          { n: 13, name: 'ROW', type: 'kbd', desc: 'Key sense row input.' },
+          { n: 14, name: 'ROW', type: 'kbd', desc: 'Key sense row input.' },
+          { n: 15, name: 'ROW', type: 'kbd', desc: 'Key sense row input.' },
+          { n: 16, name: 'ROW', type: 'kbd', desc: 'Key sense row input.' },
+          { n: 17, name: '+5V', type: 'power', desc: '+5 V logic power from the power supply.', expect: '4.9-5.1 V DC' },
+          { n: 18, name: '+5V', type: 'power', desc: '+5 V logic power.', expect: '4.9-5.1 V DC' },
+          { n: 19, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 20, name: 'GND', type: 'ground', desc: 'Ground.' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-3, p. 97 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/97' }] },
+
+      { id: 'hero1-p1201', name: 'Display board connector (P1201, 25 pins)', kind: '25-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 25)), outline: hkRowOutline(25), verify: true,
+        verifiedAgainst: 'ET-18 Schematics sheet 4 of 4 (display circuit board, P1201)',
+        summary: 'The display and keypad board end of the CPU cable. Pin 8 high turns on Q1202 and Q1201, which feed +5 V to every circuit on the board: latches U1201-U1206, decoder U1208, keypad buffers U1209 and pull-ups. With pin 8 low the display is dark and the keypad reads open. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: '+5V IN', type: 'power', desc: 'Supply into pass transistor Q1201 (joined to 2, C1201 68 µF).', verify: true },
+          { n: 2, name: '+5V IN', type: 'power', desc: 'Supply into Q1201.', verify: true },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground (joined to 4 and 12).' },
+          { n: 4, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 5, name: 'A2', type: 'addr', desc: 'Segment address A2 to the latches (through U1207).' },
+          { n: 6, name: 'A1', type: 'addr', desc: 'Segment address A1.' },
+          { n: 7, name: 'A0', type: 'addr', desc: 'Segment address A0.' },
+          { n: 8, name: 'DISPLAY POWER', type: 'power', desc: 'High = display board +5 V on (Q1202, Q1201). From $C2E0 bit 4.', expect: 'High (about 5 V) with the display lit' },
+          { n: 9, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 10, name: 'RESET', type: 'ctrl', desc: 'RESET key (joined to 11); the key grounds it.' },
+          { n: 11, name: 'RESET', type: 'ctrl', desc: 'RESET key.' },
+          { n: 12, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 13, name: '+5V', type: 'power', desc: 'Labelled +5V; on the switched +5V SOURCE rail from Q1201.', verify: true },
+          { n: 14, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 15, name: 'D4', type: 'kbd', desc: 'Keypad row bit 4 out through buffer U1209.' },
+          { n: 16, name: 'D3', type: 'kbd', desc: 'Keypad row bit 3.' },
+          { n: 17, name: 'D2', type: 'kbd', desc: 'Keypad row bit 2.' },
+          { n: 18, name: 'D5', type: 'kbd', desc: 'Keypad row bit 5.' },
+          { n: 19, name: 'D1', type: 'kbd', desc: 'Keypad row bit 1.' },
+          { n: 20, name: 'D0', type: 'kbd', desc: 'Keypad row bit 0.' },
+          { n: 21, name: '/D0', type: 'data', desc: 'Inverted D0: segment on/off data to the latches.' },
+          { n: 22, name: 'A5', type: 'addr', desc: 'Digit address A5 to decoder U1208.' },
+          { n: 23, name: 'A6', type: 'addr', desc: 'Digit address A6.' },
+          { n: 24, name: 'SELECT', type: 'ctrl', desc: 'Display select into the U1208 decoder enable (unlabelled on the drawing).', verify: true },
+          { n: 25, name: 'A4', type: 'addr', desc: 'Digit address A4.' }
+        ],
+        sources: [{ label: 'ET-18 Schematics sheet 4 of 4, display circuit board (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Schematics%20sheet%204%20of%204%20%28display%2C%20motion%29.pdf' }],
+        terms: [] },
+
+      { id: 'hero1-p403', name: 'CPU board to experimental board and tape (P403, pins 21-30)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(21, 30)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-4, printed p. 99',
+        summary: 'Power, ABORT, R/W, E clock, tape audio in and the user interrupt to the experimental board and sense board. Pads in number order (layout assumed).',
+        pins: [
+          { n: 21, name: '+5V', type: 'power', desc: '+5 V power.', expect: '4.9-5.1 V DC' },
+          { n: 22, name: '+5V', type: 'power', desc: '+5 V power.', expect: '4.9-5.1 V DC' },
+          { n: 23, name: '/ABORT', type: 'ctrl', desc: 'One side of the ABORT switch; low (pressed) drives the 6808 NMI.' },
+          { n: 24, name: '/R/W', type: 'ctrl', desc: 'Inverted read/write to the experimental board: low on read, high on write.' },
+          { n: 25, name: 'E', type: 'clock', desc: 'The 6808 E clock, to the sense board.', expect: 'Crystal / 4 (about 0.9 or 1 MHz)' },
+          { n: 26, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 27, name: 'TAPE IN', type: 'audio', desc: 'Audio tape signal from the ear jack of the tape recorder.' },
+          { n: 28, name: '/EXP IRQ', type: 'ctrl', desc: 'User-defined experimental board interrupt, active low; latched by U410 into $C200 bit 7.' },
+          { n: 29, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 30, name: 'GND', type: 'ground', desc: 'Ground.' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-4, p. 99 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/99' }],
+        terms: ['nmi'] },
+
+      { id: 'hero1-p404', name: 'CPU-I/O intercard bus (P404, pins 31-54)', kind: '24-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(31, 54)), outline: hkRowOutline(24), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-5, printed p. 100',
+        summary: 'Interrupt requests from the I/O board to the CPU, and the CPU address selects and strobes for every I/O port. Pads in number order (layout assumed).',
+        pins: [
+          { n: 31, name: 'SONAR RESET', type: 'ctrl', desc: 'Resets the sonar range timer; clearing the sonar interrupt also clears the count.' },
+          { n: 32, name: '/SONAR IRQ', type: 'ctrl', desc: 'Sonar interrupt input; a low pulse latches a pending request.' },
+          { n: 33, name: 'MOTION IRQ', type: 'ctrl', desc: 'Motion detector interrupt input.' },
+          { n: 34, name: 'LOW MOTOR IRQ', type: 'ctrl', desc: 'Low motor-voltage interrupt request.' },
+          { n: 35, name: 'LOW LOGIC IRQ', type: 'ctrl', desc: 'Low logic-voltage interrupt request.' },
+          { n: 36, name: 'RTC IRQ', type: 'ctrl', desc: 'Real-time clock 1024 Hz output when enabled; interrupts the 6808 1024 times a second.' },
+          { n: 37, name: 'PENDANT IRQ', type: 'ctrl', desc: 'Interrupt from pulling the trigger on the teaching pendant.' },
+          { n: 38, name: 'WHEEL IRQ', type: 'ctrl', desc: 'Drive wheel optical encoder pulses, conditioned for the interrupt circuit.' },
+          { n: 39, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 40, name: 'SEL SONAR', type: 'ctrl', desc: 'Address select: read the sonar range counter.' },
+          { n: 41, name: 'SEL SENSE', type: 'ctrl', desc: 'Address select: read the sense board output.' },
+          { n: 42, name: 'SEL LIMITS', type: 'ctrl', desc: 'Address select: read the limit switches and the digital tape input.' },
+          { n: 43, name: 'SEL PENDANT', type: 'ctrl', desc: 'Address select: read the teaching pendant.' },
+          { n: 44, name: 'SEL EXP IN', type: 'ctrl', desc: 'Address select: read the experimental board eight user inputs.' },
+          { n: 45, name: 'STB EXP OUT', type: 'ctrl', desc: 'Address strobe: write the experimental board eight user outputs.' },
+          { n: 46, name: 'STB SPEECH', type: 'ctrl', desc: 'Address strobe: write the phoneme code and inflection to the speech board.' },
+          { n: 47, name: 'STB STEER/PIVOT', type: 'ctrl', desc: 'Address strobe: phase signals for the steering motor and the pivot or rotate arm motor.' },
+          { n: 48, name: 'STB GRIP/SHOULDER', type: 'ctrl', desc: 'Address strobe: gripper/shoulder and extend/head motors.' },
+          { n: 49, name: 'STB MAIN DRIVE', type: 'ctrl', desc: 'Address strobe: six-bit speed, direction and enable for the main drive.' },
+          { n: 50, name: 'STB ARM SEL', type: 'ctrl', desc: 'Address strobe: arm select bits, speech strobe and light/sound select.' },
+          { n: 51, name: 'STB POWER', type: 'ctrl', desc: 'Address strobe: board power select bits and the sleep command ($C2E0).' },
+          { n: 52, name: 'VSB', type: 'power', desc: 'Standby power to the two 2K RAMs on the CPU board during sleep.' },
+          { n: 53, name: 'MEM PROTECT', type: 'ctrl', desc: 'RAM write protect during sleep; normally the memory write signal.' },
+          { n: 54, name: 'NC', type: 'nc', desc: 'Not connected.' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-5, p. 100 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/100' }],
+        terms: ['irq', 'sleep'] },
+
+      { id: 'hero1-p405', name: 'CPU-I/O intercard bus (P405, pins 55-78)', kind: '24-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(55, 78)), outline: hkRowOutline(24), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-6, printed p. 101',
+        summary: 'Power, data buses, R/W and the RTC select between the CPU and I/O boards. The table gives 62-69 as the buffered and 70-77 as the unbuffered data bus without the bit order. Pads in number order (layout assumed).',
+        pins: [
+          { n: 55, name: '+5V', type: 'power', desc: '+5 V power supply.', expect: '4.9-5.1 V DC' },
+          { n: 56, name: '+5V', type: 'power', desc: '+5 V power supply.', expect: '4.9-5.1 V DC' },
+          { n: 57, name: 'TAPE DIGITAL', type: 'io', desc: 'Digital tape input derived from the audio input on P403 pin 27, passed to the I/O card.' },
+          { n: 58, name: 'DISPLAY POWER', type: 'power', desc: 'Display power enable from the I/O card, passed through the CPU board to P401 pin 6.' },
+          { n: 59, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 60, name: 'R/W', type: 'ctrl', desc: '6808 read/write, not inverted: high on read.' },
+          { n: 61, name: 'SEL RTC', type: 'ctrl', desc: 'Address select for the real-time clock chip.' },
+          ...hkSeq(62, 69).map(n => ({ n, name: 'BD', type: 'data', desc: 'Buffered data bus line (bit order not given).' })),
+          ...hkSeq(70, 77).map(n => ({ n, name: 'D', type: 'data', desc: 'Unbuffered 6808 data bus line (bit order not given).' })),
+          { n: 78, name: 'GND', type: 'ground', desc: 'Ground.' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-6, p. 101 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/101' }] },
+
+      { id: 'hero1-p406', name: 'CPU expansion connector (P406)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 10)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-7, printed p. 101',
+        summary: 'Unused on a stock robot; the ET-18-6 memory expansion and home-built boards use P406-P408. Pins 3-10 carry BA7-BA0 (order assumed to follow the table). Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: '/SEL 4000', type: 'ctrl', desc: 'Address select for $4000-$5FFF.' },
+          { n: 2, name: '/SEL 6000', type: 'ctrl', desc: 'Address select for $6000-$7FFF.' },
+          ...[7, 6, 5, 4, 3, 2, 1, 0].map((b, i) => ({ n: 3 + i, name: 'BA' + b, type: 'addr', desc: 'Buffered address line A' + b + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-7, p. 101 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/101' }] },
+
+      { id: 'hero1-p407', name: 'CPU expansion connector (P407)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 10)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-8, printed p. 101',
+        summary: 'Reset, R/W and the unbuffered data bus for expansion. Pin 1 is a reset output for external devices, not a reset input. Pins 3-10 carry D0-D7 (order assumed to follow the table).',
+        pins: [
+          { n: 1, name: 'RESET', type: 'ctrl', desc: 'Direct to the 6808 reset line; use it to reset add-on devices.' },
+          { n: 2, name: 'R/W', type: 'ctrl', desc: 'Unbuffered 6808 read/write.' },
+          ...[0, 1, 2, 3, 4, 5, 6, 7].map((b, i) => ({ n: 3 + i, name: 'D' + b, type: 'data', desc: 'Unbuffered data bus bit ' + b + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-8, p. 101 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/101' }] },
+
+      { id: 'hero1-p408', name: 'CPU expansion connector (P408)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 10)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-9, printed p. 101',
+        summary: 'Two more memory selects and the upper buffered address lines (A15-A8 on pins 3-10, as the table says, respectively).',
+        pins: [
+          { n: 1, name: '/SEL 8000', type: 'ctrl', desc: 'Address select for $8000-$9FFF.' },
+          { n: 2, name: '/SEL A000', type: 'ctrl', desc: 'Address select for $A000-$BFFF.' },
+          ...[15, 14, 13, 12, 11, 10, 9, 8].map((b, i) => ({ n: 3 + i, name: 'BA' + b, type: 'addr', desc: 'Buffered address line A' + b + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-9, p. 101 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/101' }] },
+
+      { id: 'hero1-p308', name: 'I/O board experimental output connector (P308, pins 109-118)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(109, 118)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-10, printed p. 101',
+        summary: 'The eight experimental board lines from U305, the $C220 output latch. A low output sinks up to 24 mA. Pads in number order (layout assumed).',
+        pins: [
+          { n: 109, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 110, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          ...[7, 6, 5, 4, 3, 2, 1, 0].map((b, i) => ({ n: 111 + i, name: 'D' + b, type: 'io', desc: 'Experimental board D' + b + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-10, p. 101 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/101' }] },
+
+      { id: 'hero1-p306', name: 'I/O board experimental input connector (P306, pins 129-138)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(129, 138)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-17, printed p. 103',
+        summary: 'Sleep switch sense and the eight experimental board lines read live (not latched) by U301 at $C2A0. TTL levels: above 2 V reads 1, below 0.8 V reads 0. Pads in number order (layout assumed).',
+        pins: [
+          { n: 129, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 130, name: 'SLEEP SENSE', type: 'ctrl', desc: 'Sleep switch sense from the experimental board.' },
+          ...[7, 6, 5, 4, 3, 2, 1, 0].map((b, i) => ({ n: 131 + i, name: 'D' + b, type: 'io', desc: 'Experimental board D' + b + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-17, p. 103 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/103' }] },
+
+      { id: 'hero1-p307', name: 'I/O board status connector (P307, pins 119-128)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(119, 128)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-18, printed p. 103',
+        summary: 'Limit switches, digital tape input and speech request, read at $C260. Pads in number order (layout assumed).',
+        pins: [
+          { n: 119, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 120, name: '+5V', type: 'power', desc: '+5 V power.', expect: '4.9-5.1 V DC' },
+          { n: 121, name: 'TAPE IN', type: 'io', desc: 'Tape input (digital).' },
+          { n: 122, name: 'STEER LIMIT CW', type: 'io', desc: 'Steering limit, clockwise.' },
+          { n: 123, name: 'ARM LIMIT UP', type: 'io', desc: 'Arm limit, up.' },
+          { n: 124, name: 'HEAD LIMIT CCW', type: 'io', desc: 'Head limit, counterclockwise.' },
+          { n: 125, name: 'STEER LIMIT CCW', type: 'io', desc: 'Steering limit, counterclockwise.' },
+          { n: 126, name: 'ARM LIMIT DOWN', type: 'io', desc: 'Arm limit, down.' },
+          { n: 127, name: 'HEAD LIMIT CW', type: 'io', desc: 'Head limit, clockwise.' },
+          { n: 128, name: 'SPEECH REQUEST', type: 'ctrl', desc: 'Speech request (A/R) from the speech board.' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-18, p. 103 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/103' }] },
+
+      { id: 'hero1-p310', name: 'Main drive connector (P310, pins 89-98)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(89, 98)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-11, printed p. 102',
+        summary: 'I/O board to the main drive board: direction, on/off and the six-bit speed from the $C2A0 write latch. Pads in number order (layout assumed).',
+        pins: [
+          { n: 89, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 90, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 91, name: 'FWD/REV', type: 'ctrl', desc: 'Forward/reverse select.' },
+          { n: 92, name: 'ON/OFF', type: 'ctrl', desc: 'Drive on/off.' },
+          ...[5, 4, 3, 2, 1, 0].map((b, i) => ({ n: 93 + i, name: 'SPEED D' + b, type: 'ctrl', desc: 'Speed select bit D' + b + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-11, p. 102 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/102' }] },
+
+      { id: 'hero1-p309', name: 'Motor connector, steering and pivot/rotate (P309, pins 99-108)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(99, 108)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-12, printed p. 102',
+        summary: 'Stepper phase lines for the steering motor and the arm pivot/rotate motor, to the arm drive board. Pads in number order (layout assumed).',
+        pins: [
+          { n: 99, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 100, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          ...[4, 3, 2, 1].map((ph, i) => ({ n: 101 + i, name: 'STEER Φ' + ph, type: 'ctrl', desc: 'Steering motor phase ' + ph + '.' })),
+          ...[4, 3, 2, 1].map((ph, i) => ({ n: 105 + i, name: 'PIVOT Φ' + ph, type: 'ctrl', desc: 'Pivot/rotate motor phase ' + ph + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-12, p. 102 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/102' }] },
+
+      { id: 'hero1-p315', name: 'Motor connector, extend/head and gripper/shoulder (P315, pins 159-168)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(159, 168)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-14, printed p. 102',
+        summary: 'Stepper phase lines for the arm extend/head and gripper/shoulder motors. Pads in number order (layout assumed).',
+        pins: [
+          { n: 159, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 160, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          ...[4, 3, 2, 1].map((ph, i) => ({ n: 161 + i, name: 'EXT/HEAD Φ' + ph, type: 'ctrl', desc: 'Extend/head motor phase ' + ph + '.' })),
+          ...[4, 3, 2, 1].map((ph, i) => ({ n: 165 + i, name: 'GRIP/SHLDR Φ' + ph, type: 'ctrl', desc: 'Gripper/shoulder motor phase ' + ph + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-14, p. 102 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/102' }] },
+
+      { id: 'hero1-p316', name: 'I/O board control connector (P316, pins 149-158)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(149, 158)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-15, printed p. 103',
+        summary: 'Power, speech strobe and the two arm-select lines that pick which arm motors the phase lines drive. Pads in number order (layout assumed).',
+        pins: [
+          { n: 149, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 150, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 151, name: '+6V', type: 'power', desc: '+6 V power.', expect: 'About +6 V DC', verify: true },
+          { n: 152, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 153, name: '+5V', type: 'power', desc: '+5 V power.', expect: '4.9-5.1 V DC' },
+          { n: 154, name: '+5V', type: 'power', desc: '+5 V power.', expect: '4.9-5.1 V DC' },
+          { n: 155, name: 'SPARE', type: 'nc', desc: 'Spare.' },
+          { n: 156, name: 'SPEECH STROBE', type: 'ctrl', desc: 'Speech strobe to the speech board.' },
+          { n: 157, name: 'ARM SEL A', type: 'ctrl', desc: 'Arm select: pivot, grip, extend.' },
+          { n: 158, name: 'ARM SEL B', type: 'ctrl', desc: 'Arm select: rotate, shoulder, head.' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-15, p. 103 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/103' }] },
+
+      { id: 'hero1-p317', name: 'I/O board enables connector (P317, pins 139-148)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(139, 148)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-16, printed p. 103',
+        summary: 'The power-control outputs of the $C2E0 latch to the head boards, plus light/sound select and tape out. Pads in number order (layout assumed).',
+        pins: [
+          { n: 139, name: 'LIGHT/SOUND SEL', type: 'ctrl', desc: 'Light/sound select.' },
+          { n: 140, name: 'SLEEP CMD', type: 'ctrl', desc: 'Sleep command.' },
+          { n: 141, name: 'SENSE PWR', type: 'ctrl', desc: 'Sense power control.' },
+          { n: 142, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 143, name: 'SPEECH PWR', type: 'ctrl', desc: 'Speech power control.' },
+          { n: 144, name: 'MOTION PWR', type: 'ctrl', desc: 'Motion detect power control.' },
+          { n: 145, name: 'SONAR PWR', type: 'ctrl', desc: 'Sonar power control.' },
+          { n: 146, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 147, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 148, name: 'TAPE OUT', type: 'audio', desc: 'Tape out signal (audio to the recorder MIC input).' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-16, p. 103 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/103' }] },
+
+      { id: 'hero1-p311', name: 'I/O board miscellaneous connector (P311, pins 79-88)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(79, 88)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-21, printed p. 104',
+        summary: 'Sonar pulses, motion detect, low-voltage detects, drive encoder and +12 V. Pads in number order (layout assumed).',
+        pins: [
+          { n: 79, name: 'SONAR RX', type: 'io', desc: 'Sonar receive pulse.' },
+          { n: 80, name: 'SONAR TX', type: 'io', desc: 'Sonar transmit pulse.' },
+          { n: 81, name: 'MOTION', type: 'io', desc: 'Motion detect pulse.' },
+          { n: 82, name: 'LOW DRIVE V', type: 'ctrl', desc: 'Low drive voltage detect.' },
+          { n: 83, name: 'LOW LOGIC V', type: 'ctrl', desc: 'Low logic voltage detect.' },
+          { n: 84, name: 'OPTO C', type: 'io', desc: 'Collector of the drive opto detector.' },
+          { n: 85, name: 'OPTO A', type: 'io', desc: 'Anode of the drive opto emitter.' },
+          { n: 86, name: '+12V', type: 'power', desc: '+12 V power.', expect: '10-13.9 V DC (battery)' },
+          { n: 87, name: '/SLEEP', type: 'ctrl', desc: 'Sleep command to the power supply, active low.' },
+          { n: 88, name: '+12V', type: 'power', desc: '+12 V power.', expect: '10-13.9 V DC (battery)' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-21, p. 104 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/104' }] },
+
+      { id: 'hero1-p312', name: 'I/O board sense connector (P312, pins 189-198)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(189, 198)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-19, printed p. 104',
+        summary: 'The eight-bit sense value from the ADC0804 on the sense board, read at $C240. Pads in number order (layout assumed).',
+        pins: [
+          { n: 189, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 190, name: '+5V', type: 'power', desc: '+5 V power.', expect: '4.9-5.1 V DC' },
+          ...[7, 6, 5, 4, 3, 2, 1, 0].map((b, i) => ({ n: 191 + i, name: 'SENSE D' + b, type: 'data', desc: 'Sense value bit D' + b + '.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-19, p. 104 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/104' }],
+        terms: ['adc'] },
+
+      { id: 'hero1-p313', name: 'Teaching pendant connector (P313, pins 179-188)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(179, 188)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-20, printed p. 104',
+        summary: 'The remote teaching pendant: body/arm switch, rotary switch code, left/right and trigger. Pads in number order (layout assumed).',
+        pins: [
+          { n: 179, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 180, name: '+5V', type: 'power', desc: '+5 V power.', expect: '4.9-5.1 V DC' },
+          { n: 181, name: '/BODY/ARM', type: 'io', desc: 'Body/arm status.' },
+          { n: 182, name: 'ROTARY D2', type: 'io', desc: 'Rotary switch code D2 (codes: Fig. 1-11).' },
+          { n: 183, name: 'ROTARY D1', type: 'io', desc: 'Rotary switch code D1.' },
+          { n: 184, name: 'ROTARY D0', type: 'io', desc: 'Rotary switch code D0.' },
+          { n: 185, name: '/RIGHT', type: 'io', desc: 'Right, active low.' },
+          { n: 186, name: '/LEFT', type: 'io', desc: 'Left, active low.' },
+          { n: 187, name: 'TRIGGER', type: 'io', desc: 'Trigger.' },
+          { n: 188, name: 'NC', type: 'nc', desc: 'Not connected.' }
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-20, p. 104 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/104' }] },
+
+      { id: 'hero1-p314', name: 'I/O board speech connector (P314, pins 169-178)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(169, 178)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO 1 Advanced Programming and Interfacing, Table 6-13, printed p. 102',
+        summary: 'Pitch and phoneme code from the $C240 latch to the speech board. The printed table repeats 172 and 173 and stops at 176; the pins here are renumbered 173-178 for P5-P0, which fills the ten-pin header.',
+        pins: [
+          { n: 169, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 170, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 171, name: 'I2', type: 'ctrl', desc: 'Pitch select I2.' },
+          { n: 172, name: 'I1', type: 'ctrl', desc: 'Pitch select I1.' },
+          ...[5, 4, 3, 2, 1, 0].map((b, i) => ({ n: 173 + i, name: 'P' + b, type: 'data', desc: 'Phoneme code P' + b + '.', conflict: 'Table 6-13 prints these as 173, 172, 173, 174, 175, 176 (duplicate numbers); renumbered in sequence.' }))
+        ],
+        sources: [{ label: 'HERO 1 Advanced Programming and Interfacing, Table 6-13, p. 102 (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/102' }],
+        terms: ['phoneme'] },
+
+      { id: 'hero1-p501', name: 'Speech board signal connector (P501, 12-pin)', kind: '12-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 12)), outline: hkRowOutline(12), verify: true,
+        verifiedAgainst: 'ET-18 Illustration Booklet, Speech Accessory Board sheets 2-3 (schematic, P501); TM printed p. 79',
+        summary: 'Speech accessory board to the main harness. Pins 1-2 set pitch, 3 strobes the phoneme, 4 is the request back, 5-10 carry the six-bit code (port bits D5-D0 of $C240), 11 switches speech power. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'PITCH (D7)', type: 'ctrl', desc: 'Pitch line to SC-01A pin 2 (I2).' },
+          { n: 2, name: 'PITCH (D6)', type: 'ctrl', desc: 'Pitch line to SC-01A pin 3 (I1).' },
+          { n: 3, name: 'STROBE', type: 'ctrl', desc: 'Strobe to SC-01A pin 7; a momentary high latches the phoneme.' },
+          { n: 4, name: 'REQUEST', type: 'ctrl', desc: 'Request from SC-01A pin 8; high = ready for the next phoneme.' },
+          { n: 5, name: 'P5 (D5)', type: 'data', desc: 'Phoneme code bit 5 to SC-01A pin 9.' },
+          { n: 6, name: 'P4 (D4)', type: 'data', desc: 'Phoneme code bit 4 to pin 10.' },
+          { n: 7, name: 'P3 (D3)', type: 'data', desc: 'Phoneme code bit 3 to pin 11.' },
+          { n: 8, name: 'P2 (D2)', type: 'data', desc: 'Phoneme code bit 2 to pin 12.' },
+          { n: 9, name: 'P1 (D1)', type: 'data', desc: 'Phoneme code bit 1 to pin 13.' },
+          { n: 10, name: 'P0 (D0)', type: 'data', desc: 'Phoneme code bit 0 to pin 14.' },
+          { n: 11, name: 'ON/OFF', type: 'power', desc: 'Speech board power control from $C2E0 bit 3 (through Q502).' },
+          { n: 12, name: 'NC', type: 'nc', desc: 'Not connected.' }
+        ],
+        sources: [{ label: 'ET-18 Illustration Booklet, Speech Accessory Board sheets 2-3, schematic (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Illustration%20Booklet%20-%20Speech%20Accessory%20Board%20sheet%202-3.pdf' }],
+        terms: ['phoneme', 'strobe'] },
+
+      { id: 'hero1-p502', name: 'Speech board power and speaker (P502, pins 13-16)', kind: '4-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(13, 16)), outline: hkRowOutline(4), verify: true,
+        verifiedAgainst: 'ET-18 Illustration Booklet, Speech Accessory Board sheets 2-3 (schematic, P502)',
+        summary: '+12 V in, ground and the amplified audio to speaker A16. Pads in number order (layout assumed).',
+        pins: [
+          { n: 13, name: '+12V', type: 'power', desc: '+12 V in (red), through L501.', expect: '10-13.9 V DC (logic battery)' },
+          { n: 14, name: 'GND', type: 'ground', desc: 'Ground (black).' },
+          { n: 15, name: 'AUDIO OUT', type: 'audio', desc: 'Audio output to the speaker (green).' },
+          { n: 16, name: 'NC', type: 'nc', desc: 'Not connected.' }
+        ],
+        sources: [{ label: 'ET-18 Illustration Booklet, Speech Accessory Board sheets 2-3, schematic (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Illustration%20Booklet%20-%20Speech%20Accessory%20Board%20sheet%202-3.pdf' }] },
+
+      { id: 'hero1-exp-board', name: 'Experimental board breadboard and sockets', kind: 'Breadboard block (128 contacts) and eight 4-contact socket strips', verify: true,
+        verifiedAgainst: 'ET-18 Assembly Manual printed p. 14-16 (experimental circuit board parts and assembly)',
+        summary: 'The breadboard in the head: a 128-contact block, eight 4-contact socket strips, ABORT (SW1301) and SLEEP (SW1302), and four 10-pin plugs P1301-P1304 to the harness. It carries +5 V, +12 V, ground, R/W, the user IRQ and the eight in and eight out lines (see P403, P306, P308). The socket-strip label (part 390-2413) is not in the scans read, so the strip-by-strip table is not sourced yet.', pins: [] },
+
+      { id: 'hero1-p1302', name: 'Experimental board plug P1302 (Abort)', kind: '10-pin angled header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 10)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'ET-18 Technical Manual printed p. 82-83 (experimental board); Advanced Programming printed p. 140 (NMI tie-in points)',
+        summary: 'One of four 10-pin angled headers on the experimental board. Only pin 9 is named in the manuals: ABORT pulls it low and drives the CPU NMI (the same net as P403 pin 23). The other nine pins are not sourced.',
+        pins: [
+          { n: 9, name: '/ABORT', type: 'ctrl', desc: 'Low = ABORT pressed; drives NMI (CPU pin 6).' }
+        ],
+        sources: [{ label: 'ET-18 Technical Manual, experimental board, printed p. 82-83 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=94' }],
+        terms: ['nmi'] },
+
+      { id: 'hero1-p1304', name: 'Experimental board plug P1304 (Sleep)', kind: '10-pin angled header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 10)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'ET-18 Technical Manual printed p. 82-83 (experimental board)',
+        summary: 'One of four 10-pin angled headers on the experimental board. Only pin 10 is named: the SLEEP switch pulls it low. The other nine pins are not sourced.',
+        pins: [
+          { n: 10, name: '/SLEEP', type: 'ctrl', desc: 'Low = Sleep switch in the SLEEP position.' }
+        ],
+        sources: [{ label: 'ET-18 Technical Manual, experimental board, printed p. 82-83 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=94' }],
+        terms: ['sleep'] }
     ],
+
     herojr: [
-      { id: 'herojr-rs232', name: 'RS-232 (DB-25, J2 via P203)', kind: 'DB-25', verify: false,
-        summary: 'Serial connector on the RTA-1-3 accessory. The robot is DCE-wired: a terminal plugs in pin for pin. No handshake lines leave the board.',
+      { id: 'herojr-charger', name: 'CHARGER socket (J1, rear of head)', kind: '4-pin round power socket', geo: 'custom', pads: JR_J1_PADS, outline: 'M50 6 A44 44 0 1 1 49.9 6 Z', verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1 (P1, J1, P307); TM printed p. 20; HERO Robot FAQ 3.9',
+        summary: 'The power-cube cord plugs in here. Plug P1 puts charger + on pin 2 and ground on pin 3, and jumpers 1 to 4: that jumper closes the path from the on-board charge regulator U301 back to the batteries, so with the cord out the regulator is isolated. Pad layout as drawn on the schematic (key at the top); check against the socket.',
         pins: [
-          { n: 2, name: 'RS232 REC', desc: 'Received data into the robot (green wire, P203-7 to Q201 to ACIA Rx).' },
-          { n: 3, name: 'RS232 XMIT', desc: 'Transmitted data from the robot (red wire, P203-6 through U219).' },
-          { n: 7, name: 'GND', desc: 'Signal ground (black wire, P203-8).' }
-        ], terms: ['acia'] },
-      { id: 'herojr-p201', name: 'Sonar and sense interconnect (P201 / P301)', kind: 'board-to-board', verify: false,
-        summary: 'Signal names for the sonar, A/D and wheel lines between the CPU board and the power/sense board, from the schematic.',
+          { n: 1, name: 'BATT +', type: 'power', desc: 'To the OFF-ON switch SW1 and fuse F1 to the batteries.', expect: '11-14 V DC (battery)', verify: true },
+          { n: 2, name: 'CHARGER +', type: 'power', desc: 'Charger + from the power cube to P307 pin 5 (CHARGER INPUT) and regulator U301.', expect: 'About 12 V at 780 mA charging, rising to about 16 V near full' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground (P307 pins 2, 4, 6).', expect: '0 V' },
+          { n: 4, name: 'REG OUT', type: 'power', desc: 'Charge regulator output from P307 pin 1 (CHARGER OUTPUT); the plug jumper returns it to pin 1.' }
+        ],
+        sources: [
+          { label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' },
+          { label: 'HERO Jr Technical Manual, battery charger, printed p. 20 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=21' },
+          { label: 'HERO Robot FAQ 3.9, Hero-Jr charger plug (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html' }
+        ] },
+
+      { id: 'herojr-rs232', name: 'RS-232 (J2, DB-25 on the switch panel; RTA-1-3 accessory)', kind: 'DB-25 female', geo: 'db25', gender: 'female', verify: false,
+        verifiedAgainst: 'HERO Jr RS-232 Accessory manual, Detail 2-3D, printed p. 7-8; TM printed p. 25; Schematics sheet 1',
+        summary: 'A three-wire port from the RTA-1-3 accessory, fitted with female pins. The robot transmits on pin 3 and receives on pin 2 (DCE wiring), so a terminal plugs in with a straight cable. No handshake lines; the ACIA has /CTS and /DCD strapped low. The cable runs to CPU board plug P203 pins 6-8. Baud rate is the SW201 jumper (150-9600). The -10 V for the driver comes from the switching regulator.',
         pins: [
-          { n: 16, name: 'SONAR INIT', desc: 'Sonar init from U214 pin 19 (CB2).' },
-          { n: 17, name: 'A/D OUTPUT', desc: 'ADC0831 serial data back to U215.' },
-          { n: 18, name: 'A/D CLOCK', desc: 'ADC0831 serial clock from U215.' },
-          { n: 19, name: 'A/D CS', desc: 'ADC0831 chip select from U215.' },
-          { n: 20, name: 'SENSE ENABLE', desc: 'Powers the sonar circuits (Q314) and the sense rail.' },
-          { n: 21, name: 'SONAR ECHO', desc: 'Echo from U304 back to U215 pin 18 (CB1).' },
-          { n: 23, name: 'WHEEL DECODER', desc: 'Wheel encoder pulses to U214 CB1.' }
-        ], terms: ['adc', 'sonar'] }
+          { n: 2, name: 'RS232 REC', type: 'serial', desc: 'Data into the robot (green wire, P203 pin 7, through Q201 to ACIA Rx).' },
+          { n: 3, name: 'RS232 XMIT', type: 'serial', desc: 'Data out of the robot (red wire, P203 pin 6, from driver U219).', expect: 'About -10 V idle (mark)', verify: true },
+          { n: 7, name: 'GND', type: 'ground', desc: 'Signal ground (black wire, P203 pin 8).' }
+        ],
+        sources: [
+          { label: 'HERO Jr RS-232 Accessory manual, Detail 2-3D, printed p. 7 (archive.org)', url: 'https://archive.org/download/hero-jr-rs-232/HeroJr%20RS232.pdf#page=7' },
+          { label: 'HERO Jr Technical Manual, RS-232 interface, printed p. 25 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=26' }
+        ],
+        terms: ['acia'] },
+
+      { id: 'herojr-p201', name: 'CPU to power/sense board interconnect (P201 / P301, 25 pins)', kind: '25-pin board header (cable P201 to P301)', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 25)), outline: hkRowOutline(25), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1 (P301 to P201 cable)',
+        summary: 'The 25-way cable between the CPU board (P201) and the power/sense board (P301), wired pin for pin. Motor drive, power rails, shutdown, low battery, sonar, A/D and wheel lines. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'FORW/REV', type: 'ctrl', desc: 'Drive direction to the direction driver Q322 / relay K301.' },
+          { n: 2, name: 'DRIVE', type: 'ctrl', desc: 'Drive motor on (motor driver Q321).' },
+          { n: 3, name: 'STEERING 1', type: 'ctrl', desc: 'Steering stepper phase 1.' },
+          { n: 4, name: 'STEERING 3', type: 'ctrl', desc: 'Steering stepper phase 3.' },
+          { n: 5, name: 'STEERING 2', type: 'ctrl', desc: 'Steering stepper phase 2.' },
+          { n: 6, name: 'STEERING 4', type: 'ctrl', desc: 'Steering stepper phase 4.' },
+          { n: 7, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 8, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 9, name: '-10V', type: 'power', desc: '-10 V from the Q301 voltage doubler (RS-232 driver supply).', expect: 'About -10 V DC' },
+          { n: 10, name: '+5V', type: 'power', desc: '+5 V Vcc from switching regulator U302.', expect: '4.9-5.1 V DC awake; 0 V in sleep' },
+          { n: 11, name: '+5V', type: 'power', desc: '+5 V Vcc.', expect: '4.9-5.1 V DC awake; 0 V in sleep' },
+          { n: 12, name: 'NC', type: 'nc', desc: 'Not connected on the drawing.' },
+          { n: 13, name: '+12', type: 'power', desc: '+12 V battery supply.', expect: '11-14 V DC' },
+          { n: 14, name: '+5V SHUTDOWN', type: 'ctrl', desc: 'Shutdown to U302 pin 10; logic 1 removes Vcc for sleep.' },
+          { n: 15, name: 'LOW VOLT', type: 'ctrl', desc: 'Low battery from comparator U303; high below about 10 V.' },
+          { n: 16, name: 'SONAR INIT', type: 'ctrl', desc: 'Sonar init from U214 pin 19 (CB2) to TL851 INIT.' },
+          { n: 17, name: 'A/D OUTPUT', type: 'data', desc: 'ADC0831 serial data back to U215.' },
+          { n: 18, name: 'A/D CLOCK', type: 'clock', desc: 'ADC0831 serial clock from U215.' },
+          { n: 19, name: 'A/D CS', type: 'ctrl', desc: 'ADC0831 chip select from U215.' },
+          { n: 20, name: 'SENSE ENABLE', type: 'ctrl', desc: 'Turns on Q314 for the +5SW sonar and sense supply ($D841 D4).' },
+          { n: 21, name: 'SONAR ECHO', type: 'ctrl', desc: 'Echo from U304 back to U215 pin 18 (CB1).' },
+          { n: 22, name: 'L/S ENABLE', type: 'ctrl', desc: 'Light/sound select ($D841 D2).' },
+          { n: 23, name: 'WHEEL DECODER', type: 'ctrl', desc: 'Wheel encoder pulses (U305) to U214 CB1.' },
+          { n: 24, name: 'XMIT ENABLE', type: 'ctrl', desc: 'Transmit enable (security transmitter option, verify).', verify: true },
+          { n: 25, name: 'I.R. INPUT', type: 'io', desc: 'Infrared motion detector input (RTA-1-1 option).' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }],
+        terms: ['adc', 'sonar', 'sleep'] },
+
+      { id: 'herojr-p307', name: 'Power/sense board charger connector (P307)', kind: '6-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 6)), outline: hkRowOutline(6), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1; TM printed p. 20',
+        summary: 'Charger in and regulated charge out between J1 and regulator U301. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'CHARGER OUTPUT', type: 'power', desc: 'U301 output through W302, to J1 pin 4.' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 3, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 4, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 5, name: 'CHARGER INPUT', type: 'power', desc: 'Charger + from J1 pin 2.', expect: '12-16 V DC with the cube plugged in' },
+          { n: 6, name: 'GND', type: 'ground', desc: 'Ground.' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p310', name: 'Power/sense board battery supply (P310)', kind: '3-pin board header', geo: 'custom', gender: 'male', pads: hkRow([1, 2, 3]), outline: hkRowOutline(3), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'Switched +12 V from SW1 into the power/sense board. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 2, name: '+12', type: 'power', desc: '+12 V from the batteries through F1 and SW1.', expect: '11-14 V DC with SW1 on' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p309', name: 'Steering motor (P309)', kind: '6-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 6)), outline: hkRowOutline(6), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'Steering stepper A1 from drivers Q316-Q319. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: '+12', type: 'power', desc: 'Motor common +12 V.', expect: '11-14 V DC' },
+          { n: 2, name: 'STEERING 4', type: 'ctrl', desc: 'Phase 4 winding.' },
+          { n: 3, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 4, name: 'STEERING 2', type: 'ctrl', desc: 'Phase 2 winding.' },
+          { n: 5, name: 'STEERING 3', type: 'ctrl', desc: 'Phase 3 winding.' },
+          { n: 6, name: 'STEERING 1', type: 'ctrl', desc: 'Phase 1 winding.' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p308', name: 'Drive motor (P308)', kind: '3-pin board header', geo: 'custom', gender: 'male', pads: hkRow([1, 2, 3]), outline: hkRowOutline(3), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'Main drive motor A2 through L1/L2 and the C1-C3 suppression network; direction is reversed by relay K301. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'DRIVE 2', type: 'power', desc: 'Motor lead (through L2).' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Ground (suppression capacitor common).' },
+          { n: 3, name: 'DRIVE 1', type: 'power', desc: 'Motor lead (through L1).' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p311', name: 'Wheel encoder sensor A3 (P311)', kind: '6-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 6)), outline: hkRowOutline(6), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'Reflective optical sensor A3 over the encoder disk on the drive wheel; keep about 1/8 in between sensor and disk (TM chart). Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: '+12', type: 'power', desc: '+12 V.', verify: true },
+          { n: 2, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 4, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 5, name: 'LED', type: 'power', desc: 'Sensor LED drive.' },
+          { n: 6, name: 'PULSE DISK', type: 'io', desc: 'Phototransistor output: pulses as the disk turns (to U305).' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p304', name: 'Sound sensor microphone SP1 (P304)', kind: '3-pin board header', geo: 'custom', gender: 'male', pads: hkRow([1, 2, 3]), outline: hkRowOutline(3), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'The 45 ohm speaker used as a dynamic microphone, on shielded cable. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 2, name: 'MIC', type: 'audio', desc: 'Microphone signal to Q303.' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground (shield).' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p306', name: 'Light sensor LDR1 (P306)', kind: '3-pin board header', geo: 'custom', gender: 'male', pads: hkRow([1, 2, 3]), outline: hkRowOutline(3), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'Light-dependent resistor LDR1 (9-67) in the head. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'VCC', type: 'power', desc: 'Vcc.' },
+          { n: 2, name: 'LDR', type: 'io', desc: 'LDR signal to Q312.' },
+          { n: 3, name: 'VCC', type: 'power', desc: 'Vcc.' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p305', name: 'Sonar transducer A4 (P305)', kind: '3-pin board header', geo: 'custom', gender: 'male', pads: hkRow([1, 2, 3]), outline: hkRowOutline(3), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'Polaroid ranging transducer A4 on shielded cable. The TM chart lists the A4 lead to P305 as the first check for "no sound from transducer". Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 2, name: 'POLAROID', type: 'io', desc: 'Transducer drive and echo (T301 secondary).' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground (shield).' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }],
+        terms: ['sonar'] },
+
+      { id: 'herojr-p202', name: 'CPU board charger sense (P202)', kind: '3-pin board header', geo: 'custom', gender: 'male', pads: hkRow([1, 2, 3]), outline: hkRowOutline(3), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'Tells the CPU the charger is plugged in; the robot will not explore on its own while charging (Owner\'s Guide p. 6). Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 2, name: 'CHARGER SENSE', type: 'ctrl', desc: 'Charger-present sense.' },
+          { n: 3, name: 'NC', type: 'nc', desc: 'Not connected.' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p203', name: 'CPU board switch panel connector (P203)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 10)), outline: hkRowOutline(10), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1; RS-232 Accessory manual printed p. 7-8',
+        summary: 'SLEEP-NORM switch SW2, RS-232 cable (pins 6-8) and the steering limit switch SW3. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 2, name: '+12 SWITCHED', type: 'power', desc: '+12 V switched (to SW2).', expect: '11-14 V DC' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 4, name: 'SLEEP 1', type: 'ctrl', desc: 'SLEEP-NORM switch SW2 section.' },
+          { n: 5, name: 'SLEEP 2', type: 'ctrl', desc: 'SLEEP-NORM switch SW2 section.' },
+          { n: 6, name: 'RS232 XMIT', type: 'serial', desc: 'To J2 pin 3 (red wire).' },
+          { n: 7, name: 'RS232 REC', type: 'serial', desc: 'From J2 pin 2 (green wire).' },
+          { n: 8, name: 'RS232 GND', type: 'ground', desc: 'To J2 pin 7 (black wire).' },
+          { n: 9, name: 'CW LIMIT', type: 'io', desc: 'Steering limit switch SW3, clockwise contact.' },
+          { n: 10, name: 'CCW LIMIT', type: 'io', desc: 'Steering limit switch SW3, counterclockwise contact.' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p204', name: 'CPU board remote receiver connector (P204)', kind: '8-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 8)), outline: hkRowOutline(8), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1; TM printed p. 25 (remote interface)',
+        summary: 'The RTA-1-2 remote control receiver. Its four outputs drive Q206-Q209, which pull the keypad columns ($D820 D0-D3) low. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: '+12 SWITCHED', type: 'power', desc: '+12 V switched supply for the receiver.', expect: '11-14 V DC' },
+          { n: 2, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 3, name: 'REMOTE 4', type: 'io', desc: 'Remote receiver output 4.' },
+          { n: 4, name: 'REMOTE 3', type: 'io', desc: 'Remote receiver output 3.' },
+          { n: 5, name: 'REMOTE 2', type: 'io', desc: 'Remote receiver output 2.' },
+          { n: 6, name: 'REMOTE 1', type: 'io', desc: 'Remote receiver output 1.' },
+          { n: 7, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 8, name: 'GND', type: 'ground', desc: 'Ground.' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p205', name: 'Keyboard board connector (P205, 25 pins)', kind: '25-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 25)), outline: hkRowOutline(25), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1 (P205) and sheet 2 (keyboard)',
+        summary: 'The 4 x 4 keypad matrix ($D820 bits 0-7), the RESET key, the green POWER LED and the eight red data LEDs. Pin 2 lies on the page fold of the scan and is not read; pins 4, 9, 10 and 12 are drawn as stubs. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: '+5', type: 'power', desc: '+5 V.', expect: '4.9-5.1 V DC' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 4, name: 'NC', type: 'nc', desc: 'Not connected (stub).' },
+          { n: 5, name: 'BIT 7', type: 'kbd', desc: 'Keypad matrix line, $D820 bit 7.' },
+          { n: 6, name: 'BIT 6', type: 'kbd', desc: 'Keypad matrix line, bit 6.' },
+          { n: 7, name: 'BIT 5', type: 'kbd', desc: 'Keypad matrix line, bit 5.' },
+          { n: 8, name: 'BIT 4', type: 'kbd', desc: 'Keypad matrix line, bit 4.' },
+          { n: 9, name: 'NC', type: 'nc', desc: 'Not connected (stub).' },
+          { n: 10, name: 'NC', type: 'nc', desc: 'Not connected (stub).' },
+          { n: 11, name: 'RESET', type: 'ctrl', desc: 'RESET key to the reset circuit (not the matrix).' },
+          { n: 12, name: 'NC', type: 'nc', desc: 'Not connected (stub).' },
+          { n: 13, name: 'BIT 3', type: 'kbd', desc: 'Keypad matrix line, bit 3 (remote Q206-Q209 share bits 0-3).' },
+          { n: 14, name: 'BIT 2', type: 'kbd', desc: 'Keypad matrix line, bit 2.' },
+          { n: 15, name: 'BIT 1', type: 'kbd', desc: 'Keypad matrix line, bit 1.' },
+          { n: 16, name: 'BIT 0', type: 'kbd', desc: 'Keypad matrix line, bit 0.' },
+          { n: 17, name: 'PWR LED', type: 'io', desc: 'Green POWER LED (lit when Vcc is on).' },
+          ...[7, 6, 5, 4, 3, 2, 1, 0].map((b, i) => ({ n: 18 + i, name: 'LED ' + b, type: 'io', desc: 'Red data LED ' + b + '.' }))
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheets 1-2 (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] },
+
+      { id: 'herojr-p206', name: 'Speaker SP2 (P206)', kind: '3-pin board header', geo: 'custom', gender: 'male', pads: hkRow([1, 2, 3]), outline: hkRowOutline(3), verify: true,
+        verifiedAgainst: 'HERO Jr Schematics 595-3271 sheet 1',
+        summary: 'The 8 ohm speech speaker. Pads in number order (layout assumed).',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 2, name: 'SPKR OUTPUT', type: 'audio', desc: 'Speaker output from amplifier U224.' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.' }
+        ],
+        sources: [{ label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }] }
+    ],
+
+    hero2000: [
+      { id: 'hero2000-backplane', name: 'Backplane card slots (P201-P212, 72 pins)', kind: '72-contact card-edge sockets, 12 slots bussed in parallel', geo: 'edge-36x36-seq', verify: true,
+        verifiedAgainst: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, page 6 (backplane board)',
+        summary: 'The passive backplane: P201 through P212 are wired the same. The bus uses S-100-style signal names (SYNC, DBIN, STVAL, MWRT, MEMR, INP, OUT, WO, PHI, HLDA, VI0-VI7) with A0-A19 and separate DO and DI data buses. Numbers are read from the drawing, which lists 1-72 in one column; the split of 1-36 and 37-72 across the two sides of the card is assumed. Pull-up packs RP201-RP205 sit on the bus lines.',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.' },
+          { n: 4, name: '+16', type: 'power', desc: '+16 V (unregulated, verify).', verify: true },
+          ...hkSeq(0, 19).map(b => ({ n: 5 + b, name: 'A' + b, type: 'addr', desc: 'Address bus bit ' + b + '.' })),
+          ...hkSeq(0, 7).map(b => ({ n: 25 + b, name: '/VI' + b, type: 'ctrl', desc: 'Vectored interrupt ' + b + ', active low.', terms: ['irq'] })),
+          { n: 33, name: '/NMI', type: 'ctrl', desc: 'Non-maskable interrupt (low battery, per the I/O map).', terms: ['nmi'] },
+          { n: 34, name: 'RESET', type: 'ctrl', desc: 'Reset.', terms: ['reset'] },
+          { n: 35, name: '/HLD', type: 'ctrl', desc: 'Hold request.' },
+          { n: 36, name: 'HLDA', type: 'ctrl', desc: 'Hold acknowledge.' },
+          { n: 37, name: 'PHI', type: 'clock', desc: 'Bus clock phase.' },
+          { n: 38, name: 'CLK', type: 'clock', desc: 'Clock.' },
+          { n: 39, name: '/MLDIS', type: 'ctrl', desc: 'Memory disable (name read as MLDIS, verify).', verify: true },
+          { n: 40, name: 'SLEEP', type: 'ctrl', desc: 'Sleep.' },
+          { n: 41, name: 'OUT', type: 'ctrl', desc: 'Status: I/O output cycle.' },
+          { n: 42, name: 'INP', type: 'ctrl', desc: 'Status: I/O input cycle.' },
+          { n: 43, name: 'MEMR', type: 'ctrl', desc: 'Status: memory read cycle.' },
+          { n: 44, name: '/WO', type: 'ctrl', desc: 'Status: write cycle, active low.' },
+          { n: 45, name: 'SYNC', type: 'ctrl', desc: 'Start of bus cycle.' },
+          { n: 46, name: '/WR', type: 'ctrl', desc: 'Write strobe.' },
+          { n: 47, name: '/STVAL', type: 'ctrl', desc: 'Status valid.' },
+          { n: 48, name: 'DBIN', type: 'ctrl', desc: 'Data bus in (read strobe).' },
+          { n: 49, name: 'RDY', type: 'ctrl', desc: 'Ready (wait-state request).' },
+          { n: 50, name: 'MWRT', type: 'ctrl', desc: 'Memory write.' },
+          ...hkSeq(0, 7).map(b => ({ n: 51 + b, name: 'DI' + b, type: 'data', desc: 'Data in bus bit ' + b + ' (to the CPU).' })),
+          ...hkSeq(0, 7).map(b => ({ n: 59 + b, name: 'DO' + b, type: 'data', desc: 'Data out bus bit ' + b + ' (from the CPU).' })),
+          { n: 67, name: '+5B', type: 'power', desc: 'Power rail read as "+59" on the scan; probably a second +5 V rail (verify).', verify: true },
+          { n: 68, name: '+5B', type: 'power', desc: 'As pin 67.', verify: true },
+          { n: 69, name: '+12', type: 'power', desc: '+12 V.', verify: true },
+          { n: 70, name: '+12', type: 'power', desc: '+12 V.', verify: true },
+          { n: 71, name: '+5', type: 'power', desc: '+5 V.', expect: '4.9-5.1 V DC', verify: true },
+          { n: 72, name: '+5', type: 'power', desc: '+5 V.', expect: '4.9-5.1 V DC', verify: true }
+        ],
+        sources: [{ label: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, p. 6, backplane board (archive.org)', url: 'https://archive.org/download/heathkit-hero-2000-et-19-schematic-diagrams-595-3416/heathkit-hero-2000-et-19-schematic-diagrams-595-3416.pdf#page=6' }] },
+
+      { id: 'hero2000-p410', name: 'Serial port P410 (I/O board, 25-pin)', kind: 'DB-25 (gender not read)', geo: 'db25', verify: true,
+        verifiedAgainst: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, page 8 (I/O board)',
+        summary: 'One of the two RS-232 ports (terminal and printer) driven by the 2661 EPCIs U427/U428. The schematic ties pins 1 and 7 to ground and wires pins in the 2-8 and 20 area to the line drivers, but which pin transmits and which receives was not traced on the scan, and the shell gender is not drawn.',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Frame ground (tied to 7 on the drawing).' },
+          { n: 7, name: 'GND', type: 'ground', desc: 'Signal ground.' }
+        ],
+        sources: [{ label: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, p. 8, I/O board (archive.org)', url: 'https://archive.org/download/heathkit-hero-2000-et-19-schematic-diagrams-595-3416/heathkit-hero-2000-et-19-schematic-diagrams-595-3416.pdf#page=8' }] },
+
+      { id: 'hero2000-p412', name: 'Serial port P412 (I/O board, 25-pin)', kind: 'DB-25 (gender not read)', geo: 'db25', verify: true,
+        verifiedAgainst: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, page 8 (I/O board)',
+        summary: 'The second RS-232 port, wired like P410. Pins 1 and 7 are ground; data and handshake pins not traced; shell gender not drawn.',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Frame ground (tied to 7 on the drawing).' },
+          { n: 7, name: 'GND', type: 'ground', desc: 'Signal ground.' }
+        ],
+        sources: [{ label: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, p. 8, I/O board (archive.org)', url: 'https://archive.org/download/heathkit-hero-2000-et-19-schematic-diagrams-595-3416/heathkit-hero-2000-et-19-schematic-diagrams-595-3416.pdf#page=8' }] },
+
+      { id: 'hero2000-charger', name: 'Charger output: charge cord plug and charging rails', kind: '3-pin cord connector (MANUAL) and two charging rails (AUTO dock)', geo: 'custom', pads: hkRow([1, 2, 3]), outline: hkRowOutline(3), verify: true,
+        verifiedAgainst: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, page 11 (battery charger)',
+        summary: 'The charger has a MANUAL/AUTO switch SW1: MANUAL feeds the 3-pin cord connector drawn here, AUTO feeds the red (+) and black (-) charging rails the robot docks against. SW3 DEAD BATTERY bypasses the charger control for a flat battery. Pin roles read from a low-resolution scan; the robot-side socket is not traced.',
+        pins: [
+          { n: 1, name: 'CHG +', type: 'power', desc: 'Charger output in MANUAL (from SW1).', verify: true },
+          { n: 2, name: 'NC', type: 'nc', desc: 'Not connected.', verify: true },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Charger return.', verify: true }
+        ],
+        sources: [{ label: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, p. 11, battery charger (archive.org)', url: 'https://archive.org/download/heathkit-hero-2000-et-19-schematic-diagrams-595-3416/heathkit-hero-2000-et-19-schematic-diagrams-595-3416.pdf#page=11' }] }
     ]
   },
 
   power: {
     hero1: {
+      supply: { external: true, name: 'Heath ET-18 battery charger (separate unit; red POWER and white CHARGE lamps)',
+        output: 'About 25-27 V DC unregulated, 1.75 A max into discharged batteries; the robot regulates it to a 13.9 V float',
+        connector: 'hero1-charger',
+        notes: [
+          'The charger is only a transformer (about 20 V AC), current-limit resistors R1/R2 (2.5 ohm 10 W each), bridge BR1 and C1 3300 µF. The white lamp glows with charge current. Regulation (U201 logic, U204 motor) is on the robot power supply board.',
+          'Batteries: four 6 V 4 Ah gel cells in two independent 12 V systems. Motor B1 + B2 (base) through fuse F2 4 A; logic B3 (base) + B4 (head) through F1 3 A and head fuse F3 3 A. Board fuses: F201 2 A logic, F202 4 A motor. Disconnect the charger and pull F1, F2 and F3 before touching a battery.',
+          'Float is 13.9 V per system, set with the charger on and the base fuses out: logic TP1 = 5.6 V then TP1-TP2 = 0 V with R202; motor TP8 = 5.6 V then TP8-TP9 = 0 V with R225 (TM printed p. 47).',
+          'Below 10 V the robot stops and shows drlo (drive) or LGLo (logic) and asks for a key. Old gel cells that read 12 V open-circuit but sag under load give these warnings: load-test them.',
+          'With the charger plug out, its jumpers are out too and the batteries are disconnected from the charge circuit. No charge with the lamps lit: check the plug jumpers (1-4, 2-3, 5-6) and the power supply board fuses.',
+          'All +5 V logic comes from one switching regulator (U203 PWM, Q203/Q204, L201). Check 5 V at P201 pins 4-5 before suspecting the CPU board.'
+        ],
+        sources: [
+          { label: 'ET-18 Technical Manual, specifications, printed p. 9 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=10' },
+          { label: 'ET-18 Technical Manual, Figure 4 fuse and battery replacement (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=43' },
+          { label: 'ET-18 Technical Manual, power supply adjustment, printed p. 47 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=56' },
+          { label: 'ET-18 Technical Manual, charger and power supply circuit description, printed p. 73-74 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=84' },
+          { label: 'HERO Robot FAQ 2.5 and 3.8, batteries and charger (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html' }
+        ] },
       rails: [
-        { rail: 'Battery (charged)', expect: 'About 13.9 V under charge', where: 'Charger output; TP8/TP9 alignment; P101 plug', note: 'Battery below 10 V gives the low-battery warning (TM charger section).' },
-        { rail: '+5 V logic (main)', expect: '4.9-5.2 V', where: 'CPU pin 8 (VCC)', note: 'Switched off for about 10 s on a sleep command ($C2E0 bit 6). Verify on the board.', verify: true },
-        { rail: '+5 V display (switched)', expect: '4.9-5.2 V', where: 'P1201 pin 8 controls Q1202/Q1201', note: 'Off when $C2E0 bit 4 is low. Display blank with the CPU running points here.', verify: true },
-        { rail: '+5 V speech (switched)', expect: '4.9-5.2 V', where: 'SC-01A pin 1 (VP), via P501 pin 11 and Q502', note: 'Speech power is $C2E0 bit 3.', verify: true },
-        { rail: '+12 V motor', expect: 'About 12 V', where: 'Motor supply circuit (TM printed p. 78)', note: 'Two 12 V systems: logic and motor.', verify: true },
+        { rail: 'Logic battery (+12 V system)', expect: '13.9 V float on charge; 10 V = LGLo warning', where: 'Charger socket pin 2; P201 pin 3', note: 'B3 + B4 in series, fuses F1 and F3.' },
+        { rail: 'Motor battery (+12 V system)', expect: '13.9 V float on charge; 10 V = drlo warning', where: 'Charger socket pin 6; P201 pin 10; P202 pin 20 (steering)', note: 'B1 + B2 in series, fuse F2. Motors run straight from it.' },
+        { rail: '+5 V logic (main)', expect: '4.9-5.1 V', where: 'P201 pins 4-5; CPU pin 8 (VCC)', note: 'From the switching regulator. Switched off for about 10 s by a sleep command ($C2E0 bit 6, U321/Q301).', verify: true },
+        { rail: '+5 V standby (VSB)', expect: 'About 5 V, also during sleep', where: 'P404 pin 52 (U326 output) to the 6116 RAMs', note: 'Keeps RAM during sleep; U322 blocks writes for about 100 ms after wake.', verify: true },
+        { rail: '+5 V display (switched)', expect: '4.9-5.1 V', where: 'P1201 pin 8 controls Q1202/Q1201', note: 'Off when $C2E0 bit 4 is low. Display blank with the CPU running points here.', verify: true },
+        { rail: '+5 V speech (switched)', expect: '4.9-5.1 V', where: 'SC-01A pin 1 (VP), via P501 pin 11 and Q502', note: 'Speech power is $C2E0 bit 3.', verify: true },
+        { rail: '+6 V', expect: 'About 6 V', where: 'P316 pin 151', note: 'Named +6-V power in the P316 table; source not traced.', verify: true },
         { rail: '+8 V motion', expect: 'About 8 V', where: 'Motion board regulator U1401 (TM printed p. 78)', note: 'Regulated from +12 V.', verify: true }
       ],
       testPoints: [
         { tp: 'CPU crystal', where: 'CPU pin 38 (XTAL) and pin 39 (EXTAL)', expect: '3.579545 MHz (ROM 1.0) or 4 MHz (ROM 1.3/1.U with ET-18-6)', verify: true },
-        { tp: 'E clock', where: 'CPU pin 37 (E)', expect: 'Crystal divided by four: about 0.895 MHz (3.58 MHz) or 1 MHz (4 MHz)', verify: true },
+        { tp: 'E clock', where: 'CPU pin 37 (E)', expect: 'Crystal divided by four: about 0.895 MHz (3.58 MHz) or 1 MHz (4 MHz)' },
         { tp: 'Reset', where: 'CPU pin 40 (/RESET)', expect: 'Low at power-up, then high' },
         { tp: 'Speech strobe', where: 'SC-01A pin 7 (STB)', expect: 'Short high pulse for each phoneme' },
         { tp: 'Speech request', where: 'SC-01A pin 8 (A/R)', expect: 'High between phonemes; stuck low = no speech' },
-        { tp: 'Charger reference', where: 'TP8 to TP9', expect: '5.6 V (charger alignment, TM printed p. 55)' },
-        { tp: 'Sonar', where: 'TP1 and TP2, sense board', expect: 'Sonar alignment check per TM; values not transcribed' }
+        { tp: 'Logic charge reference', where: 'TP1 to chassis, then TP1 to TP2 (power supply board)', expect: '5.6 V, then 0 V (adjust R202), charger on' },
+        { tp: 'Motor charge reference', where: 'TP8 to chassis, then TP8 to TP9 (power supply board)', expect: '5.6 V, then 0 V (adjust R225), charger on' },
+        { tp: 'Sonar', where: 'TP1 and TP2, sense board', expect: 'Sonar alignment check per TM; values not transcribed', verify: true }
+      ],
+      sources: [
+        { label: 'ET-18 Schematics sheet 3 of 4, power supply circuit board (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Schematics%20sheet%203%20of%204%20%28io%2C%20main%20drive%2C%20power%20supply%29.pdf' },
+        { label: 'ET-18 Technical Manual, circuit description printed p. 73-82 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=84' },
+        { label: 'ET-18 Technical Manual, power supply adjustment printed p. 47 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=56' }
       ]
     },
     herojr: {
+      supply: { external: true, name: 'Heath 235-282 plug-in charger ("power cube")',
+        output: 'About 12 V DC at 780 mA max charge current, rising to about 16 V as the batteries fill; 120 V AC 60 Hz 15 W input',
+        connector: 'herojr-charger',
+        notes: [
+          'The cube is only a wall transformer supply; the charge regulator U301 is on the power/sense board. It current-limits on a flat battery and floats a full one, so it can stay connected.',
+          'Batteries: two 6 V batteries B1, B2 (Heath 418-45, 4 Ah per the FAQ) in series, through fuse F1 4 A 3AG slow-blow above the batteries. The RTA-1-4 accessory adds B3/B4 in parallel. Charge 12-14 h from flat; expect about four hours of running.',
+          'When the cube is unplugged from the wall, unplug the cord from the robot too, or the cube slowly discharges the batteries (Owner\'s Guide).',
+          'Rails: U209 5 V regulator (Vca) runs whenever SW1 is ON, even asleep: RTC, reset circuits, decoder and any jumpered RAM. U302 switching regulator (Vcc, about 25 kHz) is shut down in sleep. The Q301 square wave also makes -10 V for RS-232.',
+          'No 5 V: check U209 first (TM chart). "Low battery" with good batteries: U201, U213, U221. Batteries will not take charge: the TM chart names U211 or U212, and the J1/P1 jumper.',
+          'The robot will not explore on its own while the charger is plugged in (charger sense, P202).'
+        ],
+        sources: [
+          { label: 'HERO Jr Technical Manual, battery charger and charging regulator, printed p. 20 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=21' },
+          { label: 'HERO Jr Technical Manual, chassis parts list (B1, B2, F1, charger), printed p. 42 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=43' },
+          { label: 'HERO Jr Owner\'s Guide, charging the batteries, p. 6 (archive.org)', url: 'https://archive.org/download/HEROJrOwnersGuide/HERO%20Jr%20Owner%27s%20Guide.pdf#page=8' },
+          { label: 'HERO Robot FAQ 2.5 and 3.9, batteries and charger (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html' }
+        ] },
       rails: [
-        { rail: 'Battery', expect: 'About 12 V; low-battery warning below about 10 V', where: 'Low-voltage comparator U303 (JR-TM)', note: 'Charge 12-14 h (owner guide).', verify: true },
-        { rail: '+5 V regulated', expect: '4.9-5.1 V', where: 'CPU pin 8 (VCC); from U209 78M05 regulator', note: 'If there is no 5.0 V, check U209 first (TM chart).', verify: true },
-        { rail: '+5 V switched (+5SW)', expect: '5 V when awake; off in sleep', where: 'U214 pin 19 (CB2) drives the shutdown latch', note: 'Sonar, sense and the ADC sit on this rail. CA2 low cuts Vcc in sleep.', verify: true },
-        { rail: 'Vca (retained)', expect: 'Always on; powers the RTC and RAM retention', where: 'MC146818 pin 16 (STBY) and pin 24 (VDD)', note: 'RAM retention depends on the sleep jumpers J202 D-E (stock).', verify: true }
+        { rail: 'Battery', expect: 'About 12 V; low-battery warning below about 10 V', where: 'Low-voltage comparator U303; P310 pin 2 (switched)', note: 'Charge 12-14 h (owner guide).' },
+        { rail: '+5 V regulated (Vcc)', expect: '4.9-5.1 V awake; 0 V asleep', where: 'CPU pin 8 (VCC); P201 pins 10-11; switching regulator U302', note: 'Shut down in sleep by P201 pin 14 (+5V SHUTDOWN).', verify: true },
+        { rail: '+5 V switched (+5SW)', expect: '5 V with Sense Enable; off otherwise', where: 'Q314 output; ADC pin 8; TL851 pin 1; TL852 pin 5', note: 'Sonar, sense and the ADC sit on this rail. P201 pin 20 (SENSE ENABLE) turns it on.' },
+        { rail: 'Vca (always on)', expect: 'About 5 V whenever SW1 is ON', where: 'U209 output; RTC pin 24 (VDD)', note: 'RTC, reset circuits U221/U222 and decoder U202; RAM only if jumpered (J202, J204, J206).', verify: true },
+        { rail: '-10 V', expect: 'About -10 V', where: 'P201 pin 9; U219 pin 1', note: 'Half-wave doubler C312, D302, D303, C313 off the Q301 square wave; RS-232 driver supply.', verify: true }
       ],
       testPoints: [
         { tp: 'CPU crystal', where: 'CPU pin 38 (XTAL) and pin 39 (EXTAL)', expect: '4 MHz (Y201, JR-TM)' },
         { tp: 'E clock', where: 'CPU pin 37 (E)', expect: 'About 1 MHz' },
-        { tp: 'RTC crystal', where: 'RTC pin 2 (OSC1) and pin 3 (OSC2)', expect: '32.768 kHz', verify: true },
+        { tp: 'RTC crystal', where: 'RTC pin 2 (OSC1) and pin 3 (OSC2)', expect: '32.768 kHz' },
         { tp: 'Reset', where: 'CPU pin 40 (/RESET); RTC pin 18 (/RESET)', expect: 'Low at power-up and by the RESET key, then high' },
-        { tp: 'Sonar INIT', where: 'U214 pin 19 (CB2)', expect: 'Pulse per ping' },
+        { tp: 'Sonar INIT', where: 'U214 pin 19 (CB2); TL851 pin 14 (INIT)', expect: 'Pulse per ping' },
+        { tp: 'Sonar transmit', where: 'TL851 pin 2 (XMIT)', expect: '16 pulses (about 49.4 kHz) per ping' },
         { tp: 'Sonar echo', where: 'U215 pin 18 (CB1)', expect: 'Pulse on echo arrival' },
         { tp: 'Speech strobe', where: 'U215 pin 39 (CA2); SC-01A pin 7 (STB)', expect: 'Short pulse for each phoneme' },
         { tp: 'Speech request', where: 'U215 pin 40 (CA1); SC-01A pin 8 (A/R)', expect: 'High between phonemes' },
         { tp: 'Speech power', where: 'U215 pin 11 (PB1)', expect: 'High while speech is powered' }
+      ],
+      sources: [
+        { label: 'HERO Jr Technical Manual, circuit description printed p. 20-25 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=21' },
+        { label: 'HERO Jr Schematics 595-3271, sheets 1-4 (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }
+      ]
+    },
+    hero2000: {
+      supply: { external: true, name: 'HERO 2000 battery charger (transformer, bridge BR-1, charger control board with relay K1)',
+        output: 'Charge voltage and current not read from the schematic; the robot power supply board marks 13.8 / 14.5 V at the battery input',
+        connector: 'hero2000-charger',
+        notes: [
+          'One 12 V 24 Ah battery (HERO FAQ; not confirmed from a Heath manual here).',
+          'The charger has 120, 110, 220 and 240 V transformer wirings. SW1 MANUAL feeds the cord; AUTO feeds the docking rails. SW3 DEAD BATTERY bypasses the charger control for a flat battery.',
+          'Robot power supply board fuses: F101 7 A slow-blow and F102 20 A on the battery lugs. Regulators: U101 7812 (+12 V), U107 78M12, U106 and U105 switching controllers.',
+          'Low battery drives the 8088 NMI (I/O PAL interrupt map).'
+        ],
+        sources: [
+          { label: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, p. 4 power supply and p. 11 battery charger (archive.org)', url: 'https://archive.org/download/heathkit-hero-2000-et-19-schematic-diagrams-595-3416/heathkit-hero-2000-et-19-schematic-diagrams-595-3416.pdf#page=4' },
+          { label: 'HERO Robot FAQ 2.3 and 2.5, HERO 2000 specs and battery (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html', verify: true }
+        ] },
+      rails: [
+        { rail: 'Battery', expect: '13.8 / 14.5 V marked at the charge node', where: 'Power supply board lugs B (via F101) and D (via F102)', note: 'Marked voltage read from a low-resolution scan.', verify: true },
+        { rail: '+5 V', expect: '4.9-5.1 V', where: 'Backplane pins 71-72', verify: true },
+        { rail: '+12 V', expect: 'About 12 V', where: 'Backplane pins 69-70; U101 7812 output', verify: true },
+        { rail: '+16 V', expect: 'Not given', where: 'Backplane pin 4', verify: true }
+      ],
+      testPoints: [
+        { tp: 'CPU clock crystal', where: 'Y301 at U304 (clock generator)', expect: '15 MHz', verify: true }
+      ],
+      sources: [
+        { label: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, p. 2 CPU, p. 4 power supply, p. 6 backplane (archive.org)', url: 'https://archive.org/download/heathkit-hero-2000-et-19-schematic-diagrams-595-3416/heathkit-hero-2000-et-19-schematic-diagrams-595-3416.pdf#page=4' }
       ]
     }
   },
 
   quickref: {
     hero1: {
+      sources: [
+        { label: 'ET-18 User\'s Guide, modes and keys (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20-%20User%27s%20Guide.pdf' },
+        { label: 'ET-18 Technical Manual, initial tests printed p. 54-55 and port map p. 119 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=64' },
+        { label: 'HERO 1 Advanced Programming and Interfacing (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi/page/97' }
+      ],
       firstLook: [
         'Charge first. Sleep switch OFF, then power on. The display shows HErol.O for about 10 s, then a moving dash (TM printed p. 54).',
         'RESET goes to the Executive Mode, and the speech says "ready". Key 31 initializes the robot (TM operation check).',
@@ -705,6 +1598,11 @@ RCS.add({
     },
 
     herojr: {
+      sources: [
+        { label: 'HERO Jr Owner\'s Guide (archive.org)', url: 'https://archive.org/download/HEROJrOwnersGuide/HERO%20Jr%20Owner%27s%20Guide.pdf' },
+        { label: 'HERO Jr Programmer\'s Guide (archive.org)', url: 'https://archive.org/download/HEROJrProgrammersGuide/HERO%20Jr%20Programmer%27s%20Guide.pdf' },
+        { label: 'HERO Jr Technical Manual 595-3271 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf' }
+      ],
       firstLook: [
         'Rear POWER switch ON, SLEEP-NORM switch in NORM, then press RESET. The robot starts a spoken self-test (owner guide p. 8-9).',
         'Keep the robot on the floor at start: it can move a few inches during the test.',
@@ -770,9 +1668,16 @@ RCS.add({
     }
   },
 
+  chipLocations: { hero2000: { cpu8088: 'U311' } },
+
   resources: [
+    { name: 'HEATHKIT HERO-1 ET-18 manuals and schematics (archive.org)', url: 'https://archive.org/details/heathkit-hero-1-ET-18', what: 'Technical Manual, User\'s Guide, Assembly Manual, all four schematic sheets, block interconnect diagram, speech board.' },
+    { name: 'HERO 1 Advanced Programming and Interfacing (archive.org)', url: 'https://archive.org/details/hero1advancedpro0000robi', what: 'Every CPU and I/O board connector table (chapter 6), memory expansion.' },
+    { name: 'HERO Jr Technical Manual and Schematics 595-3271 (archive.org)', url: 'https://archive.org/details/hero-jr-technical', what: 'Circuit description, troubleshooting chart, parts lists; schematics at archive.org/details/hero-jr-schematics.' },
+    { name: 'HERO 2000 ET-19 Schematic Diagrams 595-3416 (archive.org)', url: 'https://archive.org/details/heathkit-hero-2000-et-19-schematic-diagrams-595-3416', what: 'CPU, memory, power supply, backplane, I/O, motor controllers, charger, remote console.' },
     { name: 'HERO Robot FAQ', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html', what: 'Community FAQ: ROM versions, drive boards, general facts. Cited by the ROM FAQ.', verify: true },
     { name: 'Hero-ROMS (ROM images, S19 and PAL files)', url: 'https://github.com/diivious/Hero-ROMS', what: 'HERO 1 and HERO 2000 ROM images and PAL equations.', verify: true },
     { name: 'HERO owners discussion (groups.io)', url: 'https://groups.io/g/hero-owners/topic/120761072#msg1838', what: 'Owners list thread on HERO 1 ROM versions.', verify: true }
   ]
 });
+})();
