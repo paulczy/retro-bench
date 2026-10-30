@@ -376,6 +376,59 @@
   .ctable > .sel { color: var(--copper-hi); }
   .ctable .v3 .x { font: 15px var(--font-mono); color: var(--silk); }
 
+  /* ---------- scope: an idealised trace on a 10 x 8 graticule, the derived settings beside it. Static. ---------- */
+  .legend > .tpscope { grid-column: 1 / -1; padding: 0 0 8px; border-top: 0; }
+  details.scope { margin-top: 6px; }
+  details.scope > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; min-height: 44px; padding: 10px 0; font: 13px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tin); }
+  details.scope > summary::-webkit-details-marker { display: none; }
+  details.scope > summary::before { content: '+'; font-size: 17px; line-height: 1; color: var(--copper); width: 10px; }
+  details.scope[open] > summary::before { content: '\2013'; }
+  details.scope > summary .t { color: var(--silk); letter-spacing: .06em; }
+  details.scope > summary .s { color: var(--silk-70); letter-spacing: .02em; text-transform: none; font-size: 14px; }
+  .scope-body { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 12px 24px; align-items: start; padding: 2px 0 8px; }
+  .detail .scope-body, .panel .scope-body { grid-template-columns: minmax(0, 1fr); }
+  .scr { margin: 0; max-width: 300px; }
+  .scr > svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .scr svg svg { overflow: hidden; }
+  .scr .fr { fill: var(--mask-deep); stroke: var(--silk-45); stroke-width: 1; }
+  .scr .gr { fill: none; stroke: var(--silk-12); stroke-width: 1; shape-rendering: crispEdges; }
+  .scr .ax { fill: none; stroke: var(--silk-25); stroke-width: 1; shape-rendering: crispEdges; }
+  .scr .tr { fill: none; stroke: var(--copper); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .scr .mkr { fill: var(--tin); }
+  .scr .mt { font-size: 12px; fill: var(--tin); }
+  .scr .wm { font-size: 10px; letter-spacing: .16em; fill: var(--silk-45); }
+  .scr figcaption { font: 12px/16px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tin); margin-top: 6px; }
+  .scope .kv { margin-top: 0; grid-template-columns: 88px 1fr; gap: 4px 12px; }
+  .scope .kv dd b { font: 400 16px var(--font-mono); color: var(--silk); }
+  .scope .kv dd .tin { font-size: 14px; }
+  .scope .ds { margin-top: 4px; }
+  .sams { font: 13px/18px var(--font-mono); color: var(--tin); margin-top: 4px; }
+
+  /* first ten minutes: numbered checks, the expected reading in mono, what it means if not in a quieter line */
+  .ften li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 0 12px; padding: 12px 0; border-top: 1px solid var(--silk-12); }
+  .ften li:first-child { border-top: 0; padding-top: 2px; }
+  .ften .n { font: 400 30px/1 var(--font-mono); color: var(--copper); text-align: right; }
+  .ften .c { font: 500 20px/1.15 var(--font-sans); text-transform: uppercase; letter-spacing: .03em; }
+  .ften .w { font: 15px var(--font-mono); color: var(--tin); margin-top: 3px; }
+  .ften .x { font: 17px var(--font-mono); color: var(--silk); margin-top: 4px; }
+  .ften .if { font-size: 16px; color: var(--tin); margin-top: 2px; }
+  .ften .lnk { min-height: 36px; }
+
+  /* clock tree */
+  .ctab { width: 100%; border-collapse: collapse; font-size: 17px; }
+  .ctab th { font: 400 13px var(--font-mono); letter-spacing: .12em; color: var(--tin); text-transform: uppercase; text-align: left; padding: 0 16px 6px 0; }
+  .ctab td { padding: 8px 16px 8px 0; border-top: 1px solid var(--silk-12); vertical-align: baseline; }
+  .ctab td.nm { font-weight: 500; }
+  .ctab td.w { font: 15px var(--font-mono); color: var(--tin); }
+  .ctab td.f { font-family: var(--font-mono); white-space: nowrap; }
+  .ctab td.s { font-size: 15px; padding-right: 0; }
+  .ctab td.s .lnk { min-height: 0; }
+
+  /* replacement kinds: silkscreen badges, solid for pin-compatible, dashed for an adapter */
+  .tag.kind { margin-left: 0; }
+  .tag.kind.pin-compatible { border-color: var(--silk); color: var(--silk); }
+  .tag.kind.adapter { border-style: dashed; }
+
   /* phone: pin detail as a fixed bottom panel, copper rule along its top edge */
   .panel { display: none; }
   .wire-fixed { display: none; }
@@ -516,6 +569,17 @@
     .gl summary, .res a.row { grid-template-columns: 1fr; gap: 2px; }
     .res a.row .u { grid-column: 1; }
     .kv { grid-template-columns: 84px 1fr; }
+    .scope-body { grid-template-columns: minmax(0, 1fr); }
+    .ften li { grid-template-columns: 30px minmax(0, 1fr); gap: 0 10px; }
+    .ften .n { font-size: 24px; }
+    .ctab thead { display: none; }
+    .ctab tr { display: block; padding: 8px 0; border-top: 1px solid var(--silk-12); }
+    .ctab tbody tr:first-child { border-top: 0; }
+    .ctab td { display: inline-block; border: 0; padding: 1px 14px 1px 0; }
+    .ctab td.nm, .ctab td.w, .ctab td.s { display: block; }
+    .ctab td.f[data-h]::before { content: attr(data-h) ' '; font-size: 13px; letter-spacing: .1em; color: var(--tin); }
+    .ctab td.f[data-h="f"]::before { content: none; }
+    .ctab td:empty { display: none; }
     .panel { bottom: calc(66px + env(safe-area-inset-bottom)); }
     body.panel-open .board { padding-bottom: calc(50dvh + 90px); }
     .edgebar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; position: fixed; left: 6px; right: 6px; bottom: 0; z-index: 35; height: calc(64px + env(safe-area-inset-bottom)); background: var(--mask); border-top: var(--w) solid var(--silk); padding: 0 8px env(safe-area-inset-bottom); }

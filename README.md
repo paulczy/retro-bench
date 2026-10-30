@@ -37,6 +37,16 @@ ground. Nothing moves; transitions only, and none under `prefers-reduced-motion`
 - **Keys**: `/` or Ctrl+K opens the finder anywhere (on the search page `/` focuses the field);
   arrows and Enter move through results; Esc closes the popover, panel or finder.
 
+**Waveforms are idealised, never a capture.** A test point or rail with a `scope` block draws a static trace
+on a 10 by 8 graticule (silkscreen hairlines, copper trace), built from its `shape` and labelled `IDEALISED FROM
+CAPTURE` or `IDEALISED FROM DATASHEET`. The scope settings beside it are derived from two sourced numbers, never
+typed in: the period (from `f` or `period`) gives TIME/DIV, the smallest 1-2-5 step of at least period / 5 (2 to 5
+cycles across 10 divisions; when that shows more than 4 cycles, the step below if it lands nearer the 2-to-4 band);
+the swing `high - low` gives VOLTS/DIV, the smallest 1-2-5 step of at least swing / 5 (2.5 to 5 divisions tall).
+Coupling is DC with 0 V one division up when the swing fits, probe 10x, trigger on the rising edge at 1.4 V (the TTL
+threshold) for logic swings that cross it, else mid-swing. The trace sits on the power page under its row (behind
+a `SCOPE` disclosure on a phone) and in `PIN DETAIL` of every chip pin its `where` names.
+
 Faces are self-hosted in `fonts/`: Barlow Condensed for labels and prose, Share Tech Mono for
 signal names, pin numbers, designators and values (both SIL Open Font License). Tokens, the three
 masks and the silkscreen components live in `src/input.css`; chip footprints and trace routing are SVG

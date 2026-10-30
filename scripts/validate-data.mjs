@@ -76,7 +76,57 @@ const win = { document: { createElement: () => ({}) }, addEventListener() {} };
 try { new Function('window', 'document', fs.readFileSync(path.join(root, 'src', 'connectors.js'), 'utf8'))(win, win.document); } catch (e) { console.error('FAIL src/connectors.js does not load: ' + e.message); process.exit(1); }
 const padsOf = c => { try { const L = win.RBConn.layout(c, {}); return L ? new Set(L.pads.map(q => String(q.n))) : null; } catch (e) { return null; } };
 const GEO = /^(din3|din4|din5-180|din5-240|din6|din7|din8-262|din8-270|mdin7|mdin8|de9|da15|db25|edge-\d+x\d+-(seq|cbm|ab|odd-even)|rca|f|barrel|trs|ts|custom)$/;
-const checkSources = (f, list) => { for (const s of list || []) if (!s.label || !/^https?:\/\//.test(s.url || '')) err(f, `source needs label and http url: ${JSON.stringify(s)}`); };
+const checkSources = (f, list) => { for (const s of list || []) {
+  if (!s || !s.label || !/^https?:\/\//.test(s.url || '')) err(f, `source needs label and http url: ${JSON.stringify(s)}`);
+  if (s && 'sams' in s && typeof s.sams !== 'boolean') err(f, `source sams must be true or false: ${JSON.stringify(s).slice(0, 90)}`);
+} };
+/* the same readings and pin references the app uses (src/app.js qty, pinScan) */
+const SI = { '': 1, k: 1e3, K: 1e3, M: 1e6, G: 1e9, m: 1e-3, 'µ': 1e-6, 'μ': 1e-6, u: 1e-6, n: 1e-9 };
+const qty = (s, unit) => { const mm = new RegExp(`^\\s*([-+]?\\d*\\.?\\d+)\\s*([kKMGmµμun]?)${unit}(?![A-Za-z])`).exec(String(s ?? '').replace(/[−–]/g, '-')); return mm ? Number(mm[1]) * SI[mm[2]] : null; };
+const SHAPES = new Set(['square', 'pulse', 'sine', 'burst', 'video-line', 'dc']);
+const BASES = new Set(['capture', 'datasheet']);
+const REPL_KINDS = new Set(['pin-compatible', 'modern', 'adapter']);
+const PIN_JOIN = new Set(['to', 'and', 'or', 'vs', 'from', 'then', 'with']);
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/* every "<short> pin <n>" (or connector name/id, or "to pin <n>" after one) in a where must name a real pin */
+function checkWhere(f, mid, at, text) {
+  const m = R.machines[mid]; if (!m) return;
+  const chips = (m.chips || []).map(id => R.chips[id]).filter(c => c && c.pins), conns = R.connectors[mid] || [];
+  const names = conns.flatMap(c => [c.name, c.id]).filter(Boolean).sort((a, b) => b.length - a.length).map(reEsc);
+  const NUM = String.raw`(?:\d+|[A-Z]{1,2}\d*)`;
+  const re = new RegExp(String.raw`(?:(${names.map(n => n + '|').join('')}\b[\w/-]+) )?\b(pins?) (${NUM}(?:, ${NUM})*)(?![\w])`, 'g');
+  const find = w => {
+    const lw = w.toLowerCase();
+    const c = chips.find(x => String(x.short).toLowerCase() === lw || String(x.id).toLowerCase() === lw) || (lw === 'cpu' && chips.find(x => /\bCPU\b/.test(x.role || '')));
+    if (c) return { name: c.short, pins: new Set(c.pins.map(p => String(p.n))) };
+    const k = conns.find(x => x.name === w || x.id === w);
+    return k ? { name: k.id, pins: new Set((k.pins || []).filter(p => p && p.n != null && p.n !== '?' && p.n !== '-').map(p => String(p.n))) } : null;
+  };
+  let last = null;
+  for (const [all, who, , nums] of String(text).matchAll(re)) {
+    let part = who ? find(who) : null;
+    if (!part && (!who || PIN_JOIN.has(who.toLowerCase()))) part = last;
+    if (!part) { warn(f, `${at} "${all}" names no chip or connector of ${mid} (write "<chip short> pin <n>" or the connector's name or id)`); continue; }
+    last = part;
+    for (const n of nums.split(', ')) if (!part.pins.has(n)) warn(f, `${at} "${all}": ${part.name} has no pin ${n}`);
+  }
+}
+function checkScope(f, mid, x) {
+  const s = x.scope, at = `${x.tp || x.rail} scope`;
+  if (typeof s !== 'object' || Array.isArray(s)) { err(f, `${at} must be an object`); return; }
+  if (!SHAPES.has(s.shape)) err(f, `${at} shape ${s.shape} (square, pulse, sine, burst, video-line, dc)`);
+  if (!BASES.has(s.basis)) err(f, `${at} basis ${s.basis} (capture, datasheet)`);
+  if (s.shape !== 'dc' && s.f == null && s.period == null) err(f, `${at} needs f or period`);
+  if (s.f != null && !(qty(s.f, 'Hz') > 0)) err(f, `${at} f "${s.f}" does not read as a frequency (e.g. '1.0227 MHz')`);
+  if (s.period != null && !(qty(s.period, 's') > 0)) err(f, `${at} period "${s.period}" does not read as a time (e.g. '64 µs')`);
+  for (const k of ['low', 'high']) if (s[k] != null && qty(s[k], 'V') == null) err(f, `${at} ${k} "${s[k]}" does not read as volts (e.g. '0.4 V')`);
+  if (s.low != null && s.high != null && !(qty(s.high, 'V') > qty(s.low, 'V'))) err(f, `${at} high must be above low`);
+  if (s.shape !== 'dc' && (s.low == null || s.high == null)) warn(f, `${at} has no low/high: VOLTS/DIV cannot be derived`);
+  if (s.duty != null && !/^\s*\d*\.?\d+\s*%\s*$/.test(String(s.duty))) err(f, `${at} duty "${s.duty}" must be a percentage`);
+  if (s.duty != null && !['pulse', 'square'].includes(s.shape)) warn(f, `${at} duty is only drawn for pulse and square`);
+  if (!s.source) err(f, `${at} needs a source`); else checkSources(`${f} ${at}`, [s.source]);
+  if (x.where) checkWhere(f, mid, `${at} where`, x.where);
+}
 for (const [mid, list] of Object.entries(R.connectors)) {
   const ids = new Set();
   for (const c of list) {
@@ -121,6 +171,41 @@ for (const [mid, pw] of Object.entries(R.power)) {
     checkSources(f, pw.supply.sources);
   }
   checkSources(f, pw.sources);
+  /* features 1, 3, 4 (docs/data-schema.md, last section): scope blocks, firstTen, clocks */
+  for (const x of [...(pw.rails || []), ...(pw.testPoints || [])]) if (x && x.scope != null) checkScope(f, mid, x);
+  if (pw.firstTen != null) {
+    if (!Array.isArray(pw.firstTen)) err(f, 'firstTen must be an array');
+    else pw.firstTen.forEach((s, i) => {
+      const at = `firstTen step ${s && s.step != null ? s.step : i + 1}`;
+      for (const k of ['step', 'check', 'where', 'expect']) if (!s || s[k] == null || s[k] === '') err(f, `${at} needs ${k}`);
+      if (s && s.step != null && Number(s.step) !== i + 1) warn(f, `${at} is entry ${i + 1}; steps should run 1, 2, 3...`);
+      if (s && s.source) checkSources(`${f} ${at}`, [s.source]); else warn(f, `${at} has no source`);
+      if (s && s.where) checkWhere(f, mid, `${at} where`, s.where);
+    });
+    if (Array.isArray(pw.firstTen) && (pw.firstTen.length < 6 || pw.firstTen.length > 8)) warn(f, `firstTen has ${pw.firstTen.length} steps (6 to 8 wanted)`);
+  }
+  if (pw.clocks != null) {
+    if (!Array.isArray(pw.clocks)) err(f, 'clocks must be an array');
+    else pw.clocks.forEach((c, i) => {
+      const at = `clock ${c && c.name ? c.name : i + 1}`;
+      if (!c || !c.name) err(f, `${at} needs name`);
+      if (!c || !(c.f || c.pal || c.ntsc)) err(f, `${at} needs f, or pal and/or ntsc`);
+      for (const k of ['f', 'pal', 'ntsc']) if (c && c[k] != null && qty(c[k], 'Hz') == null) warn(f, `${at} ${k} "${c[k]}" does not read as a frequency (e.g. '17.734475 MHz')`);
+      if (c && c.source) checkSources(`${f} ${at}`, [c.source]);
+      if (c && c.where) checkWhere(f, mid, `${at} where`, c.where);
+    });
+  }
+}
+for (const [cid, c] of Object.entries(R.chips)) {
+  if (c.replacements == null) continue;
+  const f = `chip ${cid}`;
+  if (!Array.isArray(c.replacements)) { err(f, 'replacements must be an array'); continue; }
+  c.replacements.forEach((r, i) => {
+    const at = `replacement ${r && r.part ? r.part : i + 1}`;
+    if (!r || !r.part) err(f, `${at} needs part`);
+    if (!r || !REPL_KINDS.has(r.kind)) err(f, `${at} kind ${r && r.kind} (pin-compatible, modern, adapter)`);
+    if (r && r.source) checkSources(`${f} ${at}`, [r.source]); else warn(f, `${at} has no source`);
+  });
 }
 for (const [cid, c] of Object.entries(R.chips)) { checkSources(`chip ${cid}`, c.datasheets); for (const p of c.pins || []) if (p.conflict) warn(`chip ${cid}`, `pin ${p.n} conflict: ${p.conflict}`); }
 for (const [mid, q] of Object.entries(R.quickref)) checkSources(`quickref ${mid}`, q.sources);

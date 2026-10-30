@@ -169,24 +169,186 @@ function termify(text, ids) {
 }
 /* documents a human can open to check a table: `sources` on connectors, power, quick reference; `datasheets` on chips */
 const safeUrl = u => (/^https?:\/\//i.test(String(u || '')) ? u : '#');
+/* Sams Computerfacts folders are redraws: every list citing one carries this note once */
+const SAMS_NOTE = "Sams redraw: part numbers are Sams's own and may not match the board";
+const samsNote = list => (arr(list).some(d => d && d.sams === true) ? `<p class="sams">${SAMS_NOTE}</p>` : '');
+const srcLink = d => `<a class="lnk" href="${esc(safeUrl(d.url))}" target="_blank" rel="noopener">${esc(d.label)}</a>${d.verify ? chk() : ''}${d.note ? ` <span class="tin sm">${esc(d.note)}</span>` : ''}`;
 const sourceList = (list, title = 'Sources', checked = '') => (arr(list).length || checked
-  ? `${title ? `<div class="h4">${title}</div>` : ''}${arr(list).length ? `<ul class="ds">${list.map(d => `<li><a class="lnk" href="${esc(safeUrl(d.url))}" target="_blank" rel="noopener">${esc(d.label)}</a>${d.verify ? chk() : ''}</li>`).join('')}</ul>` : ''}${checked ? `<p class="note">Checked against: ${esc(checked)}</p>` : ''}`
+  ? `${title ? `<div class="h4">${title}</div>` : ''}${arr(list).length ? `<ul class="ds">${list.map(d => `<li>${srcLink(d)}</li>`).join('')}</ul>${samsNote(list)}` : ''}${checked ? `<p class="note">Checked against: ${esc(checked)}</p>` : ''}`
   : '');
 const datasheets = chip => sourceList(chip.datasheets, 'Datasheets');
 const conflictNote = p => (p.conflict ? `<div class="conflict"><b>Sources disagree</b>${esc(p.conflict)}</div>` : '');
-/* "TED pin 14", "TED pins 10, 11", "CPU pin 37", "cpu8088 pin 40" (short name or chip id) become links to that pin */
-function linkPins(text, m) {
-  const chips = chipsOf(m).filter(c => c.pins);
-  return esc(text).replace(/\b([\w/-]+) (pins?) (\d+(?:, \d+)*)/g, (all, who, word, nums) => {
-    const w = who.toLowerCase();
-    const c = chips.find(x => String(x.short).toLowerCase() === w || String(x.id).toLowerCase() === w) || (w === 'cpu' && chips.find(x => /\bCPU\b/.test(x.role || '')));
-    if (!c) return all;
-    const ns = nums.split(', ').filter(n => c.pins.some(p => p.n === Number(n)));
-    if (!ns.length) return all;
-    if (ns.length === 1 && word === 'pin') return `<a class="plink" href="${chipPath(m, c)}?pin=${ns[0]}">${esc(who)} pin ${ns[0]}</a>`;
-    return `${esc(who)} ${word} ${nums.split(', ').map(n => (ns.includes(n) ? `<a class="plink" href="${chipPath(m, c)}?pin=${n}">${n}</a>` : n)).join(', ')}`;
+/* "TED pin 14", "TED pins 10, 11", "CPU pin 37", "cpu8088 pin 40" (short name or chip id), and a connector by
+   its name or id ("Power in (brick) pin 5", "c64-user pin M"). A bare "pin 2" after "to", "and"... reuses the
+   part named before it ("Power in (brick) pin 5 to pin 2"). pinScan finds them; linkPins makes them links. */
+const PIN_NUM = String.raw`(?:\d+|[A-Z]{1,2}\d*)`;
+const PIN_JOIN = new Set(['to', 'and', 'or', 'vs', 'from', 'then', 'with']);
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function pinScan(text, m, fn) {
+  const chips = chipsOf(m).filter(c => c.pins), conns = arr(dataFor(D.connectors, m).data);
+  const pw = dataFor(D.power, m).data, supplyId = pw && pw.supply && pw.supply.connector;
+  const names = conns.flatMap(c => [c.name, c.id]).filter(Boolean).map(esc).sort((a, b) => b.length - a.length).map(reEsc);
+  const re = new RegExp(String.raw`(?:(${names.map(n => n + '|').join('')}\b[\w/-]+) )?\b(pins?) (${PIN_NUM}(?:, ${PIN_NUM})*)(?![\w])`, 'g');
+  const find = w => {
+    const lw = w.toLowerCase();
+    const c = chips.find(x => String(x.short).toLowerCase() === lw || String(x.id).toLowerCase() === lw) || (lw === 'cpu' && chips.find(x => /\bCPU\b/.test(x.role || '')));
+    if (c) return { kind: 'chip', c, pins: new Set(c.pins.map(p => String(p.n))), href: n => `${chipPath(m, c)}?pin=${n}` };
+    const k = conns.find(x => esc(x.name) === w || esc(x.id) === w);
+    if (k) return { kind: 'conn', c: k, pins: new Set(realPins(k).map(p => String(p.n))), href: n => `${mPath(m)}/${k.id === supplyId ? 'power' : 'ports'}?c=${encodeURIComponent(k.id)}&pin=${encodeURIComponent(n)}` };
+    return null;
+  };
+  let last = null;
+  return esc(text).replace(re, (all, who, word, nums) => {
+    let part = who ? find(who) : null;
+    const own = !!part;
+    if (!part && (!who || PIN_JOIN.has(who.toLowerCase()))) part = last;
+    if (!part) return all;
+    last = part;
+    const list = nums.split(', '), ok = list.filter(n => part.pins.has(n));
+    return ok.length ? fn({ all, who, own, word, list, ok, part }) : all;
   });
 }
+const linkPins = (text, m) => pinScan(text, m, ({ who, own, word, list, ok, part }) => {
+  const a = (n, t) => `<a class="plink" href="${part.href(n)}">${t}</a>`;
+  if (list.length === 1 && word === 'pin') return own ? a(ok[0], `${who} pin ${ok[0]}`) : `${who ? who + ' ' : ''}${a(ok[0], `pin ${ok[0]}`)}`;
+  return `${who ? who + ' ' : ''}${word} ${list.map(n => (ok.includes(n) ? a(n, n) : n)).join(', ')}`;
+});
+/* the chip and connector pins a `where` names */
+function pinRefs(text, m) {
+  const out = [];
+  pinScan(text, m, r => { r.ok.forEach(n => out.push({ kind: r.part.kind, c: r.part.c, n })); return r.all; });
+  return out;
+}
+
+/* ---------- scope: an idealised trace and the settings derived from two sourced numbers ----------
+   A test point's `scope` gives a frequency (or period) and a swing (low, high) from a capture or a datasheet.
+   Everything a tech sets on the scope follows from those, so nothing is entered by hand:
+   TIME/DIV = the smallest 1-2-5 step >= period / 5 (10 divisions hold 2 to 5 cycles); when that shows more than
+     4, the step below it if its count (just under 2) is nearer the 2-to-4 band, so the result is 1.8 to 4.5 cycles;
+   VOLTS/DIV = the smallest 1-2-5 step >= (high - low) / 5, so the swing fills 2.5 to 5 of the 8 divisions;
+   DC coupling, probe 10x, rising-edge trigger at 1.4 V (TTL threshold) for logic shapes whose swing crosses it,
+   else mid-swing. The trace is drawn from `shape`, never from a capture, and says so. */
+const SHAPES = ['square', 'pulse', 'sine', 'burst', 'video-line', 'dc'];
+const LOGIC = new Set(['square', 'pulse', 'burst']);
+const SI = { '': 1, k: 1e3, K: 1e3, M: 1e6, G: 1e9, m: 1e-3, 'µ': 1e-6, 'μ': 1e-6, u: 1e-6, n: 1e-9 };
+/* '1.0227 MHz' -> 1022700, '64 µs' -> 6.4e-5, '-0.3 V' -> -0.3; null when it does not parse */
+function qty(s, unit) {
+  const mm = new RegExp(`^\\s*([-+]?\\d*\\.?\\d+)\\s*([kKMGmµμun]?)${unit}(?![A-Za-z])`).exec(String(s ?? '').replace(/[−–]/g, '-'));
+  return mm ? Number(mm[1]) * SI[mm[2]] : null;
+}
+const pct = s => { const mm = /^\s*(\d*\.?\d+)\s*%\s*$/.exec(String(s ?? '')); return mm && +mm[1] > 0 && +mm[1] < 100 ? mm[1] / 100 : null; };
+const step125 = x => { const e = Math.floor(Math.log10(x)), k = [1, 2, 5, 10].find(v => v >= x / 10 ** e - 1e-9); return k * 10 ** e; };
+const PFX = [[1e-9, 'n'], [1e-6, 'µ'], [1e-3, 'm'], [1, ''], [1e3, 'k'], [1e6, 'M']];
+function fmtU(v, unit) {
+  if (!v) return `0 ${unit}`;
+  let u = PFX[0]; for (const q of PFX) if (Math.abs(v) >= q[0] * 0.9995) u = q;
+  return `${+(v / u[0]).toPrecision(3)} ${u[1]}${unit}`.replace('-', '−');
+}
+function scopeSet(sc) {
+  const shape = SHAPES.includes(sc.shape) ? sc.shape : 'square';
+  const T = sc.period != null ? qty(sc.period, 's') : (f => (f > 0 ? 1 / f : null))(qty(sc.f, 'Hz'));
+  const lo = qty(sc.low, 'V'), hi = qty(sc.high, 'V');
+  const s = { shape, T, lo, hi, duty: shape === 'pulse' || shape === 'square' ? pct(sc.duty) : null };
+  if (T > 0 && shape !== 'dc') {
+    /* the smallest step showing 2 cycles shows up to 5; past 4, the step below (just under 2) may sit nearer the band */
+    let t = step125(T / 5), c = 10 * t / T;
+    const lower = t / (Math.round(t / 10 ** Math.floor(Math.log10(t) + 1e-9)) === 5 ? 2.5 : 2), cl = 10 * lower / T;
+    if (c > 4 && 2 / cl < c / 4) { t = lower; c = cl; }
+    s.tdiv = t; s.cycles = c;
+  }
+  if (shape === 'dc') {
+    const lvl = hi ?? lo;
+    if (lvl) { s.vdiv = step125(Math.abs(lvl) / 5); s.gnd = lvl > 0 ? 1 : 7; s.yLo = s.yHi = s.gnd + lvl / s.vdiv; }
+    else { s.yLo = s.yHi = 4; }
+    return s;
+  }
+  if (lo != null && hi != null && hi > lo) {
+    s.vdiv = step125((hi - lo) / 5);
+    /* 0 V one division up for a positive swing; else centre the swing (and say where 0 V went) */
+    s.gnd = lo >= 0 && hi / s.vdiv <= 6.5 ? 1 : 4 - (lo + hi) / 2 / s.vdiv;
+    s.yLo = s.gnd + lo / s.vdiv; s.yHi = s.gnd + hi / s.vdiv;
+    s.trig = LOGIC.has(shape) && lo < 1.4 && hi > 1.4 ? 1.4 : (lo + hi) / 2;
+    s.yTrig = s.gnd + s.trig / s.vdiv;
+  } else {
+    s.yLo = 2; s.yHi = 6; s.yTrig = 4;
+    if (LOGIC.has(shape)) s.trig = 1.4;
+  }
+  return s;
+}
+/* one period from the trigger point: [fraction of the period, level 0 (low) to 1 (high)] */
+function shapeSegs(s) {
+  if (s.shape === 'square' || s.shape === 'pulse') { const d = s.duty ?? (s.shape === 'square' ? 0.5 : 0.25); return [[d, 1], [1 - d, 0]]; }
+  /* a group of four pulses, then a gap as long as the group; f or period is the group's repetition rate */
+  if (s.shape === 'burst') return [...Array.from({ length: 4 }, () => [[1 / 16, 1], [1 / 16, 0]]).flat(), [0.5, 0]];
+  /* video line from the start of the active picture: active (flat grey), front porch, sync tip, back porch;
+     PAL proportions 52, 1.65, 4.7, 5.65 of 64 µs; blanking at 0.3 of the swing above the sync tip */
+  if (s.shape === 'video-line') return [[0.8125, 0.65], [0.0258, 0.3], [0.0734, 0], [0.0883, 0.3]];
+  return [[1, 0]];
+}
+const DV = 24;   /* px per division: the screen is 240 x 192 */
+function scopeSVG(s, label) {
+  const X = x => r1(x * DV), Y = y => r1((8 - y) * DV);
+  const P = s.T > 0 && s.tdiv ? s.T / s.tdiv : 10 / 3, xt = 5;   /* divisions per period; trigger at the centre */
+  let d = '';
+  if (s.shape === 'sine') {
+    const mid = (s.yLo + s.yHi) / 2, amp = (s.yHi - s.yLo) / 2, n = Math.ceil(10 / P * 48);
+    for (let i = 0; i <= n; i++) { const x = 10 * i / n; d += `${i ? 'L' : 'M'} ${X(x)} ${Y(mid + amp * Math.sin(2 * Math.PI * (x - xt) / P))} `; }
+  } else if (s.shape === 'dc') d = `M 0 ${Y(s.yLo)} H ${X(10)}`;
+  else {
+    const segs = shapeSegs(s), lv = f => s.yLo + f * (s.yHi - s.yLo);
+    let x = xt - P * Math.ceil(xt / P), first = true;
+    while (x < 10) for (const [f, l] of segs) { const y = Y(lv(l)); d += `${first ? 'M' : 'L'} ${X(x)} ${y} L ${X(x + f * P)} ${y} `; first = false; x += f * P; }
+  }
+  let grid = '';
+  for (let i = 1; i < 10; i++) grid += `M ${i * DV} 0 V ${8 * DV} `;
+  for (let i = 1; i < 8; i++) grid += `M 0 ${i * DV} H ${10 * DV} `;
+  let ticks = '';
+  for (let i = 1; i < 50; i++) if (i % 5) ticks += `M ${r1(i * DV / 5)} ${4 * DV - 3} v 6 `;
+  for (let i = 1; i < 40; i++) if (i % 5) ticks += `M ${5 * DV - 3} ${r1(i * DV / 5)} h 6 `;
+  const gnd = s.gnd != null && s.gnd >= 0 && s.gnd <= 8 ? `<path class="mkr" d="M -11 ${Y(s.gnd) - 5} l 8 5 -8 5 z"/><text class="mt" x="-14" y="${Y(s.gnd) + 4}" text-anchor="end">0</text>` : '';
+  const trig = s.shape === 'dc' ? '' : `<path class="mkr" d="M ${X(xt) - 5} -11 l 5 8 5 -8 z"/><path class="mkr" d="M ${X(10) + 11} ${Y(s.yTrig) - 5} l -8 5 8 5 z"/>`;
+  return `<svg viewBox="-26 -14 282 212" role="img" aria-label="${esc(label)}">
+    <rect class="fr" x="0" y="0" width="${10 * DV}" height="${8 * DV}"/>
+    <path class="gr" d="${grid}"/><path class="ax" d="M ${5 * DV} 0 V ${8 * DV} M 0 ${4 * DV} H ${10 * DV} ${ticks}"/>
+    <text class="wm" x="6" y="15">IDEALISED</text>
+    <svg x="0" y="0" width="${10 * DV}" height="${8 * DV}"><path class="tr" d="${d}"/></svg>
+    ${gnd}${trig}
+  </svg>`;
+}
+const SHAPE_WORD = { square: 'square wave', pulse: 'pulse train', sine: 'sine wave', burst: 'pulse bursts', 'video-line': 'video line', dc: 'DC level' };
+/* the trace, the derived settings, the note and the source. Open by default except on a phone. */
+function scopeBlock(sc, title) {
+  const s = scopeSet(sc), basis = sc.basis === 'capture' ? 'capture' : 'datasheet';
+  const swing = s.lo != null && s.hi != null ? `${fmtU(s.lo, 'V')} to ${fmtU(s.hi, 'V')}` : '';
+  const lvl = s.hi ?? s.lo, rows = [];
+  if (s.shape === 'dc') rows.push(['Time/div', 'Any', 'a level, not a wave']);
+  else rows.push(['Time/div', s.tdiv ? fmtU(s.tdiv, 's') : '—', s.tdiv ? `${+s.cycles.toFixed(1)} cycles of ${fmtU(s.T, 's')} across 10 div` : 'no frequency in the source']);
+  rows.push(['Volts/div', s.vdiv ? fmtU(s.vdiv, 'V') : '—', !s.vdiv ? 'no levels in the source'
+    : s.shape === 'dc' ? `${fmtU(lvl, 'V')} = ${+(Math.abs(lvl) / s.vdiv).toFixed(1)} div` : `${swing} = ${+((s.hi - s.lo) / s.vdiv).toFixed(1)} div`]);
+  rows.push(['Coupling', 'DC', s.gnd == null ? '' : s.gnd >= 0 && s.gnd <= 8
+    ? `0 V ${s.gnd === 1 ? 'one division up' : s.gnd === 7 ? 'one division down' : `at ${+s.gnd.toFixed(1)} div`}` : `0 V off screen: offset ${fmtU(-(s.lo + s.hi) / 2, 'V')}`]);
+  rows.push(['Trigger', s.shape === 'dc' ? 'Auto' : `Rising, ${s.trig != null ? fmtU(s.trig, 'V') : 'mid-swing'}`, s.shape === 'dc' ? 'no edges' : s.trig === 1.4 ? 'TTL threshold' : 'mid-swing']);
+  rows.push(['Probe', '10×', 'channel set to 10×']);
+  const f = s.T > 0 ? fmtU(1 / s.T, 'Hz') : '';
+  const label = `Idealised ${SHAPE_WORD[s.shape]}${f && s.shape !== 'dc' ? ', ' + f : ''}${swing ? ', ' + swing : ''}, from ${basis}`;
+  const sum = s.shape === 'dc' ? (s.vdiv ? `${fmtU(s.vdiv, 'V')}/div, DC` : 'DC') : [s.tdiv && fmtU(s.tdiv, 's') + '/div', s.vdiv && fmtU(s.vdiv, 'V') + '/div'].filter(Boolean).join(' · ');
+  return `<details class="scope"${PHONE_MQ.matches ? '' : ' open'}><summary>Scope${title ? ` <span class="t">${esc(title)}</span>` : ''}<span class="s">${esc(sum)}</span></summary>
+    <div class="scope-body">
+      <figure class="scr">${scopeSVG(s, label)}<figcaption>Idealised from ${basis}${s.shape === 'video-line' ? '; picture drawn as a flat grey' : ''}</figcaption></figure>
+      <div><dl class="kv">${rows.map(([k, v, h]) => `<dt>${k}</dt><dd><b>${esc(v)}</b>${h ? ` <span class="tin">${esc(h)}</span>` : ''}</dd>`).join('')}</dl>
+        ${sc.note ? `<p class="sm mt-2.5">${esc(sc.note)}</p>` : ''}
+        ${sc.source ? sourceList([sc.source], '') : ''}</div>
+    </div></details>`;
+}
+/* the rails and test points with a scope block whose `where` names this chip pin */
+function pinScopes(chip, p, m) {
+  const pw = dataFor(D.power, m).data; if (!pw) return '';
+  return [...arr(pw.rails).map(r => [r.rail, r]), ...arr(pw.testPoints).map(t => [t.tp, t])]
+    .filter(([, x]) => x && x.scope && pinRefs(x.where || '', m).some(r => r.kind === 'chip' && r.c === chip && String(r.n) === String(p.n)))
+    .map(([name, x]) => scopeBlock(x.scope, name)).join('');
+}
+const REPL_KIND = { 'pin-compatible': 'Pin-compatible', modern: 'Modern', adapter: 'Adapter' };
+const clockFreqs = c => (c.f ? String(c.f) : [c.pal && `PAL ${c.pal}`, c.ntsc && `NTSC ${c.ntsc}`].filter(Boolean).join(' / '));
 
 /* ---------- search index ---------- */
 let INDEX = null;
@@ -200,7 +362,9 @@ function buildIndex() {
     const ms = fittedIn(c);
     const home = ms.find(m => m.status === 'ready') || ms[0];
     if (!home) continue;
-    ix.push({ group: 'Chips', title: c.name, sub: [c.role, c.pkg, ms.map(m => m.name).join(', ')].filter(Boolean).join(', '), keys: `${c.short} ${c.family || ''} ${c.role || ''}`, href: c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`, des: boardDes(c, home), tag: c.pins ? '' : 'not captured' });
+    const chref = c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`, repl = arr(c.replacements).filter(r => r && r.part);
+    ix.push({ group: 'Chips', title: c.name, sub: [c.role, c.pkg, ms.map(m => m.name).join(', ')].filter(Boolean).join(', '), keys: `${c.short} ${c.family || ''} ${c.role || ''} ${repl.map(r => r.part).join(' ')}`, href: chref, des: boardDes(c, home), tag: c.pins ? '' : 'not captured' });
+    for (const r of repl) ix.push({ group: 'Chips', title: r.part, sub: `${REPL_KIND[r.kind] || r.kind || 'Replacement'} for the ${c.name}${r.note ? ': ' + r.note : ''}`, keys: `${c.short} ${c.name} replacement ${r.kind || ''}`, href: c.pins ? `${chref}?at=replacements` : chref, des: boardDes(c, home), tag: `replaces ${c.short}` });
     if (c.pins) for (const p of c.pins) ix.push({ group: 'Pins', title: `${c.short} pin ${p.n}  ${p.name}`, sub: `${home.name}: ${p.desc || ''}`, keys: `pin ${p.n} ${p.name} ${String(p.name).replace('/', '')} ${c.short} ${c.name}`, href: `${chipPath(home, c)}?pin=${p.n}`, des: boardDes(c, home) ? `${boardDes(c, home)}.${p.n}` : '', mono: true });
   }
   for (const [id, q] of Object.entries(D.quickref)) {
@@ -220,10 +384,14 @@ function buildIndex() {
       for (const p of realPins(c)) ix.push({ group: 'Connectors', title: `${c.name} pin ${p.n}  ${p.name || ''}`, sub: `${m.name}: ${p.desc || c.kind || ''}`, keys: `pin ${p.n} ${p.name || ''} ${String(p.name || '').replace('/', '')}`, href: `${href}&pin=${encodeURIComponent(p.n)}`, des: `J${i + 1}.${p.n}`, mono: true });
     });
   }
+  for (const [mid, pw] of Object.entries(D.power)) {
+    const m = D.machines[mid]; if (!m || !pw) continue;
+    for (const c of arr(pw.clocks)) if (c && c.name) ix.push({ group: 'Clocks', title: c.name, tag: clockFreqs(c), sub: `${m.name}${c.where ? ': ' + c.where : ''}`, keys: `clock ${clockFreqs(c)} ${c.where || ''}`, href: `${mPath(m)}/power?at=clocks`, des: mDes(m) });
+  }
   ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' });
   INDEX = ix;
 }
-const GROUP_ORDER = ['Machines', 'Chips', 'Pins', 'BASIC', 'Keys', 'Memory', 'Glossary', 'Connectors', 'Pages'];
+const GROUP_ORDER = ['Machines', 'Chips', 'Pins', 'BASIC', 'Keys', 'Memory', 'Glossary', 'Connectors', 'Clocks', 'Pages'];
 function search(q, perGroup = 20) {
   q = q.trim().toLowerCase(); if (!q) return [];
   if (!INDEX) buildIndex();
@@ -500,6 +668,8 @@ function render() {
   if (a === 'glossary' && r.q.term) { const el = document.getElementById('term-' + r.q.term); if (el) el.scrollIntoView({ block: 'center' }); }
   if (c === 'ports' && r.q.c) { const el = document.getElementById('conn-' + r.q.c); if (el) el.scrollIntoView({ block: 'start' }); }
   if (c === 'power' && r.q.c) { const el = $('#supply'); if (el) el.scrollIntoView({ block: 'start' }); }
+  /* ?at=<id> lands on a block (first-ten, clocks, replacements) */
+  if (r.q.at && /^[\w-]+$/.test(r.q.at)) { const el = document.getElementById(r.q.at); if (el) el.scrollIntoView({ block: 'start' }); }
   if ((ctx.chip || state.conn) && PANEL_MQ.matches) { padIntoView(); drawWire(); }
   document.title = ctx.chip ? `${ctx.chip.short} pinout, Retro Bench` : ctx.machine ? `${ctx.machine.name}, Retro Bench` : ctx.brand ? `${ctx.brand.name}, Retro Bench` : 'Retro Bench';
 }
@@ -598,6 +768,7 @@ function viewMachine(m) {
       ${door(`${mPath(m)}/quickref`, 'J2', 'Quick reference', qr.data ? 'Keys, BASIC, memory map' : 'Not captured yet', !qr.data)}
       ${door(`${mPath(m)}/ports`, 'J3', 'Ports', cn.data ? `${arr(cn.data).length} connectors` : 'Not captured yet', !cn.data)}
       ${door(`${mPath(m)}/power`, 'J4', 'Power', pw.data ? `${pw.data.supply && pw.data.supply.name ? esc(pw.data.supply.name) + ', ' : ''}${arr(pw.data.rails).length} rails, ${arr(pw.data.testPoints).length} test points` : 'Not captured yet', !pw.data)}
+      ${pw.data && arr(pw.data.firstTen).length ? `<a class="lnk col-start-2 lg:col-start-4 -mt-2 mono sm uppercase" href="${mPath(m)}/power?at=first-ten">First ten minutes &rsaquo;</a>` : ''}
     </div>
     ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips)}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.</p></section>`
       : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} is ${m.status === 'planned' ? 'planned' : 'on paper'}: its chips have not been entered yet.`)}
@@ -670,7 +841,16 @@ function viewChip(m, chip) {
         <div><div class="h4 mt-0">Fitted in</div><ul class="bul">${fittedIn(chip).map(mm => `<li><a href="${chipPath(mm, chip)}">${esc(mm.name)}</a>${locOf(chip, mm) ? ` <span class="mono tin sm">${esc(locOf(chip, mm))}</span>` : ''}</li>`).join('')}</ul></div>
       </div>
       ${datasheets(chip)}
-    </section>`;
+    </section>
+    ${replacementsBlock(chip)}`;
+}
+/* pin-compatible parts, modern drop-ins and adapters a tech can buy or has in a drawer */
+function replacementsBlock(chip) {
+  const list = arr(chip.replacements).filter(r => r && r.part);
+  if (!list.length) return '';
+  return `<section class="blk scroll-mt-4" id="replacements"><span class="lbl">Replacements</span>
+    <div class="legend tri">${list.map(r => `<div class="k silk">${esc(r.part)}</div><div class="v"><span class="tag kind ${esc(r.kind || '')}">${esc(REPL_KIND[r.kind] || r.kind || '')}</span></div><div class="v3">${esc(r.note || '')}${r.verify ? chk() : ''}${r.source ? `<br>${srcLink(r.source)}` : ''}</div>`).join('')}</div>
+    ${samsNote(list.map(r => r.source))}</section>`;
 }
 function detailBox(chip, m) {
   const p = state.pin != null && chip.pins.find(x => x.n === state.pin);
@@ -690,6 +870,7 @@ function pinDetail(chip, p, m) {
     </dl>
     <p class="desc">${termify(p.desc, p.terms)}${p.verify ? chk() : ''}</p>
     ${p.probe ? `<div class="probe"><b>Probe</b>${esc(p.probe)}</div>` : ''}
+    ${pinScopes(chip, p, m)}
     ${conflictNote(p)}
     ${termLinks(p.terms)}
     ${datasheets(chip)}
@@ -812,18 +993,46 @@ function viewPower(m) {
   if (!pw) return top + emptyBlk('NOT CAPTURED', `No rail or test point data for the ${esc(m.name)} in the app yet.`);
   let i = 1;
   const probes = chipsOf(m).filter(c => c.pins).flatMap(c => c.pins.filter(p => p.probe).map(p => ({ c, p })));
+  const scope = x => (x.scope ? `<div class="tpscope">${scopeBlock(x.scope)}</div>` : '');
+  const ften = arr(pw.firstTen), probeBlk = probes.length ? `<section class="blk"><span class="lbl">Probe hints</span><div class="legend">${probes.slice(0, 8).map(({ c, p }) => `<div class="k"><a class="lnk" href="${chipPath(m, c)}?pin=${p.n}">${esc(c.short)}.${p.n} ${esc(p.name)}</a></div><div class="v sm">${esc(p.probe)}</div>`).join('')}</div></section>` : '';
   return top + (pw.supply ? supplyBlock(m, pw.supply) : '') + `
     <section class="blk"><span class="lbl">Rails</span>
-      <div class="legend tri">${arr(pw.rails).map(r => `<div class="k">TP${i++}</div><div class="v"><b class="mono">${esc(r.rail)}</b><br><span class="tin sm">${linkPins(r.where || '', m)}</span>${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}</div><div class="v3 mono">${esc(r.expect || '')}</div>`).join('')}</div>
+      <div class="legend tri">${arr(pw.rails).map(r => `<div class="k">TP${i++}</div><div class="v"><b class="mono">${esc(r.rail)}</b><br><span class="tin sm">${linkPins(r.where || '', m)}</span>${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}</div><div class="v3 mono">${esc(r.expect || '')}</div>${scope(r)}`).join('')}</div>
     </section>
     ${arr(pw.testPoints).length ? `<section class="blk"><span class="lbl">Test points</span>
-      <div class="legend tri">${pw.testPoints.map(t => `<div class="k">TP${i++}</div><div class="v"><b>${esc(t.tp)}</b><br><span class="tin sm mono">${linkPins(t.where || '', m)}</span></div><div class="v3 mono">${esc(t.expect || '')}</div>`).join('')}</div>
+      <div class="legend tri">${pw.testPoints.map(t => `<div class="k">TP${i++}</div><div class="v"><b>${esc(t.tp)}</b><br><span class="tin sm mono">${linkPins(t.where || '', m)}</span></div><div class="v3 mono">${esc(t.expect || '')}</div>${scope(t)}`).join('')}</div>
     </section>` : ''}
+    ${clocksBlock(m, arr(pw.clocks))}
     ${arr(pw.sources).length ? `<section class="blk"><span class="lbl">Sources</span>${sourceList(pw.sources, '')}</section>` : ''}
-    <div class="grid gap-x-[18px] md:grid-cols-2 items-start">
+    ${ften.length ? firstTenBlock(m, ften) + probeBlk : `<div class="grid gap-x-[18px] md:grid-cols-2 items-start">
       <section class="blk"><span class="lbl">Order of checks</span><ul class="bul"><li>Rails at the supply pins, with the board loaded.</li><li>Reset goes high after power-on.</li><li>Master clock, then the CPU clock.</li><li>Only then pull the hottest chip.</li></ul></section>
-      ${probes.length ? `<section class="blk"><span class="lbl">Probe hints</span><div class="legend">${probes.slice(0, 8).map(({ c, p }) => `<div class="k"><a class="lnk" href="${chipPath(m, c)}?pin=${p.n}">${esc(c.short)}.${p.n} ${esc(p.name)}</a></div><div class="v sm">${esc(p.probe)}</div>`).join('')}</div></section>` : ''}
-    </div>` + sharedNote(shared);
+      ${probeBlk}
+    </div>`}` + sharedNote(shared);
+}
+/* the machine's own ordered checks, in place of the generic order */
+function firstTenBlock(m, steps) {
+  return `<section class="blk scroll-mt-4" id="first-ten"><span class="lbl">First ten minutes</span>
+    <ol class="ften">${steps.map((s, k) => `<li><span class="n">${esc(s.step ?? k + 1)}</span><div>
+      <div class="c">${esc(s.check || '')}${s.verify ? chk() : ''}</div>
+      ${s.where ? `<div class="w">${linkPins(s.where, m)}</div>` : ''}
+      ${s.expect ? `<div class="x">${esc(s.expect)}</div>` : ''}
+      ${s.ifNot ? `<div class="if">If not: ${esc(s.ifNot)}</div>` : ''}
+      ${s.source ? `<div class="sm">${srcLink(s.source)}</div>` : ''}</div></li>`).join('')}</ol>
+    ${samsNote(steps.map(s => s.source))}</section>`;
+}
+/* the clock tree: crystal and every derived clock, PAL and NTSC side by side, where each appears */
+function clocksBlock(m, list) {
+  list = list.filter(c => c && c.name);
+  if (!list.length) return '';
+  const tv = list.some(c => c.pal || c.ntsc);
+  const cols = tv ? ['PAL', 'NTSC'] : ['Frequency'];
+  const freq = c => (!tv ? `<td class="f" data-h="f">${esc(c.f || '')}</td>`
+    : c.pal || c.ntsc ? `<td class="f" data-h="PAL">${esc(c.pal || '')}</td><td class="f" data-h="NTSC">${esc(c.ntsc || '')}</td>`
+    : `<td class="f" colspan="2" data-h="f">${esc(c.f || '')}</td>`);
+  return `<section class="blk scroll-mt-4" id="clocks"><span class="lbl">Clocks</span>
+    <table class="ctab"><thead><tr><th>Clock</th><th>Where</th>${cols.map(h => `<th>${h}</th>`).join('')}<th>Source</th></tr></thead>
+    <tbody>${list.map(c => `<tr><td class="nm">${esc(c.name)}${c.verify ? chk() : ''}</td><td class="w">${linkPins(c.where || '', m)}</td>${freq(c)}<td class="s">${c.source ? srcLink(c.source) : ''}</td></tr>`).join('')}</tbody></table>
+    ${samsNote(list.map(c => c.source))}</section>`;
 }
 
 function resultItem(it, idx, act) {
@@ -850,7 +1059,13 @@ function allSources() {
   const push = (list, from) => arr(list).forEach(d => d && d.url && out.push({ label: d.label || d.name || d.url, url: d.url, from }));
   const mn = mid => (D.machines[mid] ? D.machines[mid].name : mid);
   for (const [mid, list] of Object.entries(D.connectors)) for (const c of arr(list)) push(c.sources, `${mn(mid)}, ${c.name}`);
-  for (const [mid, pw] of Object.entries(D.power)) { push(pw.sources, `${mn(mid)}, power`); push(pw.supply && pw.supply.sources, `${mn(mid)}, supply`); }
+  for (const [mid, pw] of Object.entries(D.power)) {
+    push(pw.sources, `${mn(mid)}, power`); push(pw.supply && pw.supply.sources, `${mn(mid)}, supply`);
+    for (const x of [...arr(pw.rails), ...arr(pw.testPoints)]) if (x && x.scope) push([x.scope.source], `${mn(mid)}, ${x.tp || x.rail} waveform`);
+    push(arr(pw.firstTen).map(s => s && s.source), `${mn(mid)}, first ten minutes`);
+    push(arr(pw.clocks).map(c => c && c.source), `${mn(mid)}, clocks`);
+  }
+  for (const c of Object.values(D.chips)) push(arr(c.replacements).map(r => r && r.source), `${c.name}, replacements`);
   for (const [mid, q] of Object.entries(D.quickref)) push(q.sources, `${mn(mid)}, quick reference`);
   for (const c of Object.values(D.chips)) push(c.datasheets, c.name);
   for (const [mid, list] of Object.entries(D.schematics)) for (const s of arr(list)) push([{ label: `${s.board}: ${s.label}`, url: s.url }], `${mn(mid)}, board`);

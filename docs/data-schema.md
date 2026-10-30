@@ -215,6 +215,14 @@ testPoints: [{ tp: 'CPU clock', where: 'CPU pin 37', expect: '1.02 MHz square',
 The app derives the scope settings (time/div in the 1-2-5 series for 2 to 4 cycles, volts/div to fit the swing in
 about five divisions, DC coupling, rising-edge trigger at 1.4 V for logic) and draws an idealised trace labelled
 "idealised from <basis>". Never enter settings by hand; never enter a `scope` block without `source`.
+How the app reads the fields (clarifications, no new fields):
+- Values are a number, an optional SI prefix and the unit: `'1.0227 MHz'`, `'64 µs'`, `'-0.3 V'`, `'500 mV'`,
+  `duty: '30%'`. Anything else ("about 1 MHz") fails the validator.
+- `burst`: `f`/`period` is the repetition rate of the group, not of the pulses inside it; the app draws four
+  pulses and a gap. `video-line`: `low` is the sync tip, `high` peak white; the picture is drawn as a flat grey.
+- `dc` (a rail): `high` is the level (`low` may be left out); `f`/`period` are not needed.
+- Leave `low`/`high` out when the source gives none: the trace is drawn without a volts/div setting.
+- `where` on the test point or rail decides where the trace also shows: in PIN DETAIL of every chip pin it names.
 
 ### firstTen on power
 ```js
@@ -227,6 +235,10 @@ power: { c64: { firstTen: [
 Six to eight steps a tech does before pulling a chip: supply, rails, reset, master clock, CPU clock, a chip select
 or bus line. `where` uses `<chip short> pin <n>` so the app links pads. The app shows these in place of the generic
 "Order of checks" when present.
+A connector pin is written with the connector's exact `name` or `id` from this machine's `connectors`:
+`'Power in (brick) pin 5 to pin 2'` links both pads (a bare `pin <n>` after "to", "and" or "or" reuses the part
+named before it). "Brick DIN pin 5" names nothing the app knows, so it stays plain text and the validator warns.
+`source` is optional in the shape but expected: the validator warns on a step without one.
 
 ### clocks on power
 ```js
