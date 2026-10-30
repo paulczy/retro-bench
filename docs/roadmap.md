@@ -56,3 +56,6 @@ and 8 last. Cross-model review and a push to GitHub Pages after each group.
 - PLCC footprint drawing: the CoCo 3 GIME is a PLCC-68 and currently draws as a DIP. Add a square footprint for `PLCC-n`.
 - Dragon 32 moves from tandy.js to a Dragon Data brand file with the Dragon 64.
 - Card-edge row layout: where a manual numbers pins without drawing rows (CoCo cartridge, MC-10 edge), the odd/even assumption is flagged in the connector summary; replace when a drawing is found.
+- Card-edge row side: `ab` edges always draw row A on top, but the Spectrum manuals call the underside A. Add an edge option (e.g. `rowA: 'bottom'`) in connectors.js and set it on the Spectrum edges.
+- The AY-3-8912 pin text in timex.js is TS2068-specific but the chip is shared with the Spectrum 128, +2 and +3: make it machine-neutral.
+- `rom23128` in commodore.js: the select pins 20 and 27 differ by ROM maker on the Spectrum; note it.
