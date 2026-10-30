@@ -99,3 +99,47 @@ confirmed.
 
 - The zip entries (ColecoVision, ADAM, Dragon 32, BBC Master and the C128 update) link to archives, not to single drawings.
 - The existing credit for Ray Carlsen, `http://personalpages.tds.net/~rcarlsen/`, no longer resolves. I left it in place because I have no confirmed replacement.
+
+## Second pass: 2026-10-30 (drives, Dragon 64, Electron, MSX)
+
+77 entries added for 10 machines, which brings the file to 336 entries over 57 machines. Every new URL, and the
+moved Dragon 32 URLs, was fetched once with `-A "Mozilla/5.0"` and returned 200 or 206. `node
+scripts/validate-data.mjs` reports 0 FAIL.
+
+- **c1541** (22): Technical Manual 990445 schematic, layout and parts list for the long board 1540008
+  (schematic 1540001), the short board 1540048 (1540049) and the 1541B/C board 250448. Schematic 251748 rev E
+  for 250442/250446 (only sheet 3 of 4 is online as an image; the Nov 1985 service manual has the board table
+  and schematics). For the 1541-II 340503: the Commodore schematic, the 314862-01 addendum (schematic 355207), a
+  redraw, the power brick and Sams CD20. Also Levak's board and parts lists, Sams CD4 and the 1984 Maintenance
+  Guide (both verify). zimmers calls 251748 an assy; the service manual says it is the schematic for 250442/250446.
+- **c1571** (9): The 310420 schematic (merged GIF), layout, the 314002-04 service manual, appy's redraw, Sams
+  CD12 and the parts list. For the 1571CR (C128DCR board 310654): the C128DCR schematic and the 1571CR readme.
+- **c1581** (7): Service manual 314982-01 schematic 252380 rev 4 (pp. 15-18), layout 250471, parts list, the
+  PDF, the power brick, Sams CD22 and the diagnostic manual.
+- **disk2** (7): Analog card schematics 050-0007-G and -H, interface card schematics 050-0005-00 and -01
+  (mirrors.apple2.org.za), Disk II Technical Procedures, Sams Disk II and the 1991 Archived Products volume.
+- **duodisk** (3) and **unidisk525** (2): Apple Technical Procedures only (Archived Products Vol. 1; Apple II
+  Family Vol. 2, which has the "Apple 5.25 Drive / UniDisk" section), plus the Disk II card schematic as a
+  verify stand-in for their controller cards. **No DuoDisk or UniDisk 5.25 schematic is online.** The asimov
+  `Unidisk_Schematic.pdf` is the UniDisk 3.5 (DSIC, 1985), so it is not linked.
+- **dragon64** (8): CD41505 CPU board sheets 1 to 3 and the CD41519 PSU/modulator, all from full-size white
+  prints (zips, 21 to 50 MB). Also quick-view JPG/GIF copies, an Electronics & Computing redraw and the Dragon
+  Data repair notes (verify). There is no Dragon 64 service manual, and nothing for the Tano or the Dragon 200.
+- **dragon32**: Still has its 6 entries. They moved from the Tandy block to a new Dragon block.
+  dragondata.worldofdragon.org now 302-redirects to http://dragondata.co.uk/ (https there does not connect), so
+  the entries and the credit now point at dragondata.co.uk.
+- **electron** (5): Service Manual 0405001 Issue 2 (Chris's Acorns, bitshifters, archive.org), with page links
+  to the main PCB circuit (pp. 37-38) and layout (p. 39). The drawing carries no issue number. **No separate
+  circuit diagrams for issues 2, 4 and 6 were found.** bbcdocs.com is now a parked domain, acornelectron.co.uk
+  has games only, and stardot.org.uk answers 403.
+- **msx1** (8) and **msx2** (6): The MSX Technical Data Book and Sony handbook (sample interface circuits
+  only), the MSX2 Technical Handbook (text), and service manuals for example boards: Philips VG-8020, Sony
+  HB-55P/75P and HB-10P, Canon V-20, Panasonic CF-2700, Yamaha CX5M, Philips VG-8230/8235 and NMS 825x, Sony
+  HB-F700 and HB-F1XD, and Victor HC-90/95. All maker manuals are marked verify because their schematic pages
+  were not opened.
+
+Not added: **oric** (no `src/data/oric.js` yet) and **TRS-80 Model I/III/4** (no machine ids in tandy.js yet).
+Leads for when they land: archive.org `model-3-service-manual-1980-radio-shack`,
+`RadioShackTRS80ModelIIIServiceManual`, `model-4-technical-reference-manual`, `TRS80Model4PServiceManual`,
+`TRS80ServiceManualForJapaneseModel1`, and the TRS-80 Technical Reference Handbook 1st/2nd editions. bitsavers
+has no TRS-80 folder (`/pdf/radioShack/` is 404; `/pdf/tandy/` has only the Model 100, 2000 and 6000).
