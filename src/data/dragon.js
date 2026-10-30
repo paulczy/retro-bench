@@ -427,11 +427,11 @@ const clocks = d64 => [
     f: d64 ? '14.218 MHz' : '14.218 MHz (the SA2120 sheet marks 14.32 MHz)', verify: !d64,
     source: { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (XL3 14.218 MHz); the Dragon 32 SA2120 sheet 1 marks XL2 14.32 MHz', url: D64CPU } },
   { name: 'VDG clock (crystal / 4)', where: 'SAM pin 7 to VDG pin 33', f: '3.5545 MHz', source: SAMDS(4, 'pin description table: VClk = crystal / 4 (3.579545 MHz from 14.31818 MHz), p. 5-326') },
-  { name: 'E, CPU clock (crystal / 16)', where: 'SAM pin 14 to 6809E pin 34', f: '0.888625 MHz', source: SAMDS(4, 'pin description table: E and Q, the MC6809E clocks, 90 degrees apart, p. 5-326') },
+  { name: 'E, CPU clock (crystal / 16)', where: `SAM pin 14 to 6809E pin 34; pia6821 pin 25 (both PIAs)${d64 ? '; 6551 pin 27 (ACIA Φ2, on E per CD41505 sheet 3)' : ''}`, f: '0.888625 MHz', source: SAMDS(4, 'pin description table: E and Q, the MC6809E clocks, 90 degrees apart, p. 5-326') },
   { name: 'Q, quadrature clock', where: 'SAM pin 13 to 6809E pin 35', f: '0.888625 MHz', source: CPUDS(3, 'bus timing, Q leads E (tEQ1), p. 3') },
   ...(d64 ? [] : [{ name: 'PAL colour subcarrier', where: 'LM1889 colour encoder (IC9)', f: '4.433619 MHz', source: { label: 'Dragon 32 circuit diagram SA2120 sheet 3 (LM1889, 4.433619 MHz)', url: D32VID } }]),
   { name: 'Field sync (/FS)', where: 'VDG pin 37', f: '50 Hz', source: { label: 'Inside the Dragon, Appendix 7, PIA summary (CB1 field sync every 20 ms), pp. 343-344', url: ITD(350) } },
-  ...(d64 ? [{ name: 'ACIA baud-rate crystal', where: '6551 pin 6', f: '1.8432 MHz', source: { label: 'Dragon 64 CD41505 sheet 3 (6551, 1.8432 MHz crystal)', url: D64VID } }] : []),
+  ...(d64 ? [{ name: 'ACIA baud-rate crystal', where: '6551 pin 6 to pin 7', f: '1.8432 MHz', source: { label: 'Dragon 64 CD41505 sheet 3 (6551, 1.8432 MHz crystal)', url: D64VID } }] : []),
 ];
 
 RCS.add({

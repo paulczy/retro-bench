@@ -523,8 +523,9 @@ RCS.add({
       ],
       clocks: [
         { name: 'Crystal X101 (7400 oscillator)', where: '40007 pin 8 (40010 boards: 40010 pin 24)', f: '16 MHz', source: sm464('electrical parts list p. 17 (X101 crystal HC-18/U 16 MHz)', 13) },
-        { name: 'Z80 clock', where: '40007 pin 39 to Z80A pin 6', f: '4 MHz', source: sm464('circuit diagram p. 15-16', 12) },
-        { name: 'CRTC character clock', where: '40007 pin 40 to 6845 pin 21', f: '1 MHz', source: W_CRTC },
+        { name: 'Z80 clock', where: '40007 pin 39 to Z80A pin 6; 40010 boards: 40010 pin 19 (/PHI, inverted by a 74HCU04)', f: '4 MHz', source: sm464('circuit diagram p. 15-16', 12) },
+        { name: 'CRTC character clock', where: '40007 pin 40 to 6845 pin 21; 40010 boards: 40010 pin 4', f: '1 MHz', source: W_CRTC },
+        { name: '/CPU address phase (1 MHz)', where: '40010 pin 14 (40010 boards)', f: '1 MHz', source: W_GA, note: 'Called /CPU ADDR on the 40007. It picks the CPU half of each microsecond on the 74LS153 address multiplexers; the gate array fetches its 2 video bytes in the other half.' },
         { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', source: AMEND },
         { name: 'Interrupt (every 52 HSYNCs)', where: 'Z80A pin 16', f: '300 Hz', source: W_GA }
       ],
@@ -573,6 +574,7 @@ RCS.add({
         { name: 'Crystal X101', where: '40010 pin 24', f: '16 MHz', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
         { name: 'Z80 clock (40010 /PHI inverted by a 74HCU04)', where: '40010 pin 19 to Z80A pin 6', f: '4 MHz', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
         { name: 'CRTC character clock', where: '40010 pin 4 to 6845 pin 21', f: '1 MHz', source: W_CRTC },
+        { name: '/CPU address phase (1 MHz)', where: '40010 pin 14', f: '1 MHz', source: W_GA, note: 'Called /CPU ADDR on the 40007. It picks the CPU half of each microsecond on the 74LS153 address multiplexers; the gate array fetches its 2 video bytes in the other half.' },
         { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', source: AMEND },
         { name: 'FDC clock', where: '765 pin 19', f: '4 MHz', source: W_FDC },
         { name: 'Interrupt (every 52 HSYNCs)', where: 'Z80A pin 16', f: '300 Hz', source: W_GA }
@@ -623,6 +625,7 @@ RCS.add({
         { name: 'Crystal X101', where: '40010 pin 24', f: '16 MHz', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
         { name: 'Z80 clock (40010 /PHI inverted by a 74HCU04)', where: '40010 pin 19 to Z80A pin 6', f: '4 MHz', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
         { name: 'CRTC character clock', where: '40010 pin 4 to 6845 pin 21', f: '1 MHz', source: W_CRTC },
+        { name: '/CPU address phase (1 MHz)', where: '40010 pin 14', f: '1 MHz', source: W_GA, note: 'Called /CPU ADDR on the 40007. It picks the CPU half of each microsecond on the 74LS153 address multiplexers; the gate array fetches its 2 video bytes in the other half.' },
         { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', source: AMEND },
         { name: 'FDC clock', where: '765 pin 19', f: '4 MHz', source: W_FDC },
         { name: 'Interrupt (every 52 HSYNCs)', where: 'Z80A pin 16', f: '300 Hz', source: W_GA }

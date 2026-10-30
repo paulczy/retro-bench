@@ -810,7 +810,8 @@ const clocks400 = (q, osc) => [
   { name: 'Colour clock', where: 'GTIA pin 28', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: q },
   { name: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: S.s800(10, 'CPU board schematic, ANTIC pin 35 photo (5 V p-p, 0.5 µs/cm)') },
   { name: 'Phase 0 (CPU clock in)', where: 'ANTIC pin 34 to 6502 pin 37', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: S.altirra(44, '3.3 Cycle timing') },
-  { name: 'Phase 2 (machine clock)', where: '6502 pin 39; ANTIC pin 29; GTIA pin 30; POKEY pin 7', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: S.trn(441, 'Hardware Manual: 114 machine cycles per TV line, 1.79 MHz, p. II.22') },
+  { name: 'Phase 2 (machine clock)', where: '6502 pin 39; ANTIC pin 29; GTIA pin 30; POKEY pin 7; PIA pin 25', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: S.trn(441, 'Hardware Manual: 114 machine cycles per TV line, 1.79 MHz, p. II.22'), note: 'The PIA is a bus peripheral and runs on this Φ2; its feed was not traced on the 400/800 sheets.' },
+  { name: 'Phase 1 out (CPU)', where: '6502 pin 3', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: { label: 'MOS 6500 Microprocessors data sheet (Nov 1985), p. 4: 6502 clock timing, Φ1 (OUT) and Φ2 (OUT) follow Φ0 (IN)', url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=4' }, note: 'Same rate as Φ0 on pin 37, in antiphase.' },
   CLK_LINE, CLK_FRAME,
 ];
 const clocksXL = (cpuSrc) => [
@@ -827,7 +828,7 @@ const clocks130xe = [
   { name: 'Colour clock', where: 'U6 output 37 to GTIA pin 28', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: S.sams(13, 'Troubleshooting, Clock and dividers (3.579545 MHz at U6 pin 37)'), note: 'Master divided by 4.' },
   { name: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: S.sams(3, 'schematic, GTIA pin 29 photo (4.5 V p-p, 0.1 µs/cm)') },
   { name: 'Phase 0 (CPU clock in)', where: 'ANTIC pin 34 to 6502C pin 37', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: S.sams(3, 'schematic, ANTIC pin 34 photo (4.4 V p-p, 0.2 µs/cm)'), note: 'Master divided by 8.' },
-  { name: 'Phase 2 (machine clock)', where: '6502C pin 39; GTIA pin 30; PIA pin 25; POKEY pin 7', ntsc: '1.78977 MHz', pal: '1.773447 MHz', source: S.sams(13, 'Troubleshooting, Clock and dividers (1.78977 MHz at U6 pin 5 and GTIA pin 30)') },
+  { name: 'Phase 2 (machine clock)', where: '6502C pin 39; ANTIC pin 29; GTIA pin 30; PIA pin 25; POKEY pin 7', ntsc: '1.78977 MHz', pal: '1.773447 MHz', source: S.sams(13, 'Troubleshooting, Clock and dividers (1.78977 MHz at U6 pin 5 and GTIA pin 30)') },
   CLK_LINE, CLK_FRAME,
 ];
 

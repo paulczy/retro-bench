@@ -335,7 +335,7 @@ RCS.add({
       verifiedAgainst: 'Motorola MC146818A ADI-1026 (pin assignment p. 1, signal descriptions p. 8-10). HERO Jr TM printed p. 25 and 28 (U209 Vca supply, RESET, IRQ) and parts list (U213 = 443-1139).',
       pins: [
         { n: 1, name: 'MOT', type: 'ctrl', dir: 'in', desc: 'Bus timing select: high = Motorola-style timing (AS, DS). Tie high on HERO Jr.' },
-        { n: 2, name: 'OSC1', type: 'clock', dir: 'in', desc: 'Crystal pin 1 (32.768 kHz on HERO Jr).', terms: ['crystal'] },
+        { n: 2, name: 'OSC1', type: 'clock', dir: 'in', desc: 'Crystal pin 1.', terms: ['crystal'] },
         { n: 3, name: 'OSC2', type: 'clock', dir: 'out', desc: 'Crystal pin 2.', terms: ['crystal'] },
         { n: 4, name: 'AD0', type: 'data', dir: 'bidir', desc: 'Multiplexed address/data bit 0.', terms: ['mux'] },
         { n: 5, name: 'AD1', type: 'data', dir: 'bidir', desc: 'Multiplexed address/data bit 1.', terms: ['mux'] },
@@ -1510,6 +1510,7 @@ RCS.add({
       clocks: [
         { name: 'CPU crystal Y401', where: 'CPU pin 38 to pin 39', f: '3.579545 MHz', source: H1TM(91, 'CPU board circuit description, printed p. 79') },
         { name: 'E clock (crystal divided by four)', where: 'CPU pin 37', f: '0.8949 MHz', source: { label: 'Motorola MC6802/6808 data sheet DS9818-R3, control timing (fXTAL = 4 x fo), p. 3', url: DS6808(3) } },
+        { name: 'A/D converter clock (phase 2 from the CPU board)', where: 'ADC0804 pin 4 (U602, fed through sense board plug P602, contact 21)', f: '0.8949 MHz', source: H1TM(89, 'sense board, analog to digital converter: phase 2 clock to pin 4 of U602, printed p. 77'), note: 'An external clock on CLK IN, so the CLK R pin (19) has no RC oscillator of its own here.' },
         { name: 'RTC crystal Y301 (trim C316)', where: 'MSM5832 pin 16 to pin 17; U317-15 (buffered)', f: '32.768 kHz', source: H1TM(60, 'clock adjustment, frequency counter method at U317 pin 15, printed p. 50') },
         { name: 'Sonar transmit oscillator U106A (adjust R108)', where: 'Sonar transmit board', f: '32 kHz', source: H1TM(88, 'sonar transmitter, printed p. 76') },
         { name: 'Sonar ping repetition (about every 1/4 s)', where: 'Sonar transmit board, U103/U104 counter', f: '4 Hz', verify: true, source: H1TM(88, 'sonar transmitter: the counter runs about 1/4 s per cycle, printed p. 76') },
@@ -1579,10 +1580,11 @@ RCS.add({
       ],
       clocks: [
         { name: 'CPU crystal Y201', where: 'CPU pin 38 to pin 39', f: '4 MHz', source: JRTM(26, 'CPU pin-out description, printed p. 24') },
-        { name: 'E clock (crystal divided by four)', where: 'CPU pin 37', f: '1 MHz', source: JRTM(26, 'CPU pin-out description, printed p. 24') },
+        { name: 'E clock (crystal divided by four)', where: 'CPU pin 37; pia6821 pin 25; ACIA pin 14 (RTA-1-3 RS-232 option)', f: '1 MHz', source: JRTM(26, 'CPU pin-out description, printed p. 24'), note: 'E is the bus clock of the 6800-family PIAs and ACIA. The scanned CPU board drawing is too coarse to read the E net; the manual only states the 1 MHz on CPU pin 37.' },
         { name: 'RTC crystal Y202 (oscillator U221E, buffer U221A)', where: 'RTC pin 2 to pin 3', f: '32.768 kHz', source: JRTM(10, 'time adjustment, printed p. 8') },
         { name: 'Sonar resonator Y301', where: 'TL851 pin 11 to pin 12', f: '420 kHz', source: JRTM(43, 'parts list, Y301 420 kHz, printed p. 41') },
         { name: 'Sonar transmit (resonator divided by 8.5, 16 pulses per ping)', where: 'TL851 pin 2', f: '49.4 kHz', source: JRTM(24, 'sonar circuit, Figure 1, printed p. 22') },
+        { name: 'Sonar oscillator out (resonator / 8.5 in transmit, / 4.5 after)', where: 'TL851 pin 10', f: '49.4 kHz in transmit, then 93.3 kHz', source: { label: 'TI TL851 Sonar Ranging Control, SLSS004 (1988), oscillator divide ratios 8.5 and 4.5, p. 1', url: 'https://www.ti.com/lit/ds/symlink/tl851.pdf#page=1' }, note: 'With the 420 kHz resonator Y301. Only runs after INIT.' },
         { name: 'Switching regulator U302 (fixed frequency)', where: 'Power/sense board, U302 and Q301', f: '25 kHz', source: JRTM(22, 'switching regulator, printed p. 20') },
       ]
     },

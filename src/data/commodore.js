@@ -229,6 +229,7 @@ const SAMS_CD4 = (what, p) => SAMS('sams-computerfacts-cd4-1541', `Sams CD4 VIC-
 const SAMS_CD12 = (what, p) => SAMS('SAMS_Computerfacts_CD12_1571', `Sams CD12 1571, ${what}`, p);
 const SAMS_CD22 = (what, p) => SAMS('SAMS_Computerfacts_CD22_1581', `Sams CD22 1581, ${what}`, p);
 const CBMF = {
+  m6502: { label: 'MOS 6500 Microprocessors data sheet (Nov 1985), p. 4: 6502 clock timing, Φ1 (OUT) and Φ2 (OUT) follow Φ0 (IN)', url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=4' },
   c64sm: (p, what) => ({ label: `C64/C64C Service Manual 314001-03, ${what}, PDF p. ${p}`, url: `http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/c64/servicemanuals/C64-C64C_Service_Manual_314001-03_(1992_Mar).pdf#page=${p}` }),
   c64c: { label: 'C64C schematic 250469 rev. A (zimmers.net PDF), notes 3 and 4: Y1 and dot clock for NTSC and PAL; 8701 pins 6, 8, 13, 14', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/c64/250469-rev.A.pdf' },
   bauer: { label: 'Christian Bauer, The MOS 6567/6569 video controller (VIC-II), 2.3 pins ΦIN and Φ0', url: 'http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt' },
@@ -949,7 +950,7 @@ RCS.add({
         { n: 3, name: 'CAP2A', type: 'audio', dir: '-', desc: 'Filter capacitor pin, pair 2 (with CAP2B).' },
         { n: 4, name: 'CAP2B', type: 'audio', dir: '-', desc: 'Filter capacitor pin, pair 2 (with CAP2A).' },
         { n: 5, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW clears the SID registers.', activeLow: true, terms: ['reset'], probe: 'LOW at power-up, then HIGH.' },
-        { n: 6, name: 'Φ2', type: 'clock', dir: 'in', desc: 'Phase 2 clock from the CPU (6510 pin 39).', terms: ['clock'], probe: 'About 1 MHz square wave.' },
+        { n: 6, name: 'Φ2', type: 'clock', dir: 'in', desc: 'Phase 2 system clock input.', terms: ['clock'], probe: 'About 1 MHz square wave.' },
         { n: 7, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
         { n: 8, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select from the PLA. LOW enables SID registers at $D400.', activeLow: true, terms: ['cs'] },
         { n: 9, name: 'A0', type: 'addr', dir: 'in', desc: 'Register select bit 0.' },
@@ -1018,7 +1019,7 @@ RCS.add({
         { n: 22, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
         { n: 23, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select from the PLA. CIA1 at $DC00, CIA2 at $DD00.', activeLow: true, terms: ['cs'] },
         { n: 24, name: '/FLAG', type: 'ctrl', dir: 'in', desc: 'Flag input. Edge-triggered interrupt input.', activeLow: true },
-        { n: 25, name: 'Φ2', type: 'clock', dir: 'in', desc: 'Phase 2 clock from the CPU (6510 pin 39).', terms: ['clock'] },
+        { n: 25, name: 'Φ2', type: 'clock', dir: 'in', desc: 'Phase 2 system clock input.', terms: ['clock'] },
         { n: 26, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
         { n: 27, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
         { n: 28, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
@@ -1930,7 +1931,7 @@ RCS.add({
         { n: 16, name: 'PB6', type: 'io', dir: 'bidir', desc: 'Port B bit 6. 1581: /WPRT.' },
         { n: 17, name: 'PB7', type: 'io', dir: 'bidir', desc: 'Port B bit 7. 1581: ATN IN (label beside PB7 on schematic 252380 sheet 3).', verify: true },
         { n: 18, name: '/PC', type: 'ctrl', dir: 'out', desc: 'Handshake: a LOW pulse after a port B read or write.', activeLow: true },
-        { n: 19, name: 'TOD', type: 'clock', dir: 'in', desc: 'Time-of-day / event counter input. 1581: tied to φ2 through J1 when fitted.', terms: ['clock'] },
+        { n: 19, name: 'TOD', type: 'clock', dir: 'in', desc: 'Time-of-day / event counter input. 1581: no clock here; it is strapped by J1 and R5 (2.7 kΩ to +5 V) to tell the DOS a WD1770 from a WD1772 (schematic 252380 sheet 3).', terms: ['clock'] },
         { n: 20, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.9 to +5.2 V' },
         { n: 21, name: '/IRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt request, open drain.', activeLow: true, terms: ['irq', 'open-drain'] },
         { n: 22, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'HIGH = read from the CIA, LOW = write.', terms: ['rw'] },
@@ -3579,8 +3580,11 @@ RCS.add({
         { step: 7, check: 'Reset', where: '6502 pin 40', expect: 'LOW at power-on, then HIGH (UB6 LM555); the disk drive resets with it', ifNot: 'No reset, frozen or garbage screen: UB6 555. If the drive resets at power-up, the 555 is good (Carlsen).', source: CBMF.rcvic20 },
       ],
       clocks: [
-        { name: 'Crystal', where: 'Y1', ntsc: '14.31818 MHz', source: CBMF.vic20e, note: 'PAL crystal value not in our sources.' },
-        { name: 'CPU clock', where: 'VIC pin 36 to 6502 pin 37', ntsc: '1.02 MHz', pal: '1.10 MHz', source: CBMF.wiki('VIC-20', 'VIC-20 (6502 at 1.02 MHz NTSC / 1.10 MHz PAL)') },
+        { name: 'Crystal', where: 'Y1', ntsc: '14.31818 MHz', source: CBMF.vic20e, note: 'PAL crystal: 4.433618 MHz per the VIC-I notes (two-phase oscillator row).' },
+        { name: 'Two-phase oscillator in (UE2 74S02 latch)', where: 'VIC pin 38 and pin 39', ntsc: '14.31818 MHz', pal: '4.433618 MHz', source: { label: 'Marko Mäkelä, VIC-I notes (zimmers.net): crystal 14318181 Hz NTSC, 4433618 Hz PAL; bus clock crystal/14 NTSC, crystal/4 PAL', url: 'http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/VIC-I.txt' }, note: 'Version E schematic: the 74S04 crystal oscillator UE1 drives the UE2 74S02 latch, whose outputs feed Φ2 IN (pin 38) and Φ1 IN (pin 39).' },
+        { name: 'CPU clock', where: 'VIC pin 35 to 6502 pin 37', ntsc: '1.02 MHz', pal: '1.10 MHz', source: CBMF.wiki('VIC-20', 'VIC-20 (6502 at 1.02 MHz NTSC / 1.10 MHz PAL)'), note: 'Version E schematic: PΦ1 (pin 35) through UE3 (7406, R28 pull-up) and the UE1/UE2 gates to Φ0; PΦ2 (pin 36) is not connected.' },
+        { name: 'Φ2 out (CPU) and VIA Φ2', where: '6502 pin 39; VIA pin 25 (UAB1, UAB3)', ntsc: '1.02 MHz', pal: '1.10 MHz', source: CBMF.m6502, note: 'Φ2 out follows Φ0 (6502 data sheet); the VIAs run on the system Φ2.' },
+        { name: 'Φ1 out (not connected on Version E)', where: '6502 pin 3', ntsc: '1.02 MHz', pal: '1.10 MHz', source: CBMF.m6502, note: 'NC on Version E; 324001 routes it on. Same rate as Φ0, in antiphase.' },
       ],
       rails: [
         { rail: '+5 V', expect: '4.95–5.10 V', where: '6502 pin 8; LM323 VR1 output', note: 'From the LM323 (VR1) on the board, fed by the 9 V AC transformer through bridge CR4. Only rail on the VIC-20: there is no +12 V. A sagging 5 V means a shorted chip; check the VIC and CPU first.' },
@@ -3623,6 +3627,9 @@ RCS.add({
         { name: '16 MHz clock', where: 'TP9; G1 (74LS08) #6 to G5 (74191) clock input #14', f: '16 MHz', source: CBMF.pet6 },
         { name: 'CLK8 (video)', where: 'G5 (74191) output QA, #3', f: '8 MHz', source: CBMF.pet6 },
         { name: 'CLK1 (CPU Φ0)', where: 'G5 (74191) output QD #7 to 6502 pin 37', f: '1 MHz', source: CBMF.pet1 },
+        { name: 'BΦ2 (CPU Φ2 out, buffered by A10 7417)', where: '6502 pin 39 to PIA pin 25 (C6, C7); VIA pin 25 (C5)', f: '1 MHz', source: { label: 'Dynamic PET logic diagram 320349 sheets 1-3: C4 6502 pin 39 to A10 (7417) as BΦ2, to C6/C7 6520 pin 25 and C5 6522 pin 25', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/pet/2001N/320349-3.gif' } },
+        { name: 'BΦ2 to the CRTC E input (12-inch boards)', where: 'CRTC pin 23', f: '1 MHz', source: { label: 'Universal Dynamic PET logic diagram 8032087 sheet 10: UB13 CRTC pin 23 (E) on BΦ2', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/pet/univ2/8032087.pdf#page=10' } },
+        { name: 'Φ1 out (not connected on 320349)', where: '6502 pin 3', f: '1 MHz', source: CBMF.m6502, note: 'Left open on 320349 sheet 1. Same rate as Φ0, in antiphase.' },
       ],
       rails: [
         { rail: '+5 V', expect: '4.9-5.2 V', where: '6502 pin 8; VR3 and VR4 (LM340-5) outputs', note: 'Two LM340-5 regulators on the board share the logic load, fed from +9 V unregulated on J8 pin 2. A shorted chip pulls one of them down and it gets very hot.' },
@@ -3665,7 +3672,8 @@ RCS.add({
         { name: 'Colour clock', where: 'VIC-IIe pin 29 (from 8701 U28, #8)', ntsc: '14.31818 MHz', source: SAMS_CC18('Miscellaneous adjustments, 14 MHz oscillator (C20)', 9) },
         { name: 'Dot clock', where: 'VIC-IIe pin 30 (from 8701 U28, #6)', ntsc: '8.1818 MHz', pal: '7.88 MHz', source: SAMS_CC18('Troubleshooting, microprocessor operation', 25), note: 'PAL value from the 8701 notes on C64C schematic 250469.' },
         { name: '1 MHz system clock', where: 'VIC-IIe pin 18', ntsc: '1.02 MHz', source: CBMF.wiki('Commodore_128', 'Commodore 128 (8502 at about 1.02 or 2.04 MHz)') },
-        { name: 'CPU clock', where: 'VIC-IIe pin 23 to 8502 pin 1', ntsc: '1.02 MHz, 2.04 MHz in FAST', source: CBMF.wiki('Commodore_128', 'Commodore 128 (8502 at about 1.02 or 2.04 MHz)') },
+        { name: '1 MHz clock to the I/O chips', where: 'SID pin 6; CIA pin 25', ntsc: '1.02 MHz', source: { label: 'C128 Service Manual 314001-08, 2 MHz operation: I/O devices are still driven by a 1 MHz source, p. 6', url: 'https://archive.org/download/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08.pdf#page=8' }, note: 'Schematic 310378 sheet 1 labels the SID PHI IN net 1MHZ. The CIAs stay at 1 MHz in FAST mode, so timers keep time.' },
+        { name: 'CPU clock', where: 'VIC-IIe pin 23 to 8502 pin 1; MMU pin 33', ntsc: '1.02 MHz, 2.04 MHz in FAST', source: CBMF.wiki('Commodore_128', 'Commodore 128 (8502 at about 1.02 or 2.04 MHz)'), note: 'Schematic 310378 sheet 1: the 2MHZ net feeds 8502 ΦIN (pin 1) and the 8722 MMU ΦIN (pin 33).' },
         { name: 'Z80 clock', where: 'VIC-IIe pin 25 to Z80A pin 6', ntsc: '2.04 MHz effective (4 MHz Z80B)', source: CBMF.wiki('Commodore_128', 'Commodore 128 (Z80B at 2.04 MHz)') },
         { name: 'VDC dot clock', where: 'VDC pin 2', f: '16 MHz', source: SAMS_CC18('parts list (Y1 oscillator 16 MHz)', 33) },
       ],
@@ -3712,7 +3720,11 @@ RCS.add({
       clocks: [
         { name: 'Crystal', where: 'Y1', f: '16 MHz', source: { label: '1540/1541 Service Manual 314002-01, clock circuits, PDF p. 10', url: CBMD_SM41(10) } },
         { name: 'CPU clock Φ0', where: '6502 pin 37', f: '1 MHz', source: SAMS_CD4('schematic, 1 MHz line from UD5 (74177) pin 12 through L3 and R1', 10) },
-        { name: 'Φ2 out', where: '6502 pin 39', f: '1 MHz', source: SAMS_CD4('schematic, waveform at UC4 (6502) pin 39', 10) },
+        { name: 'Φ2 out', where: '6502 pin 39 to VIA pin 25 (UC2, UC3)', f: '1 MHz', source: SAMS_CD4('schematic, waveform at UC4 (6502) pin 39', 10) },
+        { name: 'Φ1 out', where: '6502 pin 3', f: '1 MHz', source: CBMF.m6502, note: 'Same rate as Φ0, in antiphase.' },
+        { name: 'Bit clock (density divider, 251748 short board)', where: '325572 pin 19', f: '1.2307 MHz (tracks 1-17), 1.1428 MHz (18-24), 1.0666 MHz (25-30), 1 MHz (31-35)', source: { label: '1540/1541 Service Manual 314002-01, clock circuits: 16 MHz divided by 13 to 16 per zone, PDF p. 10', url: CBMD_SM41(10) }, note: 'From the 74LS193 density counter fed by the 16 MHz module; DS0/DS1 from the disk VIA set the zone.' },
+        { name: '16 MHz to the gate arrays (1541B/C, 1541-II)', where: '251829 pin 1; 251828 pin 21', f: '16 MHz', source: { label: '1571 Service Manual 314002-04, 40/42-pin gate array functions (OSC 16 MHz clock input), p. 8', url: CBMD_SM71(11) } },
+        { name: 'CPU clock from the gate array (1541B/C, 1541-II)', where: '251828 pin 37 to 6502 pin 37', f: '1 MHz', source: { label: '1571 Service Manual 314002-04, 40/42-pin gate array functions (ACCL 0 = 1 MHz, CK), p. 8', url: CBMD_SM71(11) } },
       ],
       supply: {
         external: false,
@@ -3774,7 +3786,10 @@ RCS.add({
       ],
       clocks: [
         { name: 'Oscillator', where: 'Y1 module to 251829 pin 1', f: '16 MHz', source: SAMS_CD12('Troubleshooting, oscillator and dividers', 24) },
+        { name: '16 MHz to the 251828', where: '251828 pin 21', f: '16 MHz', source: { label: '1571 Service Manual 314002-04, 40/42-pin gate array functions (OSC 16 MHz clock input), p. 8', url: CBMD_SM71(11) }, note: 'Schematic 310420: T1 OSC through R3 to U5 and U6 OSC.' },
         { name: 'CPU clock', where: '251828 pin 37 to 6502 pin 37', f: '1 MHz in 1541 mode, 2 MHz in 1571 mode', source: { label: '1571 Service Manual 314002-04, 40/42-pin gate array functions (OSC, ACCL, CK), p. 8', url: CBMD_SM71(11) } },
+        { name: 'Φ2 out to the VIAs and CIA', where: '6502 pin 39 to VIA pin 25; CIA pin 25', f: '1 MHz in 1541 mode, 2 MHz in 1571 mode', source: CBMF.m6502, note: 'Φ2 follows Φ0 (6502 data sheet); schematic 310420 puts the 65C22A VIAs and the 6526A CIA on PHI_2.' },
+        { name: 'Φ1 out', where: '6502 pin 3', f: '1 MHz in 1541 mode, 2 MHz in 1571 mode', source: CBMF.m6502, note: 'Through FB2 and R2 on 310420. Same rate as Φ0, in antiphase.' },
         { name: 'FDC clock', where: '1770 pin 18', f: '8 MHz', source: { label: '1571 Service Manual 314002-04, WD1770/1772 pin assignment, p. 9', url: CBMD_SM71(12) } },
       ],
       supply: {
@@ -3827,8 +3842,9 @@ RCS.add({
       ],
       clocks: [
         { name: 'Oscillator', where: 'Y1 16 MHz module to U10 (74LS93), #1', f: '16 MHz', source: SAMS_CD22('Service checks, drive is dead (D)', 5) },
-        { name: 'CPU clock φ2', where: '6502 pin 37; 8520 pin 25', f: '2 MHz', source: { label: '1581 Service Manual 314982-01, programmable baud rate (φ2 = 2 MHz), p. 4', url: CBMD_SM81(7) } },
+        { name: 'CPU clock φ2', where: '6502 pin 37; 6502 pin 39 (Φ2 out, through FB2 and R3 as PHI-2) to 8520 pin 25', f: '2 MHz', source: { label: '1581 Service Manual 314982-01, programmable baud rate (φ2 = 2 MHz), p. 4', url: CBMD_SM81(7) } },
         { name: 'FDC clock', where: '1770 pin 18', f: '8 MHz', source: { label: '1581 Service Manual 314982-01, schematic 252380 sheet 2 (Y1, U10, WD1770 clock), p. 16', url: CBMD_SM81(19) } },
+        { name: 'Φ1 out (not connected)', where: '6502 pin 3', f: '2 MHz', source: CBMF.m6502, note: 'Left open on 252380 sheet 1. Same rate as Φ0, in antiphase.' },
       ],
       supply: {
         external: true,

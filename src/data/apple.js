@@ -291,6 +291,7 @@ const iiPower = {
     { name: 'Q3', where: 'C2-12; ii-slot pin 37', f: '2.0454 MHz', note: 'Asymmetric. One cycle in 130 is long (0.629 µs).', source: SATHER_T31 },
     { name: 'Φ0 (CPU clock in)', where: 'B1-7; 6502 pin 37; ii-slot pin 40', f: '1.0227 MHz', note: 'Every 65th cycle is stretched to 1.117 µs, so the average is 1.0205 MHz.', source: SATHER_T31 },
     { name: 'Φ1', where: 'B1-6; ii-slot pin 38', f: '1.0227 MHz', note: 'Φ0 inverted.', source: SATHER_T31 },
+    { name: '6502 Φ1 out', where: '6502 pin 3', f: '1.0227 MHz', note: 'The CPU\'s own Φ1 output: same rate as Φ0 on pin 37, in antiphase. The slots get PHASE 1 from the timing generator (B1-6), not from this pin.', source: { label: 'MOS 6500 Microprocessors data sheet (Nov 1985), p. 4: 6502 clock timing, Φ1 (OUT) and Φ2 (OUT) follow Φ0 (IN)', url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=4' } },
   ],
   sources: [
     { label: 'Apple II Reference Manual (1979), Power Supply specs, p. 92', url: IIRM(102) },
@@ -2307,6 +2308,7 @@ RCS.add({
         { name: 'Q3', where: 'MMU pin 4; IOU pin 27; 2e-slot pin 37; 2e-aux pin 53', f: '2.0454 MHz', note: 'Asymmetric; one cycle in 130 is long.', source: SATHERE_T31 },
         { name: 'Φ0 (PHI0)', where: '6502 pin 37; MMU pin 3; IOU pin 26; 2e-slot pin 40; 2e-aux pin 23', f: '1.0227 MHz', note: 'Every 65th cycle is stretched to 1.117 µs; average 1.0205 MHz.', source: SATHERE_T31 },
         { name: 'Φ1 (PHI1)', where: '2e-slot pin 38; 2e-aux pin 36', f: '1.0227 MHz', note: 'Φ0 inverted.', source: SATHERE_T31 },
+        { name: '6502 Φ1 and Φ2 outputs', where: '6502 pin 3; 6502 pin 39', f: '1.0227 MHz', note: 'Φ2 out is in phase with Φ0 on pin 37, Φ1 out 180° out of phase (data sheet). The slot PHI0/PHI1 come from the timing HAL, not from these pins.', source: { label: 'MOS 6500 Microprocessors data sheet (Nov 1985), p. 4: 6502 clock timing, Φ1 (OUT) and Φ2 (OUT) follow Φ0 (IN)', url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=4' } },
       ],
     },
     apple2c: {
