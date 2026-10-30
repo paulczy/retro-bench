@@ -195,3 +195,59 @@ RCS.addSchematics({ c64: [
 - `rev` and `years` describe the board, `note` says how to recognise it or what differs. `verify: true` when the
   assembly-to-document match is not confirmed.
 - Credits: `RCS.addCredits([{ name, url, what }])`: the archive or person, and what of theirs we used.
+
+## Test-point waveforms, first ten minutes, clocks, replacements, Sams
+
+Approved features 1 to 6 on docs/roadmap.md add these optional fields. Nothing here may be invented: every
+`scope` block, `firstTen` step and `replacements` row carries a source a human can open.
+
+### scope on a test point
+```js
+testPoints: [{ tp: 'CPU clock', where: 'CPU pin 37', expect: '1.02 MHz square',
+  scope: { f: '1.0227 MHz',            // or period: '64 µs' for video lines; one of them is required
+           low: '0.2 V', high: '4.6 V', // the swing the source gives (datasheet VOL/VOH or a measured capture)
+           shape: 'square',             // square | pulse | sine | burst | video-line | dc
+           duty: '50%',                 // pulse/square only; omit when unknown
+           basis: 'capture' | 'datasheet',   // capture = a Sams or service-manual photo; datasheet = timing diagram + schematic frequency
+           source: { label: 'Sams CC17 C64, waveform 3, p. 12', url: '...', sams: true },
+           note: 'Rounded edges are normal; a flat line means no clock.' } }]
+```
+The app derives the scope settings (time/div in the 1-2-5 series for 2 to 4 cycles, volts/div to fit the swing in
+about five divisions, DC coupling, rising-edge trigger at 1.4 V for logic) and draws an idealised trace labelled
+"idealised from <basis>". Never enter settings by hand; never enter a `scope` block without `source`.
+
+### firstTen on power
+```js
+power: { c64: { firstTen: [
+  { step: 1, check: 'Supply unloaded', where: 'Brick DIN pin 5 to pin 2', expect: '+4.95 to +5.10 V DC',
+    ifNot: 'Do not plug it in: the brick is failing high.', source: { label, url } },
+  { step: 2, check: '+5 V on the board', where: 'CPU pin 6; VIC pin 40', expect: '+4.9 to +5.2 V', ifNot: 'Shorted chip or fuse; pull PLA then VIC.' },
+  ... ] } }
+```
+Six to eight steps a tech does before pulling a chip: supply, rails, reset, master clock, CPU clock, a chip select
+or bus line. `where` uses `<chip short> pin <n>` so the app links pads. The app shows these in place of the generic
+"Order of checks" when present.
+
+### clocks on power
+```js
+power: { c64: { clocks: [
+  { name: 'Crystal', where: 'Y1', pal: '17.734475 MHz', ntsc: '14.31818 MHz', source: {...} },
+  { name: 'Dot clock', where: 'VIC pin 22', pal: '7.88 MHz', ntsc: '8.18 MHz' },
+  { name: 'CPU clock', where: 'VIC pin 17 to CPU pin 1', pal: '0.985 MHz', ntsc: '1.023 MHz' } ] } }
+```
+Use `f` instead of `pal`/`ntsc` for machines with one standard.
+
+### replacements on a chip
+```js
+replacements: [
+  { part: '8521', kind: 'pin-compatible', note: 'Later CIA; timer B bug differs.', source: {...} },
+  { part: 'ARMSID', kind: 'modern', note: 'Drop-in SID replacement; needs the 12 V or 9 V jumper set.', source: { label, url } },
+  { part: '6569 in a 6567 board', kind: 'adapter', note: 'Needs the crystal and the PAL/NTSC jumper changed.' } ]
+```
+`kind` is `pin-compatible`, `modern` or `adapter`. Only parts a tech can buy or has in a parts drawer.
+
+### Sams Computerfacts citations
+Any `source`/`sources` entry taken from a Sams Computerfacts folder sets `sams: true`. The app appends the fixed
+note "Sams redraw: part numbers are Sams's own and may not match the board" and shows a `conflict` when a Sams
+value disagrees with the maker's document, which wins. Where a community page documents a specific Sams error,
+add it as a second source with `note`.
