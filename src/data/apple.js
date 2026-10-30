@@ -1,4 +1,4 @@
-/* Retro Bench data: Apple (II, II+, IIe, IIc, III). Pins and ports checked against the Apple II Reference Manual (1979), the Apple IIe and IIc Technical Reference Manuals and the chip data sheets; see docs/verification/apple.md. Unsourced items carry verify. */
+/* Retro Bench data: Apple (II, II+, IIe, IIc, III; Disk II, DuoDisk, UniDisk 5.25 drives). Pins and ports checked against the Apple II Reference Manual (1979), the Apple IIe and IIc Technical Reference Manuals and the chip data sheets; see docs/verification/apple.md. Unsourced items carry verify. */
 (() => {
 Object.assign(RCS.terms, {
   'language-card': { term: 'Language card', short: 'RAM card that replaces the ROM window at $D000-$FFFF.', long: 'A card that adds 16 KB of RAM switched over the ROM at $D000-$FFFF, so a language or Applesoft can run from RAM. A bad card shows as BASIC not found, or random crashes once it is fitted.' },
@@ -240,6 +240,794 @@ const iiPower = {
   ],
 };
 
+/* ---- Disk drives: Disk II (with its interface card), DuoDisk, UniDisk 5.25. Pins checked against the Apple
+   schematics 050-0005-01 (interface card) and 050-0007-H (analog card), the Disk ][ Technical Procedures, Sather's
+   "Understanding the Apple II" ch. 9 and the chip data sheets; see docs/verification/apple-drives.md. ---- */
+Object.assign(RCS.terms, {
+  stepper: { term: 'Stepper motor', short: 'Motor that moves the head one step per phase change.', long: 'The Disk II head is moved by a four-phase stepper. Software turns the phases on and off in order; two phase steps move the head one track. Ascending phases move the head inward (to track 34), descending outward to track 0.' },
+  darlington: { term: 'Darlington driver', short: 'Two-transistor switch that sinks heavy current to ground.', long: 'A Darlington pair (as in the ULN2003) switches a coil or lamp to ground from a TTL input. Its output only sinks current; something else must pull it up. A dead driver leaves a coil permanently off or on.' },
+  sequencer: { term: 'Logic state sequencer', short: 'PROM plus latch that runs as a tiny 2 MHz state machine.', long: 'On the Disk II controller the P6 PROM and a 74LS174 latch step through states on every Q3 clock, shifting bits into or out of the 74LS323 data register. Wrong or 13-sector P6 PROMs give a controller that steps and spins but never reads.' },
+});
+
+const DISKDOCS = 'https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/hardware/storage/disks';
+const A2DP = 'https://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project';
+const D2TP = n => `${DISKDOCS}/Apple%20Disk%20II%20Technical%20Procedures.pdf#page=${n}`;
+const DUOTP = n => `${DISKDOCS}/AppleService%20Technical%20Procedures%20-%20Apple%20DuoDisk.pdf#page=${n}`;
+const D2MAN = n => `${DISKDOCS}/Disk%20II%20Floppy%20Disk%20Subsystem%20Installation%20and%20Operating%20Manual.pdf#page=${n}`;
+const SAMSD2 = n => `${DISKDOCS}/Sams%20Technical%20-%20Disk%20II.pdf#page=${n}`;
+const D2CARD = `${A2DP}/Interface%20Cards/Disk%20Drive%20Controllers/Apple%20Disk%20II%20Interface%20Card/Schematics/Apple%20Disk%20II%20-%20Schematics%20050-0005-01.pdf#page=2`;
+const D2ANALOG = `${A2DP}/Peripherals/Disk%20Drives/Apple%20Disk%20II/Schematics/Apple%20Disk%20II%20-%20Schematics%20Analog%20Board%20050-0007-H.pdf#page=2`;
+const D2ROMS = `${A2DP}/Interface%20Cards/Disk%20Drive%20Controllers/Apple%20Disk%20II%20Interface%20Card/ROM%20Images/`;
+const D2PHOTO = `${A2DP}/Peripherals/Disk%20Drives/Apple%20Disk%20II/Photos/Apple%20Disk%20II%20Drive%20-%20Analog%20card.jpg`;
+const D2CARDPHOTO = `${A2DP}/Interface%20Cards/Disk%20Drive%20Controllers/Apple%20Disk%20II%20Interface%20Card/Photos/Apple%20Disk%20II%20Interface%20Card%20-%20Front.jpg`;
+const C525PHOTO = `${A2DP}/Interface%20Cards/Disk%20Drive%20Controllers/Apple%205.25%20Controller%20Card/Photos/Apple%205.25%20Controller%20Card%20-%20Front.jpg`;
+const DUOCABLE = `${A2DP}/Peripherals/Disk%20Drives/Apple%20DuoDisk%205.25/Documentation/Apple%20DuoDisk%20-%20Cable%20Specifications.pdf`;
+const DUOBACK = `${A2DP}/Peripherals/Disk%20Drives/Apple%20DuoDisk%205.25/Photos/Apple%20DuoDisk%205.25%20-%20Back.jpg`;
+const UNIBACK = `${A2DP}/Peripherals/Disk%20Drives/Apple%20UniDisk%205.25/Photos/Apple%20UniDisk%205.25%20-%20Back.jpg`;
+const UNIBOTTOM = `${A2DP}/Peripherals/Disk%20Drives/Apple%20UniDisk%205.25/Photos/Apple%20UniDisk%205.25%20-%20Bottom.jpg`;
+const UNIPOWER = `${A2DP}/Peripherals/Disk%20Drives/Apple%20UniDisk%205.25/Schematics/Apple%20Unidisk%20-%20Power%20Usage%20Oscilloscope%20Screens.pdf#page=2`;
+const UTA2 = n => `https://archive.org/details/understanding_the_apple_ii/page/n${n}`;
+const DOSMAN = n => `https://archive.org/details/The_DOS_Manual_HQ/page/n${n}`;
+const UNIMAN = n => `https://archive.org/details/Apple_II_UniDisk_Owners_Manual/page/n${n}`;
+const DUOMAN = n => `https://archive.org/details/addom/page/n${n}`;
+const TI = (p, pg) => `https://www.ti.com/lit/ds/symlink/${p}.pdf#page=${pg}`;
+const RCA78 = pg => `http://www.bitsavers.org/components/rca/_dataBooks/1978_RCA_Linear_Integrated_Circuits.pdf#page=${pg}`;
+const MMI80 = pg => `http://www.bitsavers.org/components/mmi/_dataBooks/1980_MMI_Bipolar_LSI_Databook_2ed.pdf#page=${pg}`;
+const MC3470DS = 'http://www.bitsavers.org/components/motorola/_dataSheets/MC3470.pdf#page=1';
+const FLOPPYLIST = 'https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/hardware/storage/disks/apple_floppy_disk_drives.pdf';
+
+/* 2 x 10 headers seen from above. Analog card: odd row on top, pin 1 at the right (photo). Interface card: odd row at
+   the bottom, pin 1 at the left (photo). */
+const HDR20_ANALOG = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, x: 95 - Math.floor(i / 2) * 10, y: i % 2 ? 62 : 38 }));
+const HDR20_CARD = Array.from({ length: 20 }, (_, i) => ({ n: i + 1, x: 5 + Math.floor(i / 2) * 10, y: i % 2 ? 38 : 62 }));
+const HDR20_OUTLINE = 'M0 26 H100 V74 H0 Z';
+
+const ribbonPins = (side) => {
+  const card = side === 'card';
+  return [
+    { n: 1, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 2, name: 'Φ0', type: 'io', desc: `Stepper phase 0${card ? ' from 74LS259 Q0' : ', to ULN2003 pin 6'}. HIGH turns the phase on.`, expect: 'TTL HIGH while phase 0 is on; pulses during seeks' },
+    { n: 3, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 4, name: 'Φ1', type: 'io', desc: `Stepper phase 1${card ? ' from 74LS259 Q1' : ', to ULN2003 pin 5'}. Also feeds the write-protect switch (edge contact 4): leaving phase 1 on forces write protect.`, expect: 'TTL HIGH while phase 1 is on' },
+    { n: 5, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 6, name: 'Φ2', type: 'io', desc: `Stepper phase 2${card ? ' from 74LS259 Q2' : ', to ULN2003 pin 4'}.`, expect: 'TTL HIGH while phase 2 is on' },
+    { n: 7, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 8, name: 'Φ3', type: 'io', desc: `Stepper phase 3${card ? ' from 74LS259 Q3' : ', to ULN2003 pin 3'}.`, expect: 'TTL HIGH while phase 3 is on' },
+    { n: 9, name: '-12 V', type: 'power', desc: '-12 V from slot pin 33 (analog card C5, comparator offset pot R28).', expect: '-11 to -13 V' },
+    { n: 10, name: '/WR REQ', type: 'ctrl', desc: 'Write request, LOW to write. Shared by both drives; only the enabled drive acts on it.', expect: 'HIGH; LOW only while writing' },
+    { n: 11, name: '+5 V', type: 'power', desc: '+5 V logic supply from slot pin 25 (analog card C4, MC3470, 74LS125).', expect: '+4.75 to +5.25 V' },
+    { n: 12, name: '+5 V', type: 'power', desc: '+5 V, paralleled with pin 11.', expect: '+4.75 to +5.25 V' },
+    { n: 13, name: '+12 V', type: 'power', desc: '+12 V from slot pin 50: spindle motor, stepper, MC3470 and write driver.', expect: '+11.3 to +12.5 V' },
+    { n: 14, name: card ? '/ENBL1 or /ENBL2' : '/ENBL', type: 'ctrl', desc: card ? 'Drive enable: /ENBL1 on the DRIVE 1 header, /ENBL2 on the DRIVE 2 header (the only pin that differs). From the 74LS132 at A2.' : 'Drive enable from the controller, LOW turns this drive on: motor, IN USE light, stepper, read and write-protect outputs.', expect: 'LOW while this drive is on; HIGH about 1 s after the last access' },
+    { n: 15, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+11.3 to +12.5 V' },
+    { n: 16, name: 'RD DATA', type: 'io', desc: 'Read pulses from the enabled drive (74LS125 3-state output on the analog card, so two drives can share it). About 1 µs per flux reversal.', expect: 'Pulse train while a written disk turns' },
+    { n: 17, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+11.3 to +12.5 V' },
+    { n: 18, name: 'WR DATA', type: 'io', desc: 'Serial write data: each 1 bit is a level change, every 4 µs bit cell.', expect: 'Toggling only while writing' },
+    { n: 19, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+11.3 to +12.5 V' },
+    { n: 20, name: 'W PROT', type: 'io', desc: 'Write-protect status from the enabled drive (74LS125 3-state output). HIGH with a protected disk; shifted into the 74LS323 data register at SR (pin 11).', expect: 'HIGH with a write-protected disk in the enabled drive' },
+  ];
+};
+
+const d2Sources = {
+  card: { label: 'Apple schematic 050-0005-01, Disk II Interface Card (rev 01), 20-pin connector block (A2DP)', url: D2CARD },
+  analog: { label: 'Apple schematic 050-0007-H, Disk II Analog Board, 20-pin and edge connectors (A2DP)', url: D2ANALOG },
+  sather: { label: 'Understanding the Apple II (Sather), Figure 9.3 drive connections, p. 9-6', url: UTA2(235) },
+};
+
+const prom6309 = (role) => {
+  const p5 = role === 'p5';
+  const a = p5 ? ['AD0 (slot pin 2)', 'AD1 (slot pin 3)', 'AD2 (slot pin 4)', 'AD3 (slot pin 5)', 'AD4 (slot pin 6)', 'AD5 (slot pin 7)', 'AD6 (slot pin 8)', 'AD7 (slot pin 9)']
+    : ['74LS174 Q5 (pin 15): sequencer state bit', '74LS323 QA\' (pin 8): top bit of the data register', '74LS259 Q6 (pin 11): the Q6 soft switch', '74LS259 Q7 (pin 12): the Q7 soft switch (read/write)', 'Synchronised read pulse (74LS174 Q3 through the 74LS132)', '74LS174 Q2 (pin 7): state bit', '74LS174 Q1 (pin 5): state bit', '74LS174 Q0 (pin 2): state bit'];
+  const d = n => p5 ? `Data bit ${n} to the slot data bus.` : (n < 4 ? `Sequencer command bit ${n} to the 74LS323 (S0, S1, /CLR, SL).` : `Next-state bit ${n - 4} to the 74LS174 latch.`);
+  return [
+    { n: 1, name: 'A0', type: 'addr', dir: 'in', desc: `Address 0: ${a[0]}.`, ...(p5 ? {} : { terms: ['sequencer'] }) },
+    { n: 2, name: 'A1', type: 'addr', dir: 'in', desc: `Address 1: ${a[1]}.` },
+    { n: 3, name: 'A2', type: 'addr', dir: 'in', desc: `Address 2: ${a[2]}.` },
+    { n: 4, name: 'A3', type: 'addr', dir: 'in', desc: `Address 3: ${a[3]}.` },
+    { n: 5, name: 'A4', type: 'addr', dir: 'in', desc: `Address 4: ${a[4]}.` },
+    { n: 6, name: 'O1 (D0)', type: 'data', dir: 'out', desc: d(0) },
+    { n: 7, name: 'O2 (D1)', type: 'data', dir: 'out', desc: d(1) },
+    { n: 8, name: 'O3 (D2)', type: 'data', dir: 'out', desc: d(2) },
+    { n: 9, name: 'O4 (D3)', type: 'data', dir: 'out', desc: d(3) },
+    { n: 10, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', probe: '0 V' },
+    { n: 11, name: 'O5 (D4)', type: 'data', dir: 'out', desc: d(4) },
+    { n: 12, name: 'O6 (D5)', type: 'data', dir: 'out', desc: d(5) },
+    { n: 13, name: 'O7 (D6)', type: 'data', dir: 'out', desc: d(6) },
+    { n: 14, name: 'O8 (D7)', type: 'data', dir: 'out', desc: d(7) },
+    { n: 15, name: '/E1', type: 'ctrl', dir: 'in', desc: 'Output enable 1, active LOW. Tied to ground on the card.', activeLow: true, probe: '0 V' },
+    { n: 16, name: '/E2', type: 'ctrl', dir: 'in', activeLow: true, desc: p5 ? 'Output enable 2, active LOW: /I/O SELECT from slot pin 1, so the PROM answers at $Cn00-$CnFF.' : 'Output enable 2, active LOW: from the drive-on logic, so the sequencer only drives while a drive is on.', probe: p5 ? 'Pulses LOW when the CPU reads $Cn00-$CnFF (boot)' : 'LOW while a drive is on' },
+    { n: 17, name: 'A5', type: 'addr', dir: 'in', desc: `Address 5: ${a[5]}.` },
+    { n: 18, name: 'A6', type: 'addr', dir: 'in', desc: `Address 6: ${a[6]}.` },
+    { n: 19, name: 'A7', type: 'addr', dir: 'in', desc: `Address 7: ${a[7]}.` },
+    { n: 20, name: 'VCC', type: 'power', dir: '-', terms: ['vcc'], desc: p5 ? '+5 V, switched: Q1 (2N3906) and Q2 (MPSU51) power the PROM only while /I/O SELECT is LOW.' : '+5 V, switched: Q3 (MPSU51) powers P6 and the 74LS174 only while a drive is on.', probe: p5 ? '0 V at rest; +5 V pulses during $Cn00 reads, so a steady 0 V here is normal' : '+5 V with a drive running; near 0 V with the drives off (normal)' },
+  ];
+};
+
+const driveMachines = {
+  disk2: {
+    id: 'disk2', brand: 'apple', name: 'Disk II', kind: 'drive', year: 1978, status: 'ready',
+    aka: 'Disk II drive A2M0003 (analog card 650-0103, schematic 050-0007, revs 00 to H) + Disk II Interface Card 650-X104 (schematic 050-0005) with P5 boot and P6 sequencer PROMs: 341-0009/341-0010 for 13-sector DOS 3.2, 341-0027/341-0028 for 16-sector DOS 3.3',
+    cpu: 'none (dumb drive)', rom: 'On the interface card: P5 boot PROM and P6 state-sequencer PROM, 256 × 8 each (6309 type)', os: 'DOS 3.3 / ProDOS',
+    chips: ['uln2003', 'mc3470', 'ls125', 'ca3146', 'disk2p6', 'disk2p5', 'ls323', 'ls259', 'ls174'],
+    tagline: 'Shugart/Alps 5.25 in mechanism, a four-chip analog card and a 20-wire ribbon to an eight-chip controller in slot 6.',
+  },
+  duodisk: {
+    id: 'duodisk', brand: 'apple', name: 'DuoDisk', kind: 'drive', year: 1983, status: 'ready',
+    aka: 'DuoDisk 5.25 A9M0108: two half-height drives on one analog card (676-11101, 676-11102 or 676-11107), round cable 590-0114 (DB-25 at the drive, DB-19 at the card), DuoDisk controller card = UniDisk / Apple 5.25 Drive controller card',
+    cpu: 'none (dumb drive)', rom: 'On the controller card: P5 341-0027 boot PROM and P6 341-0028 sequencer PROM (Disk II circuit)', os: 'DOS 3.3 / ProDOS',
+    chips: ['mc3470', 'ls125', 'ca3141', 'disk2p6', 'disk2p5', 'ls323', 'ls259', 'ls174'],
+    tagline: 'Two Disk II-class drives in one beige case; the left one is drive 1. Not for the IIc.',
+  },
+  unidisk525: {
+    id: 'unidisk525', brand: 'apple', name: 'UniDisk 5.25', kind: 'drive', year: 1984, status: 'ready',
+    aka: 'UniDisk 5.25 A9M0104: half-height, captive DB-19 cable plus a DB-19 daisy-chain socket; on the UniDisk (5.25 Drive) controller card in a II, II Plus or IIe, or on the Apple IIc external drive port (drive 2, driven by the IIc IWM)',
+    cpu: 'none (dumb drive)', rom: 'On the controller card: P5 341-0027 and P6 341-0028 (Disk II circuit); on a IIc the IWM and the IIc ROM do the work', os: 'DOS 3.3 / ProDOS',
+    chips: ['iwm344', 'disk2p6', 'disk2p5', 'ls323', 'ls259', 'ls174'],
+    tagline: 'Beige half-height 5.25 in drive with a pass-through port: two per controller card, one on a IIc.',
+  },
+};
+
+const driveChips = {
+  mc3470: {
+    id: 'mc3470', name: 'MC3470 floppy disk read amplifier', short: '3470', family: 'Motorola linear',
+    role: 'Read amplifier, peak detector and pulse shaper', pkg: 'DIP-18',
+    machines: ['disk2', 'duodisk'], location: { disk2: 'B1 on the analog card (socketed, Apple 355-3470)', duodisk: 'C1 on the DuoDisk analog card' },
+    summary: 'Amplifies the millivolt head signal, filters and differentiates it, and puts out one TTL pulse per flux reversal after a time-domain mask (one-shot 1, pins 6-7) that rejects narrow noise. On the Disk II card R33 (or R21) on that one-shot is the comparator offset adjustment at TP5; R28 trims the output at TP7. Runs on +5 V (pin 11) and +12 V (pin 18). A bad one gives repeated recalibration and I/O errors.',
+    fails: ['Drive recalibrates repeatedly', 'Spins but will not boot', 'I/O ERROR on reads'],
+    heat: 'warm',
+    verifiedAgainst: 'Motorola MC3470/MC3470A data sheet, pin connection diagram, p. 7-109; Apple schematic 050-0007-H',
+    datasheets: [
+      { label: 'Motorola MC3470/MC3470A data sheet, pin connection and typical application, p. 7-109 (bitsavers)', url: MC3470DS },
+      { label: 'Apple schematic 050-0007-H, Disk II Analog Board (B1)', url: D2ANALOG },
+      { label: 'Understanding the Apple II (Sather), The Read Pulse, p. 9-9', url: UTA2(238) },
+    ],
+    pins: [
+      { n: 1, name: 'IN A', type: 'io', dir: 'in', desc: 'Amplifier input A from the read/write head.' },
+      { n: 2, name: 'IN B', type: 'io', dir: 'in', desc: 'Amplifier input B from the read/write head.' },
+      { n: 3, name: 'OFFSET DEC', type: 'ctrl', dir: '-', desc: 'Offset decoupling / gain select. C6 0.22 µF across pins 3 and 4 on the Disk II card.' },
+      { n: 4, name: 'OFFSET DEC', type: 'ctrl', dir: '-', desc: 'Offset decoupling / gain select (pair with pin 3).' },
+      { n: 5, name: 'GND', type: 'ground', dir: '-', terms: ['gnd'], desc: '0 V.', probe: '0 V' },
+      { n: 6, name: 'MONO1', type: 'ctrl', dir: '-', desc: 'One-shot 1 (time-domain filter) timing: C7 330 pF; R20, R21 and pot R33 set the mask, about 3 µs for DOS 3.3. TP5.', probe: 'TP5: rising part 2.5-3.0 µs, whole pulse 3.75-4.0 µs (Amplitude test running)' },
+      { n: 7, name: 'MONO1', type: 'ctrl', dir: '-', desc: 'One-shot 1 timing (pair with pin 6).' },
+      { n: 8, name: 'MONO2', type: 'ctrl', dir: '-', desc: 'One-shot 2 (output pulse width) timing: C8 330 pF. TP6.' },
+      { n: 9, name: 'MONO2', type: 'ctrl', dir: '-', desc: 'One-shot 2 timing (pair with pin 8).' },
+      { n: 10, name: 'DATA OUT', type: 'io', dir: 'out', desc: 'Digital read pulse, one per flux reversal, to the 74LS125 and ribbon pin 16. TP7.', probe: 'TP7: clean pulses with no double edges; trim R28 if they jitter' },
+      { n: 11, name: 'VCC1', type: 'power', dir: '-', terms: ['vcc'], desc: '+5 V (7 V absolute maximum).', probe: '+5 V' },
+      { n: 12, name: 'DIFF', type: 'ctrl', dir: '-', desc: 'Differentiator components: L5 68 µH, C13 3000 pF, R24 91 Ω across pins 12 and 13.' },
+      { n: 13, name: 'DIFF', type: 'ctrl', dir: '-', desc: 'Differentiator components (pair with pin 12).' },
+      { n: 14, name: 'DIFF IN', type: 'io', dir: 'in', desc: 'Active differentiator input from the head filter.' },
+      { n: 15, name: 'DIFF IN', type: 'io', dir: 'in', desc: 'Active differentiator input (pair with pin 14).' },
+      { n: 16, name: 'AMP OUT', type: 'io', dir: 'out', desc: 'Amplifier output into the L3/L4/C10/C11 filter; TP8/TP9 side.', probe: 'TP8/TP9: at least 150 mV p-p with the Amplitude test' },
+      { n: 17, name: 'AMP OUT', type: 'io', dir: 'out', desc: 'Amplifier output (pair with pin 16).' },
+      { n: 18, name: 'VCC2', type: 'power', dir: '-', desc: '+12 V (10-14 V).', probe: '+11.5 to +12 V' },
+    ],
+  },
+  ls125: {
+    id: 'ls125', name: '74LS125 quad 3-state buffer', short: '74LS125', family: '74LS TTL',
+    role: 'Drive-side 3-state gates: write protect, read data, write data, write request', pkg: 'DIP-14',
+    machines: ['disk2', 'duodisk'], location: { disk2: 'B4 on the analog card (socketed, Apple 305-0125)', duodisk: 'B3 (cards 676-11101/11102) or C3 (676-11107) on the analog card' },
+    summary: 'Four non-inverting buffers, each with its own active-LOW enable. On the Disk II analog card two of them put W PROT and RD DATA on the shared ribbon only while this drive is enabled; the other two gate WR DATA and write request. It sits on the +5 V rail, so it dies with C4 when +12 V reaches the 5 V pins (misplugged ribbon, or a card plugged in with power on).',
+    fails: ['Write-protect errors on unprotected disks, or writes on protected ones', 'Reads but will not write', 'I/O ERROR', 'Drive 1 will not boot while this card is on drive 2'],
+    heat: 'cool',
+    verifiedAgainst: 'TI SN74LS125A data sheet (SDLS044A), pinout, p. 1; Apple schematic 050-0007-H',
+    datasheets: [
+      { label: 'TI SN74LS125A data sheet (SDLS044A), N-package pinout, p. 1', url: TI('sn74ls125a', 1) },
+      { label: 'Apple schematic 050-0007-H, Disk II Analog Board (B4)', url: D2ANALOG },
+      { label: 'Disk ][ Technical Procedures, visual inspection (C4 and the 74LS125), p. 5.5', url: D2TP(57) },
+    ],
+    pins: [
+      { n: 1, name: '/1G', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Enable for gate 1 (write protect): LOW while the drive is enabled.' },
+      { n: 2, name: '1A', type: 'io', dir: 'in', desc: 'Write-protect switch input (R12 10 kΩ pull-up; the switch returns to phase 1).', probe: 'HIGH with a protected disk' },
+      { n: 3, name: '1Y', type: 'io', dir: 'out', desc: 'W PROT to ribbon pin 20.' },
+      { n: 4, name: '/2G', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Enable for gate 2 (write data), from the write-request logic.' },
+      { n: 5, name: '2A', type: 'io', dir: 'in', desc: 'WR DATA from ribbon pin 18.' },
+      { n: 6, name: '2Y', type: 'io', dir: 'out', desc: 'Write data to the CA3146 head driver.' },
+      { n: 7, name: 'GND', type: 'ground', dir: '-', terms: ['gnd'], desc: '0 V.', probe: '0 V' },
+      { n: 8, name: '3Y', type: 'ctrl', dir: 'out', desc: 'Buffered write request (R16 1 kΩ pull-up) to ULN2003 pin 7 and the 2G enable.' },
+      { n: 9, name: '3A', type: 'ctrl', dir: 'in', desc: '/WR REQ from ribbon pin 10 (R15 1 kΩ pull-up).', probe: 'HIGH; LOW only while writing' },
+      { n: 10, name: '/3G', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Enable for gate 3 (write request).' },
+      { n: 11, name: '4Y', type: 'io', dir: 'out', desc: 'RD DATA to ribbon pin 16 (R13 15 kΩ pull-up on rev H); TP1.', terms: ['tristate'], probe: 'Pulse train while reading' },
+      { n: 12, name: '4A', type: 'io', dir: 'in', desc: 'Read pulse from the MC3470 output stage.' },
+      { n: 13, name: '/4G', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Enable for gate 4 (read data): LOW while the drive is enabled.' },
+      { n: 14, name: 'VCC', type: 'power', dir: '-', terms: ['vcc'], desc: '+5 V.', probe: '+5 V' },
+    ],
+  },
+  ca3146: {
+    id: 'ca3146', name: 'CA3146E transistor array (write driver)', short: '3146', family: 'RCA linear (NPN array)',
+    role: 'Head write driver and write/erase current switch', pkg: 'DIP-14',
+    machines: ['disk2'], location: { disk2: 'A3 on the analog card (socketed, Apple 351-3146)' },
+    summary: 'Five NPN transistors: a differential pair (Q1, Q2, common emitter pin 3) and three singles (Q3-Q5, Q5 emitter tied to the substrate at pin 13). On the Disk II card the pair switches current into the two halves of the centre-tapped head through CR1 and CR2 as WR DATA toggles, and the other transistors switch the write current on with write request. Sams calls it the write amp. On Apple\'s chip-swap chart for I/O errors and for "reads but will not write".',
+    fails: ['Reads but will not write', 'I/O ERROR', 'Drive 1 will not boot while this card is on drive 2'],
+    heat: 'cool',
+    verifiedAgainst: 'RCA 1978 Linear Integrated Circuits databook, CA3118/CA3146/CA3183 data, terminal diagram (PDF p. 211); Apple schematic 050-0007-H',
+    datasheets: [
+      { label: 'RCA 1978 Linear Integrated Circuits, CA3146 terminal diagram, PDF p. 211 (bitsavers)', url: RCA78(211) },
+      { label: 'Apple schematic 050-0007-H, Disk II Analog Board (A3)', url: D2ANALOG },
+      { label: 'Sams COMPUTERFACTS CD6 Disk II, parts list (Write Amp CA3146E), p. 5', url: SAMSD2(5) },
+    ],
+    pins: [
+      { n: 1, name: 'Q1 C', type: 'io', dir: 'out', desc: 'Q1 collector: one half of the head winding through CR1.' },
+      { n: 2, name: 'Q1 B', type: 'io', dir: 'in', desc: 'Q1 base (differential pair input, write data).' },
+      { n: 3, name: 'Q1/Q2 E', type: 'io', dir: '-', desc: 'Common emitter of the differential pair: the switched write current.' },
+      { n: 4, name: 'Q2 B', type: 'io', dir: 'in', desc: 'Q2 base (differential pair input).' },
+      { n: 5, name: 'Q2 C', type: 'io', dir: 'out', desc: 'Q2 collector: the other half of the head winding through CR2.' },
+      { n: 6, name: 'Q3 B', type: 'ctrl', dir: 'in', desc: 'Q3 base (write-current switch).' },
+      { n: 7, name: 'Q3 E', type: 'ctrl', dir: '-', desc: 'Q3 emitter.' },
+      { n: 8, name: 'Q3 C', type: 'ctrl', dir: 'out', desc: 'Q3 collector.' },
+      { n: 9, name: 'Q4 B', type: 'ctrl', dir: 'in', desc: 'Q4 base.' },
+      { n: 10, name: 'Q4 E', type: 'ctrl', dir: '-', desc: 'Q4 emitter.' },
+      { n: 11, name: 'Q4 C', type: 'ctrl', dir: 'out', desc: 'Q4 collector.' },
+      { n: 12, name: 'Q5 B', type: 'ctrl', dir: 'in', desc: 'Q5 base.' },
+      { n: 13, name: 'Q5 E / SUB', type: 'ground', dir: '-', desc: 'Q5 emitter and the chip substrate; must be the most negative point (ground on this card).', probe: '0 V' },
+      { n: 14, name: 'Q5 C', type: 'ctrl', dir: 'out', desc: 'Q5 collector.' },
+    ],
+  },
+  ca3141: {
+    id: 'ca3141', name: 'CA3141E high-voltage diode array', short: '3141', family: 'RCA linear (diode array)',
+    role: 'Diode array in the DuoDisk read/write head switching', pkg: 'DIP-16',
+    machines: ['duodisk'], location: { duodisk: 'B1 on DuoDisk analog cards 676-11101 and 676-11102 (Apple 352-3141)' },
+    summary: 'Ten matched 30 V diodes: three common-cathode pairs (cathodes on pins 3, 6, 14), two common-anode pairs (anodes on 8, 11) and the substrate on pin 9. Apple\'s DuoDisk chart lists it first for "motor and LED on but will not boot" and for "reads but does not write" on the 676-11101/11102 cards. How the DuoDisk board uses each diode is not in the documents found.',
+    fails: ['Motor and LED on, but the disk will not boot', 'Reads but does not write'],
+    heat: 'cool',
+    verifiedAgainst: 'RCA 1978 Linear Integrated Circuits databook, CA3141E data, Fig. 1 terminal assignment (PDF p. 243)',
+    datasheets: [
+      { label: 'RCA 1978 Linear Integrated Circuits, CA3141E Fig. 1 terminal assignment, PDF p. 243 (bitsavers)', url: RCA78(243) },
+      { label: 'DuoDisk Technical Procedures, analog card chip-swapping chart, p. 4.6', url: DUOTP(24) },
+    ],
+    pins: [
+      { n: 1, name: 'D1 A', type: 'io', dir: '-', desc: 'Anode of D1 (cathode on pin 3).' },
+      { n: 2, name: 'D2 A', type: 'io', dir: '-', desc: 'Anode of D2 (cathode on pin 3).' },
+      { n: 3, name: 'D1/D2 K', type: 'io', dir: '-', desc: 'Common cathode of D1 and D2.' },
+      { n: 4, name: 'D3 A', type: 'io', dir: '-', desc: 'Anode of D3 (cathode on pin 6).' },
+      { n: 5, name: 'D4 A', type: 'io', dir: '-', desc: 'Anode of D4 (cathode on pin 6).' },
+      { n: 6, name: 'D3/D4 K', type: 'io', dir: '-', desc: 'Common cathode of D3 and D4.' },
+      { n: 7, name: 'D5 K', type: 'io', dir: '-', desc: 'Cathode of D5 (anode on pin 8).' },
+      { n: 8, name: 'D5/D6 A', type: 'io', dir: '-', desc: 'Common anode of D5 and D6.' },
+      { n: 9, name: 'SUB', type: 'ground', dir: '-', desc: 'Substrate; must be the most negative point.', probe: '0 V' },
+      { n: 10, name: 'D6 K', type: 'io', dir: '-', desc: 'Cathode of D6 (anode on pin 8).' },
+      { n: 11, name: 'D7/D8 A', type: 'io', dir: '-', desc: 'Common anode of D7 and D8.' },
+      { n: 12, name: 'D8 K', type: 'io', dir: '-', desc: 'Cathode of D8 (anode on pin 11).' },
+      { n: 13, name: 'D7 K', type: 'io', dir: '-', desc: 'Cathode of D7 (anode on pin 11).' },
+      { n: 14, name: 'D9/D10 K', type: 'io', dir: '-', desc: 'Common cathode of D9 and D10.' },
+      { n: 15, name: 'D9 A', type: 'io', dir: '-', desc: 'Anode of D9 (cathode on pin 14).' },
+      { n: 16, name: 'D10 A', type: 'io', dir: '-', desc: 'Anode of D10 (cathode on pin 14).' },
+    ],
+  },
+  disk2p5: {
+    id: 'disk2p5', name: 'P5 boot PROM 341-0027 (256 × 8, 6309 type)', short: 'P5', family: 'Bipolar PROM (MMI 6309 / TI TBP28L22 / 74S471 type)',
+    role: 'Controller boot code at $Cn00-$CnFF', pkg: 'DIP-20',
+    machines: ['disk2', 'duodisk', 'unidisk525'], location: { disk2: 'D3 on the Disk II Interface Card, marked PROM P5', duodisk: 'PROM P5 on the 5.25 controller card', unidisk525: 'PROM P5 on the 5.25 controller card (II/IIe hosts only)' },
+    summary: 'The 256-byte boot program the Autostart ROM finds at $Cn00 ($C600 in slot 6): PR#6 runs it, it recalibrates the head against the stop and reads track 0, sector 0. 341-0027 is the 16-sector (DOS 3.3) part; 341-0009 is the 13-sector (DOS 3.2) one. Its +5 V (pin 20) is switched on only while /I/O SELECT is LOW, so 0 V there at rest is normal. Not a 74S287/82S129: those are 256 × 4 in 16 pins.',
+    fails: ['PR#6 hangs with no drive activity', 'No "Apple ][" boot attempt at power-on', 'DOS 3.3 disks will not boot (13-sector P5 fitted)'],
+    heat: 'warm',
+    verifiedAgainst: 'MMI 1980 Bipolar LSI Databook, 53/6308-1 and 53/6309-1 pin configuration (p. 3-5); Apple schematic 050-0005-01',
+    datasheets: [
+      { label: 'MMI 1980 Bipolar LSI Databook, 6308/6309 256 × 8 pin configuration, p. 3-5 (bitsavers)', url: MMI80(22) },
+      { label: 'MMI 1980 Bipolar LSI Databook, PROM cross-reference (6309 = 74S471; 74S287 = 6301, 256 × 4), p. 3-1', url: MMI80(19) },
+      { label: 'Apple schematic 050-0005-01, Disk II Interface Card (P5 at D3, Q1/Q2 power switch)', url: D2CARD },
+      { label: 'Understanding the Apple II (Sather), The Bootstrap ROM, p. 9-11', url: UTA2(240) },
+      { label: 'A2DP: Disk II interface card ROM images (341-0009, 341-0010, 341-0027, 341-0028)', url: D2ROMS },
+    ],
+    pins: prom6309('p5'),
+  },
+  disk2p6: {
+    id: 'disk2p6', name: 'P6 state-sequencer PROM 341-0028 (256 × 8, 6309 type)', short: 'P6', family: 'Bipolar PROM (MMI 6309 / TI TBP28L22 / 74S471 type)',
+    role: 'Logic state sequencer program (the "state machine")', pkg: 'DIP-20',
+    machines: ['disk2', 'duodisk', 'unidisk525'], location: { disk2: 'B3 on the Disk II Interface Card, marked PROM P6', duodisk: 'PROM P6 on the 5.25 controller card', unidisk525: 'PROM P6 on the 5.25 controller card (II/IIe hosts only)' },
+    summary: 'With the 74LS174 at A3 it forms the 2 MHz sequencer: the address is the current state, the Q6/Q7 soft switches, the read pulse and the data-register top bit; the outputs are the next state and a 4-bit command to the 74LS323 (clear, shift left, shift right, load). 341-0028 is the 16-sector part (341-0010 for 13-sector). It and the 74LS174 get +5 V through Q3 only while a drive is on. The dump is a full 256 × 8; a 74S287/82S129 (256 × 4, 16 pins) does not fit.',
+    fails: ['Drive spins and steps but never reads (I/O ERROR)', 'Cannot write or format', 'DOS 3.3 disks will not boot (13-sector P6 fitted)'],
+    heat: 'warm',
+    verifiedAgainst: 'MMI 1980 Bipolar LSI Databook, 53/6308-1 and 53/6309-1 pin configuration (p. 3-5); Apple schematic 050-0005-01',
+    datasheets: [
+      { label: 'MMI 1980 Bipolar LSI Databook, 6308/6309 256 × 8 pin configuration, p. 3-5 (bitsavers)', url: MMI80(22) },
+      { label: 'Apple schematic 050-0005-01, Disk II Interface Card (P6 at B3, Q3 power switch)', url: D2CARD },
+      { label: 'Understanding the Apple II (Sather), Drive Off/On (sequencer power), p. 9-13', url: UTA2(242) },
+      { label: 'A2DP: Disk II interface card ROM images (341-0028 dump is 256 × 8)', url: D2ROMS },
+    ],
+    pins: prom6309('p6'),
+  },
+  ls323: {
+    id: 'ls323', name: '74LS323 8-bit universal shift/storage register', short: '74LS323', family: '74LS TTL',
+    role: 'Controller data register (shifts disk bits in and out)', pkg: 'DIP-20',
+    machines: ['disk2', 'duodisk', 'unidisk525'], location: { disk2: 'C3 on the Disk II Interface Card', duodisk: '74LS323 on the 5.25 controller card', unidisk525: '74LS323 on the 5.25 controller card (II/IIe hosts only)' },
+    summary: 'The data register between the 6502 and the drive. P6 sets its mode on S0/S1 and /CLR every Q3 cycle: load from the bus to write, shift left to assemble read bits, shift right to sample the write-protect line at SR. Its 3-state I/O pins drive the data bus only on even $C08x,X reads (/G2 is address bit 0) with /DEVICE SELECT LOW.',
+    fails: ['I/O ERROR on every read', 'Write-protect status wrong', 'Writes garbage'],
+    heat: 'warm',
+    verifiedAgainst: 'TI SN54LS323/SN74LS323 data sheet (SDLS160), pinout and function table, p. 1; Apple schematic 050-0005-01',
+    datasheets: [
+      { label: 'TI SN74LS323 data sheet (SDLS160), pinout and function table, p. 1', url: TI('sn54ls323', 1) },
+      { label: 'Apple schematic 050-0005-01, Disk II Interface Card (C3)', url: D2CARD },
+      { label: 'Understanding the Apple II (Sather), Figure 9.7 controller block diagram, p. 9-10', url: UTA2(239) },
+    ],
+    pins: [
+      { n: 1, name: 'S0', type: 'ctrl', dir: 'in', desc: 'Function select 0, from the P6 sequencer command.' },
+      { n: 2, name: '/G1', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Output control 1: /DEVICE SELECT (slot pin 41).', probe: 'Pulses LOW on $C0E0-$C0EF accesses (slot 6)' },
+      { n: 3, name: '/G2', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Output control 2: address bit A0, so only even addresses read the register.', terms: ['tristate'] },
+      { n: 4, name: 'G/QG', type: 'data', dir: 'bidir', desc: 'Register bit G, to the slot data bus.' },
+      { n: 5, name: 'E/QE', type: 'data', dir: 'bidir', desc: 'Register bit E, to the slot data bus.' },
+      { n: 6, name: 'C/QC', type: 'data', dir: 'bidir', desc: 'Register bit C, to the slot data bus.' },
+      { n: 7, name: 'A/QA', type: 'data', dir: 'bidir', desc: 'Register bit A, to the slot data bus.' },
+      { n: 8, name: 'QA\'', type: 'data', dir: 'out', desc: 'Serial output of stage A: to P6 address A1.' },
+      { n: 9, name: '/CLR', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Synchronous clear, from the sequencer.' },
+      { n: 10, name: 'GND', type: 'ground', dir: '-', terms: ['gnd'], desc: '0 V.', probe: '0 V' },
+      { n: 11, name: 'SR', type: 'io', dir: 'in', desc: 'Shift-right serial input: W PROT from ribbon pin 20.', probe: 'HIGH with a protected disk in the enabled drive' },
+      { n: 12, name: 'CLK', type: 'clock', dir: 'in', terms: ['clock'], desc: 'Clock: Q3 gated through the 74LS132 while a drive is on.', probe: '2 MHz while a drive runs' },
+      { n: 13, name: 'B/QB', type: 'data', dir: 'bidir', desc: 'Register bit B, to the slot data bus.' },
+      { n: 14, name: 'D/QD', type: 'data', dir: 'bidir', desc: 'Register bit D, to the slot data bus.' },
+      { n: 15, name: 'F/QF', type: 'data', dir: 'bidir', desc: 'Register bit F, to the slot data bus.' },
+      { n: 16, name: 'H/QH', type: 'data', dir: 'bidir', desc: 'Register bit H, to the slot data bus.' },
+      { n: 17, name: 'QH\'', type: 'data', dir: 'out', desc: 'Serial output of stage H (not used on the Disk II card).' },
+      { n: 18, name: 'SL', type: 'io', dir: 'in', desc: 'Shift-left serial input, from the sequencer.' },
+      { n: 19, name: 'S1', type: 'ctrl', dir: 'in', desc: 'Function select 1, from the P6 sequencer command.' },
+      { n: 20, name: 'VCC', type: 'power', dir: '-', terms: ['vcc'], desc: '+5 V.', probe: '+5 V' },
+    ],
+  },
+  ls259: {
+    id: 'ls259', name: '74LS259 8-bit addressable latch (9334)', short: '74LS259', family: '74LS TTL',
+    role: 'Controller soft switches $C080-$C08F,X: phases, motor, drive select, Q6, Q7', pkg: 'DIP-16',
+    machines: ['disk2', 'duodisk', 'unidisk525'], location: { disk2: 'C2 on the Disk II Interface Card (9334, 74259 or 74LS259)', duodisk: '74LS259 on the 5.25 controller card', unidisk525: '74LS259 on the 5.25 controller card (II/IIe hosts only)' },
+    summary: 'Any access to $C080+slot×$10 to $C08F+slot×$10 sets or clears one of eight latches: A1-A3 pick the latch, A0 is the new value (even address off, odd on). Q0-Q3 are the stepper phases, Q4 motor, Q5 drive 1/2, Q6 and Q7 the sequencer mode. /RESET clears them all, so Control-Reset stops the drive. Schematic rev 01 changed the part from 74LS259 to the pin-compatible 9334.',
+    fails: ['Head never moves', 'Motor never starts', 'Always the same drive selected', 'Cannot write'],
+    heat: 'cool',
+    verifiedAgainst: 'TI SN74LS259B data sheet (SDLS086), pinout, p. 1; Apple schematic 050-0005-01',
+    datasheets: [
+      { label: 'TI SN74LS259B data sheet (SDLS086), N-package pinout, p. 1', url: TI('sn74ls259b', 1) },
+      { label: 'Apple schematic 050-0005-01, Disk II Interface Card (C2)', url: D2CARD },
+      { label: 'Understanding the Apple II (Sather), Table 9.1 controller commands, p. 9-11', url: UTA2(240) },
+    ],
+    pins: [
+      { n: 1, name: 'S0', type: 'addr', dir: 'in', desc: 'Latch select 0: address A1 (slot pin 3).' },
+      { n: 2, name: 'S1', type: 'addr', dir: 'in', desc: 'Latch select 1: address A2 (slot pin 4).' },
+      { n: 3, name: 'S2', type: 'addr', dir: 'in', desc: 'Latch select 2: address A3 (slot pin 5).' },
+      { n: 4, name: 'Q0', type: 'io', dir: 'out', desc: 'Phase 0 ($C080/$C081,X) to ribbon pin 2.', probe: 'HIGH while phase 0 is on' },
+      { n: 5, name: 'Q1', type: 'io', dir: 'out', desc: 'Phase 1 ($C082/$C083,X) to ribbon pin 4.' },
+      { n: 6, name: 'Q2', type: 'io', dir: 'out', desc: 'Phase 2 ($C084/$C085,X) to ribbon pin 6.' },
+      { n: 7, name: 'Q3', type: 'io', dir: 'out', desc: 'Phase 3 ($C086/$C087,X) to ribbon pin 8.' },
+      { n: 8, name: 'GND', type: 'ground', dir: '-', terms: ['gnd'], desc: '0 V.', probe: '0 V' },
+      { n: 9, name: 'Q4', type: 'ctrl', dir: 'out', desc: 'Motor on ($C088 off / $C089 on, X) through a 74LS05 to the 556 one-second turn-off timer.', probe: 'HIGH from $C0E9 until $C0E8 (slot 6)' },
+      { n: 10, name: 'Q5', type: 'ctrl', dir: 'out', desc: 'Drive select ($C08A drive 1 / $C08B drive 2, X) to the enable gates.' },
+      { n: 11, name: 'Q6', type: 'ctrl', dir: 'out', desc: 'Q6 ($C08C / $C08D,X) to P6 address A2: read data vs load or sense write protect.' },
+      { n: 12, name: 'Q7', type: 'ctrl', dir: 'out', desc: 'Q7 ($C08E read / $C08F write, X) to P6 address A3.' },
+      { n: 13, name: 'D', type: 'addr', dir: 'in', desc: 'Data in: address A0 (slot pin 2). Even address = 0, odd = 1.', terms: ['soft-switch'] },
+      { n: 14, name: '/G', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Enable: /DEVICE SELECT (slot pin 41).', probe: 'Pulses LOW on $C0E0-$C0EF accesses (slot 6)' },
+      { n: 15, name: '/CLR', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Clear: system /RESET (slot pin 31). Forces every switch off.', terms: ['reset'], probe: 'HIGH when running' },
+      { n: 16, name: 'VCC', type: 'power', dir: '-', terms: ['vcc'], desc: '+5 V.', probe: '+5 V' },
+    ],
+  },
+  ls174: {
+    id: 'ls174', name: '74LS174 hex D flip-flop', short: '74LS174', family: '74LS TTL',
+    role: 'Sequencer state latch and read-pulse synchroniser', pkg: 'DIP-16',
+    machines: ['disk2', 'duodisk', 'unidisk525'], location: { disk2: 'A3 on the Disk II Interface Card', duodisk: '74LS174 on the 5.25 controller card', unidisk525: '74LS174 on the 5.25 controller card (II/IIe hosts only)' },
+    summary: 'Four flip-flops hold the sequencer state (P6 outputs D4-D7 in, fed back to P6 address lines A0, A5, A6, A7); two more clock RD DATA through twice to line it up with Q3. Clocked on Q3, cleared when the drives go off, and powered with P6 through Q3 (MPSU51) only while a drive is on, so 0 V on pin 16 with the drives off is normal.',
+    fails: ['Drive spins and steps but never reads', 'Cannot write'],
+    heat: 'cool',
+    verifiedAgainst: 'TI SN74LS174 data sheet (SDLS068A), pinout, p. 1; Apple schematic 050-0005-01',
+    datasheets: [
+      { label: 'TI SN74LS174 data sheet (SDLS068A), N-package pinout, p. 1', url: TI('sn74ls174', 1) },
+      { label: 'Apple schematic 050-0005-01, Disk II Interface Card (A3)', url: D2CARD },
+      { label: 'Understanding the Apple II (Sather), Drive Off/On, p. 9-13', url: UTA2(242) },
+    ],
+    pins: [
+      { n: 1, name: '/CLR', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Clear, from the drive-on logic: drives off clears the sequencer.' },
+      { n: 2, name: '1Q', type: 'data', dir: 'out', desc: 'Schematic Q0: state bit to P6 A7 (also the write-data toggle).' },
+      { n: 3, name: '1D', type: 'data', dir: 'in', desc: 'Schematic D0: from P6 D7 (pin 14).' },
+      { n: 4, name: '2D', type: 'data', dir: 'in', desc: 'Schematic D1: from P6 D6 (pin 13).' },
+      { n: 5, name: '2Q', type: 'data', dir: 'out', desc: 'Schematic Q1: state bit to P6 A6.' },
+      { n: 6, name: '3D', type: 'data', dir: 'in', desc: 'Schematic D2: from P6 D4 (pin 11).' },
+      { n: 7, name: '3Q', type: 'data', dir: 'out', desc: 'Schematic Q2: state bit to P6 A5.' },
+      { n: 8, name: 'GND', type: 'ground', dir: '-', terms: ['gnd'], desc: '0 V.', probe: '0 V' },
+      { n: 9, name: 'CLK', type: 'clock', dir: 'in', terms: ['clock'], desc: 'Clock: Q3 through the 74LS132.', probe: '2 MHz while a drive runs' },
+      { n: 10, name: '4Q', type: 'io', dir: 'out', desc: 'Schematic Q3: twice-latched read pulse to the 74LS132 and P6 A4.' },
+      { n: 11, name: '4D', type: 'io', dir: 'in', desc: 'Schematic D3: from 5Q (pin 12), the second synchroniser stage.' },
+      { n: 12, name: '5Q', type: 'io', dir: 'out', desc: 'Schematic Q4: first latched copy of the read pulse.' },
+      { n: 13, name: '5D', type: 'io', dir: 'in', desc: 'Schematic D4: RD DATA from ribbon pin 16.', probe: 'Pulse train while reading' },
+      { n: 14, name: '6D', type: 'data', dir: 'in', desc: 'Schematic D5: from P6 D5 (pin 12).' },
+      { n: 15, name: '6Q', type: 'data', dir: 'out', desc: 'Schematic Q5: state bit to P6 A0.', terms: ['sequencer'] },
+      { n: 16, name: 'VCC', type: 'power', dir: '-', terms: ['vcc'], desc: '+5 V, switched by Q3 (MPSU51) only while a drive is on.', probe: '+5 V with a drive running; near 0 V with the drives off (normal)' },
+    ],
+  },
+};
+
+const d2Ribbon = {
+  id: 'disk2-ribbon', name: 'Analog card 20-pin header (ribbon to the controller)', kind: '2 × 10 male header, 0.1 in, on the Disk II analog card', geo: 'custom', gender: 'male',
+  pads: HDR20_ANALOG, outline: HDR20_OUTLINE,
+  verifiedAgainst: 'Apple schematic 050-0007-H (Disk II Analog Board) and 050-0005-01 (Interface Card); Sather Figure 9.3',
+  summary: 'THE probe point on a Disk II: everything between controller and drive is here. Odd pins 1-7 are ground, 9 is -12 V, 11-12 +5 V, odd 13-19 +12 V; phases on 2-8, /WR REQ 10, /ENBL 14, RD DATA 16, WR DATA 18, W PROT 20. Drawn as on the card (photo): odd row on top with pin 1 at the right end, next to the "1" on the silkscreen; the plug\'s arrow goes to pin 1 and the cable exits away from the card. A plug shifted one column puts +12 V onto the +5 V pins and the logic pins: C4 bursts and the 74LS125 dies. Measure with the drive enabled (PR#6 or CATALOG).',
+  pins: ribbonPins('analog'),
+  sources: [
+    d2Sources.analog, d2Sources.card, d2Sources.sather,
+    { label: 'Disk II analog card photo (650-0103, header pin 1 and 20 marked) (A2DP)', url: D2PHOTO },
+    { label: 'Disk ][ Technical Procedures, replacing the cable (arrow to pin 1), p. 1.5', url: D2TP(7) },
+    { label: 'Disk II Installation and Operating Manual, centring the connector, p. 2', url: D2MAN(6) },
+  ],
+  terms: ['stepper'],
+};
+
+const d2CardHdr = {
+  id: 'disk2-card-hdr', name: 'Interface card DRIVE 1 / DRIVE 2 headers (20-pin)', kind: 'Two 2 × 10 male headers, 0.1 in, on the Disk II Interface Card', geo: 'custom', gender: 'male',
+  pads: HDR20_CARD, outline: HDR20_OUTLINE,
+  verifiedAgainst: 'Apple schematic 050-0005-01, Disk II Interface Card, 20-pin connector block',
+  summary: 'Upper header DRIVE 1, lower DRIVE 2; both carry the same lines except pin 14 (/ENBL1 or /ENBL2). Drawn as on the card (photo): odd row nearest the card edge with pin 1 at the left, 20 at the top right. The card\'s 50-pin edge is the Apple II peripheral slot already drawn for the II, II Plus and IIe (ii-slot / 2e-slot): it takes +5 V from slot pin 25, +12 V from 50, -12 V from 33, /I/O SELECT pin 1 (P5), /DEVICE SELECT pin 41 (soft switches), Q3 pin 37 (sequencer clock) and /RESET pin 31.',
+  pins: ribbonPins('card'),
+  sources: [
+    d2Sources.card,
+    { label: 'Disk II Interface Card photo (650-X104, DRIVE 1 / DRIVE 2 headers, pins 1, 2, 19, 20 marked) (A2DP)', url: D2CARDPHOTO },
+    { label: 'Disk II Installation and Operating Manual, installing multiple drives, p. 4', url: D2MAN(8) },
+    { label: 'Apple II Reference Manual (1979), peripheral connector pinout, p. 106', url: IIRM(116) },
+  ],
+};
+
+const d2Mech = {
+  id: 'disk2-mech', name: 'Analog card edge to the mechanism (motor, stepper, LED, write protect)', kind: '14-position double-sided card edge on the analog card (the "motor plug" pushes on)', geo: 'edge-14x14-cbm', keys: [],
+  verify: true,
+  verifiedAgainst: 'Apple schematic 050-0007-H, Disk II Analog Board, edge-connector block',
+  summary: 'The harness from the mechanism (stepper coils, motor speed card, IN USE LED, write-protect switch) pushes onto these fingers at the rear of the analog card; Sams calls it J2. Stepper coils sit between gated +12 V (10-12) and the ULN2003 outputs on M, N, P, R. The pin assignments are from the schematic; which side carries numbers and which letters is not stated there (the photo shows A at the left end of the component side), so the drawing is unchecked. The read/write head has its own 4-wire plug at the front (erase, two R/W ends, centre tap); no pin numbers are given for it.',
+  pins: [
+    { n: 2, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 4, name: 'W P RET', type: 'io', desc: 'Write-protect switch return: phase 1 from ribbon pin 4 (schematic rev 01; earlier boards grounded it).' },
+    { n: 5, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 6, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 8, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 10, name: '+12 EN', type: 'power', desc: 'Gated +12 V from Q1 (MPSU51): motor card and stepper common.', expect: 'About 11.6 V with the drive on; 0 V off' },
+    { n: 11, name: '+12 EN', type: 'power', desc: 'Gated +12 V (paralleled).', expect: 'About 11.6 V with the drive on' },
+    { n: 12, name: '+12 EN', type: 'power', desc: 'Gated +12 V (paralleled).', expect: 'About 11.6 V with the drive on' },
+    { n: 13, name: '+12', type: 'power', desc: 'Ungated +12 V (separate line from ribbon pin 13, schematic rev 04).', expect: '+11.6 to +12 V' },
+    { n: 14, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 'B', name: 'ACT LED', type: 'io', desc: 'IN USE LED, through R8 560 Ω.', expect: 'LED lit while the drive is enabled' },
+    { n: 'D', name: 'W PROT', type: 'io', desc: 'Write-protect switch to the 74LS125 (R12 10 kΩ pull-up). Open switch = protected.' },
+    { n: 'K', name: '-MTR ON', type: 'ctrl', desc: 'Motor on to the motor speed control card, through R9 1 kΩ.', expect: 'LOW (active) while the drive is enabled' },
+    { n: 'L', name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    { n: 'M', name: 'ΦC', type: 'io', desc: 'Stepper coil C, sunk by the ULN2003.', expect: 'About 11.6 V idle; near 0 V while its phase is on' },
+    { n: 'N', name: 'ΦD', type: 'io', desc: 'Stepper coil D, sunk by the ULN2003.', expect: 'About 11.6 V idle' },
+    { n: 'P', name: 'ΦA', type: 'io', desc: 'Stepper coil A, sunk by the ULN2003.', expect: 'About 11.6 V idle' },
+    { n: 'R', name: 'ΦB', type: 'io', desc: 'Stepper coil B, sunk by the ULN2003.', expect: 'About 11.6 V idle' },
+  ],
+  sources: [
+    d2Sources.analog,
+    { label: 'Sams COMPUTERFACTS CD6 Disk II, stepper check (11.6 V at J2 pins 11, 12, M, N, P, R), p. 6', url: SAMSD2(6) },
+    { label: 'Disk II analog card photo (edge fingers, A marked) (A2DP)', url: D2PHOTO },
+    { label: 'Understanding the Apple II (Sather), Figure 9.3 drive functional diagram, p. 9-6', url: UTA2(235) },
+  ],
+  terms: ['stepper'],
+};
+
+const ctrlDb19 = (iic) => [
+  { n: 1, name: 'GND', type: 'ground', desc: 'Ground (DB-25 pin 2).', expect: '0 V' },
+  { n: 2, name: 'GND', type: 'ground', desc: 'Ground (DB-25 pin 4).', expect: '0 V' },
+  { n: 3, name: 'GND', type: 'ground', desc: 'Ground (DB-25 pins 9, 21).', expect: '0 V' },
+  { n: 4, name: 'GND', type: 'ground', desc: 'Ground (DB-25 pins 10, 14).', expect: '0 V' },
+  { n: 5, name: '-12 V', type: 'power', desc: '-12 V (DB-25 pin 23; bracketed in Apple\'s table).', expect: '-11 to -13 V' },
+  { n: 6, name: '+5 V', type: 'power', desc: '+5 V (DB-25 pin 7).', expect: '+4.75 to +5.25 V' },
+  { n: 7, name: '+12 V', type: 'power', desc: '+12 V (DB-25 pin 19).', expect: '+11.3 to +12.5 V' },
+  { n: 8, name: '+12 V', type: 'power', desc: '+12 V (DB-25 pin 20).', expect: '+11.3 to +12.5 V' },
+  { n: 9, name: 'ENBL B', type: 'ctrl', desc: `Enable, second drive (DB-25 pin 8). Active LOW as on the Disk II.${iic ? ' On a IIc external port this pin is /EXTINT instead (IIc TRM Table 11-18).' : ''}`, expect: 'LOW while drive 2 runs' },
+  { n: 10, name: 'WR PROT', type: 'io', desc: 'Write-protect status (DB-25 pin 12).' },
+  { n: 11, name: 'Φ0', type: 'io', desc: 'Stepper phase 0 (DB-25 pin 15).' },
+  { n: 12, name: 'Φ1', type: 'io', desc: 'Stepper phase 1 (DB-25 pin 16).' },
+  { n: 13, name: 'Φ2', type: 'io', desc: 'Stepper phase 2 (DB-25 pin 17).' },
+  { n: 14, name: 'Φ3', type: 'io', desc: 'Stepper phase 3 (DB-25 pin 18).' },
+  { n: 15, name: '/WR REQ', type: 'ctrl', desc: 'Write request (DB-25 pin 5).', expect: 'HIGH; LOW only while writing' },
+  { n: 16, name: '+5 V', type: 'power', desc: `+5 V (DB-25 pin 24).${iic ? ' Not connected on a IIc external port (IIc TRM Table 11-18).' : ''}`, expect: '+4.75 to +5.25 V on a controller card' },
+  { n: 17, name: 'ENBL A', type: 'ctrl', desc: 'Enable, first drive (DB-25 pin 11). Active LOW.', expect: 'LOW while drive 1 runs', ...(iic ? { conflict: 'The IIc TRM names this pin DR2* in Figure 11-26 and DR1* in Table 11-18; on the IIc it enables the external drive (drive 2).' } : {}) },
+  { n: 18, name: 'RD DATA', type: 'io', desc: 'Read pulses (DB-25 pin 3).', expect: 'Pulse train while reading' },
+  { n: 19, name: 'WR DATA', type: 'io', desc: 'Write data (DB-25 pin 6).' },
+];
+
+const duoDb25Pins = [
+  { n: 1, name: 'NC', type: 'nc', desc: 'Not connected.' },
+  { n: 2, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 1).', expect: '0 V' },
+  { n: 3, name: 'RD DATA', type: 'io', desc: 'Read pulses (DB-19 pin 18).' },
+  { n: 4, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 2).', expect: '0 V' },
+  { n: 5, name: 'WR REQ', type: 'ctrl', desc: 'Write request (DB-19 pin 15).' },
+  { n: 6, name: 'WR DATA', type: 'io', desc: 'Write data (DB-19 pin 19).' },
+  { n: 7, name: '+5 V', type: 'power', desc: '+5 V (DB-19 pin 6).', expect: '+4.75 to +5.25 V' },
+  { n: 8, name: 'ENBL B', type: 'ctrl', desc: 'Enable, drive 2 (right-hand drive) (DB-19 pin 9).' },
+  { n: 9, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 3).', expect: '0 V' },
+  { n: 10, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 4).', expect: '0 V' },
+  { n: 11, name: 'ENBL A', type: 'ctrl', desc: 'Enable, drive 1 (left-hand drive) (DB-19 pin 17).' },
+  { n: 12, name: 'WR PROT', type: 'io', desc: 'Write-protect status (DB-19 pin 10).' },
+  { n: 13, name: 'NC', type: 'nc', desc: 'Not connected.' },
+  { n: 14, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 4).', expect: '0 V' },
+  { n: 15, name: 'Φ0', type: 'io', desc: 'Stepper phase 0 (DB-19 pin 11).' },
+  { n: 16, name: 'Φ1', type: 'io', desc: 'Stepper phase 1 (DB-19 pin 12).' },
+  { n: 17, name: 'Φ2', type: 'io', desc: 'Stepper phase 2 (DB-19 pin 13).' },
+  { n: 18, name: 'Φ3', type: 'io', desc: 'Stepper phase 3 (DB-19 pin 14).' },
+  { n: 19, name: '+12 V', type: 'power', desc: '+12 V (DB-19 pin 7).', expect: '+11.3 to +12.5 V' },
+  { n: 20, name: '+12 V', type: 'power', desc: '+12 V (DB-19 pin 8; Apple\'s table prints "12 volts").', expect: '+11.3 to +12.5 V' },
+  { n: 21, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 3).', expect: '0 V' },
+  { n: 22, name: 'NC', type: 'nc', desc: 'Not connected.' },
+  { n: 23, name: '-12 V', type: 'power', desc: '-12 V (DB-19 pin 5).', expect: '-11 to -13 V' },
+  { n: 24, name: '+5 V', type: 'power', desc: '+5 V (DB-19 pin 16).', expect: '+4.75 to +5.25 V' },
+  { n: 25, name: 'NC', type: 'nc', desc: 'Not connected.' },
+];
+
+const DUOCABLE_SRC = { label: 'Apple Tech Info Library TA37054, DuoDisk: Cable Specifications and Pinouts (cable 590-0114) (A2DP)', url: DUOCABLE };
+
+const driveConnectors = {
+  disk2: [d2Ribbon, d2CardHdr, d2Mech],
+  duodisk: [
+    { id: 'duo-db25', name: 'DuoDisk rear connector (DB-25)', kind: 'DB-25 socket on the DuoDisk back panel', geo: 'db25', gender: 'female',
+      verifiedAgainst: 'Apple Tech Info Library TA37054, DuoDisk cable 590-0114 pinout',
+      summary: 'The round cable 590-0114 runs from here to the DB-19 on the controller card\'s back-panel plate. Apple\'s table gives the DB-25 end by pin number (standard D-sub numbering assumed); ENBL A is the left drive (drive 1), ENBL B the right. Socket gender from the A2DP photo. Never plug a Macintosh or 3.5 in drive into this chain.',
+      pins: duoDb25Pins,
+      sources: [DUOCABLE_SRC, { label: 'A2DP photo: DuoDisk A9M0108 back panel (DB-25 socket, model label)', url: DUOBACK }] },
+    { id: 'duo-db19', name: 'Controller card DB-19 (back-panel plate)', kind: 'DB-19 socket on the controller card\'s ribbon, fixed in a back-panel opening', geo: 'custom', gender: 'female', pads: db19Pads, outline: DB19_OUTLINE,
+      verifiedAgainst: 'Apple Tech Info Library TA37054, DuoDisk cable 590-0114 pinout; Apple IIc TRM Figure 11-26 (DB-19 numbering)',
+      summary: 'The DuoDisk (UniDisk, Apple 5.25 Drive) controller card has one 20-pin header whose ribbon ends in this DB-19, screwed into a back-panel opening with jack screws. One card runs one DuoDisk or two single drives. Numbered as Apple draws the IIc DB-19 socket: pin 1 at the top right, 1-10 along the wide row, 11-19 along the narrow row.',
+      pins: ctrlDb19(false),
+      sources: [DUOCABLE_SRC, { label: 'Apple IIc Technical Reference Manual, Figure 11-26 disk drive connector, p. 274', url: IIC(301) }, { label: 'DuoDisk Owner\'s Manual, fitting the D-shaped connector, p. 2-4', url: DUOMAN(11) }] },
+  ],
+  unidisk525: [
+    { id: 'uni-db19', name: 'DB-19 drive port (controller card plate or IIc rear)', kind: 'DB-19 socket the UniDisk cable plugs into (the drive\'s captive cable ends in the mating plug)', geo: 'custom', gender: 'female', pads: db19Pads, outline: DB19_OUTLINE,
+      verifiedAgainst: 'Apple Tech Info Library TA37054 (5.25 controller DB-19 pinout); Apple IIc TRM Figure 11-26 and Table 11-18',
+      summary: 'On a II, II Plus or IIe this is the DB-19 on the UniDisk controller card ribbon (same card as the DuoDisk\'s), carrying ENBL A on 17 and ENBL B on 9 for two drives. On a IIc it is the external drive port (2c-disk): one drive only, pin 9 is /EXTINT and pin 16 is unconnected. The UniDisk\'s own rear DB-19 socket passes the chain to a second UniDisk; its pin table is not in the documents found. Numbered as Apple draws the socket: pin 1 at the top right.',
+      pins: ctrlDb19(true),
+      sources: [DUOCABLE_SRC, { label: 'Apple IIc Technical Reference Manual, disk drive connector, Figure 11-26 / Table 11-18, p. 274', url: IIC(301) }, { label: 'UniDisk Owner\'s Manual, connecting a second UniDisk (daisy chain)', url: UNIMAN(13) }, { label: 'A2DP photo: UniDisk 5.25 back (daisy-chain DB-19 socket, captive cable)', url: UNIBACK }] },
+  ],
+};
+
+const d2FirstLook = [
+  'Drive 1 goes on the upper DRIVE 1 header; boot with PR#6 (or power on: the Autostart ROM finds the card in slot 6 and runs P5 at $C600).',
+  'Spins but no boot: speed first (DSPEED, ±26, set -5 to 0 on the motor card pot), then a dirty head, the ribbon, the analog card chips (2003, 3470, 74LS125, 3146), the mechanism.',
+  'A clatter at every boot is the P5 routine banging the head against track 0. Recalibrating over and over is a read problem: swap the MC3470.',
+  'Before plugging the ribbon in, power off and check the plug is centred on both rows: an offset plug puts +12 V on the +5 V pins and kills C4 and the 74LS125.',
+  'Probe the 20-pin header with the drive running: +5 V on 11/12, +12 V on 13-19 odd, -12 V on 9, /ENBL (14) LOW, read pulses on 16.',
+  'P6 and the 74LS174 have +5 V only while a drive is on, and P5 only during $C6xx reads: 0 V on those VCC pins at rest is normal.',
+];
+
+const diskQuick = (extra) => ({
+  sources: [
+    { label: 'The DOS Manual (Apple, DOS 3.3), Appendix G command summary (INIT, CATALOG, SAVE, LOAD, RUN)', url: DOSMAN(162) },
+    { label: 'The DOS Manual, Appendix B message I/O ERROR (causes)', url: DOSMAN(130) },
+    { label: 'Understanding the Apple II (Sather), Table 9.1 Disk II controller commands, p. 9-11', url: UTA2(240) },
+    { label: 'Understanding the Apple II (Sather), Drive Off/On (1 s turn-off delay), p. 9-13', url: UTA2(242) },
+    { label: 'Understanding the Apple II (Sather), Positioning the Head (boot recalibration), p. 9-38', url: UTA2(267) },
+    { label: 'Disk ][ Technical Procedures, troubleshooting chart, p. 4.3', url: D2TP(51) },
+    { label: 'Apple II ProDOS User\'s Manual (Asimov mirror)', url: 'https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/os/prodos/Apple%20II%20Prodos%20User%27s%20Manual_HiRes.pdf', verify: true },
+    ...(extra.sources || []),
+  ],
+  firstLook: extra.firstLook,
+  keys: [
+    { keys: 'IN USE light on', does: 'The drive is enabled: motor on, head and read/write active. Never pull a disk while it is lit.' },
+    { keys: 'Light and motor stay on ~1 s after access', does: 'Normal: the controller\'s 556 timer delays motor-off by about one second ($C0E8 in slot 6).' },
+    { keys: 'Control-Reset', does: 'Stops the drive at once: /RESET clears all eight controller switches (no 1 s delay).' },
+    { keys: 'Clatter or buzz at boot, once', does: 'Normal recalibration: P5 makes 80 descending phase steps, driving the head 38-40 tracks out against the track-0 stop.' },
+    { keys: 'Recalibrates again and again', does: 'Reads are failing (no address field found). Apple\'s chart: MC3470 first; then speed, head, alignment.' },
+    { keys: 'High-pitched whine', does: 'Mechanical fault in the drive (Apple chart).' },
+    { keys: 'Motor runs, light on, no boot', does: 'Speed, dirty head, cable, analog card, mechanism, in that order (Apple chart).' },
+    ...(extra.keys || []),
+  ],
+  basic: {
+    dialect: 'DOS 3.3 / ProDOS disk commands',
+    essentials: [
+      { cmd: 'PR#6', does: 'Boot the disk in slot 6, drive 1 (runs P5 at $C600). From the monitor: C600G or 6 Control-P.' },
+      { cmd: 'IN#6', does: 'Also boots slot 6 (P5 answers input calls too).' },
+      { cmd: 'CATALOG [,S6] [,D2]', does: 'List files, volume number and sectors. CAT in ProDOS.' },
+      { cmd: 'LOAD name [,D2]', does: 'Load a BASIC program; switches to the right BASIC.' },
+      { cmd: 'SAVE name', does: 'Save the program in memory.' },
+      { cmd: 'RUN name', does: 'Load and run.' },
+      { cmd: 'INIT HELLO [,V254]', does: 'DOS 3.3: format the disk in the current drive and write DOS plus a HELLO program. Erases the disk.' },
+      { cmd: 'DELETE name / RENAME a,b', does: 'Remove or rename a file.' },
+      { cmd: 'LOCK name / UNLOCK name', does: 'Protect a file (asterisk in the CATALOG); Apple\'s write test unlocks HELLO.' },
+      { cmd: 'BLOAD / BSAVE name,A$2000,L$2000', does: 'Binary image to and from memory.' },
+      { cmd: 'VERIFY name', does: 'Read a file back and check it.' },
+      { cmd: 'PREFIX /VOL/DIR', does: 'ProDOS: set the current directory.', verify: true },
+      { cmd: '-name', does: 'ProDOS: run a SYSTEM, BINARY or BASIC file.', verify: true },
+    ],
+    groups: [
+      { group: 'DOS 3.3 parameters', items: [',Ss slot 1-7', ',Dd drive 1 or 2', ',Vv volume 1-254', 'Defaults stick until changed'] },
+      { group: 'DOS 3.3 file commands', items: ['CATALOG', 'LOAD / SAVE / RUN', 'BLOAD / BSAVE / BRUN', 'DELETE', 'RENAME', 'LOCK / UNLOCK', 'VERIFY', 'INIT', 'OPEN / CLOSE / READ / WRITE / APPEND / POSITION', 'EXEC', 'MAXFILES', 'MON / NOMON', 'FP / INT', 'PR#s / IN#s'] },
+      { group: 'ProDOS (BASIC.SYSTEM)', items: ['CAT / CATALOG', 'PREFIX', 'CREATE', '-pathname', 'BYE', 'FRE', 'STORE / RESTORE', 'CHAIN', 'Format with the Filer or System Utilities'] },
+      { group: 'Monitor', items: ['C600G  boot slot 6', '6 Control-P  boot slot 6', '3D0G  back to DOS'] },
+    ],
+    quirks: [
+      'I/O ERROR (code 8) means 96 failed tries: door open, no disk, disk not INITed, disk in wrong way, wrong drive or slot, or a 13-sector disk under 16-sector DOS.',
+      'WRITE PROTECTED (code 4) comes from the drive\'s notch switch through ribbon pin 20; a stuck or misadjusted switch gives it on good disks.',
+      'A ,S or ,D pointing at nothing becomes the default: give the right ,S6,D1 on the next command (Control-Reset, 3D0G, CATALOG,S6 if lost).',
+      'DOS 3.3 reads only 16-sector disks; DOS 3.2 disks need the MUFFIN program, and a 13-sector controller (P5/P6 341-0009/0010) cannot boot DOS 3.3.',
+    ],
+  },
+  memory: [
+    { range: '$C080,X / $C081,X', what: 'Phase 0 off / on (slot 6, X = $60: $C0E0 / $C0E1)' },
+    { range: '$C082,X / $C083,X', what: 'Phase 1 off / on ($C0E2 / $C0E3)' },
+    { range: '$C084,X / $C085,X', what: 'Phase 2 off / on ($C0E4 / $C0E5)' },
+    { range: '$C086,X / $C087,X', what: 'Phase 3 off / on ($C0E6 / $C0E7)' },
+    { range: '$C088,X / $C089,X', what: 'Drives off (after 1 s) / selected drive on ($C0E8 / $C0E9)' },
+    { range: '$C08A,X / $C08B,X', what: 'Select drive 1 / drive 2 ($C0EA / $C0EB)' },
+    { range: '$C08C,X / $C08D,X', what: 'Q6 off: read data / Q6 on: load or sense write protect ($C0EC / $C0ED)' },
+    { range: '$C08E,X / $C08F,X', what: 'Q7 off: read mode / Q7 on: write mode ($C0EE / $C0EF)' },
+    { range: 'Even address read', what: 'Returns the data register; bit 7 set = valid disk byte' },
+    { range: '$Cn00-$CnFF', what: 'P5 boot PROM ($C600-$C6FF in slot 6)' },
+    { range: 'X = slot × $10', what: 'Slot 5: $C0D0-$C0DF; slot 4: $C0C0-$C0CF' },
+  ],
+});
+
+const driveQuickref = {
+  disk2: diskQuick({ firstLook: d2FirstLook }),
+  duodisk: diskQuick({
+    firstLook: [
+      'Two drives on one analog card; the left drive is drive 1. The controller card (same as the UniDisk / Apple 5.25 card) goes in slot 6, its DB-19 in a back-panel opening.',
+      'One controller card runs one DuoDisk. Not for the IIc. On a IIgs use the disk port or a 5.25 controller; some units need Apple\'s IIgs modification.',
+      'No motor: interface card, cable, analog board, mechanism. Motor and LED on but no boot: card, cable, DSPEED, then CA3141, 74LS125, MC3470.',
+      'Speed: DSPEED adjustment hole under each drive, near the front; keep the DuoDisk flat and turn very slowly.',
+      'Fuzz on the analog card means C21 exploded (card fitted with power on): check the 74LS125 and C21. Serial numbers below 325000 can short a loose analog board.',
+      'Disks trashed by Open-Apple-Control-Reset on cards 676-11101/11102: cut C29 and C30 off the board.',
+    ],
+    keys: [{ keys: 'Left / right drive', does: 'Left = drive 1 (ENBL A), right = drive 2 (ENBL B).' }],
+    sources: [{ label: 'DuoDisk Technical Procedures, product description and connection, p. 1.2', url: DUOTP(6) }, { label: 'DuoDisk Technical Procedures, troubleshooting flowchart, p. 4.3', url: DUOTP(21) }],
+  }),
+  unidisk525: diskQuick({
+    firstLook: [
+      'On a II, II Plus or IIe: UniDisk controller card in slot 6, two UniDisks per card (the second daisy-chains off the back of the first). A third and fourth need a second card (slot 4).',
+      'On a IIc: one UniDisk 5.25 on the external drive port; it is slot 6, drive 2, driven by the IIc IWM. An original IIc boots it only with ProDOS and PR#7.',
+      'The red IN USE light is the only indicator; never pull a disk while it is lit.',
+      'Same mechanism as the DuoDisk and the Apple 5.25 Drive (Apple Technical Procedures); the controller card is the same as the DuoDisk card, with the Disk II circuit.',
+      'Probe the DB-19 with the drive running: +5 V pin 6, +12 V pins 7/8, -12 V pin 5, enable LOW on 17 (or 9 for the second drive on a card).',
+    ],
+    keys: [{ keys: 'PR#7 (original IIc)', does: 'Boot a ProDOS disk in the external 5.25 drive (Monitor: 7 Control-P).' }],
+    sources: [{ label: 'UniDisk Owner\'s Manual, controller card and two-drive limit', url: UNIMAN(9) }, { label: 'Apple IIc Technical Reference Manual, Disk I/O port characteristics ($C0E0-$C0EF), p. 121', url: IIC(148) }, { label: 'Apple IIc Technical Reference Manual, starting from the external drive, p. 122', url: IIC(149) }],
+  }),
+};
+
+const d2Sym = [
+  { symptom: 'Drive spins, light on, but will not boot (I/O errors)', suspects: ['mc3470', 'ca3146', 'ls125', 'uln2003'], note: 'Apple\'s order: drive speed (DSPEED), dirty head, interface cable, analog card, mechanism. On the analog card swap the 3470 (B1), 3146 (A3), 74LS125 (B4) and 2003 (D4) one at a time, then do the comparator offset adjustment.' },
+  { symptom: 'Will not boot, drive does not come on', suspects: ['uln2003', 'ls259', 'disk2p5'], note: 'Apple\'s order: cable, mechanism, analog card. With PR#6, ribbon pin 14 must go LOW; then ULN2003 pin 16 LOW and about 11.6 V on Q1\'s collector (edge pins 10-12). No pin 14 activity: controller (74LS259 Q4/Q5, the 556, P5).' },
+  { symptom: 'Clatter or grinding at boot', suspects: [], note: 'Once per boot is normal: P5 steps the head 38-40 tracks outward against the track-0 stop. Keeps doing it, or bangs on every access: reads are failing, see the recalibration entry.' },
+  { symptom: 'Recalibrates repeatedly', suspects: ['mc3470'], note: 'Apple\'s chart: the 3470 at B1. Also check speed, head cleanliness and alignment (azimuth, head radial).' },
+  { symptom: 'Head does not move (stuck stepper) or disk does not turn', suspects: ['uln2003'], note: 'Apple\'s chart: the 2003 at D4. Check for about 11.6 V at edge contacts 11, 12, M, N, P, R and the stepper winding resistance; a stuck carriage needs clean (never oiled) guide rails.' },
+  { symptom: 'I/O ERROR on a working drive', suspects: ['ca3146', 'ls125', 'uln2003'], note: 'First the DOS causes: door open, no disk, disk not INITed, wrong slot or drive, 13-sector disk. Then Apple\'s chip order: 3146 (A3), 74LS125 (B4), 2003 (D4).' },
+  { symptom: 'Speed drift / disks unreadable in other drives', suspects: [], note: 'Run DSPEED: acceptable ±26, set -5 to 0 with the trimpot on the motor control card at the back (not the analog card pots), run 128 passes. Erratic speed: clean the pulleys, check the belt. Sams: the spindle-pulley strobe pattern stands still under 60 Hz light at 300 rpm.' },
+  { symptom: 'Writes on protected disks, or WRITE PROTECTED on good ones', suspects: ['ls125'], note: 'Adjust the write-protect switch (two setscrews, Disk Alignment Aid), test with a pinched tab, then the 74LS125 at B4. Phase 1 left on also forces write protect (the switch returns to phase 1).' },
+  { symptom: 'Reads but does not write', suspects: ['ls125', 'uln2003', 'ca3146'], note: 'Apple\'s order: 74LS125 (B4), 2003 (D4), 3146 (A3), then the comparator offset adjustment. Check /WR REQ (ribbon 10) goes LOW and WR DATA (18) toggles.' },
+  { symptom: 'Burnt C4, dead 74LS125 after plugging in the ribbon', suspects: ['ls125', 'uln2003'], note: 'The ribbon plug was off by a column or fitted with power on. Shifted one column, the +12 V pins (13, 15) land on +5 V (11) and the logic pins, so C4 (470 µF 6.3 V) bursts and the 74LS125 dies; Apple says a damaged C4 means a damaged 74LS125. Replace both, check the 2003 and the 3470 (7 V max on pin 11), and inspect the card for burnt sockets.' },
+  { symptom: 'Drive 1 will not boot with drive 2 connected', suspects: ['uln2003', 'ls125', 'ca3146', 'mc3470'], note: 'A damaged analog card on drive 2 can hold the shared ribbon lines. Unplug drive 2 to confirm, then swap 2003, 74LS125, 3146, 3470 on its card.' },
+  { symptom: 'DOS 3.3 disks will not boot, DOS 3.2 disks do', suspects: ['disk2p5', 'disk2p6'], note: 'A 13-sector controller: P5 341-0009 and P6 341-0010. Fit 341-0027 and 341-0028 (both PROMs together).' },
+  { symptom: 'High-pitched whine', suspects: [], note: 'Apple\'s chart: mechanical (spindle, belt, motor).' },
+];
+
+const driveSymptoms = {
+  disk2: d2Sym,
+  duodisk: [
+    { symptom: 'No motor sound at boot', suspects: [], note: 'Apple\'s order: interface card, interface cable, analog board, mechanism, then return the unit.' },
+    { symptom: 'Motor and LED on, but disk will not boot', suspects: ['ca3141', 'ls125', 'mc3470'], note: 'Card, cable, DSPEED, then chip swaps: CA3141 at B1 (cards 676-11101/11102), 74LS125 at B3 (or C3 on 676-11107), MC3470 at C1; then the analog board and mechanism.' },
+    { symptom: 'Reads but does not write', suspects: ['ca3141', 'ls125'], note: 'CA3141 at B1 (676-11101/11102 cards), then the 74LS125 at B3.' },
+    { symptom: 'Disk data destroyed on Open-Apple-Control-Reset or by some copy protection', suspects: [], note: 'Cards 676-11101 and 676-11102 pass the diagnostic but do this. Cut off capacitors C29 and C30 (zones A1 and B1); do not replace them.' },
+    { symptom: 'Fuzz or burnt parts on the analog card', suspects: ['ls125'], note: 'C21 exploded, usually because the card was fitted with the computer on. Inspect the 74LS125 and C21; Apple returned such cards.' },
+    { symptom: 'Intermittent faults on early units', suspects: [], note: 'Serial numbers below 325000: the analog board can slide out of its guides and short on the mechanism. Bend the shield top in about 1 mm, then re-check head radial alignment.' },
+    { symptom: 'Speed out / disks unreadable elsewhere', suspects: [], note: 'DSPEED through the hole under the drive, near the front; keep the unit flat, turn very slowly, aim for 0. Cannot set it: replace the mechanism.' },
+  ],
+  unidisk525: [
+    { symptom: 'Third or fourth UniDisk not seen', suspects: [], note: 'One controller card runs two UniDisks only; fit a second card (slot 4).' },
+    { symptom: 'Will not boot from the UniDisk on a IIc', suspects: ['iwm344'], note: 'The IIc boots its built-in drive; the external drive is slot 6, drive 2. An original IIc can boot it only with ProDOS, by PR#7 or 7 Control-P.' },
+    { symptom: 'Drive dead on a IIc, built-in drive fine', suspects: ['iwm344'], note: 'Check the IIc external port: +5 V pin 6, +12 V pins 7/8, -12 V pin 5. The IWM drives both drives, so a bad IWM usually kills the built-in drive too.' },
+    { symptom: 'Spins but will not boot on a II/IIe', suspects: ['disk2p6', 'ls174', 'ls323'], note: 'Swap in a known-good controller card and cable first. Its circuit is the Disk II controller: P6 and the 74LS174 have +5 V only with a drive on.' },
+  ],
+};
+
+const d2Power = {
+  supply: {
+    external: false, name: 'No supply of its own: powered by the Apple II / II Plus / IIe through the Disk II Interface Card and the 20-wire ribbon',
+    output: '+5 V on ribbon pins 11-12 (slot pin 25), +12 V on 13, 15, 17, 19 (slot pin 50), -12 V on pin 9 (slot pin 33); gated +12 V to motor and stepper via Q1 (MPSU51) only while enabled',
+    connector: 'disk2-ribbon',
+    notes: [
+      'Only +12 V drives the motors, so the +12 V load is large at motor start; the analog card has a 220 µF / 27 µH filter (C2, L1) to help the computer\'s supply. No Apple current figure was found for the Disk II.',
+      'A misaligned or offset ribbon plug, or plugging the card or cable in with power on, puts +12 V on the 5 V net: C4 (470 µF 6.3 V) bursts and the 74LS125 dies.',
+      'With the drive enabled, Sams gives 11.6 V on Q1\'s emitter and collector and 10.8 V on its base, 5.0 V on C4 (+) and -12.0 V on C5 (-).',
+      'The Disk II cannot go on a IIc (no ribbon port); a Disk II can be re-cabled to a DB-19 for 5.25 controller cards and IIc-era ports.',
+    ],
+    sources: [
+      d2Sources.analog, d2Sources.card,
+      { label: 'Understanding the Apple II (Sather), Power Supply (drive), p. 9-5', url: UTA2(234) },
+      { label: 'Sams COMPUTERFACTS CD6 Disk II, power supply service checks, p. 6', url: SAMSD2(6) },
+      { label: 'Disk ][ Technical Procedures, visual inspection (C4 and the 74LS125), p. 5.5', url: D2TP(57) },
+      { label: 'Apple Floppy Drives list (Disk II re-cabling, model numbers) (community)', url: FLOPPYLIST, verify: true },
+    ],
+  },
+  rails: [
+    { rail: '+5 V', expect: '4.75-5.25 V (Sams: 5.0 V at C4 +)', where: '3470 pin 11; 74LS125 pin 14; ribbon pins 11, 12', note: 'Logic. Nothing on the analog card tolerates +12 V here.' },
+    { rail: '+12 V', expect: '11.3-12.5 V (Sams: 11.6 V at Q1 emitter)', where: '2003 pin 9; 3470 pin 18; ribbon pins 13, 15, 17, 19', note: 'Motor, stepper, read amp and write driver.' },
+    { rail: '+12 V gated', expect: 'About 11.6 V with the drive enabled; 0 V off', where: 'Q1 (MPSU51) collector; edge contacts 10, 11, 12', note: 'Switched by the 2003 from /ENBL. Missing: Q1 or the 2003.' },
+    { rail: '-12 V', expect: '-11 to -13 V (Sams: -12.0 V at C5 -)', where: 'Ribbon pin 9; C5', note: 'Comparator offset network (R28).' },
+    { rail: 'Controller +5 V (switched)', expect: '+5 V only while a drive is on', where: 'P6 pin 20; 74LS174 pin 16', note: 'Q3 (MPSU51) on the interface card. P5 pin 20 is switched by Q1/Q2 from /I/O SELECT.' },
+  ],
+  testPoints: [
+    { tp: 'Ground', where: 'TP2, TP3, TP4 on the analog card', expect: '0 V (use TP4 for the scope ground)' },
+    { tp: 'Read amplitude', where: 'TP8 and TP9 (3470 pin 16/17 filter side)', expect: 'At least 150 mV p-p (3 div at 50 mV/div, 1 µs/div, AC) with the Amplitude test writing a scratch disk' },
+    { tp: 'Comparator offset', where: 'TP5 (3470 pin 6)', expect: 'Rising part 2.5-3.0 µs, whole pulse 3.75-4.0 µs (0.5 µs/div); adjust R33, or R21 on boards where it is the pot' },
+    { tp: 'Read data shape', where: 'TP7 (3470 pin 10)', expect: 'Single stable pulse image, no double edges (1 µs/div); adjust R28' },
+    { tp: 'Read data out', where: 'TP1 (74LS125 pin 11) / ribbon pin 16', expect: 'Pulse train while a written disk turns' },
+    { tp: 'Drive enable', where: 'Ribbon pin 14 / 2003 pin 2', expect: 'LOW while the drive is on; goes HIGH about 1 s after $C0E8' },
+    { tp: 'Speed (DSPEED)', where: 'Trimpot on the motor control card at the back of the mechanism', expect: 'Within ±26 on the Disk Alignment Aid scale; set to -5 to 0 over 128 passes' },
+    { tp: 'Speed (strobe)', where: 'Spindle pulley pattern, VR1 on the motor speed control card', expect: '300 rpm: outer pattern stands still under 60 Hz fluorescent light (inner for 50 Hz)' },
+    { tp: 'Motor speed control', where: 'Speed control IC (CX065B) pin 7 / motor transistor', expect: 'Sams: 10.4 V at IC pin 7 and the transistor emitter, 6.0 V at its collector' },
+    { tp: 'Stepper phases', where: 'Ribbon pins 2, 4, 6, 8 / 2003 pins 11-14', expect: 'One or two phases on at a time while seeking; all off at rest (phase 0 left on after boot)' },
+    { tp: 'Sequencer clock', where: '74LS323 pin 12 / 74LS174 pin 9', expect: '2 MHz while a drive runs' },
+  ],
+  sources: [
+    { label: 'Disk ][ Technical Procedures, D-Speed test, pp. 2.8-2.9', url: D2TP(20) },
+    { label: 'Disk ][ Technical Procedures, Amplitude test (TP8/TP9), pp. 3.4-3.6', url: D2TP(29) },
+    { label: 'Disk ][ Technical Procedures, Comparator offset adjustment (TP5, TP7, R21/R33, R28), pp. 3.20-3.23', url: D2TP(46) },
+    { label: 'Sams COMPUTERFACTS CD6 Disk II, motor speed adjustment and service checks, p. 6', url: SAMSD2(6) },
+    { label: 'Understanding the Apple II (Sather), Disk II overview (300 rpm), p. 9-3', url: UTA2(232) },
+    d2Sources.analog,
+  ],
+};
+
+const ctrlRails = (iic) => [
+  { rail: '+5 V', expect: '4.75-5.25 V', where: `DB-19 pin 6${iic ? '' : ' and 16'}`, note: iic ? 'IIc: from the internal converter (1.5 A total for the whole machine).' : 'From slot pin 25 through the controller card.' },
+  { rail: '+12 V', expect: '11.3-12.5 V', where: 'DB-19 pins 7, 8', note: iic ? 'IIc: 0.6 A continuous (0.9 A intermittent, 1.5 A surge under 100 ms) for the whole machine, shared with the built-in drive.' : 'From slot pin 50; motor and stepper.' },
+  { rail: '-12 V', expect: '-11 to -13 V', where: 'DB-19 pin 5', note: iic ? 'IIc: 100 mA max.' : 'From slot pin 33. The UniDisk 5.25 needs it; the later Apple 5.25 Drive does not.' },
+];
+
+const drivePower = {
+  disk2: d2Power,
+  duodisk: {
+    supply: {
+      external: false, name: 'No supply of its own: powered from the Apple II-family slot through the DuoDisk (5.25 Drive) controller card and cable 590-0114',
+      output: '+5 V on DB-25 pins 7 and 24, +12 V on 19 and 20, -12 V on 23 (DB-19 pins 6, 16; 7, 8; 5)',
+      connector: 'duo-db25',
+      notes: [
+        'Both drives run from the same cable; no Apple current figure was found for the DuoDisk.',
+        'Fitting the controller card with the computer on is what blows C21 and the 74LS125 on the analog card (fuzz on the board).',
+        'Early units (serial below 325000) can short a loose analog board against the mechanism.',
+        'Not compatible with the Apple IIc. On a IIgs it works on the disk port; some units need Apple\'s modification.',
+      ],
+      sources: [DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, product description, p. 1.2', url: DUOTP(6) }, { label: 'DuoDisk Technical Procedures, chip-swap notes (C21), p. 4.5', url: DUOTP(23) }],
+    },
+    rails: [
+      { rail: '+5 V', expect: '4.75-5.25 V', where: 'DB-25 pins 7, 24 (DB-19 pins 6, 16)', note: 'From slot pin 25 through the controller card.' },
+      { rail: '+12 V', expect: '11.3-12.5 V', where: 'DB-25 pins 19, 20 (DB-19 pins 7, 8)', note: 'From slot pin 50; motors and steppers of both drives.' },
+      { rail: '-12 V', expect: '-11 to -13 V', where: 'DB-25 pin 23 (DB-19 pin 5)', note: 'From slot pin 33.' },
+    ],
+    testPoints: [
+      { tp: 'Speed (DSPEED)', where: 'Adjustment hole under each drive, near the front', expect: '"Good" range on the Apple 5.25-Inch Disk Drive Diagnostic, as close to 0 as possible; keep the unit flat' },
+      { tp: 'Drive enable', where: 'DB-25 pin 11 (drive 1) / pin 8 (drive 2)', expect: 'LOW while that drive runs' },
+      { tp: 'Read data', where: 'DB-25 pin 3', expect: 'Pulse train while reading' },
+    ],
+    sources: [DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, DSPEED adjustment, p. 3.2', url: DUOTP(17) }],
+  },
+  unidisk525: {
+    supply: {
+      external: false, name: 'No supply of its own: powered over its DB-19 cable by the UniDisk (5.25 Drive) controller card or the Apple IIc external drive port',
+      output: '+5 V on DB-19 pin 6 (and 16 on the controller card), +12 V on 7 and 8, -12 V on 5',
+      connector: 'uni-db19',
+      notes: [
+        'On a IIc the external port shares the internal converter: +12 V 0.6 A continuous (0.9 A intermittent, 1.5 A surge under 100 ms), +5 V 1.5 A, -12 V 100 mA for the whole machine, built-in drive included. The port\'s power is for one drive only; Apple warns other loads can damage the converter.',
+        'Apple\'s 1983 power study for a "UniDisk" drive shows +12 V peaking near 2.6 A at motor start and about 0.8-1 A running, and +5 V about 0.6 A (0.4 A standby). The drive tested may not be the production UniDisk 5.25.',
+        'The UniDisk 5.25 needs -12 V; the later platinum Apple 5.25 Drive (A9M0107) does not.',
+      ],
+      sources: [
+        { label: 'Apple IIc Technical Reference Manual, Table 11-4 internal converter, p. 234', url: IIC(261) },
+        { label: 'Apple IIc Technical Reference Manual, Disk I/O warning (port power for a drive only), p. 273', url: IIC(300) },
+        { label: 'Apple, UniDisk Floppy Disk power usage, Table 1 DC power requirements (9 Mar 1983) (A2DP)', url: UNIPOWER, verify: true },
+        { label: 'Apple Floppy Drives list (UniDisk needs -12 V) (community)', url: FLOPPYLIST, verify: true },
+        DUOCABLE_SRC,
+      ],
+    },
+    rails: ctrlRails(true),
+    testPoints: [
+      { tp: 'Drive enable', where: 'DB-19 pin 17 (pin 9 for a second drive on a card)', expect: 'LOW while the drive runs' },
+      { tp: 'Read data', where: 'DB-19 pin 18; IWM pin 22 on a IIc', expect: 'Pulse train while reading' },
+      { tp: 'IIc disk clocks', where: 'IWM pin 24 / IWM pin 25', expect: '7.16 MHz / 2.04 MHz' },
+      { tp: 'Speed', where: 'DSPEED hole under the drive (same mechanism as the DuoDisk)', expect: '"Good" range on the Apple 5.25-Inch Disk Drive Diagnostic', verify: true },
+    ],
+    sources: [{ label: 'Apple IIc Technical Reference Manual, IWM pinouts, pp. 247-248', url: IIC(274) }, DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, same mechanism in DuoDisk, UniDisk and Apple 5.25 Drive, p. 2.2', url: DUOTP(8) }],
+  },
+};
+
+const driveResources = [
+  { name: 'Disk ][ Technical Procedures (Apple, 1982-84)', url: 'https://archive.org/details/Apple_Disk_II_Technical_Procedures', what: 'Take-apart, DSPEED, write-protect switch, amplitude/azimuth/radial calibration, comparator offset, analog-card chip-swap charts.' },
+  { name: 'Disk II schematics: interface card 050-0005-01, analog board 050-0007 revs 05, G, H (A2DP)', url: `${A2DP}/Peripherals/Disk%20Drives/Apple%20Disk%20II/Schematics/`, what: 'Apple engineering schematics; the 20-pin pinout and every chip pin used here.' },
+  { name: 'Understanding the Apple II (Sather), chapter 9 The Disk Controller', url: UTA2(230), what: 'How the Disk II drive, analog card, controller and P6 sequencer work, with the controller schematic.' },
+  { name: 'Sams COMPUTERFACTS CD6: Apple II Model A2M0003 (Disk II)', url: 'https://archive.org/details/Sams_Technical_Disk_II', what: 'Service checks with voltages, parts list, speed and azimuth procedures. Sams redraws Apple\'s circuit with its own designators (J1, J2, IC 4D); check against Apple\'s schematic.' },
+  { name: 'Disk II Floppy Disk Subsystem Installation and Operating Manual', url: 'https://archive.org/details/Disk_II_Floppy_Disk_Subsystem_Installation_and_Operating_Manual', what: 'Installing the card and ribbons, DOS commands, first aid.' },
+  { name: 'DuoDisk Technical Procedures (AppleService, 1985-89)', url: DUOTP(1), what: 'DuoDisk take-apart, DSPEED, troubleshooting flowchart, analog-card versions, capacitor fix, chip-swap chart, parts list.' },
+  { name: 'DuoDisk Owner\'s Manual', url: 'https://archive.org/details/addom', what: 'Installation of the controller card, back-panel connector and drive.' },
+  { name: 'UniDisk (5.25) Owner\'s Manual', url: 'https://archive.org/details/Apple_II_UniDisk_Owners_Manual', what: 'Controller card, daisy chain, two-drive limit, care.' },
+  { name: 'Apple Tech Info Library TA37054: DuoDisk cable pinouts', url: DUOCABLE, what: 'DB-19 to DB-25 cable 590-0114 pin table.' },
+  { name: 'The DOS Manual (Apple, DOS 3.3)', url: 'https://archive.org/details/The_DOS_Manual_HQ', what: 'Every DOS 3.3 command and error message.' },
+];
+
 RCS.add({
   brand: { id: 'apple', name: 'Apple', blurb: 'II, II+, IIe, IIc. 6502, slots, Applesoft.' },
   machines: {
@@ -295,6 +1083,7 @@ RCS.add({
       tagline: 'Business machine with the SOS operating system. Facts only, no pinouts yet.',
       verify: true,
     },
+    ...driveMachines,
   },
   chips: {
     cpu6502: {
@@ -662,7 +1451,8 @@ RCS.add({
       family: 'Apple custom',
       role: 'Floppy disk controller',
       pkg: 'DIP-28',
-      machines: ['apple2c'],
+      machines: ['apple2c', 'unidisk525'],
+      location: { unidisk525: 'In the host Apple IIc (main board), not in the drive' },
       summary: 'Integrated Woz Machine: the whole Disk II controller in one chip. In the IIc it runs the built-in drive (drive 1) and the external drive port (drive 2). The stepper phases, WRDATA, /WRREQ, RDDATA, WRPROT and the drive selects go straight to the drives. The 344-0041 marking and suffix vary.',
       fails: ['Built-in drive will not boot', 'Disk read errors'],
       verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-9 and Table 11-11, pp. 247-248',
@@ -897,6 +1687,7 @@ RCS.add({
         { n: 24, name: '+5V', type: 'power', dir: '-', desc: '+5 V.', probe: '+5 V' },
       ],
     },
+    ...driveChips,
   },
   symptoms: {
     apple2: iiSymptoms,
@@ -939,7 +1730,8 @@ RCS.add({
         ],
         "note": "SPKR at IOU pin 8 should toggle."
       }
-    ]
+    ],
+    ...driveSymptoms,
   },
   connectors: {
     apple2: iiConnectors,
@@ -1272,6 +2064,7 @@ RCS.add({
         ],
         sources: [{ label: 'Apple IIc Technical Reference Manual, output jack, p. 256', url: IIC(283) }] },
     ],
+    ...driveConnectors,
   },
   power: {
     apple2: iiPower,
@@ -1349,6 +2142,7 @@ RCS.add({
         { label: 'Apple IIc Technical Reference Manual, TMG pinouts, p. 245', url: IIC(272) },
       ],
     },
+    ...drivePower,
   },
   quickref: {
     apple2: {
@@ -1820,7 +2614,8 @@ RCS.add({
           "what": "Monitor ROM"
         }
       ]
-    }
+    },
+    ...driveQuickref,
   },
   resources: [
     { name: 'Apple II Documentation Project', url: 'https://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/', what: 'Schematics, technical notes, manuals.' },
@@ -1835,6 +2630,8 @@ RCS.add({
     { name: 'Apple IIe Technical Reference Manual (1987 edition)', url: 'https://archive.org/details/apple-iie-technical-reference-manual-1987-edition', what: 'Corrected keyboard connector table; enhanced and extended-keyboard IIe.' },
     { name: 'Apple IIc Technical Reference Manual (2nd ed.)', url: 'https://archive.org/details/Apple_IIc_Technical_Reference_Manual', what: 'Chapter 11: MMU, IOU, TMG, GLU, IWM and 6551 pinouts; all rear ports; power.' },
     { name: 'Apple IIc (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Apple_IIc', what: 'IIc specifications and rear ports. Custom chips not covered.', verify: true },
+    ...driveResources,
   ],
+  chipLocations: { disk2: { uln2003: 'D4 on the analog card (socketed, Apple 327-2003)' } },
 });
 })();
