@@ -47,6 +47,22 @@ Coupling is DC with 0 V one division up when the swing fits, probe 10x, trigger 
 threshold) for logic swings that cross it, else mid-swing. The trace sits on the power page under its row (behind
 a `SCOPE` disclosure on a phone) and in `PIN DETAIL` of every chip pin its `where` names.
 
+**Print mode.** Every machine page has a `Print card` button, and the browser's own Print does the same: a
+`@media print` sheet in `src/input.css` swaps the mask tokens for black on white (copper prints black, silkscreen as
+dark grey hairlines), drops the strip, breadcrumb, edge bar, panels and toggles, and prints a card built for paper
+instead of the screen: machine name and designator, the chip footprints with their designators, the rails, the first
+ten minutes (or the generic order of checks), the clock table and every connector as a line of pin numbers and
+names, no drawings. Blocks and table rows never split across a page; the connector list may run on into the next
+column one connector at a time. The largest boards (BBC Master, HERO 1) still fit one Letter page.
+
+**Bench notes.** Each machine and chip page ends with a notes field kept in `localStorage` only, under
+`rb-note:m:<machine id>` or `rb-note:c:<chip id>` as `{ text, at }`. It saves 600 ms after the last key and at once
+when the field loses focus, the route changes or the page is hidden, and says "Saved on this device only". Typing `/` there
+types a slash rather than opening the finder. `#/notes` lists every note with a link back, a two-tap delete,
+Export (a `.txt` file: one `=== machine c64: Commodore 64 ===` or `=== chip <id>: <name> ===` header per note, a line
+starting `===` or `\` escaped with `\`) and Import of the same format, which merges: new notes are added, different
+text is appended to the existing note. No sync, no account.
+
 Faces are self-hosted in `fonts/`: Barlow Condensed for labels and prose, Share Tech Mono for
 signal names, pin numbers, designators and values (both SIL Open Font License). Tokens, the three
 masks and the silkscreen components live in `src/input.css`; chip footprints and trace routing are SVG
@@ -61,6 +77,13 @@ power and test points, and a fault table; `sheet` machines have facts and chip l
 cheat sheets; `planned` machines are placeholders. See [docs/mockups](docs/mockups) for the six design
 explorations and `docs/mockups/index.html` for a launcher that shows them at desktop, iPad and iPhone
 sizes. `node scripts/validate-data.mjs` checks every data file.
+
+- **Video signals** (`#/video`, data in `src/data/video.js`): composite levels, NTSC and PAL line and field timing,
+  IBM RGBI, analogue RGB, C64 luma/chroma, RF channels and modulator inputs, drawn as one PAL line on a graticule and
+  tabled with a source on every row (ITU-R BT.470-6 and BT.1700 with SMPTE 170M, the IBM PC Technical Reference,
+  VESA E-EDID, the C64 PRG and service manual, 47 CFR 73.603, the Acorn Electron service manual). Linked from More,
+  search, every power page's Clocks block and every connector with video pins.
+- **Bench notes** (`#/notes`) and the **print card** on every machine page, described under Design.
 
 ## Run
 

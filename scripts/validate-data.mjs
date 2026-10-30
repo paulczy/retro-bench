@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.join(root, 'src', 'data');
-const order = ['core', 'commodore', 'apple', 'atari', 'coleco', 'sinclair', 'timex', 'ti', 'tandy', 'heathkit', 'ibm', 'amstrad', 'acorn', 'dragon', 'msx', 'oric', 'schematics'];
+const order = ['core', 'commodore', 'apple', 'atari', 'coleco', 'sinclair', 'timex', 'ti', 'tandy', 'heathkit', 'ibm', 'amstrad', 'acorn', 'dragon', 'msx', 'oric', 'schematics', 'video'];
 const only = process.argv.slice(2);
 
 const window = {};
@@ -222,6 +222,29 @@ for (const [mid, list] of Object.entries(R.schematics || {})) {
     if (!SCH_KINDS.has(s.kind)) err(`schematics ${mid}`, `kind ${s.kind} (schematic, layout, manual, parts)`);
   }
 }
+/* video.js: the #/video reference. Every signal row needs a source that resolves to a sources entry. */
+if (R.video) {
+  const V = R.video, f = 'video', GROUPS = new Set(['levels', 'line', 'field', 'rgbi', 'rgb', 'yc', 'rf', 'mod']);
+  for (const k of ['standards', 'signals', 'sources']) if (!Array.isArray(V[k])) err(f, `${k} must be an array`);
+  const std = new Set((V.standards || []).map(s => s && s.id)), src = new Set();
+  for (const s of V.standards || []) if (!s || !s.id || !s.name) err(f, `standard needs id and name: ${JSON.stringify(s)}`);
+  for (const s of V.sources || []) {
+    if (!s || !s.id || !s.short) err(f, `source needs id and short: ${JSON.stringify(s).slice(0, 90)}`);
+    else if (src.has(s.id)) err(f, `duplicate source id ${s.id}`); else src.add(s.id);
+  }
+  checkSources(f, V.sources);
+  const used = new Set();
+  (V.signals || []).forEach((r, i) => {
+    const at = `signal ${r && r.name ? r.name : i + 1}`;
+    if (!r || !r.name) err(f, `${at} needs name`);
+    if (!r || !GROUPS.has(r.group)) err(f, `${at} group ${r && r.group} (${[...GROUPS].join(', ')})`);
+    if (r && r.value == null && ![...std].some(k => r[k] != null)) err(f, `${at} needs value or a standard column`);
+    const ids = r && r.source == null ? [] : [].concat(r.source).filter(Boolean);
+    if (!ids.length) err(f, `${at} has no source`);
+    for (const id of ids) { used.add(id); if (!src.has(id)) err(f, `${at} source ${id} is not in sources`); }
+  });
+  for (const id of src) if (!used.has(id)) warn(f, `source ${id} is cited by no signal`);
+} else err('video', 'RCS.video missing (src/data/video.js)');
 for (const c of R.credits || []) if (!c.name || !c.url || !c.what) err('credits', `entry needs name, url, what: ${JSON.stringify(c).slice(0, 90)}`);
 const counts = R.brands.map(b => `${b.id} ${b.machines.length}m/${Object.values(R.chips).filter(c => c.machines.some(m => R.machines[m]?.brand === b.id) && c.pins).length}c`).join(' · ');
 console.log(`machines ${Object.keys(R.machines).length} · chips ${Object.keys(R.chips).length} (${Object.values(R.chips).filter(c => c.pins).length} with pins) · terms ${Object.keys(R.terms).length}`);

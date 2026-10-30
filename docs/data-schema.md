@@ -263,3 +263,24 @@ Any `source`/`sources` entry taken from a Sams Computerfacts folder sets `sams: 
 note "Sams redraw: part numbers are Sams's own and may not match the board" and shows a `conflict` when a Sams
 value disagrees with the maker's document, which wins. Where a community page documents a specific Sams error,
 add it as a second source with `note`.
+
+## Video signal reference (src/data/video.js)
+
+Feature 5 on docs/roadmap.md. One object, loaded after `schematics.js`, rendered at `#/video`:
+```js
+RCS.video = {
+  standards: [{ id: 'ntsc', name: 'NTSC', sub: 'M/NTSC, 525 lines, 59.94 fields' }, ...],   // the columns a row may fill
+  signals: [
+    { group: 'line', id: 'hs', name: 'Horizontal sync', ntsc: '4.70 ± 0.10 µs', pal: '4.7 ± 0.2 µs',
+      note: 'optional', source: ['smpte-t2', 'bt470-t11'], verify: false },
+    { group: 'rf', name: 'UK UHF channel 36', value: 'Vision carrier 591.25 MHz', source: 'electron-sm' } ],
+  sources: [{ id: 'bt470-t11', short: 'BT.470 T1-1', label: 'ITU-R BT.470-6, Table 1-1, p. 5', url: '...#page=5', note: 'optional' }],
+};
+```
+- `group` is one of `levels`, `line`, `field`, `rgbi`, `rgb`, `yc`, `rf`, `mod`; each is one table on the page, in that order.
+- A row fills `value`, or one or more standard columns (`ntsc`, `pal`, `cga`, `mda`); the table shows the standard
+  columns any of its rows use, else a single Value column.
+- `source` is a source `id` or an array of them. The validator FAILS a row without one, or one naming an unknown id.
+  A number no source gives carries `verify: true` and still names the nearest source.
+- The line drawing reads `white`, `sync`, `burst`, `fp`, `hs`, `bp` and `bs` from the PAL column, so keep those ids.
+- "Derived" in a note means arithmetic on the cited table (back porch = sync edge to blanking end, less sync width).

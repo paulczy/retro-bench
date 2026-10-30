@@ -388,7 +388,9 @@ function buildIndex() {
     const m = D.machines[mid]; if (!m || !pw) continue;
     for (const c of arr(pw.clocks)) if (c && c.name) ix.push({ group: 'Clocks', title: c.name, tag: clockFreqs(c), sub: `${m.name}${c.where ? ': ' + c.where : ''}`, keys: `clock ${clockFreqs(c)} ${c.where || ''}`, href: `${mPath(m)}/power?at=clocks`, des: mDes(m) });
   }
-  ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' });
+  ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' },
+    { group: 'Pages', title: 'Video signals', sub: 'Composite levels, PAL and NTSC timing, RGBI, RGB, luma/chroma, RF', keys: 'video composite sync porch burst pal ntsc rgbi cga mda rgb luma chroma s-video rf modulator channel ire', href: '#/video' },
+    { group: 'Pages', title: 'Bench notes', sub: 'Your notes, kept on this device', keys: 'notes export import', href: '#/notes' });
   INDEX = ix;
 }
 const GROUP_ORDER = ['Machines', 'Chips', 'Pins', 'BASIC', 'Keys', 'Memory', 'Glossary', 'Connectors', 'Clocks', 'Pages'];
@@ -611,6 +613,7 @@ function parseHash() {
   return { path, segs, bad, q: Object.fromEntries(new URLSearchParams(qs)) };
 }
 function render() {
+  noteFlush();
   const r = parseHash();
   const [a, b, c, d] = r.segs;
   const ctx = { route: r, crumbs: [] };
@@ -622,6 +625,8 @@ function render() {
   else if (a === 'credits') { ctx.crumbs = [['Sources and credits']]; html = viewCredits(); }
   else if (a === 'glossary') { ctx.crumbs = [['Glossary']]; html = viewGlossary(r.q.term); }
   else if (a === 'more') { ctx.crumbs = [['More']]; html = viewMore(); }
+  else if (a === 'video') { ctx.crumbs = [['Video signals']]; html = viewVideo(); }
+  else if (a === 'notes') { ctx.crumbs = [['Bench notes']]; html = viewNotes(); }
   else {
     const brand = D.brands.find(x => x.id === a);
     const m = brand && D.machines[b];
@@ -660,6 +665,7 @@ function render() {
   state.phone = PHONE_MQ.matches;
   state.ctx = ctx;
   $('#main').innerHTML = html;
+  document.body.classList.toggle('has-card', !!$('#main > .printcard'));
   renderStrip(); renderTrace(); renderEdgebar();
   closePop(); closePalette();
   window.scrollTo(0, 0);
@@ -691,15 +697,16 @@ function renderTrace() {
   tr.hidden = false;
   tr.innerHTML = parts.map((p, i) => (i ? '<span class="seg" aria-hidden="true"></span>' : '') + (p[1] ? `<a href="${p[1]}">${esc(p[0])}</a>` : `<span class="here" aria-current="page">${esc(p[0])}</span>`)).join('');
 }
+const MORE_PAGES = ['more', 'glossary', 'resources', 'credits', 'video', 'notes'];
 function renderEdgebar() {
   const [a, , c] = state.ctx.route.segs, m = currentMachine();
   const f = (href, label, on, off) => `<a href="${href}" class="${on ? 'on' : ''}${off ? ' off' : ''}"${on ? ' aria-current="page"' : ''}${off ? ' aria-disabled="true" tabindex="-1"' : ''}><span class="fg" aria-hidden="true"></span>${label}</a>`;
   $('#edgebar').innerHTML =
-    f('#/', 'Home', !a || (!['search', 'more', 'glossary', 'resources', 'credits'].includes(a) && !['pinouts', 'chip', 'quickref'].includes(c))) +
+    f('#/', 'Home', !a || (!['search', ...MORE_PAGES].includes(a) && !['pinouts', 'chip', 'quickref'].includes(c))) +
     f(m ? `${mPath(m)}/pinouts` : '#/', 'Chips', c === 'pinouts' || c === 'chip', !m || !chipsOf(m).length) +
     f(m ? `${mPath(m)}/quickref` : '#/', 'Ref', c === 'quickref', !m || !dataFor(D.quickref, m).data) +
     f('#/search', 'Search', a === 'search') +
-    f('#/more', 'More', ['more', 'glossary', 'resources', 'credits'].includes(a));
+    f('#/more', 'More', MORE_PAGES.includes(a));
 }
 
 /* ---------- views ---------- */
@@ -770,6 +777,7 @@ function viewMachine(m) {
       ${door(`${mPath(m)}/power`, 'J4', 'Power', pw.data ? `${pw.data.supply && pw.data.supply.name ? esc(pw.data.supply.name) + ', ' : ''}${arr(pw.data.rails).length} rails, ${arr(pw.data.testPoints).length} test points` : 'Not captured yet', !pw.data)}
       ${pw.data && arr(pw.data.firstTen).length ? `<a class="lnk col-start-2 lg:col-start-4 -mt-2 mono sm uppercase" href="${mPath(m)}/power?at=first-ten">First ten minutes &rsaquo;</a>` : ''}
     </div>
+    <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-3.5"><button type="button" class="btn" data-act="print">Print card</button><span class="tin sm">One page, black on white: chips, rails, first checks, clocks, connector pins.</span></div>
     ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips)}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.</p></section>`
       : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} is ${m.status === 'planned' ? 'planned' : 'on paper'}: its chips have not been entered yet.`)}
     ${qr.data || tp ? `<div class="grid gap-x-[18px] md:grid-cols-2 items-start">
@@ -780,7 +788,9 @@ function viewMachine(m) {
       ${sy.data && arr(sy.data).length ? sy.data.map(s => `<div class="symrow"><div><div class="s">${esc(s.symptom)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</div><div class="u">${arr(s.suspects).map(id => { const c = D.chips[id]; if (!c) return ''; const l = [boardDes(c, m), c.short].filter(Boolean).join(' '); return c.pins && fits(m, id) ? `<a href="${chipPath(m, c)}">${esc(l)}</a>` : `<span title="Pinout not captured">${esc(l)}</span>`; }).join('')}</div></div>`).join('') + sharedNote(sy.shared)
         : `<p class="note mt-0">No symptom table yet for this machine.</p>`}
     </section>
-    ${boardsBlock(m)}`;
+    ${noteBlock('m', m.id, m.name)}
+    ${boardsBlock(m)}
+    ${printCard(m)}`;
 }
 /* links to the board drawings an archive holds for this machine, grouped by board assembly */
 const SCH_KIND = { schematic: 'Schematic', layout: 'Board layout', manual: 'Service manual', parts: 'Parts list' };
@@ -842,7 +852,8 @@ function viewChip(m, chip) {
       </div>
       ${datasheets(chip)}
     </section>
-    ${replacementsBlock(chip)}`;
+    ${replacementsBlock(chip)}
+    ${noteBlock('c', chip.id, chip.name)}`;
 }
 /* pin-compatible parts, modern drop-ins and adapters a tech can buy or has in a drawer */
 function replacementsBlock(chip) {
@@ -966,6 +977,7 @@ function viewPorts(m) {
     return `<section class="blk cblk${b.wide ? ' wide' : ''} scroll-mt-4" id="conn-${esc(c.id)}"><span class="lbl"><span class="d">J${i + 1}</span>${esc(c.name)}</span>
       <div class="tin sm mono">${esc(c.kind || '')}${c.verify ? chk() : ''}</div>
       ${c.summary ? `<p class="desc mt-2 text-base">${esc(c.summary)}</p>` : ''}
+      ${arr(c.pins).some(p => p && p.type === 'video') ? videoLink('what these pins should measure') : ''}
       ${b.html}
       ${termLinks(c.terms)}
       ${sourceList(c.sources, 'Sources', c.verifiedAgainst)}
@@ -1032,7 +1044,7 @@ function clocksBlock(m, list) {
   return `<section class="blk scroll-mt-4" id="clocks"><span class="lbl">Clocks</span>
     <table class="ctab"><thead><tr><th>Clock</th><th>Where</th>${cols.map(h => `<th>${h}</th>`).join('')}<th>Source</th></tr></thead>
     <tbody>${list.map(c => `<tr><td class="nm">${esc(c.name)}${c.verify ? chk() : ''}</td><td class="w">${linkPins(c.where || '', m)}</td>${freq(c)}<td class="s">${c.source ? srcLink(c.source) : ''}</td></tr>`).join('')}</tbody></table>
-    ${samsNote(list.map(c => c.source))}</section>`;
+    ${samsNote(list.map(c => c.source))}${videoLink('PAL and NTSC line and sync timing')}</section>`;
 }
 
 function resultItem(it, idx, act) {
@@ -1070,6 +1082,7 @@ function allSources() {
   for (const c of Object.values(D.chips)) push(c.datasheets, c.name);
   for (const [mid, list] of Object.entries(D.schematics)) for (const s of arr(list)) push([{ label: `${s.board}: ${s.label}`, url: s.url }], `${mn(mid)}, board`);
   for (const list of Object.values(D.resources)) push(list, 'resources');
+  if (D.video) push(D.video.sources, 'video signals');
   return out;
 }
 function viewCredits() {
@@ -1085,16 +1098,214 @@ function viewCredits() {
 const viewGlossary = focus => head('', 'Glossary', `${Object.keys(D.terms).length} terms used across the pinouts. Anywhere else in the app a dotted word opens the same definition in place.`) +
   `<section class="blk gl"><span class="lbl">Legend</span>${Object.entries(D.terms).map(([id, t]) => `<details id="term-${id}" class="${focus === id ? 'hi' : ''}"${focus === id ? ' open' : ''}><summary><span class="t">${esc(t.term)}</span><span class="s">${esc(t.short)}</span></summary><div class="long">${esc(t.long)}</div></details>`).join('')}</section>`;
 function viewMore() {
-  const m = mask();
+  const m = mask(), nNotes = noteKeys().filter(k => noteGet(k)).length, pm = currentMachine();
   return head('', 'More', '') + `
     <section class="blk"><span class="lbl">Reference</span>
-      <div class="legend"><div class="k"><a class="lnk" href="#/glossary">GLOSSARY</a></div><div class="v">Every term, with the long definition</div><div class="k"><a class="lnk" href="#/resources">RESOURCES</a></div><div class="v">Archives and communities, by brand</div><div class="k"><a class="lnk" href="#/credits">CREDITS</a></div><div class="v">Every archive and document the data was checked against</div></div>
+      <div class="legend"><div class="k"><a class="lnk" href="#/glossary">GLOSSARY</a></div><div class="v">Every term, with the long definition</div><div class="k"><a class="lnk" href="#/resources">RESOURCES</a></div><div class="v">Archives and communities, by brand</div><div class="k"><a class="lnk" href="#/credits">CREDITS</a></div><div class="v">Every archive and document the data was checked against</div><div class="k"><a class="lnk" href="#/video">VIDEO SIGNALS</a></div><div class="v">Composite levels, PAL and NTSC sync timing, RGBI, analogue RGB, luma/chroma, RF channels</div></div>
+    </section>
+    <section class="blk"><span class="lbl">On the bench</span>
+      <div class="legend"><div class="k"><a class="lnk" href="#/notes">NOTES</a> <span class="tin mono sm">${nNotes}</span></div><div class="v">Your bench notes from machine and chip pages, kept on this device only. Export and import as a text file.</div><div class="k"><a class="lnk" href="${pm ? mPath(pm) : '#/'}">PRINT</a></div><div class="v">On a machine page, <span class="mono">Print card</span> (or the browser's Print) gives one page in black on white: the chip footprints with designators, rails, the first ten minutes or the order of checks, clocks and every connector's pin numbers.${pm ? ` Last machine: ${esc(pm.name)}.` : ''}</div></div>
     </section>
     <section class="blk"><span class="lbl">Solder mask</span>
       <div class="jumpers mt-0" role="radiogroup" aria-label="Solder mask">${MASKS.map(k => `<a href="#/more" role="radio" aria-checked="${m === k}" data-act="set-mask" data-mask="${k}" class="${m === k ? 'on' : ''}">${k === 'light' ? 'Light (bare FR-4)' : k}</a>`).join('')}</div>
       <p class="note">${state.maskPick ? 'Your pick is kept on this device.' : 'Following the system setting until you pick one.'} Light is for bright benches and daylight.</p>
     </section>
     <section class="blk"><span class="lbl">Offline</span><div id="net-more">${netMore()}</div></section>`;
+}
+/* ---------- video signal reference: data in src/data/video.js, every row cites a source ---------- */
+const videoLink = why => (D.video ? `<p class="note"><a class="lnk mono sm uppercase" href="#/video">Video levels &rsaquo;</a> <span class="tin">${esc(why)}</span></p>` : '');
+const VIDEO_GROUPS = [
+  ['levels', 'Composite levels', 'Into 75 Ω, measured from blanking. NTSC in IRE units, 140 IRE = 1 V.'],
+  ['line', 'Line timing', 'Between half-amplitude points, from the leading edge of horizontal sync.'],
+  ['field', 'Field timing', ''],
+  ['rgbi', 'RGBI, TTL direct drive', 'IBM CGA and MDA, as the PC Technical Reference gives them.'],
+  ['rgb', 'Analogue RGB', 'The level sets a display can declare (VESA EDID).'],
+  ['yc', 'Luma and chroma', 'S-Video style: sync and brightness on one line, colour on another. The Commodore 64 example.'],
+  ['rf', 'RF channels', ''],
+  ['mod', 'What a modulator takes in', ''],
+];
+const vSrc = id => (D.video ? arr(D.video.sources).find(s => s.id === id) : null);
+const vCite = r => [].concat(r.source || []).map(vSrc).filter(Boolean).map(s => `<a class="vsrc" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener" title="${esc(s.label)}">${esc(s.short)}</a>`).join(' ');
+function videoTable(rows) {
+  const stds = arr(D.video.standards).filter(st => rows.some(r => r[st.id] != null));
+  const cols = stds.length ? stds : [{ id: 'value', name: 'Value' }];
+  return `<table class="ctab vtab"><thead><tr><th>Signal</th>${cols.map(c => `<th${c.sub ? ` title="${esc(c.sub)}"` : ''}>${esc(c.name)}</th>`).join('')}<th>Source</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td class="nm">${esc(r.name)}${r.verify ? chk() : ''}${r.note ? `<div class="vnote">${esc(r.note)}</div>` : ''}</td>${cols.map(c => `<td class="f" data-h="${stds.length ? esc(c.name) : 'f'}">${esc(r[c.id] ?? '')}</td>`).join('')}<td class="s">${vCite(r)}</td></tr>`).join('')}</tbody></table>`;
+}
+/* one PAL line around line blanking, drawn to scale in time and level on a graticule:
+   2 µs/div from 8 µs before the sync edge to 16 µs after it, 0.1 V/div from -0.4 V to +0.8 V.
+   Levels and widths are read from the PAL column of video.js (white, sync, burst, fp, hs, bp, bs). */
+function videoLineSVG() {
+  const row = id => arr(D.video.signals).find(r => r.id === id) || {};
+  const pal = (id, unit, d) => { const v = qty(row(id).pal, unit); return v == null ? d : v; };
+  const us = (id, d) => +(pal(id, 's', d * 1e-6) * 1e6).toFixed(2);
+  const white = pal('white', 'V', 0.7), sync = pal('sync', 'V', -0.3), burst = pal('burst', 'V', 0.3);
+  const fp = us('fp', 1.5), hs = us('hs', 4.7), bp = us('bp', 5.8), bs = us('bs', 5.6), bend = hs + bp, bl = 10 / 4.43361875;
+  const XS = 26, YS = 220, t0 = -8, t1 = 16, v1 = 0.8, v0 = -0.4;
+  const X = t => r1((t - t0) * XS), Y = v => r1((v1 - v) * YS), W = X(t1), H = Y(v0);
+  let grid = '';
+  for (let t = t0 + 2; t < t1; t += 2) grid += `M ${X(t)} 0 V ${H} `;
+  for (let v = 1; v < 12; v++) grid += `M 0 ${r1(v * 0.1 * YS)} H ${W} `;
+  /* the trace: picture (mid grey), front porch, sync, back porch with the burst, picture (white, then grey) */
+  let d = `M 0 ${Y(0.35)} H ${X(-fp)} V ${Y(0)} H ${X(0)} V ${Y(sync)} H ${X(hs)} V ${Y(0)} H ${X(bs)}`;
+  for (let i = 1, n = 80; i <= n; i++) d += ` L ${X(bs + bl * i / n)} ${Y(burst / 2 * Math.sin(2 * Math.PI * 10 * i / n))}`;
+  d += ` H ${X(bend)} V ${Y(white)} H ${X(13.5)} V ${Y(0.35)} H ${W}`;
+  const mv = v => `${v > 0 ? '+' : v < 0 ? '−' : ''}${+Math.abs(v).toFixed(3)} V`;
+  const lvl = (v, k, sub) => `<path class="lv" d="M 0 ${Y(v)} H ${W}"/><text class="vlk" x="${W + 12}" y="${Y(v) + 4}">${k}</text><text class="vls" x="${W + 12}" y="${Y(v) + 19}">${sub}</text>`;
+  const dim = (a, b, y, k) => `<path class="dm" d="M ${X(a)} ${y - 5} v 10 M ${X(b)} ${y - 5} v 10 M ${X(a)} ${y} H ${X(b)}"/><text class="vls" x="${(X(a) + X(b)) / 2}" y="${y + 17}" text-anchor="middle">${k}</text>`;
+  return `<svg class="vline" width="${W + 250}" height="${H + 88}" viewBox="-40 -26 ${W + 250} ${H + 88}" role="img" aria-label="One PAL video line around line blanking: picture, front porch ${fp} µs, sync ${hs} µs down to ${mv(sync)}, back porch ${bp} µs with the colour burst, then picture up to peak white ${mv(white)}.">
+    <rect class="fr" x="0" y="0" width="${W}" height="${H}"/><path class="gr" d="${grid}"/>
+    <path class="ax" d="M ${X(0)} 0 V ${H}"/><text class="mt" x="${X(0)}" y="-10" text-anchor="middle">0H</text>
+    <text class="wm" x="6" y="15">IDEALISED</text>
+    ${lvl(white, `PEAK WHITE ${mv(white)}`, `NTSC ${esc(row('white').ntsc || '')}`)}
+    ${lvl(0, 'BLANKING 0 V', 'PAL black = blanking; NTSC 7.5 IRE up')}
+    ${lvl(sync, `SYNC TIP ${mv(sync)}`, `NTSC ${esc(row('sync').ntsc || '')}`)}
+    ${[white, 0, sync].map(v => `<text class="mt" x="-8" y="${Y(v) + 4}" text-anchor="end">${mv(v).replace(' V', '')}</text>`).join('')}
+    <path class="tr" d="${d}"/>
+    <text class="vls" x="${X(bs + bl / 2)}" y="${Y(burst / 2) - 8}" text-anchor="middle">BURST ${+burst.toFixed(3)} V p-p</text>
+    <text class="vls" x="${X(-4.5)}" y="${Y(0.35) - 8}" text-anchor="middle">PICTURE</text>
+    ${dim(0, hs, H + 14, `SYNC ${hs} µs`)}${dim(hs, bend, H + 14, `BACK PORCH ${bp} µs`)}
+    <path class="dm" d="M ${X(-fp)} ${H + 9} v 10 M ${X(0)} ${H + 9} v 10 M ${X(-fp)} ${H + 14} H ${X(0)}"/><text class="vls" x="${X(-fp) - 4}" y="${H + 18}" text-anchor="end">FRONT PORCH ${fp} µs</text>
+    <path class="dm" d="M ${X(bend)} ${H + 9} v 10 M ${X(bend)} ${H + 14} H ${W}"/><text class="vls" x="${X(bend) + 6}" y="${H + 31}">ACTIVE LINE &#8594;</text>
+  </svg>`;
+}
+function viewVideo() {
+  const V = D.video;
+  if (!V) return emptyBlk('NOT LOADED', 'src/data/video.js is missing.');
+  const groups = VIDEO_GROUPS.map(([g, title, sub]) => [g, title, sub, arr(V.signals).filter(r => r.group === g)]).filter(x => x[3].length);
+  return head('', 'Video signals', 'What a composite, RGBI, RGB, luma/chroma or RF output should measure. Every number links to the standard or manual it comes from; <span class="mono">CHECK</span> marks the few that no source here gives.') + `
+    <nav class="jumpers" aria-label="Sections">${groups.map(([g, title]) => `<a href="#/video?at=v-${g}">${esc(title.split(',')[0])}</a>`).join('')}</nav>
+    <section class="blk"><span class="lbl">One line, PAL</span>
+      <figure class="scr vfig"><div class="vwrap">${videoLineSVG()}</div>
+        <figcaption class="normal-case">Idealised, 2 µs/div and 0.1 V/div into 75 Ω. Timing and levels are the PAL rows below, NTSC on the right.</figcaption></figure>
+    </section>
+    ${groups.map(([g, title, sub, rows]) => `<section class="blk scroll-mt-4" id="v-${g}"><span class="lbl">${esc(title)}</span>${sub ? `<p class="note mt-0 mb-2">${esc(sub)}</p>` : ''}${videoTable(rows)}</section>`).join('')}
+    <section class="blk" id="v-sources"><span class="lbl">Sources</span>${sourceList(V.sources.map(s => ({ label: `${s.short}: ${s.label}`, url: s.url, note: s.note })), '')}
+      <p class="note">EIA RS-170 and RS-170A are not linked: no copy of the text was found online. SMPTE 170M, which replaced RS-170A, is the NTSC reference here.</p></section>`;
+}
+
+/* ---------- print card: one page per machine, black on white (src/input.css, @media print) ---------- */
+function printCard(m) {
+  const chips = chipsOf(m), pw = dataFor(D.power, m).data, conns = arr(dataFor(D.connectors, m).data);
+  const rails = pw ? arr(pw.rails) : [], ften = pw ? arr(pw.firstTen) : [], clocks = pw ? arr(pw.clocks).filter(c => c && c.name) : [];
+  const tv = clocks.some(c => c.pal || c.ntsc);
+  const sec = (title, body, cls = '') => `<section class="pc-b${cls}"><h2>${title}</h2>${body}</section>`;
+  const sup = pw && pw.supply ? `<p class="pc-n">${esc(pw.supply.name || 'Supply')}${pw.supply.output ? `: ${esc(pw.supply.output)}` : ''}</p>` : '';
+  const checks = ften.length
+    ? `<ol class="pc-ol">${ften.map((s, k) => `<li><b>${esc(s.step ?? k + 1)}</b> ${esc(s.check || '')}${s.where ? ` <span class="pc-w">${esc(s.where)}</span>` : ''}${s.expect ? ` <span class="pc-x">${esc(s.expect)}</span>` : ''}</li>`).join('')}</ol>`
+    : '<ol class="pc-ol"><li><b>1</b> Rails at the supply pins, with the board loaded.</li><li><b>2</b> Reset goes high after power-on.</li><li><b>3</b> Master clock, then the CPU clock.</li><li><b>4</b> Only then pull the hottest chip.</li></ol>';
+  const clk = c => (tv ? (c.pal || c.ntsc ? `<td class="m">${esc(c.pal || '')}</td><td class="m">${esc(c.ntsc || '')}</td>` : `<td class="m" colspan="2">${esc(c.f || '')}</td>`) : `<td class="m">${esc(c.f || '')}</td>`);
+  return `<section class="printcard" aria-hidden="true">
+    <header class="pc-h"><span class="pc-d">${esc(mDes(m))}</span><h1>${esc(m.name)}</h1><span class="pc-s">Retro Bench card, ${new Date().toISOString().slice(0, 10)}. Check readings against the sources in the app.</span></header>
+    ${chips.length ? sec('Chips', boardGrid(m, chips)) : ''}
+    <div class="pc-cols">
+      ${rails.length ? sec('Rails', `${sup}<table class="pc-t"><thead><tr><th>Rail</th><th>Where</th><th>Expect</th></tr></thead><tbody>${rails.map(r => `<tr><td class="m">${esc(r.rail)}</td><td>${esc(r.where || '')}</td><td class="m">${esc(r.expect || '')}</td></tr>`).join('')}</tbody></table>`) : ''}
+      ${sec(ften.length ? 'First ten minutes' : 'Order of checks', checks)}
+      ${clocks.length ? sec('Clocks', `<table class="pc-t"><thead><tr><th>Clock</th><th>Where</th>${tv ? '<th>PAL</th><th>NTSC</th>' : '<th>Frequency</th>'}</tr></thead><tbody>${clocks.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.where || '')}</td>${clk(c)}</tr>`).join('')}</tbody></table>`) : ''}
+      ${conns.length ? sec('Connectors', conns.map((c, i) => `<div class="pc-c"><b>J${i + 1} ${esc(c.name)}</b> <span class="pc-w">${esc(c.kind || '')}</span><div class="pc-p">${realPins(c).map(p => `<span><b>${esc(p.n)}</b> ${esc(p.name || '')}</span>`).join(' ')}</div></div>`).join(''), ' pc-flow') : ''}
+    </div>
+  </section>`;
+}
+
+/* ---------- bench notes: localStorage only, one key per machine (rb-note:m:<id>) or chip (rb-note:c:<id>) ---------- */
+const NOTE_PFX = 'rb-note:';
+const noteKey = (kind, id) => `${NOTE_PFX}${kind}:${id}`;
+const noteGet = k => { const v = LS.get(k, null); return v && typeof v.text === 'string' && v.text.trim() ? v : null; };
+function noteSave(k, text) {
+  if (String(text).trim()) LS.set(k, { text, at: new Date().toISOString() });
+  else try { localStorage.removeItem(k); } catch {}
+}
+function noteKeys() {
+  const out = [];
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(NOTE_PFX)) out.push(k); } } catch {}
+  return out;
+}
+/* what a key belongs to: its name and the page it came from */
+function noteTarget(k) {
+  const mm = /^rb-note:([mc]):(.+)$/.exec(k) || [], kind = mm[1], id = mm[2];
+  if (kind === 'm') { const m = D.machines[id]; return { kind, id, name: m ? m.name : id, href: m ? mPath(m) : '' }; }
+  const c = D.chips[id], home = c && (fittedIn(c).find(x => x.status === 'ready') || fittedIn(c)[0]);
+  return { kind, id, name: c ? c.name : id, href: home ? (c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`) : '' };
+}
+const noteWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); };
+const noteStatus = (n, pending) => `${pending ? 'Not saved yet' : 'Saved on this device only'}${!pending && n ? `, ${esc(noteWhen(n.at))}` : ''}. <a class="lnk" href="#/notes">All notes</a>`;
+/* typing saves 600 ms after the last key; leaving the field, the page or the route saves at once */
+const notePending = new Map();
+let noteTimer = 0;
+function noteFlush() {
+  clearTimeout(noteTimer); noteTimer = 0;
+  for (const [k, t] of notePending) {
+    noteSave(k, t);
+    for (const el of $$('[data-note-status]')) if (el.dataset.noteStatus === k) el.innerHTML = noteStatus(noteGet(k));
+  }
+  notePending.clear();
+}
+function noteInput(el) {
+  const k = el.dataset.note;
+  if (!notePending.has(k)) for (const s of $$('[data-note-status]')) if (s.dataset.noteStatus === k) s.innerHTML = noteStatus(null, true);
+  notePending.set(k, el.value);
+  clearTimeout(noteTimer); noteTimer = setTimeout(noteFlush, 600);
+}
+function noteBlock(kind, id, what) {
+  const k = noteKey(kind, id), n = noteGet(k);
+  return `<section class="blk notes scroll-mt-4" id="notes"><span class="lbl">Bench notes</span>
+    <textarea class="notearea" data-note="${esc(k)}" rows="4" aria-label="Bench notes for ${esc(what)}" placeholder="Readings, swaps, what you tried on this ${kind === 'm' ? 'machine' : 'chip'}.">${esc(n ? n.text : '')}</textarea>
+    <p class="note mt-1.5" data-note-status="${esc(k)}" aria-live="polite">${noteStatus(n)}</p></section>`;
+}
+/* machines first, then chips, each by name */
+function noteList() {
+  return noteKeys().map(k => ({ k, n: noteGet(k), t: noteTarget(k) })).filter(x => x.n && x.t.kind)
+    .sort((a, b) => b.t.kind.localeCompare(a.t.kind) || a.t.name.localeCompare(b.t.name));
+}
+/* Export, plain text: three header lines, then one section per note,
+     === machine c64: Commodore 64 ===     or     === chip vic6569: MOS 6569 VIC-II ===
+   then the note and a blank line. A note line starting with "===" or "\" is written with a "\" in front. */
+function notesText() {
+  const out = ['Retro Bench bench notes', `Exported ${new Date().toISOString()}`, 'One section per note. Import merges a file in this format.', ''];
+  for (const { n, t } of noteList()) out.push(`=== ${t.kind === 'm' ? 'machine' : 'chip'} ${t.id}: ${t.name} ===`, ...n.text.split('\n').map(l => (/^(===|\\)/.test(l) ? '\\' + l : l)), '');
+  return out.join('\n');
+}
+function notesParse(txt) {
+  const out = []; let cur = null;
+  for (const line of String(txt).replace(/\r\n?/g, '\n').split('\n')) {
+    const h = /^=== (machine|chip) ([^\s:]+)(?::.*)? ===$/.exec(line);
+    if (h) { cur = { k: noteKey(h[1] === 'machine' ? 'm' : 'c', h[2]), lines: [] }; out.push(cur); continue; }
+    if (cur) cur.lines.push(line.startsWith('\\') ? line.slice(1) : line);
+  }
+  return out.map(x => ({ k: x.k, text: x.lines.join('\n').replace(/\s+$/, '') })).filter(x => x.text.trim());
+}
+/* merge: a new key is added; a note already holding the text is left alone; a different one gets it appended */
+function notesImport(txt) {
+  let added = 0, merged = 0, same = 0;
+  for (const { k, text } of notesParse(txt)) {
+    const have = noteGet(k);
+    if (!have) { noteSave(k, text); added++; }
+    else if (have.text.includes(text)) same++;
+    else { noteSave(k, `${have.text}\n\n${text}`); merged++; }
+  }
+  return { added, merged, same };
+}
+function notesExport() {
+  const url = URL.createObjectURL(new Blob([notesText()], { type: 'text/plain' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = `retro-bench-notes-${new Date().toISOString().slice(0, 10)}.txt`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+function viewNotes(msg = '') {
+  const list = noteList();
+  return head('', 'Bench notes', 'Your notes from machine and chip pages. They live in this browser on this device only: no sync, no account. Export a text file to keep a copy or to move them.') + `
+    <div class="flex flex-wrap gap-2.5 items-center mt-4">
+      <button type="button" class="btn" data-act="notes-export"${list.length ? '' : ' disabled'}>Export .txt</button>
+      <label class="btn cursor-pointer">Import .txt<input type="file" accept=".txt,text/plain" class="sr-only" data-act="notes-import"></label>
+      <span class="tin sm" id="notes-msg" role="status">${esc(msg)}</span>
+    </div>
+    ${list.length ? `<section class="blk"><span class="lbl">${list.length} note${list.length === 1 ? '' : 's'}</span>${list.map(({ k, n, t }) => `<div class="nrow">
+        <div class="nh"><span class="tag kind">${t.kind === 'm' ? 'Machine' : 'Chip'}</span>${t.href ? `<a class="lnk" href="${t.href}">${esc(t.name)}</a>` : `<span>${esc(t.name)}</span>`}<span class="tin sm mono">${esc(noteWhen(n.at))}</span>
+          <button type="button" class="btn ml-auto" data-act="note-del" data-key="${esc(k)}" aria-label="Delete the note for ${esc(t.name)}">Delete</button></div>
+        <div class="nt">${esc(n.text)}</div></div>`).join('')}</section>`
+      : emptyBlk('NO NOTES YET', 'Open a machine or a chip and type in its Bench notes box. Notes appear here with a link back.')}
+    <p class="note">Export writes one section per note, headed <span class="mono">=== machine c64: Commodore 64 ===</span> or <span class="mono">=== chip &lt;id&gt;: &lt;name&gt; ===</span>. Import reads the same format and merges: new notes are added, different text is appended to the existing note.</p>`;
 }
 const viewNotFound = () => emptyBlk('NO SUCH TRACE', 'That page does not exist. <a href="#/">Back to the board</a>.');
 
@@ -1176,6 +1387,7 @@ function padIntoView(pin = $('svg.dip .pin.sel') || $('svg.conn .cpin.sel')) {
 }
 function refreshChip() {
   const { chip, machine } = state.ctx; if (!chip) return;
+  noteFlush();
   state.compact = wantCompact(chip); state.stack = wantStack(chip);
   $('#main').innerHTML = viewChip(machine, chip);
   renderPanel(); drawWire(); watchDip();
@@ -1394,7 +1606,26 @@ document.addEventListener('click', e => {
   else if (a === 'close-pop') closePop();
   else if (a === 'install' && net.prompt) { const p = net.prompt; p.prompt(); p.userChoice.finally(() => { net.prompt = null; paintNet(); }); }
   else if (a === 'reload') location.reload();
+  else if (a === 'print') { noteFlush(); window.print(); }
+  else if (a === 'notes-export') notesExport();
+  else if (a === 'note-del') {
+    /* two taps: the first arms the button, the second deletes */
+    if (!act.dataset.armed) { act.dataset.armed = '1'; act.textContent = 'Delete? Tap again'; act.classList.add('on'); return; }
+    try { localStorage.removeItem(act.dataset.key); } catch {}
+    $('#main').innerHTML = viewNotes('Note deleted.');
+  }
 });
+document.addEventListener('change', e => {
+  if (e.target.dataset.act !== 'notes-import' || !e.target.files || !e.target.files[0]) return;
+  e.target.files[0].text().then(txt => {
+    const r = notesImport(txt), n = r.added + r.merged + r.same;
+    $('#main').innerHTML = viewNotes(n ? `Imported: ${r.added} new, ${r.merged} merged, ${r.same} already here.` : 'No notes found in that file.');
+  }, () => { const m = $('#notes-msg'); if (m) m.textContent = 'Could not read that file.'; });
+});
+/* bench notes save on a pause in typing, and at once when the field loses focus or the page is hidden */
+document.addEventListener('focusout', e => { if (e.target.dataset && e.target.dataset.note) noteFlush(); });
+addEventListener('pagehide', noteFlush);
+document.addEventListener('visibilitychange', () => { if (document.hidden) noteFlush(); });
 document.addEventListener('submit', e => {
   const f = e.target.closest('form'); if (!f) return;
   e.preventDefault();
@@ -1404,6 +1635,7 @@ document.addEventListener('submit', e => {
   go('/search?q=' + encodeURIComponent(inp.value.trim()));
 });
 document.addEventListener('input', e => {
+  if (e.target.dataset.note) { noteInput(e.target); return; }
   if (e.target.id === 'pal-input') { state.palIdx = 0; renderPalette(); }
   if (e.target.id === 'q-page') { const q = e.target.value; history.replaceState(null, '', '#/search?q=' + encodeURIComponent(q)); $('#results').innerHTML = searchResults(q); }
 });

@@ -429,6 +429,33 @@
   .tag.kind.pin-compatible { border-color: var(--silk); color: var(--silk); }
   .tag.kind.adapter { border-style: dashed; }
 
+  /* video signals: tables share the clock-tree style; the line drawing shares the scope graticule */
+  .vtab td.f { white-space: normal; }
+  .vtab td.nm { min-width: 150px; }
+  .vtab .vnote { font: 400 15px/1.3 var(--font-sans); color: var(--tin); margin-top: 2px; }
+  .vsrc { font: 13px var(--font-mono); color: var(--copper); text-decoration: underline dotted; text-underline-offset: 3px; white-space: nowrap; display: inline-block; padding: 12px 2px; margin: -12px 0; }
+  .vsrc:hover { color: var(--copper-hi); }
+  .scr.vfig { max-width: none; }
+  .vwrap { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+  .vwrap svg.vline { display: block; max-width: none; overflow: visible; }
+  .scr .lv { fill: none; stroke: var(--silk-25); stroke-width: 1; stroke-dasharray: 3 4; }
+  .scr .dm { fill: none; stroke: var(--tin); stroke-width: 1; }
+  .scr .vlk { font-size: 12px; letter-spacing: .08em; fill: var(--silk); }
+  .scr .vls { font-size: 11px; letter-spacing: .04em; fill: var(--tin); }
+
+  /* bench notes: a plain field on the mask, copper when focused */
+  .notearea { display: block; width: 100%; min-height: 120px; resize: vertical; background: var(--mask-deep); color: var(--silk); border: var(--w) solid var(--silk-45); border-radius: var(--radius-silk); font: 17px/1.4 var(--font-mono); padding: 10px 12px; }
+  .notearea::placeholder { color: var(--tin-dim); }
+  .notearea:focus { border-color: var(--copper); outline: none; }
+  .nrow { padding: 12px 0; border-top: 1px solid var(--silk-12); }
+  .nrow:first-of-type { border-top: 0; padding-top: 0; }
+  .nh { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+  .nh .lnk { font: 500 19px var(--font-sans); }
+  .nt { white-space: pre-wrap; overflow-wrap: anywhere; font: 16px/1.4 var(--font-mono); color: var(--silk-70); margin-top: 4px; }
+  .btn[disabled] { opacity: .4; pointer-events: none; }
+  .btn:has(> .sr-only:focus-visible) { outline: 2px solid var(--copper); outline-offset: 2px; }
+  .printcard { display: none; }
+
   /* phone: pin detail as a fixed bottom panel, copper rule along its top edge */
   .panel { display: none; }
   .wire-fixed { display: none; }
@@ -590,4 +617,60 @@
     .edgebar a.off { opacity: .35; pointer-events: none; }
     .palette { padding-top: 12px; }
   }
+}
+
+/* ---------- print: black on white, no chrome. A machine page prints its card (.printcard), one page.
+   Unlayered so it beats the mask tokens and the components. Copper prints black, silkscreen dark grey hairlines. ---------- */
+@media print {
+  @page { margin: 9mm; }
+  :root, :root[data-mask] {
+    --mask: #fff; --mask-deep: #fff; --mask-weave: transparent; --hole: #fff;
+    --silk: #000; --silk-70: #222; --silk-45: #555; --silk-25: #777; --silk-12: #aaa;
+    --copper: #000; --copper-hi: #000; --copper-dk: #000; --copper-ink: #fff;
+    --tin: #333; --tin-dim: #666; --pwr: #000; --clk: #000; --warn: #000; --w: .75px;
+    color-scheme: light;
+  }
+  html, body { background: #fff !important; background-image: none !important; color: #000; }
+  .strip, .trace, .edgebar, .panel, .wire, .wire-fixed, .pop, .palette, .hole, .tog, button, textarea, .notes, .jumpers { display: none !important; }
+  .board { border: 0; margin: 0; padding: 0; max-width: none; min-height: 0; }
+  main { padding: 0 !important; }
+  .blk { border: .5pt solid #555; break-inside: avoid; }
+  .blk > .lbl { background: #fff; }
+  table, tr, li, figure, .pc-b, .pc-c { break-inside: avoid; }
+  .pc-b.pc-flow { break-inside: auto; }   /* the connector list may continue in the next column, one connector at a time */
+  .pc-b.pc-flow h2 { break-after: avoid; }
+  h1, h2, .lbl, thead { break-after: avoid; }
+  .vwrap { overflow: visible; }
+
+  /* the card replaces the machine page */
+  body.has-card main > :not(.printcard) { display: none !important; }
+  body.has-card .printcard { display: block; font: 8.5pt/1.25 var(--font-sans); color: #000; }
+  .pc-h { display: flex; flex-wrap: wrap; gap: 2pt 10pt; align-items: baseline; border-bottom: .75pt solid #000; padding-bottom: 3pt; }
+  .pc-h .pc-d { font: 18pt/1 var(--font-mono); }
+  .pc-h h1 { font: 600 16pt/1 var(--font-sans); text-transform: uppercase; letter-spacing: .04em; }
+  .pc-h .pc-s { margin-left: auto; font: 7pt var(--font-mono); color: #444; }
+  .pc-b { margin-top: 5pt; }
+  .pc-b h2 { font: 7pt var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: #000; border-bottom: .5pt solid #555; padding-bottom: 1pt; margin-bottom: 3pt; }
+  .pc-cols { columns: 2; column-gap: 12pt; }
+  .pc-cols > .pc-b:first-child { margin-top: 5pt; }
+  .pc-t { width: 100%; border-collapse: collapse; font-size: 7.5pt; }
+  .pc-t th { font: 6.5pt var(--font-mono); letter-spacing: .08em; text-align: left; color: #444; text-transform: uppercase; padding: 0 5pt 1pt 0; }
+  .pc-t td { border-top: .5pt solid #aaa; padding: 1pt 5pt 1pt 0; vertical-align: top; }
+  .pc-t .m, .pc-x, .pc-p b { font-family: var(--font-mono); }
+  .pc-n { font-size: 7.5pt; margin: 0 0 2pt; }
+  .pc-ol li { padding: 1pt 0; font-size: 7.5pt; }
+  .pc-ol li > b { font: 8pt var(--font-mono); margin-right: 3pt; }
+  .pc-w { color: #444; font-size: 7pt; }
+  .pc-x { font-size: 7pt; }
+  .pc-c { margin: 0 0 2.5pt; font-size: 6.8pt; }
+  .pc-c > b { font: 7.5pt var(--font-mono); }
+  .pc-p { line-height: 1.3; }
+  .pc-p span { white-space: nowrap; margin-right: 4pt; }
+  .printcard .board-grid { --fpw: 104px; --gx: 8px; gap: 6px var(--gx); padding-top: 4px; }
+  .printcard .board-grid::before { bottom: 30px; }
+  .printcard .bcell .bl { height: 14px; margin-bottom: 1px; }
+  .printcard .bcell .des { font-size: 10px; }
+  .printcard .bcell .pn, .printcard .bcell .flag { font-size: 7px; }
+  .printcard .bcell .role { font-size: 8px; line-height: 10px; margin-top: 1px; }
+  .printcard .chipfp .ol { stroke-width: 1; }
 }
