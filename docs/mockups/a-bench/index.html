@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Retro Bench</title>
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --bg:#f3f4f6; --surface:#ffffff; --surface2:#f8f9fa; --border:#d9dde2; --border-strong:#aeb6bf;
+  --text:#1b1f24; --muted:#5f6b76; --accent:#0b6e99; --accent-ink:#ffffff; --accent-soft:#e1f0f6;
+  --shadow:0 10px 30px rgba(20,24,30,.16); --radius:6px;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,monospace;
+  --pt-power:#c92a2a; --pt-ground:#212529; --pt-clock:#f08c00; --pt-addr:#1c7ed6; --pt-data:#2f9e44;
+  --pt-ctrl:#7048e8; --pt-io:#0ca678; --pt-video:#d6336c; --pt-audio:#e6a100; --pt-kbd:#22b8cf;
+  --pt-serial:#82c91e; --pt-nc:#adb5bd;
+  --ok:#2f9e44; --warn:#f08c00; --bad:#c92a2a; --planned:#adb5bd;
+  --rail:240px; --insp:320px;
+}
+[data-theme=dark]{
+  --bg:#141619; --surface:#1c1f23; --surface2:#23272c; --border:#343940; --border-strong:#4b525b;
+  --text:#e6e8eb; --muted:#99a3ad; --accent:#4db5dc; --accent-ink:#0b1a21; --accent-soft:#163442;
+  --shadow:0 10px 30px rgba(0,0,0,.55);
+  --pt-ground:#ced4da; --pt-nc:#6c757d; --pt-addr:#4dabf7; --pt-ctrl:#9775fa; --pt-power:#ff6b6b; --pt-video:#f06595; --pt-data:#51cf66;
+  --planned:#6c757d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:15px/1.5 var(--sans);color:var(--text);background:var(--bg);-webkit-text-size-adjust:100%}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+h1,h2,h3,h4{margin:0;line-height:1.25;font-weight:600}
+h1{font-size:24px}h2{font-size:18px}h3{font-size:15px}
+p{margin:0 0 10px}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+/* ---------- app frame ---------- */
+#app{display:grid;grid-template-columns:var(--rail) minmax(0,1fr) var(--insp);min-height:100vh}
+#rail{border-right:1px solid var(--border);background:var(--surface);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+#main{min-width:0;padding:28px 32px 48px}
+#inspector{border-left:1px solid var(--border);background:var(--surface);position:sticky;top:0;height:100vh;overflow-y:auto}
+#tabs{display:none}
+
+/* rail */
+.brand{display:flex;align-items:center;gap:10px;padding:16px 16px 12px;border-bottom:1px solid var(--border)}
+.brand .mark{width:28px;height:28px;border-radius:6px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:600 12px var(--mono)}
+.brand b{font-size:15px;font-weight:600}
+.brand .small{display:block;color:var(--muted);line-height:1.2}
+.rail-section{padding:8px 8px}
+.rail-item{display:flex;align-items:center;gap:10px;width:100%;min-height:36px;padding:0 10px;border-radius:5px;text-align:left;color:var(--text);font-size:14px}
+.rail-item:hover{background:var(--surface2);text-decoration:none}
+.rail-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.rail-item .ico{width:18px;height:18px;flex:none;color:var(--muted)}
+.rail-item.active .ico{color:var(--accent)}
+.rail-brand{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:34px;padding:0 10px;border-radius:5px;color:var(--text);font-size:14px;font-weight:600}
+.rail-brand:hover{background:var(--surface2)}
+.rail-brand .chev{width:14px;height:14px;color:var(--muted);transition:transform .15s}
+.rail-brand[aria-expanded=false] .chev{transform:rotate(-90deg)}
+.rail-brand .abbr{display:none}
+.rail-machines{padding-left:8px;margin:0 0 4px;list-style:none}
+.rail-machines .rail-item{min-height:32px;font-size:13.5px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.dot.ready{background:var(--ok)}.dot.sheet{background:var(--warn)}.dot.planned{background:var(--planned)}
+.rail-foot{margin-top:auto;border-top:1px solid var(--border);padding:12px 16px;display:grid;gap:10px}
+.pwa{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12.5px}
+.pwa .dot{background:var(--ok)}
+.switch{display:flex;align-items:center;justify-content:space-between;width:100%;font-size:13.5px}
+.switch .track{width:34px;height:20px;border-radius:10px;background:var(--border-strong);position:relative;transition:background .15s}
+.switch .track::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.switch[aria-checked=true] .track{background:var(--accent)}
+.switch[aria-checked=true] .track::after{transform:translateX(14px)}
+.kbd{font:11.5px var(--mono);border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--surface2);color:var(--muted)}
+
+/* ---------- common blocks ---------- */
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:14px}
+.crumbs a{color:var(--muted)}
+.crumbs .sep{color:var(--border-strong)}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+.page-head p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.card.pad{padding:18px 20px}
+.section{margin-top:28px}
+.section>h2{margin-bottom:12px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
+.grid{display:grid;gap:12px}
+.grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid.auto{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.tile{display:flex;flex-direction:column;gap:6px;padding:16px 18px;color:var(--text);min-height:44px;transition:border-color .15s}
+.tile:hover{border-color:var(--accent);text-decoration:none}
+.tile h3{font-size:15px}
+.tile .meta{font-size:13px;color:var(--muted)}
+.tile .count{font:600 13px var(--mono);color:var(--accent)}
+.row-link{display:flex;align-items:center;gap:14px;padding:14px 18px;color:var(--text);border-bottom:1px solid var(--border);min-height:44px}
+.row-link:last-child{border-bottom:0}
+.row-link:hover{background:var(--surface2);text-decoration:none}
+.row-link .grow{flex:1;min-width:0}
+.row-link .sub{font-size:13px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;line-height:1;padding:4px 7px;border-radius:4px;border:1px solid var(--border);color:var(--muted);background:var(--surface2);vertical-align:middle;white-space:nowrap}
+.badge.verify{color:#8a5a00;border-color:#f3d28a;background:#fff6dd}
+[data-theme=dark] .badge.verify{color:#ffd57a;border-color:#6b4f00;background:#2d2300}
+.badge.low{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.badge.heat-cool{color:#1c7ed6;border-color:#a5d8ff;background:#e7f5ff}
+.badge.heat-warm{color:#b35c00;border-color:#ffd8a8;background:#fff4e6}
+.badge.heat-hot{color:#c92a2a;border-color:#ffc9c9;background:#fff5f5}
+[data-theme=dark] .badge.heat-cool{color:#74c0fc;border-color:#1864ab;background:#0b2a45}
+[data-theme=dark] .badge.heat-warm{color:#ffc078;border-color:#8a4b00;background:#2e1c00}
+[data-theme=dark] .badge.heat-hot{color:#ff8787;border-color:#9d1e1e;background:#3a0f0f}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;padding:8px 12px;border-bottom:1px solid var(--border)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.mono{white-space:nowrap}
+.term{border-bottom:1px dotted var(--accent);color:inherit;cursor:pointer;padding:2px 0}
+.term:hover{color:var(--accent)}
+.termchips{display:flex;flex-wrap:wrap;gap:6px}
+.termchips .term{border:1px solid var(--border);border-bottom:1px dotted var(--accent);border-radius:4px;padding:5px 8px;font-size:13px;background:var(--surface2);min-height:30px}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font-size:13.5px;font-weight:500}
+.btn:hover{border-color:var(--border-strong);text-decoration:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.btn svg{width:16px;height:16px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:5px;overflow:hidden}
+.seg button{min-height:34px;padding:0 12px;font-size:13.5px;border-right:1px solid var(--border);background:var(--surface)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.empty{padding:28px 20px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius)}
+.empty strong{display:block;color:var(--text);margin-bottom:4px}
+ul.bullets{margin:0;padding-left:20px}
+ul.bullets li{margin:4px 0}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 20px;margin-top:16px}
+.facts div span{display:block;font-size:12.5px;color:var(--muted)}
+.facts div b{font-weight:500;font-size:14px}
+
+/* search field */
+.search-field{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);padding:0 12px;min-height:46px}
+.search-field svg{width:18px;height:18px;color:var(--muted);flex:none}
+.search-field input{flex:1;min-width:0;border:0;background:none;font:inherit;color:inherit;outline:none;height:44px}
+.search-field .kbd{flex:none}
+.search-field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* home */
+.home-hero{max-width:720px;margin:12px auto 36px}
+.home-hero h1{font-size:28px;font-weight:600;letter-spacing:-.01em}
+.home-hero p{color:var(--muted);margin:6px 0 20px}
+.brand-tile{padding:16px 18px;color:var(--text);display:flex;flex-direction:column;gap:4px}
+.brand-tile .sub{font-size:13px;color:var(--muted)}
+.brand-tile .statusrow{display:flex;gap:10px;margin-top:6px;font-size:12.5px;color:var(--muted)}
+.recent-row{display:flex;gap:10px;flex-wrap:wrap}
+.chip-btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text);font-size:14px}
+.chip-btn:hover{border-color:var(--accent);text-decoration:none}
+
+/* machine page */
+.mhead{padding:22px 24px}
+.mhead .top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.mhead h1{font-size:26px}
+.mhead .aka{color:var(--muted);margin-top:2px}
+.doors{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:20px}
+.door{display:flex;flex-direction:column;justify-content:space-between;gap:10px;padding:16px;min-height:112px;color:var(--text)}
+.door:hover{border-color:var(--accent);text-decoration:none}
+.door .ico{width:22px;height:22px;color:var(--accent)}
+.door h3{font-size:15px}
+.door .meta{font-size:12.5px;color:var(--muted)}
+.door.off{opacity:.6}
+.strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
+.strip .sym{flex:0 0 260px;scroll-snap-align:start;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.strip .sym h3{font-size:14.5px}
+.strip .sym .note{font-size:13px;color:var(--muted);flex:1}
+.suspects{display:flex;flex-wrap:wrap;gap:6px}
+.suspects a{font:12.5px var(--mono);border:1px solid var(--border);border-radius:4px;padding:4px 7px;color:var(--accent);background:var(--surface2)}
+
+/* pinouts list */
+.chip-row{display:flex;gap:16px;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--border);color:var(--text)}
+.chip-row:last-child{border-bottom:0}
+.chip-row:hover{background:var(--surface2);text-decoration:none}
+.chip-row .pkg{flex:none;width:64px;font:600 12px var(--mono);color:var(--muted);text-align:center;border:1px solid var(--border);border-radius:4px;padding:6px 0;background:var(--surface2)}
+.chip-row .grow{flex:1;min-width:0}
+.chip-row .title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip-row .fails{font-size:13px;color:var(--muted);margin-top:4px}
+.chip-row.stub{color:var(--muted);cursor:default}
+.chip-row.stub:hover{background:none}
+
+/* chip page */
+.chip-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.legend button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid var(--border);border-radius:16px;font-size:12.5px;background:var(--surface);color:var(--text)}
+.legend button .sw{width:10px;height:10px;border-radius:2px}
+.legend button[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.legend.filtered button[aria-pressed=false]{opacity:.5}
+.diagram-wrap{overflow-x:auto;display:flex;justify-content:center;padding:8px 0}
+svg.dip{display:block;font-family:var(--mono);user-select:none;-webkit-user-select:none}
+svg.dip .body{fill:var(--surface2);stroke:var(--text);stroke-width:1.5}
+svg.dip .body.below{stroke-dasharray:6 4}
+svg.dip .notch{fill:var(--bg);stroke:var(--text);stroke-width:1.5}
+svg.dip .p1{fill:var(--text)}
+svg.dip .chipname{fill:var(--muted);font-size:11px;text-anchor:middle;letter-spacing:.08em}
+svg.dip .pin{cursor:pointer}
+svg.dip .hit{fill:transparent}
+svg.dip .pin:hover .hit{fill:var(--accent-soft)}
+svg.dip .pin.sel .hit{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg.dip .pin:focus-visible{outline:none}
+svg.dip .pin:focus-visible .hit{stroke:var(--accent);stroke-width:2}
+svg.dip .num{fill:var(--muted);font-size:10px}
+svg.dip .name{fill:var(--text);font-size:11.5px}
+svg.dip .pin.sel .name{font-weight:700;fill:var(--accent)}
+svg.dip .pin.dim{opacity:.22}
+svg.dip .caption{fill:var(--muted);font-size:11px;text-anchor:middle;font-family:var(--sans)}
+.pinlist td .sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin-right:8px}
+.pinlist tr{cursor:pointer}
+.pinlist tr:hover td{background:var(--surface2)}
+.pinlist tr.sel td{background:var(--accent-soft)}
+.pinlist td{min-height:44px;height:44px}
+.chip-about{margin-top:24px}
+
+/* inspector */
+.insp{padding:20px}
+.insp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.insp-head h2{font-size:13px;font-weight:600;color:var(--muted)}
+.insp-close{display:none;width:36px;height:36px;border-radius:5px;align-items:center;justify-content:center}
+.insp-close:hover{background:var(--surface2)}
+.pinhead{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.pinnum{width:48px;height:48px;border-radius:6px;display:grid;place-items:center;font:600 18px var(--mono);color:#fff;background:var(--c);flex:none}
+.pinname{font:600 20px var(--mono)}
+.probe{margin:14px 0;padding:10px 12px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 4px 4px 0;font-size:13.5px}
+.probe strong{display:block;font-size:12px;color:var(--accent);margin-bottom:2px}
+.insp h4{font-size:12.5px;color:var(--muted);margin:18px 0 8px;font-weight:600}
+.insp ul{margin:0;padding-left:18px}
+.insp ul li{margin:4px 0;font-size:14px}
+.pin-nav{display:flex;gap:8px;margin-top:20px}
+.pin-nav .btn{flex:1;justify-content:center}
+.insp .facts{grid-template-columns:1fr}
+
+/* bottom sheet (phone) */
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--border);border-radius:14px 14px 0 0;box-shadow:var(--shadow);max-height:78vh;overflow-y:auto;transform:translateY(100%);transition:transform .22s ease;touch-action:pan-y}
+#sheet.open{transform:translateY(0)}
+#sheet .handle{position:sticky;top:0;background:var(--surface);padding:10px 0 6px;display:flex;justify-content:center;cursor:grab;touch-action:none}
+#sheet .handle span{width:40px;height:4px;border-radius:2px;background:var(--border-strong)}
+#sheet .insp{padding-top:4px}
+#scrim{position:fixed;inset:0;background:rgba(10,12,14,.35);z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}
+#scrim.show{opacity:1;pointer-events:auto}
+
+/* popover */
+#popover{position:fixed;z-index:60;width:min(340px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:14px 16px}
+#popover h3{font-size:15px;margin-bottom:4px}
+#popover .short{color:var(--accent);font-size:13.5px;margin-bottom:6px}
+#popover .long{font-size:13.5px;margin:0}
+#popover .foot{margin-top:10px;font-size:13px}
+
+/* palette */
+#palette{position:fixed;inset:0;z-index:70;background:rgba(10,12,14,.4);display:flex;justify-content:center;align-items:flex-start;padding:10vh 12px 0}
+#palette[hidden]{display:none}
+.pal{width:min(640px,100%);background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;max-height:70vh;display:flex;flex-direction:column}
+.pal .search-field{border:0;border-bottom:1px solid var(--border);border-radius:0;min-height:52px}
+.pal .results{overflow-y:auto}
+.pal .group{padding:8px 0}
+.pal .group+.group{border-top:1px solid var(--border)}
+.pal .ghead{font-size:11.5px;font-weight:600;color:var(--muted);padding:4px 16px 4px}
+.pal .item{display:flex;align-items:center;gap:12px;padding:8px 16px;min-height:44px;cursor:pointer;color:var(--text)}
+.pal .item .t{font-weight:500}
+.pal .item .s{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pal .item .grow{min-width:0;flex:1}
+.pal .item .mono{font-size:12px;color:var(--muted)}
+.pal .item.active,.pal .item:hover{background:var(--accent-soft)}
+.pal .hint{padding:10px 16px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--border);display:flex;gap:14px}
+.pal .nothing{padding:24px 16px;color:var(--muted);text-align:center}
+
+/* search page */
+.results-page .group{margin-top:22px}
+.results-page .ghead{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px}
+
+/* quickref tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tabs button{min-height:40px;padding:0 14px;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+details.group{border-bottom:1px solid var(--border)}
+details.group:last-child{border-bottom:0}
+details.group summary{list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:46px;padding:0 18px;cursor:pointer;font-weight:500}
+details.group summary::-webkit-details-marker{display:none}
+details.group summary .chev{width:16px;height:16px;color:var(--muted);transition:transform .15s}
+details.group[open] summary .chev{transform:rotate(180deg)}
+details.group .items{display:flex;flex-wrap:wrap;gap:6px;padding:4px 18px 16px}
+details.group .items span{font:13px var(--mono);border:1px solid var(--border);border-radius:4px;padding:5px 8px;background:var(--surface2)}
+.quirks li{margin:6px 0}
+
+/* glossary */
+.gl{padding:14px 18px;border-bottom:1px solid var(--border)}
+.gl:last-child{border-bottom:0}
+.gl h3{font-size:15px}
+.gl .short{color:var(--accent);font-size:13.5px}
+.gl p{font-size:14px;margin:4px 0 0}
+
+/* ---------- tablet ---------- */
+@media (min-width:768px) and (max-width:1023px){
+  :root{--rail:64px}
+  #app{grid-template-columns:var(--rail) minmax(0,1fr)}
+  #main{padding:22px 22px 40px}
+  .brand{justify-content:center;padding:14px 0}
+  .brand div{display:none}
+  .rail-section{padding:6px}
+  .rail-item{justify-content:center;padding:0;min-height:44px}
+  .rail-item .label{display:none}
+  .rail-brand{justify-content:center;padding:0;min-height:40px}
+  .rail-brand .chev,.rail-brand .full{display:none}
+  .rail-brand .abbr{display:inline;font:600 12px var(--mono)}
+  .rail-machines{display:none}
+  .rail-foot{padding:10px 6px}
+  .pwa span.t{display:none}
+  .switch .label{display:none}
+  .switch{justify-content:center}
+  #inspector{position:fixed;top:0;right:0;bottom:0;width:min(380px,90vw);transform:translateX(100%);transition:transform .22s ease;z-index:40;box-shadow:none}
+  #inspector.open{transform:translateX(0);box-shadow:var(--shadow)}
+  .insp-close{display:inline-flex}
+  .doors{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* ---------- phone ---------- */
+@media (max-width:767px){
+  #app{grid-template-columns:minmax(0,1fr)}
+  #rail,#inspector{display:none}
+  #main{padding:16px 16px calc(80px + env(safe-area-inset-bottom))}
+  #tabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom)}
+  #tabs a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;font-size:11px;color:var(--muted)}
+  #tabs a svg{width:22px;height:22px}
+  #tabs a.active{color:var(--accent)}
+  #tabs a.disabled{opacity:.4;pointer-events:none}
+  .home-hero h1{font-size:24px}
+  .doors{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.cols-2,.grid.cols-3{grid-template-columns:1fr}
+  .page-head{flex-direction:column}
+  .mhead .top{flex-direction:column}
+  .facts{grid-template-columns:1fr 1fr}
+  table.t th,table.t td{padding:8px 10px}
+  .chip-row .pkg{display:none}
+  .pinlist th:nth-child(5),.pinlist td:nth-child(5){display:none}
+  .card.pad{padding:14px 16px}
+}
+.only-desktop,.only-tablet{display:none}
+@media (min-width:1024px){.only-desktop{display:inline-flex}}
+@media (min-width:768px) and (max-width:1023px){.only-tablet{display:inline-flex}}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="rail" aria-label="Machines"></nav>
+  <main id="main"></main>
+  <aside id="inspector" aria-label="Inspector"></aside>
+  <nav id="tabs" aria-label="Sections"></nav>
+</div>
+<div id="scrim"></div>
+<div id="sheet" role="dialog" aria-label="Pin detail"></div>
+<div id="popover" role="dialog" hidden></div>
+<div id="palette" hidden>
+  <div class="pal" role="dialog" aria-label="Search">
+    <label class="search-field">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="pal-input" type="search" placeholder="Search chips, pins, BASIC, keys, terms" autocomplete="off" spellcheck="false">
+      <span class="kbd">Esc</span>
+    </label>
+    <div class="results" id="pal-results"></div>
+    <div class="hint"><span><span class="kbd">↑↓</span> move</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">/</span> or <span class="kbd">Ctrl K</span> from anywhere</span></div>
+  </div>
+</div>
+
+<script src="../shared/data.js"></script>
+<script>
+(() => {
+'use strict';
+const D = window.RCS;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const DIR = { in: 'Input', out: 'Output', bidir: 'Bidirectional', '-': 'Supply / passive' };
+const STATUS = { ready: 'Ready', sheet: 'Cheat sheet only', planned: 'Planned' };
+const HEAT = { cool: 'Runs cool', warm: 'Runs warm', hot: 'Runs hot' };
+const ABBR = { commodore: 'C=', apple: 'Ap', atari: 'At', coleco: 'Cv', sinclair: 'ZX', ti: 'TI', tandy: 'TR' };
+
+const ICON = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  chip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="6" width="12" height="12" rx="1.5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7a2 2 0 0 1 2 2v14a1 1 0 0 0-1-1H4zM20 4h-7a2 2 0 0 0-2 2v14a1 1 0 0 1 1-1h8z"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>',
+  plug: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3v5M15 3v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v3"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2 21h20zM12 10v5M12 18v.5"/></svg>',
+  chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>',
+  close: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  flip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 8l5 4-5 4zM21 8l-5 4 5 4z"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4h6l-1 6 3 3v2H7v-2l3-3zM12 15v6"/></svg>',
+};
+
+/* ---------- state ---------- */
+const state = {
+  theme: LS.get('rcs-theme', null),
+  recents: LS.get('rcs-recent', []),
+  pinned: LS.get('rcs-pinned', []),
+  collapsed: LS.get('rcs-collapsed', {}),
+  flip: false, view: 'diagram', filter: null, pin: null, chipId: null, qtab: 'keys',
+  ctx: {}, palItems: [], palIdx: 0,
+};
+
+/* ---------- theme ---------- */
+const mq = matchMedia('(prefers-color-scheme: dark)');
+function effectiveTheme() { return state.theme || (mq.matches ? 'dark' : 'light'); }
+function applyTheme() { document.documentElement.dataset.theme = effectiveTheme(); }
+mq.addEventListener('change', () => { if (!state.theme) { applyTheme(); renderRail(); } });
+applyTheme();
+
+/* ---------- helpers ---------- */
+const brandOf = m => D.brands.find(b => b.id === m.brand);
+const mPath = m => `#/${m.brand}/${m.id}`;
+const chipPath = (m, c) => `${mPath(m)}/chip/${c.id}`;
+const verifyBadge = () => '<span class="badge verify" title="Reconstructed data; check against a datasheet">verify</span>';
+const heatBadge = h => h ? `<span class="badge heat-${h}">${HEAT[h]}</span>` : '';
+const statusHTML = s => `<span class="status"><span class="dot ${s}"></span>${STATUS[s]}</span>`;
+const termChips = (ids, title = 'Related terms') => {
+  const ts = (ids || []).map(id => D.terms[id]).filter(Boolean);
+  if (!ts.length) return '';
+  return `<h4>${title}</h4><div class="termchips">${(ids || []).filter(id => D.terms[id]).map(id => `<button class="term" data-term="${id}">${esc(D.terms[id].term)}</button>`).join('')}</div>`;
+};
+/* Plus/4 shares C16 data; other stubs have none */
+function dataFor(table, m) {
+  if (table[m.id]) return { data: table[m.id], shared: null };
+  if (m.id === 'plus4' && table.c16) return { data: table.c16, shared: D.machines.c16 };
+  return { data: null, shared: null };
+}
+function sharedNote(shared) {
+  return shared ? `<p class="small muted">Shown from the ${esc(shared.name)} sheet; the 264 series shares this data.</p>` : '';
+}
+function touchRecent(id) {
+  const r = [id, ...state.recents.filter(x => x !== id)].slice(0, 6);
+  if (r.join() !== state.recents.join()) { state.recents = r; LS.set('rcs-recent', r); }
+}
+function currentMachine() {
+  return state.ctx.machine || D.machines[state.recents[0]] || null;
+}
+function crumbs(parts) {
+  return `<nav class="crumbs">${parts.map((p, i) => (i ? '<span class="sep">/</span>' : '') + (p.href ? `<a href="${p.href}">${esc(p.label)}</a>` : `<span>${esc(p.label)}</span>`)).join('')}</nav>`;
+}
+
+/* ---------- search index ---------- */
+let INDEX = null;
+function buildIndex() {
+  const ix = [];
+  for (const m of Object.values(D.machines)) {
+    ix.push({ group: 'Machines', title: m.name, sub: [m.aka, m.cpu, STATUS[m.status]].filter(Boolean).join(' - '), keys: `${m.id} ${m.aka || ''} ${brandOf(m).name}`, href: mPath(m) });
+  }
+  for (const c of Object.values(D.chips)) {
+    const ms = c.machines.map(id => D.machines[id]).filter(Boolean);
+    const home = ms.find(m => m.status === 'ready') || ms[0];
+    if (!home) continue;
+    ix.push({ group: 'Chips', title: c.name, sub: `${c.role} - ${c.pkg} - ${ms.map(m => m.name).join(', ')}`, keys: `${c.short} ${c.family || ''} ${c.role}`, href: c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`, tag: c.pins ? '' : 'not captured' });
+    if (c.pins) for (const p of c.pins) {
+      ix.push({ group: 'Pins', title: `${c.short} pin ${p.n}  ${p.name}`, sub: `${home.name} - ${p.desc}`, keys: `pin ${p.n} ${p.name} ${p.name.replace('/', '')} ${c.short} ${c.name}`, href: `${chipPath(home, c)}?pin=${p.n}`, mono: p.name });
+    }
+  }
+  for (const [id, q] of Object.entries(D.quickref)) {
+    const m = D.machines[id];
+    for (const e of q.basic.essentials) ix.push({ group: 'BASIC', title: e.cmd, sub: `${m.name} - ${e.does}`, keys: q.basic.dialect, href: `${mPath(m)}/quickref?tab=basic` });
+    for (const g of q.basic.groups) for (const it of g.items) ix.push({ group: 'BASIC', title: it, sub: `${m.name} - ${g.group}`, keys: q.basic.dialect, href: `${mPath(m)}/quickref?tab=basic` });
+    for (const k of q.keys) ix.push({ group: 'Keys', title: k.keys, sub: `${m.name} - ${k.does}`, keys: '', href: `${mPath(m)}/quickref?tab=keys` });
+    for (const r of q.memory) ix.push({ group: 'Memory', title: `${r.range}  ${r.what}`, sub: m.name, keys: r.what, href: `${mPath(m)}/quickref?tab=memory`, mono: r.range });
+  }
+  for (const [id, t] of Object.entries(D.terms)) ix.push({ group: 'Glossary', title: t.term, sub: t.short, keys: id + ' ' + t.long, href: `#/glossary?term=${id}`, term: id });
+  for (const [mid, list] of Object.entries(D.connectors)) {
+    const m = D.machines[mid];
+    for (const c of list) ix.push({ group: 'Connectors', title: c.name, sub: `${m.name} - ${c.kind}`, keys: c.pins.map(p => p.name).join(' '), href: `${mPath(m)}/ports` });
+  }
+  ix.push({ group: 'Pages', title: 'Glossary', sub: 'All terms', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'External links', href: '#/resources' });
+  INDEX = ix;
+}
+const GROUP_ORDER = ['Machines', 'Chips', 'Pins', 'BASIC', 'Keys', 'Memory', 'Glossary', 'Connectors', 'Pages'];
+function search(q, perGroup = 6) {
+  q = q.trim().toLowerCase();
+  if (!q) return [];
+  if (!INDEX) buildIndex();
+  const hits = [];
+  for (const it of INDEX) {
+    const t = it.title.toLowerCase(), k = (it.keys || '').toLowerCase(), s = (it.sub || '').toLowerCase();
+    let score = 0;
+    if (t === q) score = 100; else if (t.startsWith(q)) score = 80; else if (t.includes(q)) score = 60;
+    else if (k.includes(q)) score = 40; else if (s.includes(q)) score = 20;
+    if (score) hits.push({ ...it, score });
+  }
+  hits.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
+  const groups = new Map();
+  for (const h of hits) { if (!groups.has(h.group)) groups.set(h.group, []); const g = groups.get(h.group); if (g.length < perGroup) g.push(h); }
+  return GROUP_ORDER.filter(g => groups.has(g)).map(g => ({ group: g, items: groups.get(g) }));
+}
+
+/* ---------- router ---------- */
+function parseHash() {
+  const h = location.hash.replace(/^#/, '') || '/';
+  const [path, qs = ''] = h.split('?');
+  return { path, segs: path.split('/').filter(Boolean), q: Object.fromEntries(new URLSearchParams(qs)) };
+}
+function render() {
+  const r = parseHash();
+  const [a, b, c, d] = r.segs;
+  const ctx = { route: r };
+  let html;
+  if (!a) html = viewHome();
+  else if (a === 'search') html = viewSearch(r.q.q || '');
+  else if (a === 'resources') html = viewResources();
+  else if (a === 'glossary') html = viewGlossary(r.q.term);
+  else if (a === 'more') html = viewMore();
+  else {
+    const brand = D.brands.find(x => x.id === a);
+    const m = brand && D.machines[b];
+    if (!brand) html = viewNotFound();
+    else if (!b) { ctx.brand = brand; html = viewBrand(brand); }
+    else if (!m || m.brand !== brand.id) html = viewNotFound();
+    else {
+      ctx.brand = brand; ctx.machine = m; touchRecent(m.id);
+      if (!c) html = viewMachine(brand, m);
+      else if (c === 'pinouts') html = viewPinouts(brand, m);
+      else if (c === 'quickref') { if (r.q.tab) state.qtab = r.q.tab; html = viewQuickref(brand, m); }
+      else if (c === 'ports') html = viewPorts(brand, m);
+      else if (c === 'power') html = viewPower(brand, m);
+      else if (c === 'chip' && D.chips[d] && D.chips[d].pins) {
+        const chip = D.chips[d]; ctx.chip = chip;
+        if (state.chipId !== chip.id) { state.chipId = chip.id; state.pin = null; state.filter = null; state.flip = false; }
+        if (r.q.pin) state.pin = Number(r.q.pin);
+        html = viewChip(brand, m, chip);
+      } else html = viewNotFound();
+    }
+  }
+  if (!ctx.chip) { state.chipId = null; state.pin = null; }
+  state.ctx = ctx;
+  $('#main').innerHTML = html;
+  renderRail(); renderTabs(); renderInspector();
+  closePopover();
+  if (!ctx.chip) closeSheet();
+  if (ctx.chip && state.pin != null) openPinPanels(); else { $('#inspector').classList.remove('open'); }
+  window.scrollTo(0, 0);
+  document.title = ctx.chip ? `${ctx.chip.short} pinout - Retro Bench` : ctx.machine ? `${ctx.machine.name} - Retro Bench` : 'Retro Bench';
+}
+
+/* ---------- rail / tabs ---------- */
+function renderRail() {
+  const r = parseHash(); const [a, b] = r.segs;
+  const dark = effectiveTheme() === 'dark';
+  const tree = D.brands.map(br => {
+    const open = !state.collapsed[br.id];
+    return `<div>
+      <button class="rail-brand" data-act="collapse" data-id="${br.id}" aria-expanded="${open}">
+        <span class="full">${esc(br.name)}</span><span class="abbr" title="${esc(br.name)}">${ABBR[br.id] || esc(br.name.slice(0, 2))}</span>${ICON.chev}
+      </button>
+      ${open ? `<ul class="rail-machines">${br.machines.map(id => { const m = D.machines[id]; return `<li><a class="rail-item${b === id ? ' active' : ''}" href="${mPath(m)}"><span class="dot ${m.status}"></span><span class="label">${esc(m.name)}</span></a></li>`; }).join('')}</ul>` : ''}
+    </div>`;
+  }).join('');
+  $('#rail').innerHTML = `
+    <a class="brand" href="#/"><span class="mark">RB</span><div><b>Retro Bench</b><span class="small">8-bit repair reference</span></div></a>
+    <div class="rail-section">
+      <a class="rail-item${!a ? ' active' : ''}" href="#/"><span class="ico">${ICON.home}</span><span class="label">Home</span></a>
+      <button class="rail-item" data-act="palette"><span class="ico">${ICON.search}</span><span class="label">Search</span><span class="kbd label" style="margin-left:auto">Ctrl K</span></button>
+    </div>
+    <div class="rail-section">${tree}</div>
+    <div class="rail-section">
+      <a class="rail-item${a === 'glossary' ? ' active' : ''}" href="#/glossary"><span class="ico">${ICON.book}</span><span class="label">Glossary</span></a>
+      <a class="rail-item${a === 'resources' ? ' active' : ''}" href="#/resources"><span class="ico">${ICON.link}</span><span class="label">Resources</span></a>
+    </div>
+    <div class="rail-foot">
+      <button class="switch" role="switch" aria-checked="${dark}" data-act="theme" title="Dark mode"><span class="label">Dark mode</span><span class="track"></span></button>
+      <div class="pwa" title="Mock PWA status"><span class="dot"></span><span class="t">Installed &middot; works offline</span></div>
+    </div>`;
+}
+function renderTabs() {
+  const r = parseHash(); const [a, , c] = r.segs;
+  const m = currentMachine();
+  const tab = (href, icon, label, active, disabled) => `<a href="${href}" class="${active ? 'active' : ''}${disabled ? ' disabled' : ''}"${disabled ? ' aria-disabled="true"' : ''}>${icon}<span>${label}</span></a>`;
+  $('#tabs').innerHTML =
+    tab('#/', ICON.home, 'Home', !a || (a !== 'search' && a !== 'more' && c !== 'pinouts' && c !== 'chip' && c !== 'quickref')) +
+    tab(m ? `${mPath(m)}/pinouts` : '#/', ICON.chip, 'Pinouts', c === 'pinouts' || c === 'chip', !m) +
+    tab(m ? `${mPath(m)}/quickref` : '#/', ICON.book, 'Quick ref', c === 'quickref', !m) +
+    tab('#/search', ICON.search, 'Search', a === 'search') +
+    tab('#/more', ICON.more, 'More', a === 'more' || a === 'glossary' || a === 'resources');
+}
+
+/* ---------- views ---------- */
+function searchField(value = '', id = 'home-search') {
+  return `<form class="search-field" data-act="search-form"><span>${ICON.search}</span><input id="${id}" type="search" placeholder="Search chips, pins, BASIC, keys, terms" value="${esc(value)}" autocomplete="off"><span class="kbd only-desktop">/</span></form>`;
+}
+function viewHome() {
+  const recents = state.recents.map(id => D.machines[id]).filter(Boolean);
+  const pinned = state.pinned.map(id => D.machines[id]).filter(Boolean);
+  const chipBtn = m => `<a class="chip-btn" href="${mPath(m)}"><span class="dot ${m.status}"></span>${esc(m.name)}</a>`;
+  return `
+    <div class="home-hero">
+      <h1>What is on the bench?</h1>
+      <p>Pinouts, quick reference and test points for 8-bit machines. Pick a brand or search for a chip, a pin or a command.</p>
+      ${searchField()}
+    </div>
+    ${pinned.length ? `<div class="section"><h2>Pinned</h2><div class="recent-row">${pinned.map(chipBtn).join('')}</div></div>` : ''}
+    ${recents.length ? `<div class="section"><h2>Recent</h2><div class="recent-row">${recents.map(chipBtn).join('')}</div></div>` : ''}
+    <div class="section">
+      <h2>Brands</h2>
+      <div class="grid auto">${D.brands.map(br => {
+        const ms = br.machines.map(id => D.machines[id]);
+        const ready = ms.filter(m => m.status === 'ready').length, sheet = ms.filter(m => m.status === 'sheet').length;
+        return `<a class="card brand-tile" href="#/${br.id}"><h3>${esc(br.name)}</h3><span class="sub">${esc(br.blurb)}</span>
+          <span class="statusrow">${ready ? `<span><span class="dot ready"></span> ${ready} ready</span>` : ''}${sheet ? `<span><span class="dot sheet"></span> ${sheet} sheet</span>` : ''}${ms.length - ready - sheet ? `<span><span class="dot planned"></span> ${ms.length - ready - sheet} planned</span>` : ''}</span></a>`;
+      }).join('')}</div>
+    </div>
+    <p class="small muted" style="margin-top:32px">Press <span class="kbd">/</span> anywhere to search. <span class="dot ready" style="margin-left:8px"></span> Installed &middot; works offline.</p>`;
+}
+function viewBrand(br) {
+  return `${crumbs([{ label: 'Home', href: '#/' }, { label: br.name }])}
+    <div class="page-head"><div><h1>${esc(br.name)}</h1><p>${esc(br.blurb)}</p></div></div>
+    <div class="card">${br.machines.map(id => {
+      const m = D.machines[id];
+      return `<a class="row-link" href="${mPath(m)}"><span class="dot ${m.status}"></span><div class="grow"><div><b>${esc(m.name)}</b> <span class="muted small">${m.year || ''}${m.aka ? ' - ' + esc(m.aka) : ''}</span></div><div class="sub">${esc(m.tagline || '')}${m.cpu ? ' - ' + esc(m.cpu) : ''}</div></div><span class="small muted">${STATUS[m.status]}</span></a>`;
+    }).join('')}</div>
+    <p class="small muted" style="margin-top:14px"><span class="dot ready"></span> Ready: full pinouts and quick reference. <span class="dot sheet" style="margin-left:8px"></span> Sheet: cheat sheet exists, not yet in the app. <span class="dot planned" style="margin-left:8px"></span> Planned.</p>`;
+}
+function viewMachine(br, m) {
+  const chips = (m.chips || []).map(id => D.chips[id]).filter(Boolean);
+  const captured = chips.filter(c => c.pins).length;
+  const qr = dataFor(D.quickref, m), sy = dataFor(D.symptoms, m), cn = dataFor(D.connectors, m), pw = dataFor(D.power, m);
+  const pinnedNow = state.pinned.includes(m.id);
+  const door = (href, icon, title, meta, off) => `<a class="card door${off ? ' off' : ''}" href="${href}"><span class="ico">${icon}</span><div><h3>${title}</h3><div class="meta">${meta}</div></div></a>`;
+  const facts = [['CPU', m.cpu], ['RAM', m.ram], ['ROM', m.rom], ['Video', m.video], ['Sound', m.sound], ['Software', m.os]].filter(f => f[1]);
+  return `${crumbs([{ label: 'Home', href: '#/' }, { label: br.name, href: '#/' + br.id }, { label: m.name }])}
+    <div class="card mhead">
+      <div class="top">
+        <div><h1>${esc(m.name)}</h1><div class="aka">${esc(m.aka || '')}${m.year ? (m.aka ? ' - ' : '') + m.year : ''}</div><p style="margin-top:8px">${esc(m.tagline || '')}</p></div>
+        <div style="display:flex;gap:8px;align-items:center;flex:none">${statusHTML(m.status)}<button class="btn" data-act="pin-machine" data-id="${m.id}" aria-pressed="${pinnedNow}">${ICON.pin}${pinnedNow ? 'Pinned' : 'Pin'}</button></div>
+      </div>
+      ${facts.length ? `<div class="facts">${facts.map(f => `<div><span>${f[0]}</span><b>${esc(f[1])}</b></div>`).join('')}</div>` : ''}
+    </div>
+    <div class="doors">
+      ${door(`${mPath(m)}/pinouts`, ICON.chip, 'Pinouts', chips.length ? `${captured} of ${chips.length} chips drawn` : 'No chips captured yet', !chips.length)}
+      ${door(`${mPath(m)}/quickref`, ICON.book, 'Quick reference', qr.data ? 'Keys, BASIC, memory map' : 'Not captured yet', !qr.data)}
+      ${door(`${mPath(m)}/ports`, ICON.plug, 'Ports', cn.data ? `${cn.data.length} connectors` : 'Not captured yet', !cn.data)}
+      ${door(`${mPath(m)}/power`, ICON.bolt, 'Power and test points', pw.data ? `${pw.data.rails.length} rails, ${pw.data.testPoints.length} test points` : 'Not captured yet', !pw.data)}
+      ${door('#faults', ICON.warn, 'Common faults', sy.data ? `${sy.data.length} symptoms` : 'Not captured yet', !sy.data)}
+    </div>
+    ${qr.data ? `<div class="section"><h2>First look</h2><div class="card pad"><ul class="bullets">${qr.data.firstLook.map(b => `<li>${esc(b)}</li>`).join('')}</ul>${sharedNote(qr.shared)}</div></div>` : ''}
+    <div class="section" id="faults"><div class="section-head"><h2>Common faults</h2>${sy.data ? `<span class="small muted">Tap a suspect to open its pinout</span>` : ''}</div>
+      ${sy.data ? `<div class="strip">${sy.data.map(s => `<div class="card sym"><h3>${esc(s.symptom)}</h3><div class="suspects">${s.suspects.map(id => { const c = D.chips[id]; return c ? (c.pins ? `<a href="${chipPath(m, c)}">${esc(c.short)}</a>` : `<a href="${mPath(m)}/pinouts">${esc(c.short)}</a>`) : ''; }).join('')}</div><div class="note">${esc(s.note)}</div></div>`).join('')}</div>${sharedNote(sy.shared)}`
+      : `<div class="empty"><strong>No fault table yet</strong>This machine has a cheat sheet but the symptom table has not been captured.</div>`}
+    </div>`;
+}
+function viewPinouts(br, m) {
+  const chips = (m.chips || []).map(id => D.chips[id]).filter(Boolean);
+  return `${crumbs([{ label: 'Home', href: '#/' }, { label: br.name, href: '#/' + br.id }, { label: m.name, href: mPath(m) }, { label: 'Pinouts' }])}
+    <div class="page-head"><div><h1>Pinouts</h1><p>${esc(m.name)}. Chips are listed hottest first; tap one for the drawing.</p></div></div>
+    ${chips.length ? `<div class="card">${[...chips].sort((a, b) => ({ hot: 0, warm: 1, cool: 2 }[a.heat] ?? 3) - ({ hot: 0, warm: 1, cool: 2 }[b.heat] ?? 3)).map(c => {
+      const loc = c.location && c.location[m.id];
+      const inner = `<span class="pkg">${esc(c.pkg)}</span><div class="grow"><div class="title"><b>${esc(c.name)}</b>${heatBadge(c.heat)}${c.verify ? verifyBadge() : ''}${c.pins ? '' : '<span class="badge">Pinout not captured yet</span>'}</div><div class="small muted">${esc(c.role)}${loc ? ' - ' + esc(loc) : ''}</div><div class="fails">Fails as: ${esc((c.fails || []).join('; '))}</div></div>`;
+      return c.pins ? `<a class="chip-row" href="${chipPath(m, c)}">${inner}</a>` : `<div class="chip-row stub">${inner}</div>`;
+    }).join('')}</div>`
+    : `<div class="empty"><strong>No chips captured yet</strong>The ${esc(m.name)} cheat sheet exists but its chips have not been entered.</div>`}`;
+}
+function chipSVG(chip) {
+  const pins = chip.pins, n = pins.length, half = n / 2;
+  const PT = 32, NL = 92, SL = 22, BW = 128, TOP = 44, BOT = state.flip ? 40 : 24;
+  const W = 2 * (NL + SL) + BW, H = TOP + half * PT + BOT;
+  const bodyX = NL + SL, bodyY = TOP - 12, bodyH = half * PT + 24, cy = bodyY + bodyH / 2;
+  let g = '';
+  pins.forEach((p, i) => {
+    const leftNormally = i < half;
+    const row = leftNormally ? i : n - 1 - i;
+    const left = state.flip ? !leftNormally : leftNormally;
+    const y = TOP + row * PT + PT / 2;
+    const dim = state.filter && p.type !== state.filter;
+    const sel = state.pin === p.n;
+    g += `<g class="pin${dim ? ' dim' : ''}${sel ? ' sel' : ''}" data-pin="${p.n}" tabindex="0" role="button" aria-label="Pin ${p.n} ${esc(p.name)}" aria-pressed="${sel}">
+      <rect class="hit" x="${left ? 0 : W - NL - SL}" y="${y - PT / 2}" width="${NL + SL}" height="${PT}" rx="4"/>
+      <rect class="stub" x="${left ? NL : W - NL - SL}" y="${y - 5}" width="${SL}" height="10" fill="var(--pt-${p.type})"/>
+      <text class="num" x="${left ? bodyX + 8 : W - bodyX - 8}" y="${y + 3.5}" text-anchor="${left ? 'start' : 'end'}">${p.n}</text>
+      <text class="name" x="${left ? NL - 6 : W - NL + 6}" y="${y + 4}" text-anchor="${left ? 'end' : 'start'}">${esc(p.name)}</text>
+    </g>`;
+  });
+  const p1x = state.flip ? W - bodyX - 30 : bodyX + 30;
+  return `<svg class="dip" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(chip.name)} ${esc(chip.pkg)} pinout, ${state.flip ? 'viewed from below' : 'top view'}">
+    <rect class="body${state.flip ? ' below' : ''}" x="${bodyX}" y="${bodyY}" width="${BW}" height="${bodyH}" rx="3"/>
+    <path class="notch" d="M ${W / 2 - 11} ${bodyY} A 11 11 0 0 0 ${W / 2 + 11} ${bodyY}"/>
+    <circle class="p1" cx="${p1x}" cy="${TOP + PT / 2}" r="3"/>
+    <text class="chipname" transform="rotate(-90 ${W / 2} ${cy})" x="${W / 2}" y="${cy + 4}">${esc(chip.short)}  ${esc(chip.pkg)}</text>
+    ${g}
+    <text class="caption" x="${W / 2}" y="${H - 8}">${state.flip ? 'Viewed from below - pins toward you, notch still up' : 'Top view - notch up, pin 1 top left'}</text>
+  </svg>`;
+}
+function pinList(chip) {
+  return `<div class="card"><table class="t pinlist"><thead><tr><th>Pin</th><th>Name</th><th>Type</th><th>Dir</th><th>Description</th></tr></thead><tbody>${chip.pins.map(p => {
+    const dim = state.filter && p.type !== state.filter;
+    return `<tr data-pin="${p.n}" tabindex="0" class="${state.pin === p.n ? 'sel' : ''}" style="${dim ? 'opacity:.35' : ''}"><td class="mono">${p.n}</td><td class="mono"><b>${esc(p.name)}</b>${p.activeLow ? ' <span class="badge low">low</span>' : ''}</td><td><span class="sw" style="background:var(--pt-${p.type})"></span>${D.pinTypes[p.type].label}</td><td class="small muted">${esc(DIR[p.dir])}</td><td class="small">${esc(p.desc)}</td></tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+function viewChip(br, m, chip) {
+  const types = [...new Set(chip.pins.map(p => p.type))];
+  const loc = chip.location && chip.location[m.id];
+  return `${crumbs([{ label: 'Home', href: '#/' }, { label: br.name, href: '#/' + br.id }, { label: m.name, href: mPath(m) }, { label: 'Pinouts', href: mPath(m) + '/pinouts' }, { label: chip.short }])}
+    <div class="page-head"><div><h1>${esc(chip.name)}</h1><p>${esc(chip.role)} - ${esc(chip.pkg)}${loc ? ' - ' + esc(loc) + ' on the ' + esc(m.name) : ''}</p></div>
+      <div style="display:flex;gap:8px;flex:none;align-items:center">${heatBadge(chip.heat)}${chip.verify ? verifyBadge() : ''}<button class="btn only-tablet" data-act="open-inspector">Details</button></div></div>
+    <div class="chip-tools">
+      <div class="seg" role="group" aria-label="View"><button data-act="view" data-v="diagram" aria-pressed="${state.view === 'diagram'}">Diagram</button><button data-act="view" data-v="list" aria-pressed="${state.view === 'list'}">List</button></div>
+      <button class="btn" data-act="flip" aria-pressed="${state.flip}">${ICON.flip}${state.flip ? 'Viewing from below' : 'Flip - view from below'}</button>
+      ${state.filter ? `<button class="btn" data-act="filter" data-t="">Clear filter</button>` : ''}
+      <span class="small muted" style="margin-left:auto">Tap a pin for detail</span>
+    </div>
+    <div class="legend${state.filter ? ' filtered' : ''}" role="group" aria-label="Pin types - tap to filter">${types.map(t => `<button data-act="filter" data-t="${t}" aria-pressed="${state.filter === t}"><span class="sw" style="background:var(--pt-${t})"></span>${D.pinTypes[t].label}<span class="muted">${chip.pins.filter(p => p.type === t).length}</span></button>`).join('')}</div>
+    ${state.view === 'diagram' ? `<div class="card diagram-wrap" id="diagram">${chipSVG(chip)}</div>` : pinList(chip)}
+    <div class="chip-about card pad">
+      <h2>About this chip</h2>
+      <p style="margin-top:8px">${esc(chip.summary)}</p>
+      <div class="grid cols-2" style="margin-top:12px">
+        <div><h4 class="small muted" style="margin:0 0 6px">Fails as</h4><ul class="bullets">${chip.fails.map(f => `<li>${esc(f)}</li>`).join('')}</ul></div>
+        <div><h4 class="small muted" style="margin:0 0 6px">Fitted in</h4><ul class="bullets">${chip.machines.map(id => D.machines[id]).filter(Boolean).map(mm => `<li><a href="${chipPath(mm, chip)}">${esc(mm.name)}</a>${chip.location && chip.location[mm.id] ? ` <span class="muted small">${esc(chip.location[mm.id])}</span>` : ''}</li>`).join('')}</ul></div>
+      </div>
+      ${datasheets(chip)}
+    </div>`;
+}
+function datasheets(chip) {
+  if (!chip.datasheets || !chip.datasheets.length) return '';
+  return `<h4>Datasheets</h4><ul>${chip.datasheets.map(d => `<li><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a> ${d.verify ? verifyBadge() : ''}</li>`).join('')}</ul>${chip.verifiedAgainst ? `<p class="small muted" style="margin-top:8px">Checked against: ${esc(chip.verifiedAgainst)}</p>` : ''}`;
+}
+function viewQuickref(br, m) {
+  const { data: q, shared } = dataFor(D.quickref, m);
+  const head = `${crumbs([{ label: 'Home', href: '#/' }, { label: br.name, href: '#/' + br.id }, { label: m.name, href: mPath(m) }, { label: 'Quick reference' }])}
+    <div class="page-head"><div><h1>Quick reference</h1><p>${esc(m.name)}${q ? ' - ' + esc(q.basic.dialect) : ''}</p></div></div>`;
+  if (!q) return head + `<div class="empty"><strong>Not captured yet</strong>The ${esc(m.name)} has a cheat sheet in the repo but its keys, BASIC and memory map are not in the app.</div>`;
+  const tab = state.qtab in { keys: 1, basic: 1, memory: 1 } ? state.qtab : 'keys';
+  const tabs = `<div class="tabs" role="tablist">${[['keys', 'Keys'], ['basic', 'BASIC'], ['memory', 'Memory']].map(([id, l]) => `<button role="tab" data-act="qtab" data-t="${id}" aria-selected="${tab === id}">${l}</button>`).join('')}</div>`;
+  let body = '';
+  if (tab === 'keys') body = `<div class="card"><table class="t"><thead><tr><th style="width:34%">Keys</th><th>Does</th></tr></thead><tbody>${q.keys.map(k => `<tr><td class="mono" style="white-space:normal">${esc(k.keys)}</td><td>${esc(k.does)} ${k.verify ? verifyBadge() : ''}</td></tr>`).join('')}</tbody></table></div>`;
+  else if (tab === 'basic') body = `
+    <h2 style="margin-bottom:10px">Essentials</h2>
+    <div class="card"><table class="t"><thead><tr><th style="width:40%">Command</th><th>Does</th></tr></thead><tbody>${q.basic.essentials.map(e => `<tr><td class="mono" style="white-space:normal">${esc(e.cmd)}</td><td>${esc(e.does)} ${e.verify ? verifyBadge() : ''}</td></tr>`).join('')}</tbody></table></div>
+    <div class="section"><h2>Everything else</h2><div class="card">${q.basic.groups.map(g => `<details class="group"><summary>${esc(g.group)}<span style="display:flex;align-items:center;gap:10px"><span class="small muted">${g.items.length}</span>${ICON.chev}</span></summary><div class="items">${g.items.map(i => `<span>${esc(i)}</span>`).join('')}</div></details>`).join('')}</div></div>
+    <div class="section"><h2>Quirks</h2><div class="card pad"><ul class="bullets quirks">${q.basic.quirks.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
+  else body = `<div class="card"><table class="t"><thead><tr><th style="width:34%">Range</th><th>What</th></tr></thead><tbody>${q.memory.map(r => `<tr><td class="mono">${esc(r.range)}</td><td>${esc(r.what)}</td></tr>`).join('')}</tbody></table></div>`;
+  return head + tabs + body + sharedNote(shared);
+}
+function viewPorts(br, m) {
+  const { data: list, shared } = dataFor(D.connectors, m);
+  const head = `${crumbs([{ label: 'Home', href: '#/' }, { label: br.name, href: '#/' + br.id }, { label: m.name, href: mPath(m) }, { label: 'Ports' }])}
+    <div class="page-head"><div><h1>Ports and connectors</h1><p>${esc(m.name)}. Pin numbers follow the connector's own convention; "?" means the sheet did not record it.</p></div></div>`;
+  if (!list) return head + `<div class="empty"><strong>Not captured yet</strong>No connector pinouts for the ${esc(m.name)} in the app.</div>`;
+  return head + `<div class="grid cols-2">${list.map(c => `<div class="card pad">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><h3>${esc(c.name)}</h3><span class="badge">${esc(c.kind)}</span>${c.verify ? verifyBadge() : ''}</div>
+      <p class="small" style="margin:8px 0 10px">${esc(c.summary)}</p>
+      <table class="t"><tbody>${c.pins.map(p => `<tr><td class="mono muted" style="width:52px">${esc(p.n)}</td><td class="mono"><b>${esc(p.name)}</b></td><td class="small muted">${esc(p.desc || '')}</td></tr>`).join('')}</tbody></table>
+      ${termChips(c.terms)}
+    </div>`).join('')}</div>` + sharedNote(shared);
+}
+function viewPower(br, m) {
+  const { data: pw, shared } = dataFor(D.power, m);
+  const head = `${crumbs([{ label: 'Home', href: '#/' }, { label: br.name, href: '#/' + br.id }, { label: m.name, href: mPath(m) }, { label: 'Power' }])}
+    <div class="page-head"><div><h1>Power and test points</h1><p>${esc(m.name)}. Check the rails before suspecting any chip.</p></div></div>`;
+  if (!pw) return head + `<div class="empty"><strong>Not captured yet</strong>No rail or test point data for the ${esc(m.name)} in the app.</div>`;
+  return head + `
+    <h2 style="margin-bottom:10px">Rails</h2>
+    <div class="card"><table class="t"><thead><tr><th>Rail</th><th>Expect</th><th>Where</th><th>Note</th></tr></thead><tbody>${pw.rails.map(r => `<tr><td class="mono"><b>${esc(r.rail)}</b></td><td class="mono">${esc(r.expect)}</td><td class="small">${esc(r.where)}</td><td class="small muted">${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>
+    <div class="section"><h2>Test points</h2>
+    <div class="card"><table class="t"><thead><tr><th>Test point</th><th>Where</th><th>Expect</th></tr></thead><tbody>${pw.testPoints.map(t => `<tr><td><b>${esc(t.tp)}</b></td><td class="mono small">${esc(t.where)}</td><td class="small">${esc(t.expect)}</td></tr>`).join('')}</tbody></table></div></div>` + sharedNote(shared);
+}
+function resultItem(it) {
+  return `<a class="item" href="${it.href}"><div class="grow"><div class="t">${esc(it.title)}${it.tag ? ` <span class="badge">${esc(it.tag)}</span>` : ''}</div><div class="s">${esc(it.sub || '')}</div></div></a>`;
+}
+function searchResults(q) {
+  if (!q.trim()) return `<p class="small muted" style="margin-top:16px">Try <a href="#/search?q=ras">ras</a>, <a href="#/search?q=pin%2040">pin 40</a>, <a href="#/search?q=sound">sound</a> or <a href="#/search?q=reset">reset</a>.</p>`;
+  const groups = search(q, 20);
+  if (!groups.length) return `<div class="empty" style="margin-top:20px"><strong>Nothing matched "${esc(q)}"</strong>Try a pin name without the slash, a chip number, or a BASIC keyword.</div>`;
+  return groups.map(g => `<div class="group"><div class="ghead">${g.group}</div><div class="card pal">${g.items.map(resultItem).join('')}</div></div>`).join('');
+}
+function viewSearch(q) {
+  return `<div class="page-head"><div><h1>Search</h1><p>Chips, pins ("/RAS", "pin 40"), BASIC commands, keys, glossary terms and connectors.</p></div></div>
+    ${searchField(q, 'page-search')}
+    <div class="results-page">${searchResults(q)}</div>`;
+}
+function viewResources() {
+  const sec = (title, list) => `<div class="section"><h2>${esc(title)}</h2><div class="card">${list.map(r => `<a class="row-link" href="${esc(r.url)}" target="_blank" rel="noopener"><div class="grow"><div><b>${esc(r.name)}</b> ${r.verify ? verifyBadge() : ''}</div><div class="sub">${esc(r.what)}</div></div><span class="ico muted" style="width:16px">${ICON.link}</span></a>`).join('')}</div></div>`;
+  return `${crumbs([{ label: 'Home', href: '#/' }, { label: 'Resources' }])}<div class="page-head"><div><h1>Resources</h1><p>External archives and communities. Links open in a new tab.</p></div></div>
+    ${sec('General', D.resources.general)}${D.brands.filter(b => D.resources[b.id]).map(b => sec(b.name, D.resources[b.id])).join('')}`;
+}
+function viewGlossary(focus) {
+  return `${crumbs([{ label: 'Home', href: '#/' }, { label: 'Glossary' }])}<div class="page-head"><div><h1>Glossary</h1><p>Terms used across the pinouts. Anywhere else in the app they open as a popover.</p></div></div>
+    <div class="card">${Object.entries(D.terms).map(([id, t]) => `<div class="gl" id="term-${id}" ${focus === id ? 'style="background:var(--accent-soft)"' : ''}><h3>${esc(t.term)}</h3><div class="short">${esc(t.short)}</div><p>${esc(t.long)}</p></div>`).join('')}</div>`;
+}
+function viewMore() {
+  const dark = effectiveTheme() === 'dark';
+  return `<div class="page-head"><div><h1>More</h1></div></div>
+    <div class="card">
+      <a class="row-link" href="#/glossary"><span class="ico muted" style="width:18px">${ICON.book}</span><div class="grow"><b>Glossary</b><div class="sub">All terms</div></div></a>
+      <a class="row-link" href="#/resources"><span class="ico muted" style="width:18px">${ICON.link}</span><div class="grow"><b>Resources</b><div class="sub">External links by brand</div></div></a>
+      <div class="row-link"><div class="grow"><b>Dark mode</b><div class="sub">Follows the system until you choose</div></div><button class="switch" role="switch" aria-checked="${dark}" data-act="theme" style="width:auto"><span class="track"></span></button></div>
+      <div class="row-link"><div class="grow"><b>Offline</b><div class="sub">Installed &middot; works offline</div></div><span class="dot ready"></span></div>
+    </div>`;
+}
+function viewNotFound() {
+  return `<div class="empty" style="margin-top:40px"><strong>Nothing here</strong>That page does not exist. <a href="#/">Back to home</a>.</div>`;
+}
+
+/* ---------- inspector / sheet ---------- */
+function pinDetail(chip, p, m) {
+  const t = D.pinTypes[p.type];
+  const i = chip.pins.indexOf(p);
+  const prev = chip.pins[(i - 1 + chip.pins.length) % chip.pins.length], next = chip.pins[(i + 1) % chip.pins.length];
+  return `<div class="pinhead"><span class="pinnum" style="--c:var(--pt-${p.type})">${p.n}</span><div><div class="pinname">${esc(p.name)}</div><div class="small muted">${esc(chip.short)} - ${esc(m.name)}</div></div></div>
+    <dl class="kv">
+      <dt>Direction</dt><dd>${esc(DIR[p.dir] || p.dir)}</dd>
+      <dt>Type</dt><dd><span class="dot" style="background:var(--pt-${p.type});margin-right:6px"></span>${t.label} <span class="muted small">${t.hint}</span></dd>
+      ${p.activeLow ? `<dt>Logic</dt><dd><button class="badge low term" data-term="active-low" style="cursor:pointer">Active low</button></dd>` : ''}
+    </dl>
+    <p style="margin-top:14px">${esc(p.desc)} ${p.verify ? verifyBadge() : ''}</p>
+    ${p.probe ? `<div class="probe"><strong>Probe</strong>${esc(p.probe)}</div>` : ''}
+    ${termChips(p.terms)}
+    ${datasheets(chip)}
+    <div class="pin-nav"><button class="btn" data-pin="${prev.n}">Pin ${prev.n} ${esc(prev.name)}</button><button class="btn" data-pin="${next.n}">Pin ${next.n} ${esc(next.name)}</button></div>`;
+}
+function chipSummary(chip, m) {
+  return `<h3 style="font-size:17px">${esc(chip.name)}</h3><p class="small muted" style="margin:2px 0 12px">${esc(chip.family || '')}</p>
+    <p class="small">${esc(chip.summary)}</p>
+    <dl class="kv small" style="margin-top:12px"><dt>Package</dt><dd class="mono">${esc(chip.pkg)}</dd><dt>Heat</dt><dd>${heatBadge(chip.heat)}</dd>${chip.location && chip.location[m.id] ? `<dt>Location</dt><dd class="mono">${esc(chip.location[m.id])}</dd>` : ''}</dl>
+    <h4>Fails as</h4><ul>${chip.fails.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+    ${datasheets(chip)}
+    <p class="small muted" style="margin-top:18px">Tap a pin on the drawing to replace this with its detail.</p>`;
+}
+function renderInspector() {
+  const { chip, machine: m, brand } = state.ctx;
+  let title = 'Inspector', body = '';
+  if (chip) {
+    const p = state.pin != null && chip.pins.find(x => x.n === state.pin);
+    title = p ? 'Pin detail' : 'Chip summary';
+    body = p ? pinDetail(chip, p, m) : chipSummary(chip, m);
+  } else if (m) {
+    const qr = dataFor(D.quickref, m), sy = dataFor(D.symptoms, m);
+    title = m.name;
+    body = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">${statusHTML(m.status)}</div>
+      ${[['CPU', m.cpu], ['RAM', m.ram], ['ROM', m.rom], ['Video', m.video], ['Sound', m.sound]].filter(f => f[1]).length ? `<div class="facts" style="margin-top:0">${[['CPU', m.cpu], ['RAM', m.ram], ['ROM', m.rom], ['Video', m.video], ['Sound', m.sound]].filter(f => f[1]).map(f => `<div><span>${f[0]}</span><b>${esc(f[1])}</b></div>`).join('')}</div>` : ''}
+      ${sy.data ? `<h4>Usual suspects</h4><div class="termchips">${[...new Set(sy.data.flatMap(s => s.suspects))].map(id => D.chips[id]).filter(c => c && c.pins).map(c => `<a class="term" href="${chipPath(m, c)}">${esc(c.short)}</a>`).join('')}</div>` : ''}
+      ${qr.data ? `<h4>Shortcuts</h4><ul><li><a href="${mPath(m)}/quickref?tab=keys">Keys and quirks</a></li><li><a href="${mPath(m)}/quickref?tab=basic">BASIC essentials</a></li><li><a href="${mPath(m)}/quickref?tab=memory">Memory map</a></li></ul>` : `<p class="small muted" style="margin-top:14px">Stub data: this machine has a cheat sheet but no deep data yet.</p>`}`;
+  } else if (brand) {
+    title = brand.name;
+    body = `<p class="small">${esc(brand.blurb)}</p>${D.resources[brand.id] ? `<h4>Resources</h4><ul>${D.resources[brand.id].slice(0, 4).map(r => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a></li>`).join('')}</ul>` : ''}`;
+  } else {
+    title = 'Bench notes';
+    body = `<p class="small">Measure the +5 V rail and the reset line before pulling any chip. Then the clock.</p>
+      <h4>Keyboard</h4><dl class="kv small"><dt><span class="kbd">/</span></dt><dd>Search</dd><dt><span class="kbd">Ctrl K</span></dt><dd>Command palette</dd><dt><span class="kbd">Esc</span></dt><dd>Close panels</dd></dl>
+      <h4>Legend</h4><div class="termchips">${Object.entries(D.pinTypes).map(([k, t]) => `<span class="legend-item small" style="display:inline-flex;align-items:center;gap:6px"><span class="dot" style="background:var(--pt-${k})"></span>${t.label}</span>`).join('')}</div>
+      <p class="small muted" style="margin-top:18px"><span class="dot ready"></span> Installed &middot; works offline</p>`;
+  }
+  $('#inspector').innerHTML = `<div class="insp-head"><h2>${esc(title)}</h2><button class="insp-close" data-act="close-inspector" aria-label="Close">${ICON.close}</button></div><div class="insp">${body}</div>`;
+  if (chip) {
+    const p = state.pin != null && chip.pins.find(x => x.n === state.pin);
+    $('#sheet').innerHTML = `<div class="handle" data-act="sheet-handle"><span></span></div><div class="insp">${p ? pinDetail(chip, p, m) : ''}</div>`;
+  }
+}
+function isPhone() { return matchMedia('(max-width: 767px)').matches; }
+function isTablet() { return matchMedia('(min-width: 768px) and (max-width: 1023px)').matches; }
+function openPinPanels() {
+  if (isPhone()) { $('#sheet').classList.add('open'); $('#scrim').classList.add('show'); }
+  else if (isTablet()) $('#inspector').classList.add('open');
+}
+function closeSheet() { $('#sheet').classList.remove('open'); $('#scrim').classList.remove('show'); $('#sheet').style.transform = ''; }
+function selectPin(n) {
+  const { chip } = state.ctx; if (!chip) return;
+  state.pin = n;
+  const diag = $('#diagram');
+  if (diag) diag.innerHTML = chipSVG(chip); else { const list = $('.pinlist'); if (list) list.closest('.card').outerHTML = pinList(chip); }
+  renderInspector();
+  openPinPanels();
+  if (!isPhone()) { const insp = $('#inspector'); insp.scrollTop = 0; }
+}
+function refreshChip() {
+  const { chip, brand, machine } = state.ctx; if (!chip) return;
+  $('#main').innerHTML = viewChip(brand, machine, chip);
+  renderInspector();
+}
+
+/* ---------- popover ---------- */
+function openPopover(id, anchor) {
+  const t = D.terms[id]; if (!t) return;
+  const pop = $('#popover');
+  pop.innerHTML = `<h3>${esc(t.term)}</h3><div class="short">${esc(t.short)}</div><p class="long">${esc(t.long)}</p><div class="foot"><a href="#/glossary?term=${id}">Open in glossary</a></div>`;
+  pop.hidden = false;
+  const r = anchor.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let x = Math.min(Math.max(12, r.left), innerWidth - pw - 12);
+  let y = r.bottom + 8; if (y + ph > innerHeight - 12) y = Math.max(12, r.top - ph - 8);
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+  pop.dataset.open = '1';
+}
+function closePopover() { const p = $('#popover'); p.hidden = true; delete p.dataset.open; }
+
+/* ---------- palette ---------- */
+function openPalette(prefill = '') {
+  closePopover();
+  const pal = $('#palette'); pal.hidden = false;
+  const inp = $('#pal-input'); inp.value = prefill; state.palIdx = 0; renderPalette(); inp.focus(); inp.select();
+}
+function closePalette() { $('#palette').hidden = true; }
+function renderPalette() {
+  const q = $('#pal-input').value;
+  const groups = search(q, 5);
+  const items = groups.flatMap(g => g.items); state.palItems = items;
+  if (state.palIdx >= items.length) state.palIdx = 0;
+  let i = 0;
+  $('#pal-results').innerHTML = !q.trim() ? `<div class="nothing">Type a chip, a pin like <span class="mono">/RAS</span> or <span class="mono">pin 40</span>, a BASIC keyword, or a term.</div>`
+    : !items.length ? `<div class="nothing">Nothing matched "${esc(q)}".</div>`
+    : groups.map(g => `<div class="group"><div class="ghead">${g.group}</div>${g.items.map(it => { const idx = i++; return `<a class="item${idx === state.palIdx ? ' active' : ''}" data-idx="${idx}" href="${it.href}">${it.mono ? `<span class="mono" style="width:64px;flex:none">${esc(it.mono)}</span>` : ''}<div class="grow"><div class="t">${esc(it.title)}${it.tag ? ` <span class="badge">${esc(it.tag)}</span>` : ''}</div><div class="s">${esc(it.sub || '')}</div></div></a>`; }).join('')}</div>`).join('');
+  const act = $('#pal-results .item.active'); if (act) act.scrollIntoView({ block: 'nearest' });
+}
+function palGo() {
+  const it = state.palItems[state.palIdx]; if (!it) return;
+  closePalette(); location.hash = it.href.replace(/^#/, '');
+  if (location.hash === it.href) render();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const pop = $('#popover');
+  if (pop.dataset.open && !pop.contains(e.target) && !e.target.closest('[data-term]')) closePopover();
+
+  const term = e.target.closest('[data-term]');
+  if (term) { e.preventDefault(); openPopover(term.dataset.term, term); return; }
+
+  const pinEl = e.target.closest('[data-pin]');
+  if (pinEl) { selectPin(Number(pinEl.dataset.pin)); return; }
+
+  const palItem = e.target.closest('#palette .item');
+  if (palItem) { e.preventDefault(); state.palIdx = Number(palItem.dataset.idx); palGo(); return; }
+  if (e.target === $('#palette')) { closePalette(); return; }
+  if (e.target === $('#scrim')) { state.pin = null; closeSheet(); refreshChip(); return; }
+
+  const act = e.target.closest('[data-act]');
+  if (!act) return;
+  const a = act.dataset.act;
+  if (a === 'theme') { state.theme = effectiveTheme() === 'dark' ? 'light' : 'dark'; LS.set('rcs-theme', state.theme); applyTheme(); renderRail(); if (parseHash().segs[0] === 'more') $('#main').innerHTML = viewMore(); }
+  else if (a === 'collapse') { state.collapsed[act.dataset.id] = !state.collapsed[act.dataset.id]; LS.set('rcs-collapsed', state.collapsed); renderRail(); }
+  else if (a === 'palette') openPalette();
+  else if (a === 'flip') { state.flip = !state.flip; refreshChip(); }
+  else if (a === 'view') { state.view = act.dataset.v; refreshChip(); }
+  else if (a === 'filter') { const t = act.dataset.t; state.filter = (!t || state.filter === t) ? null : t; refreshChip(); }
+  else if (a === 'qtab') { state.qtab = act.dataset.t; const { brand, machine } = state.ctx; $('#main').innerHTML = viewQuickref(brand, machine); }
+  else if (a === 'pin-machine') { const id = act.dataset.id; state.pinned = state.pinned.includes(id) ? state.pinned.filter(x => x !== id) : [...state.pinned, id]; LS.set('rcs-pinned', state.pinned); render(); }
+  else if (a === 'close-inspector') { $('#inspector').classList.remove('open'); }
+  else if (a === 'open-inspector') { $('#inspector').classList.add('open'); }
+  else if (a === 'sheet-handle') { state.pin = null; closeSheet(); refreshChip(); }
+});
+document.addEventListener('submit', e => {
+  const f = e.target.closest('[data-act="search-form"]'); if (!f) return;
+  e.preventDefault(); const q = f.querySelector('input').value.trim();
+  location.hash = '/search?q=' + encodeURIComponent(q);
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'pal-input') { state.palIdx = 0; renderPalette(); }
+  if (e.target.id === 'page-search') { const q = e.target.value; history.replaceState(null, '', '#/search?q=' + encodeURIComponent(q)); $('.results-page').innerHTML = searchResults(q); }
+});
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName;
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
+  if (!$('#palette').hidden) {
+    if (e.key === 'Escape') { e.preventDefault(); closePalette(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); state.palIdx = Math.min(state.palIdx + 1, state.palItems.length - 1); renderPalette(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); state.palIdx = Math.max(state.palIdx - 1, 0); renderPalette(); }
+    else if (e.key === 'Enter') { e.preventDefault(); palGo(); }
+    return;
+  }
+  if ((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); openPalette(); return; }
+  if (e.key === '/' && !typing) { e.preventDefault(); openPalette(); return; }
+  if (e.key === 'Escape') {
+    if ($('#popover').dataset.open) { closePopover(); return; }
+    if ($('#sheet').classList.contains('open')) { state.pin = null; closeSheet(); refreshChip(); return; }
+    if ($('#inspector').classList.contains('open')) { $('#inspector').classList.remove('open'); return; }
+  }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset && e.target.dataset.pin) { e.preventDefault(); selectPin(Number(e.target.dataset.pin)); }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset && e.target.dataset.term) { e.preventDefault(); openPopover(e.target.dataset.term, e.target); }
+});
+/* bottom-sheet drag to dismiss */
+(() => {
+  const sheet = $('#sheet'); let startY = null, dy = 0;
+  sheet.addEventListener('pointerdown', e => { if (!e.target.closest('.handle')) return; startY = e.clientY; dy = 0; sheet.setPointerCapture(e.pointerId); sheet.style.transition = 'none'; });
+  sheet.addEventListener('pointermove', e => { if (startY == null) return; dy = Math.max(0, e.clientY - startY); sheet.style.transform = `translateY(${dy}px)`; });
+  const end = () => { if (startY == null) return; sheet.style.transition = ''; startY = null; if (dy > 80) { state.pin = null; closeSheet(); refreshChip(); } else sheet.style.transform = ''; };
+  sheet.addEventListener('pointerup', end); sheet.addEventListener('pointercancel', end);
+})();
+/* glossary deep link from search: scroll to term */
+window.addEventListener('hashchange', () => {
+  render();
+  const { segs, q } = parseHash();
+  if (segs[0] === 'glossary' && q.term) { const el = document.getElementById('term-' + q.term); if (el) el.scrollIntoView({ block: 'center' }); }
+});
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href="#faults"]');
+  if (a) { e.preventDefault(); const el = document.getElementById('faults'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+});
+window.addEventListener('resize', () => {
+  if (state.ctx.chip && state.pin != null) { if (!isPhone()) closeSheet(); if (!isTablet()) $('#inspector').classList.remove('open'); openPinPanels(); }
+});
+render();
+})();
+</script>
+</body>
+</html>

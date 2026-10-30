@@ -1,0 +1,16 @@
+{
+  "name": "retro-bench",
+  "version": "1.0.0",
+  "description": "Retro Bench: offline pinouts and quick reference for 8-bit computer repair",
+  "scripts": {
+    "build": "tailwindcss -i src/input.css -o dist/app.css --minify",
+    "watch": "tailwindcss -i src/input.css -o dist/app.css --watch"
+  },
+  "license": "CC-BY-4.0",
+  "type": "commonjs",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  },
+  "private": true
+}

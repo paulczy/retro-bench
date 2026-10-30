@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retro Bench — UI mockups</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f4f4f5; --fg:#18181b; --mut:#71717a; --card:#fff; --line:#e4e4e7; --acc:#2563eb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141417; --fg:#f4f4f5; --mut:#a1a1aa; --card:#1e1e22; --line:#2e2e33; --acc:#60a5fa; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--fg); }
+  header { display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--card); position:sticky; top:0; z-index:2; }
+  h1 { font-size:16px; margin:0 16px 0 0; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .seg button { font:inherit; font-size:13px; padding:7px 12px; border:0; background:transparent; color:var(--fg); cursor:pointer; min-height:36px; }
+  .seg button + button { border-left:1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background:var(--acc); color:#fff; }
+  .hint { color:var(--mut); font-size:13px; margin-left:auto; }
+  .hint a { color:var(--acc); }
+  main { padding:20px; display:flex; justify-content:center; }
+  .frame { background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.12); overflow:hidden; transition:width .2s; }
+  @media (prefers-reduced-motion: reduce) { .frame { transition:none; } }
+  .frame iframe { display:block; border:0; width:100%; height:100%; background:#fff; }
+  .frame.desktop { width:min(1280px, 100%); height:820px; }
+  .frame.tablet  { width:820px;  height:1000px; border-radius:24px; }
+  .frame.tabletl { width:1180px; height:760px;  border-radius:24px; }
+  .frame.phone   { width:390px;  height:780px;  border-radius:36px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px; padding:0 20px 24px; max-width:1280px; margin:0 auto; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .card h2 { font-size:15px; margin:0 0 6px; }
+  .card p { margin:0; color:var(--mut); font-size:13px; }
+  .card a { color:var(--acc); font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Retro Bench · UI mockups</h1>
+  <div class="seg" id="which" role="group" aria-label="Mockup">
+    <button data-m="a-bench" aria-pressed="true">A · Bench Console</button>
+    <button data-m="b-datasheet">B · Field Manual</button>
+    <button data-m="c-terminal">C · Terminal</button>
+    <button data-m="d-silkscreen">D · Silkscreen</button>
+    <button data-m="e-manual">E · Service Manual</button>
+    <button data-m="f-instrument">F · Instrument</button>
+  </div>
+  <div class="seg" id="size" role="group" aria-label="Device">
+    <button data-s="desktop" aria-pressed="true">Desktop 1280</button>
+    <button data-s="tabletl">iPad landscape</button>
+    <button data-s="tablet">iPad portrait</button>
+    <button data-s="phone">iPhone 390</button>
+  </div>
+  <span class="hint">Open full page: <a id="open" href="a-bench/index.html" target="_blank">a-bench/index.html</a></span>
+</header>
+<main><div class="frame desktop" id="frame"><iframe id="view" src="a-bench/index.html" title="Mockup"></iframe></div></main>
+<section class="cards">
+  <div class="card"><h2>A · Bench Console</h2><p>Clean modern tool. Left rail, centre content, always-open right inspector. SVG DIP chip drawing with legend-as-filter and flip-to-underside. Command palette search. Light + dark.</p><a href="a-bench/NOTES.md">Notes</a></div>
+  <div class="card"><h2>B · Field Manual</h2><p>Warm paper and ink, numbered sections, breadcrumb trail, right-hand section index. Pinout as two mirrored signal tables with filter chips; margin-note callout per pin. Full-page index-style search. "Dim lamp" dark mode.</p><a href="b-datasheet/NOTES.md">Notes</a></div>
+  <div class="card"><h2>D · Silkscreen</h2><p>The circuit board is the interface. Solder-mask green or black, silkscreen white, copper for the live thing. Machines and chips as footprints with designators; a copper trace runs from the selected pin to its detail.</p><a href="d-silkscreen/NOTES.md">Notes</a></div>
+  <div class="card"><h2>E · Service Manual</h2><p>A 1983 factory service manual opened flat. Paper and ink, one orange-red spot colour, numbered sections and figures, callouts with leader lines. Memory map as a drawing, keys as keystroke boxes.</p><a href="e-manual/NOTES.md">Notes</a></div>
+  <div class="card"><h2>F · Instrument</h2><p>A bench analyzer. Putty-grey panel, one phosphor display (amber or green), soft keys that change per screen, a rotary knob that selects the machine. Pin detail as a scope-style cursor readout.</p><a href="f-instrument/NOTES.md">Notes</a></div>
+  <div class="card"><h2>C · Terminal</h2><p>Dark bench mode, amber or green accent. Persistent command line with mini-syntax ("ted pin 10", "/ras"). Hybrid pinout: chip glyph synced with a dense table. Right drawer for details. Number and letter keys drive navigation.</p><a href="c-terminal/NOTES.md">Notes</a></div>
+</section>
+<script>
+  const view = document.getElementById('view'), frame = document.getElementById('frame'), open = document.getElementById('open');
+  let m = 'a-bench', s = 'desktop';
+  const sync = () => { view.src = m + '/index.html'; open.href = m + '/index.html'; open.textContent = m + '/index.html'; frame.className = 'frame ' + s;
+    document.querySelectorAll('#which button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
+    document.querySelectorAll('#size button').forEach(b => b.setAttribute('aria-pressed', b.dataset.s === s)); };
+  document.getElementById('which').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { m = b.dataset.m; sync(); } });
+  document.getElementById('size').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { s = b.dataset.s; frame.className = 'frame ' + s;
+    document.querySelectorAll('#size button').forEach(x => x.setAttribute('aria-pressed', x.dataset.s === s)); } });
+</script>
+</body>
+</html>

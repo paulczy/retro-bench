@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Retro Bench — Field manual</title>
+<style>
+/* ============================================================
+   Variant B — "Field Manual": warm paper, ink, oxblood, rules.
+   ============================================================ */
+:root {
+  --paper: #F3EDDF;
+  --paper-2: #EAE2CF;
+  --note: #FBF7EC;
+  --ink: #1F1B16;
+  --ink-2: #645C50;
+  --ink-3: #8F8677;
+  --rule: #CDC2A9;
+  --rule-2: #E0D7C2;
+  --accent: #7A2E3A;
+  --accent-soft: #F0DEDF;
+  --shadow: 0 8px 28px rgba(60, 40, 20, .18);
+
+  --t-power: #B4463A; --t-ground: #3F3B36; --t-clock: #B37D1B; --t-addr: #2F6C8C;
+  --t-data: #3B7D58; --t-ctrl: #6A4B8F; --t-io: #C0782A; --t-video: #2B8686;
+  --t-audio: #A5478C; --t-kbd: #7D7B2B; --t-serial: #5B6E90; --t-nc: #B9B19F;
+
+  --serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, "DejaVu Sans Mono", monospace;
+}
+[data-theme="dark"] {
+  --paper: #2B241E;
+  --paper-2: #231D18;
+  --note: #342C25;
+  --ink: #ECE2D0;
+  --ink-2: #B3A692;
+  --ink-3: #85796A;
+  --rule: #4E4237;
+  --rule-2: #3B322A;
+  --accent: #D98A96;
+  --accent-soft: #4A2D32;
+  --shadow: 0 8px 28px rgba(0, 0, 0, .5);
+  --t-power: #E0756A; --t-ground: #BDB3A4; --t-clock: #E0AA44; --t-addr: #6AA6C8;
+  --t-data: #6DB58B; --t-ctrl: #A98BD0; --t-io: #E09A4E; --t-video: #5FB8B8;
+  --t-audio: #D27BBE; --t-kbd: #B5B356; --t-serial: #8FA3C8; --t-nc: #6E6558;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); color: var(--ink); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; font-family: var(--serif); font-size: 17px; line-height: 1.55;
+  background: var(--paper); color: var(--ink); min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--mono); font-size: .92em; }
+[hidden] { display: none !important; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 32px 0; }
+
+/* ---------- Top bar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 30; background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+.topbar-in {
+  max-width: 1180px; margin: 0 auto; padding: 8px 20px;
+  display: flex; align-items: center; gap: 16px; min-height: 56px;
+}
+.crumbs { flex: 1; min-width: 0; margin: 0; padding: 0; list-style: none; display: flex; align-items: center; white-space: nowrap; overflow: hidden; font-size: 16px; }
+.crumbs li { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.crumbs li + li::before { content: "›"; color: var(--ink-3); margin: 0 9px; }
+.crumbs a { color: var(--ink-2); }
+.crumbs li:last-child { color: var(--ink); font-weight: 600; }
+.crumbs li:last-child a { color: var(--ink); }
+.search {
+  position: relative; width: 300px; flex-shrink: 0;
+}
+.search input {
+  width: 100%; height: 40px; padding: 0 12px 0 34px; font: inherit; font-size: 15px;
+  color: var(--ink); background: var(--note); border: 1px solid var(--rule); border-radius: 3px;
+}
+.search input::placeholder { color: var(--ink-3); }
+.search svg { position: absolute; left: 11px; top: 12px; width: 16px; height: 16px; stroke: var(--ink-3); fill: none; stroke-width: 2; pointer-events: none; }
+.search kbd {
+  position: absolute; right: 9px; top: 10px; font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+  border: 1px solid var(--rule); border-radius: 3px; padding: 1px 5px; line-height: 1.3; background: var(--paper);
+}
+.lamp {
+  flex-shrink: 0; height: 40px; min-width: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 3px;
+  font-size: 14px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 7px;
+}
+.lamp:hover { color: var(--ink); border-color: var(--ink-3); }
+.lamp svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+/* ---------- Page frame ---------- */
+.wrap {
+  max-width: 1180px; margin: 0 auto; padding: 32px 20px 96px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 56px; align-items: start;
+}
+main { max-width: 760px; min-width: 0; }
+.rail { position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow: auto; font-size: 14px; scrollbar-width: thin; }
+.rail .toc { border-left: 1px solid var(--rule); padding-left: 16px; margin: 0; }
+.toc-title { color: var(--ink-3); font-style: italic; margin: 0 0 8px; }
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li { margin: 0; }
+.toc a { display: block; padding: 5px 0; color: var(--ink-2); line-height: 1.35; }
+.toc a .num { color: var(--accent); font-variant-numeric: tabular-nums; display: inline-block; min-width: 2.2em; }
+.toc a.on { color: var(--ink); font-weight: 600; }
+.toc a:hover { color: var(--ink); text-decoration: none; }
+.toc-dd { display: none; }
+
+/* ---------- Typography ---------- */
+h1, h2, h3, h4 { font-weight: 400; margin: 0; line-height: 1.2; letter-spacing: -0.005em; }
+h1 { font-size: 36px; }
+h2 { font-size: 24px; margin: 0 0 14px; padding-top: 14px; border-top: 1px solid var(--ink); }
+h3 { font-size: 19px; margin: 24px 0 10px; }
+.num { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: .35em; }
+h2 .num { font-size: 20px; }
+section[data-sec] { margin: 44px 0 0; scroll-margin-top: 80px; }
+section[data-sec]:first-of-type { margin-top: 36px; }
+p { margin: 0 0 12px; max-width: 68ch; }
+.lede { font-size: 19px; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-2); }
+.small { font-size: 14px; }
+ul, ol { padding-left: 1.4em; margin: 0 0 12px; }
+li { margin: 0 0 6px; }
+ol.steps { list-style: none; padding: 0; counter-reset: step; max-width: 66ch; }
+ol.steps li { counter-increment: step; display: grid; grid-template-columns: 2.4em 1fr; margin: 0 0 10px; }
+ol.steps li::before { content: counter(step) "."; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* Title block, like a manual's first page */
+.title-block { padding-bottom: 18px; border-bottom: 2px solid var(--ink); display: flex; gap: 24px; align-items: flex-start; }
+.title-block > div { flex: 1; min-width: 0; }
+.title-block .kicker { color: var(--ink-2); font-size: 15px; margin: 0 0 6px; }
+.title-block .aka { color: var(--ink-2); margin: 8px 0 0; font-style: italic; }
+.title-block .tag { margin: 12px 0 0; font-size: 19px; max-width: 60ch; }
+.title-block .row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 14px; font-size: 15px; color: var(--ink-2); }
+.title-block figure { margin: 0; flex-shrink: 0; }
+
+/* Definition list, two columns */
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 22px; margin: 0; max-width: 66ch; }
+dl.facts dt { color: var(--ink-2); font-style: italic; }
+dl.facts dd { margin: 0; }
+dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0 0 12px; font-size: 14px; }
+dl.kv dt { color: var(--ink-2); font-style: italic; }
+dl.kv dd { margin: 0; }
+
+/* Tables */
+table.dt { width: 100%; border-collapse: collapse; margin: 0 0 8px; font-size: 16px; }
+table.dt th { text-align: left; font-weight: 400; font-style: italic; color: var(--ink-2); padding: 6px 10px 8px; border-bottom: 1px solid var(--ink); font-size: 14px; }
+table.dt td { padding: 10px 10px; border-bottom: 1px solid var(--rule-2); vertical-align: top; }
+table.dt td:first-child, table.dt th:first-child { padding-left: 0; }
+table.dt td:last-child, table.dt th:last-child { padding-right: 0; }
+table.dt tr.linkrow { cursor: pointer; }
+table.dt tr.linkrow:hover td { background: var(--paper-2); }
+table.dt td.mono { font-family: var(--mono); font-size: 14.5px; white-space: nowrap; }
+table.dt .sub { color: var(--ink-2); font-size: 14px; display: block; }
+
+/* Badges */
+.badge { display: inline-block; font-size: 12px; line-height: 1; padding: 4px 7px; border-radius: 2px; border: 1px solid var(--rule); color: var(--ink-2); vertical-align: middle; white-space: nowrap; font-family: var(--serif); }
+.badge.low { border-color: var(--accent); color: var(--accent); }
+.badge.verify { border-style: dashed; color: var(--ink-2); }
+.badge.verify::before { content: "?"; color: var(--accent); margin-right: 4px; font-weight: 700; }
+.heat { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-2); white-space: nowrap; }
+.heat::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--rule); }
+.heat.hot::before { background: #C9372C; }
+.heat.warm::before { background: #D99A2B; }
+.heat.cool::before { background: #5E8FB0; }
+.status { font-size: 13px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 2px; padding: 3px 7px; white-space: nowrap; }
+.status.ready { color: var(--accent); border-color: var(--accent); }
+.status.planned { border-style: dashed; }
+
+/* Glossary term chips (tap to open) */
+.term {
+  font: inherit; color: var(--ink); border-bottom: 1px dotted var(--accent); padding: 0 1px; cursor: pointer; line-height: inherit;
+  border-radius: 0; text-decoration: none;
+}
+.term:hover { background: var(--accent-soft); }
+.termlist { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; }
+.termlist .term { font-size: 14px; border: 1px solid var(--rule); border-bottom: 1px dotted var(--accent); padding: 5px 9px; border-radius: 3px; background: var(--note); min-height: 32px; }
+
+.pop {
+  position: fixed; z-index: 60; width: min(380px, calc(100vw - 24px)); background: var(--note); color: var(--ink);
+  border: 1px solid var(--rule); border-left: 3px solid var(--accent); box-shadow: var(--shadow); padding: 14px 16px 12px; font-size: 15px;
+}
+.pop h4 { font-size: 17px; margin: 0 0 6px; }
+.pop p { margin: 0 0 8px; }
+.pop .pop-x { position: absolute; right: 6px; top: 6px; width: 32px; height: 32px; color: var(--ink-3); font-size: 18px; }
+.pop .pop-x:hover { color: var(--ink); }
+.pop a { font-size: 14px; }
+
+/* Doors (contents on the machine page) */
+.doors { list-style: none; padding: 0; margin: 0; }
+.doors li { border-bottom: 1px solid var(--rule-2); }
+.doors a { display: grid; grid-template-columns: 2.4em 1fr auto; gap: 0 10px; align-items: baseline; padding: 14px 0; color: inherit; min-height: 44px; }
+.doors a:hover { text-decoration: none; background: var(--paper-2); }
+.doors .d-title { font-size: 20px; }
+.doors .d-desc { grid-column: 2; color: var(--ink-2); font-size: 15px; margin-top: 2px; }
+.doors .d-go { color: var(--accent); font-size: 14px; }
+
+/* Index / listing rows (brands, machines, chips, results) */
+.index { list-style: none; margin: 0; padding: 0; }
+.index li { border-bottom: 1px solid var(--rule-2); }
+.index a.row, .index .row { display: flex; gap: 14px; align-items: baseline; padding: 13px 0; color: inherit; min-height: 44px; }
+.index a.row:hover { text-decoration: none; background: var(--paper-2); }
+.index .row .num { min-width: 2em; }
+.index .row .main { flex: 1; min-width: 0; }
+.index .row .t { font-size: 19px; }
+.index .row .d { color: var(--ink-2); font-size: 15px; display: block; }
+.index .row .r { color: var(--ink-2); font-size: 14px; white-space: nowrap; text-align: right; }
+
+/* Filter chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 18px;
+  font-size: 14px; color: var(--ink-2); background: var(--paper);
+}
+.chip:hover { border-color: var(--ink-3); color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chip .sw { width: 10px; height: 10px; border-radius: 2px; background: var(--rule); }
+.chip .n { color: inherit; opacity: .6; font-variant-numeric: tabular-nums; }
+.chip.clear { border-style: dashed; }
+
+/* ---------- Pin tables (the datasheet) ---------- */
+.pinhead { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; margin: 0 0 14px; font-size: 14px; color: var(--ink-2); }
+.toggle { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+.toggle button { padding: 0 12px; height: 36px; font-size: 14px; color: var(--ink-2); }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.pins { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; align-items: start; }
+.pins .side-label { font-size: 13px; color: var(--ink-3); font-style: italic; margin: 0 0 6px; }
+.pins .side-label.r { text-align: right; }
+table.pintab { width: 100%; border-collapse: collapse; font-size: 15px; table-layout: fixed; }
+table.pintab th { font-weight: 400; font-style: italic; color: var(--ink-3); font-size: 12px; padding: 0 6px 6px; text-align: left; border-bottom: 1px solid var(--ink); }
+table.pintab.right th { text-align: right; }
+table.pintab td { height: 44px; padding: 0 6px; border-bottom: 1px solid var(--rule-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+table.pintab tr { cursor: pointer; }
+table.pintab tr:hover td { background: var(--paper-2); }
+table.pintab tr.on td { background: var(--accent-soft); }
+table.pintab tr.on td.nm { color: var(--accent); font-weight: 700; }
+table.pintab tr.dim td { opacity: .25; }
+table.pintab tr.dim td.bar { opacity: .25; }
+table.pintab td.bar, table.pintab th.bar { width: 7px; padding: 0; border-bottom: 0; }
+table.pintab th.bar { border-bottom: 0; }
+table.pintab .num { width: 2.6em; margin: 0; }
+table.pintab .dir { width: 3em; }
+table.pintab .vf { width: 1.5em; }
+table.pintab td.num { font-family: var(--mono); color: var(--ink-2); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.pintab td.nm { font-family: var(--mono); font-size: 15px; }
+table.pintab td.dir { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+table.pintab td.vf { color: var(--accent); font-weight: 700; padding: 0; text-align: center; font-size: 13px; }
+table.pintab.right td.num, table.pintab.right td.nm, table.pintab.right td.dir { text-align: right; }
+.t-power .bar { background: var(--t-power); } .t-ground .bar { background: var(--t-ground); }
+.t-clock .bar { background: var(--t-clock); } .t-addr .bar { background: var(--t-addr); }
+.t-data .bar { background: var(--t-data); } .t-ctrl .bar { background: var(--t-ctrl); }
+.t-io .bar { background: var(--t-io); } .t-video .bar { background: var(--t-video); }
+.t-audio .bar { background: var(--t-audio); } .t-kbd .bar { background: var(--t-kbd); }
+.t-serial .bar { background: var(--t-serial); } .t-nc .bar { background: var(--t-nc); }
+.sw.t-power { background: var(--t-power) !important; } .sw.t-ground { background: var(--t-ground) !important; }
+.sw.t-clock { background: var(--t-clock) !important; } .sw.t-addr { background: var(--t-addr) !important; }
+.sw.t-data { background: var(--t-data) !important; } .sw.t-ctrl { background: var(--t-ctrl) !important; }
+.sw.t-io { background: var(--t-io) !important; } .sw.t-video { background: var(--t-video) !important; }
+.sw.t-audio { background: var(--t-audio) !important; } .sw.t-kbd { background: var(--t-kbd) !important; }
+.sw.t-serial { background: var(--t-serial) !important; } .sw.t-nc { background: var(--t-nc) !important; }
+.pins-note { font-size: 14px; color: var(--ink-2); margin: 12px 0 0; }
+
+/* Chip glyph */
+.glyph { display: block; }
+.glyph .body { fill: var(--paper-2); stroke: var(--ink); stroke-width: 1.2; }
+.glyph .notch { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
+.glyph .stub { fill: var(--ink-3); }
+.glyph .dot { fill: var(--ink); }
+.glyph text { font-family: var(--mono); font-size: 10px; fill: var(--ink-2); }
+.glyph .stub.t-power { fill: var(--t-power); } .glyph .stub.t-ground { fill: var(--t-ground); }
+.glyph .stub.t-clock { fill: var(--t-clock); } .glyph .stub.t-addr { fill: var(--t-addr); }
+.glyph .stub.t-data { fill: var(--t-data); } .glyph .stub.t-ctrl { fill: var(--t-ctrl); }
+.glyph .stub.t-io { fill: var(--t-io); } .glyph .stub.t-video { fill: var(--t-video); }
+.glyph .stub.t-audio { fill: var(--t-audio); } .glyph .stub.t-kbd { fill: var(--t-kbd); }
+.glyph .stub.t-serial { fill: var(--t-serial); } .glyph .stub.t-nc { fill: var(--t-nc); }
+.pkg-fig { display: flex; gap: 28px; align-items: flex-start; }
+.pkg-fig figure { margin: 0; flex-shrink: 0; }
+.pkg-fig figcaption { font-size: 13px; color: var(--ink-3); font-style: italic; text-align: center; margin-top: 6px; }
+
+/* ---------- Margin note (datasheet callout) ---------- */
+.note {
+  background: var(--note); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+  padding: 16px 18px 14px; font-size: 15px; margin: 0 0 22px;
+}
+.note .note-head { display: flex; justify-content: space-between; align-items: center; margin: 0 0 4px; }
+.note .kicker { color: var(--ink-2); font-size: 14px; font-style: italic; }
+.note .x { width: 36px; height: 36px; margin: -8px -10px -8px 0; color: var(--ink-3); font-size: 20px; line-height: 1; }
+.note .x:hover { color: var(--ink); }
+.note h3 { margin: 0 0 12px; font-family: var(--mono); font-size: 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.note h3 .sw { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.note p { margin: 0 0 10px; }
+.note .probe { padding: 10px 12px; background: var(--paper); border: 1px solid var(--rule-2); font-size: 14px; }
+.note .probe b { font-weight: 600; font-style: italic; color: var(--ink-2); }
+.note .ds { font-size: 14px; }
+.note .ds a { display: block; margin: 2px 0; }
+.note .pn { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--rule-2); }
+.note .pn button { font-size: 14px; color: var(--accent); min-height: 36px; font-family: var(--mono); }
+.note .pn button:disabled { color: var(--ink-3); cursor: default; }
+.note .pn button:hover:not(:disabled) { text-decoration: underline; }
+.note .grip { display: none; }
+.scrim { position: fixed; inset: 0; background: rgba(30, 20, 10, .35); z-index: 40; }
+
+/* Quick ref groups (expandable rows) */
+details.grp { border-bottom: 1px solid var(--rule-2); }
+details.grp summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 12px 0; cursor: pointer; min-height: 44px; }
+details.grp summary::-webkit-details-marker { display: none; }
+details.grp summary::after { content: "+"; margin-left: auto; color: var(--accent); font-size: 20px; width: 24px; text-align: center; }
+details.grp[open] summary::after { content: "–"; }
+details.grp summary .count { color: var(--ink-3); font-size: 14px; }
+details.grp .items { list-style: none; padding: 0 0 14px 2.6em; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 20px; }
+details.grp .items li { font-family: var(--mono); font-size: 14px; margin: 0; padding: 4px 0; border-bottom: 1px dotted var(--rule); }
+
+/* Search */
+.search-big { position: relative; margin: 20px 0 8px; }
+.search-big input { width: 100%; height: 52px; font: inherit; font-size: 19px; padding: 0 16px 0 44px; background: var(--note); border: 1px solid var(--ink); border-radius: 3px; color: var(--ink); }
+.search-big svg { position: absolute; left: 15px; top: 16px; width: 20px; height: 20px; stroke: var(--ink-2); fill: none; stroke-width: 2; }
+.entry { display: block; padding: 11px 0; border-bottom: 1px solid var(--rule-2); color: inherit; min-height: 44px; }
+.entry:hover, .entry:focus { background: var(--paper-2); text-decoration: none; outline-offset: -2px; }
+.entry .e-title { font-family: var(--mono); font-size: 15.5px; }
+.entry .e-title.serif { font-family: var(--serif); font-size: 18px; }
+.entry .e-detail { color: var(--ink); }
+.entry .e-detail::before { content: " — "; color: var(--ink-3); }
+.entry .e-where { display: block; font-size: 13.5px; color: var(--ink-3); margin-top: 2px; }
+.empty { padding: 28px 0; color: var(--ink-2); font-style: italic; }
+
+/* Home */
+.masthead { padding: 8px 0 20px; border-bottom: 2px solid var(--ink); }
+.masthead h1 { font-size: 44px; }
+.masthead .sub { color: var(--ink-2); font-size: 19px; margin: 8px 0 0; font-style: italic; }
+.pinbtn { font-size: 14px; color: var(--accent); border: 1px solid var(--rule); border-radius: 3px; padding: 0 12px; height: 36px; }
+.pinbtn[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Footer / colophon */
+footer.colophon { max-width: 1180px; margin: 0 auto; padding: 0 20px 40px; font-size: 13.5px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; border-top: 1px solid var(--rule); padding-top: 16px; }
+.pwa { display: inline-flex; align-items: center; gap: 7px; }
+.pwa::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #4F8A5B; }
+
+/* ---------- Tablet ---------- */
+@media (max-width: 1023px) {
+  .wrap { display: block; max-width: 800px; }
+  .crumbs li { flex: 0 0 auto; }
+  .crumbs li:nth-last-child(n+4) { display: none; }
+  .crumbs li:nth-last-child(3)::before { content: none; }
+  .search { width: 240px; }
+  .search kbd { display: none; }
+  .rail { display: none; }
+  .toc-dd { display: block; position: relative; margin: 20px 0 -8px; font-size: 15px; }
+  .toc-dd summary { list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 3px; cursor: pointer; color: var(--ink-2); background: var(--paper); }
+  .toc-dd summary::-webkit-details-marker { display: none; }
+  .toc-dd summary::after { content: "▾"; font-size: 12px; }
+  .toc-dd .toc { position: absolute; left: 0; top: calc(100% + 6px); z-index: 25; background: var(--note); border: 1px solid var(--rule); box-shadow: var(--shadow); padding: 10px 18px 10px 14px; min-width: 260px; }
+  .toc-dd .toc a { padding: 8px 0; }
+  .toc-dd .toc-title { display: none; }
+  .note {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 50; width: min(400px, 88vw); margin: 0;
+    overflow: auto; border: 0; border-left: 3px solid var(--accent); box-shadow: var(--shadow);
+    padding: 20px 22px 24px; font-size: 16px;
+    transform: translateX(0); transition: transform .22s ease;
+  }
+  .note.closing { transform: translateX(100%); }
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .topbar-in { flex-wrap: wrap; gap: 8px 12px; padding: 8px 14px; }
+  .crumbs { order: 3; flex-basis: 100%; font-size: 15px; }
+  .crumbs li:nth-last-child(n+3) { display: none; }
+  .crumbs li:nth-last-child(3)::before { content: "›"; }
+  .crumbs li:nth-last-child(2)::before { content: none; }
+  .search { flex: 1; width: auto; }
+  .search kbd { display: none; }
+  .lamp span { display: none; }
+  .wrap { padding: 22px 14px 110px; }
+  h1 { font-size: 30px; }
+  .masthead h1 { font-size: 34px; }
+  h2 { font-size: 21px; }
+  .title-block { flex-direction: column-reverse; gap: 12px; }
+  .pkg-fig { flex-direction: column; gap: 14px; }
+  .pins { gap: 0 10px; }
+  table.pintab td { padding: 0 4px; font-size: 14px; }
+  table.pintab td.nm { font-size: 14px; }
+  table.pintab td.dir { display: none; }
+  table.pintab th.dir { display: none; }
+  dl.facts { grid-template-columns: 1fr; gap: 0; }
+  dl.facts dt { margin-top: 8px; }
+  dl.facts dd { margin-bottom: 2px; }
+  .doors a { grid-template-columns: 2.2em 1fr; }
+  .doors .d-go { display: none; }
+  .index .row .r { display: none; }
+
+  /* Section index becomes a floating "Contents" button + bottom sheet */
+  .toc-dd { position: static; margin: 0; }
+  .toc-dd summary { position: fixed; right: 14px; bottom: 18px; z-index: 35; min-height: 46px; padding: 0 18px; border-radius: 23px; background: var(--ink); color: var(--paper); border-color: var(--ink); box-shadow: var(--shadow); }
+  .toc-dd summary::after { content: ""; }
+  .toc-dd .toc { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 45; max-height: 70vh; overflow: auto; min-width: 0; border-radius: 12px 12px 0 0; padding: 16px 18px 24px; box-shadow: var(--shadow); }
+  .toc-dd .toc-title { display: block; }
+  .toc-dd .toc a { padding: 10px 0; font-size: 16px; }
+  .toc-dd[open] summary { display: none; }
+
+  /* Margin note becomes a bottom sheet */
+  .note {
+    top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 74vh;
+    border-left: 0; border-top: 3px solid var(--accent); border-radius: 12px 12px 0 0;
+    padding: 10px 18px calc(22px + env(safe-area-inset-bottom));
+    transform: translateY(0); transition: transform .22s ease;
+  }
+  .note.closing { transform: translateY(100%); }
+  .note .grip { display: block; width: 40px; height: 4px; border-radius: 2px; background: var(--rule); margin: 0 auto 10px; }
+  .note h3 { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+@media print {
+  .topbar, .rail, .toc-dd, footer.colophon { display: none; }
+  .wrap { display: block; padding: 0; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <ol class="crumbs" id="crumbs"></ol>
+    <form class="search" id="searchform" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="Search chips, pins, BASIC, terms" autocomplete="off" aria-label="Search">
+      <kbd>/</kbd>
+    </form>
+    <button class="lamp" id="lamp" type="button" aria-label="Toggle dim lamp mode">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.3 1 2.5h6c0-1.2.3-1.9 1-2.5A6 6 0 0 0 12 3z"/></svg>
+      <span id="lamp-label">Dim lamp</span>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+  <main id="main"></main>
+  <aside class="rail" id="rail">
+    <nav class="toc" id="toc" aria-label="Sections on this page"></nav>
+  </aside>
+</div>
+
+<footer class="colophon">
+  <span>Retro Bench field manual, prototype B</span>
+  <span class="pwa">Installed · works offline</span>
+  <a href="#/glossary">Glossary</a>
+  <a href="#/resources">Resources</a>
+</footer>
+
+<div id="scrim" class="scrim" hidden></div>
+<aside id="note" class="note" hidden aria-live="polite"></aside>
+<div id="pop" class="pop" hidden role="dialog"></div>
+
+<script src="../shared/data.js"></script>
+<script>
+(() => {
+const D = window.RCS;
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem('rcsB.' + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('rcsB.' + k, JSON.stringify(v)); } catch {} },
+};
+
+/* ---------- helpers over the data ---------- */
+const brandOf = m => D.brands.find(b => b.id === m.brand);
+const shortName = m => m.name.replace(/^Commodore (\d)/, 'C$1').replace(/^Commodore /, '').replace(/^Apple /, '');
+const machineHref = m => `#/${m.brand}/${m.id}`;
+const chipHref = (m, c, pin) => `${machineHref(m)}/chip/${c.id}${pin ? '/' + pin : ''}`;
+const machinesFor = chip => (chip.machines || []).map(id => D.machines[id]).filter(Boolean);
+const homeMachineFor = chip => machinesFor(chip).find(m => m.status === 'ready') || machinesFor(chip)[0];
+const dirLabel = { in: 'Input', out: 'Output', bidir: 'Bidirectional', '-': 'Supply / passive' };
+const dirShort = { in: 'in', out: 'out', bidir: 'i/o', '-': '—' };
+const heatText = { hot: 'runs hot', warm: 'warm', cool: 'cool' };
+const statusText = { ready: 'Full data', sheet: 'Cheat sheet only', planned: 'Planned' };
+const statusDesc = {
+  ready: 'Pinouts, quick reference, ports and power captured.',
+  sheet: 'A cheat sheet exists in the repo; not yet loaded into the app.',
+  planned: 'On the list. Nothing captured yet.',
+};
+
+const verify = v => v ? ' <span class="badge verify" title="Reconstructed data; check against a datasheet">verify</span>' : '';
+const termBtn = id => { const t = D.terms[id]; return t ? `<button type="button" class="term" data-term="${id}">${esc(t.term)}</button>` : ''; };
+const termList = ids => (ids && ids.length) ? `<div class="termlist">${ids.map(termBtn).join('')}</div>` : '';
+const typeName = t => (D.pinTypes[t] || { label: t }).label;
+
+/* ---------- chip glyph (package drawing, notch up, pin 1 top-left) ---------- */
+function glyph(chip, big, flipped) {
+  const n = chip.pins ? chip.pins.length : parseInt((chip.pkg.match(/\d+/) || ['16'])[0], 10);
+  const half = n / 2;
+  const pitch = big ? 11 : 4.5, stub = big ? 12 : 5, bodyW = big ? 86 : 30, pad = big ? 14 : 5;
+  const h = half * pitch + pad * 2, w = bodyW + stub * 2, r = big ? 9 : 4;
+  const pinAt = i => chip.pins ? chip.pins.find(p => p.n === i) : null;
+  let stubs = '';
+  for (let i = 0; i < half; i++) {
+    const y = pad + i * pitch + pitch * 0.2, sh = pitch * 0.6;
+    const l = flipped ? n - i : i + 1, rr = flipped ? i + 1 : n - i;
+    const pl = pinAt(l), pr = pinAt(rr);
+    stubs += `<rect class="stub ${pl ? 't-' + pl.type : ''}" x="0" y="${y}" width="${stub}" height="${sh}"/>`;
+    stubs += `<rect class="stub ${pr ? 't-' + pr.type : ''}" x="${bodyW + stub}" y="${y}" width="${stub}" height="${sh}"/>`;
+  }
+  const dotX = flipped ? stub + bodyW - r * 1.4 : stub + r * 1.4;
+  const labels = big ? `
+    <text x="${stub + 6}" y="${pad + pitch * 0.8}" ${flipped ? `text-anchor="start"` : ''}>${flipped ? n : 1}</text>
+    <text x="${stub + bodyW - 6}" y="${pad + pitch * 0.8}" text-anchor="end">${flipped ? 1 : n}</text>
+    <text x="${stub + 6}" y="${h - pad - pitch * 0.2}">${flipped ? half + 1 : half}</text>
+    <text x="${stub + bodyW - 6}" y="${h - pad - pitch * 0.2}" text-anchor="end">${flipped ? half : half + 1}</text>
+    <text x="${w / 2}" y="${h / 2 + 4}" text-anchor="middle">${esc(chip.short)}</text>` : '';
+  return `<svg class="glyph" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(chip.pkg)} package, notch at top, pin 1 ${flipped ? 'top right (viewed from below)' : 'top left'}">
+    <rect class="body" x="${stub}" y="0.6" width="${bodyW}" height="${h - 1.2}" rx="1"/>
+    <path class="notch" d="M${stub + bodyW / 2 - r},0.6 a${r},${r} 0 0 0 ${r * 2},0"/>
+    ${stubs}
+    <circle class="dot" cx="${dotX}" cy="${pad + pitch * 0.5}" r="${big ? 3 : 1.6}"/>
+    ${labels}
+  </svg>`;
+}
+
+/* ---------- small building blocks ---------- */
+function section(id, num, title, body, extra = '') {
+  return `<section data-sec id="${id}"><h2><span class="num">${num}</span> ${esc(title)}${extra}</h2>${body}</section>`;
+}
+function titleBlock({ kicker, title, aka, tag, row, fig }) {
+  return `<div class="title-block"><div>
+    ${kicker ? `<p class="kicker">${kicker}</p>` : ''}
+    <h1>${title}</h1>
+    ${aka ? `<p class="aka">${aka}</p>` : ''}
+    ${tag ? `<p class="tag">${tag}</p>` : ''}
+    ${row ? `<div class="row">${row}</div>` : ''}
+  </div>${fig ? `<figure>${fig}</figure>` : ''}</div>`;
+}
+const notCaptured = what => `<p class="empty">${what} not captured yet for this machine. The cheat sheet in the repo is the source to pull from.</p>`;
+
+/* ============================================================
+   Pages. Each returns { title, crumbs, html, after }.
+   ============================================================ */
+const crumbHome = { label: 'Home', href: '#/' };
+const crumbsFor = (b, m, ...rest) => [crumbHome, b && { label: b.name, href: `#/${b.id}` }, m && { label: shortName(m), href: machineHref(m) }, ...rest].filter(Boolean);
+
+function pageHome() {
+  const recent = store.get('recent', []).map(id => D.machines[id]).filter(Boolean);
+  const pinned = store.get('pinned', []).map(id => D.machines[id]).filter(Boolean);
+  const shelf = [...pinned, ...recent.filter(m => !pinned.includes(m))].slice(0, 6);
+  const machineRow = (m, i) => `<li><a class="row" href="${machineHref(m)}">
+      <span class="num">${i + 1}</span>
+      <span class="main"><span class="t">${esc(m.name)}</span><span class="d">${esc(brandOf(m).name)}, ${m.year || ''}${pinned.includes(m) ? ' — pinned' : ''}</span></span>
+      <span class="r"><span class="status ${m.status}">${statusText[m.status]}</span></span></a></li>`;
+  const html = `
+    <div class="masthead"><h1>Retro Bench</h1><p class="sub">A field manual for 8-bit computer repair, one machine at a time.</p></div>
+    ${section('find', 1, 'Find', `
+      <form class="search-big" id="homesearch" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" id="homeq" placeholder="A chip, a pin (/RAS, pin 40), a BASIC word, a term" aria-label="Search">
+      </form>
+      <p class="small muted">Try <a href="#/search?q=%2FRAS">/RAS</a>, <a href="#/search?q=pin%2040">pin 40</a>, <a href="#/search?q=DLOAD">DLOAD</a>, <a href="#/search?q=reset">reset</a>. Press <code>/</code> anywhere to search.</p>`)}
+    ${section('shelf', 2, 'On the bench', shelf.length
+      ? `<ol class="index">${shelf.map(machineRow).join('')}</ol>`
+      : `<p class="empty">Machines you open appear here. Pin one from its page to keep it at the top.</p>`)}
+    ${section('makes', 3, 'Makes', `<ol class="index">${D.brands.map((b, i) => {
+      const ms = b.machines.map(id => D.machines[id]).filter(Boolean);
+      const ready = ms.filter(m => m.status === 'ready').length;
+      return `<li><a class="row" href="#/${b.id}">
+        <span class="num">${i + 1}</span>
+        <span class="main"><span class="t">${esc(b.name)}</span><span class="d">${esc(b.blurb)}</span></span>
+        <span class="r">${ms.length} machine${ms.length === 1 ? '' : 's'}${ready ? `<br>${ready} with full data` : ''}</span></a></li>`;
+    }).join('')}</ol>`)}
+    ${section('appendix', 4, 'Appendix', `<ul class="doors">
+      <li><a href="#/glossary"><span class="num">4.1</span><span class="d-title">Glossary</span><span class="d-go">Open</span><span class="d-desc">${Object.keys(D.terms).length} bench terms: active low, /RAS and /CAS, tri-state, badlines.</span></a></li>
+      <li><a href="#/resources"><span class="num">4.2</span><span class="d-title">Resources</span><span class="d-go">Open</span><span class="d-desc">External archives, datasheet mirrors and repair communities by make.</span></a></li>
+    </ul>`)}`;
+  return { title: 'Retro Bench', crumbs: [crumbHome], html, after() {
+    const f = $('#homesearch'); f.addEventListener('submit', e => { e.preventDefault(); const v = $('#homeq').value.trim(); if (v) location.hash = `#/search?q=${encodeURIComponent(v)}`; });
+  } };
+}
+
+function pageBrand(b) {
+  const ms = b.machines.map(id => D.machines[id]).filter(Boolean);
+  const html = `
+    ${titleBlock({ kicker: 'Make', title: esc(b.name), tag: esc(b.blurb) })}
+    ${section('machines', 1, 'Machines', `<ol class="index">${ms.map((m, i) => `<li><a class="row" href="${machineHref(m)}">
+        <span class="num">${i + 1}</span>
+        <span class="main"><span class="t">${esc(m.name)}</span><span class="d">${m.year || ''}${m.aka ? ', ' + esc(m.aka) : ''}. ${esc(m.tagline || '')}</span></span>
+        <span class="r"><span class="status ${m.status}">${statusText[m.status]}</span></span></a></li>`).join('')}</ol>
+      <p class="small muted" style="margin-top:14px">${Object.entries(statusText).map(([k, v]) => `<span class="status ${k}">${v}</span> ${esc(statusDesc[k])}`).join('<br>')}</p>`)}
+    ${section('links', 2, 'Resources', (D.resources[b.id] || []).length
+      ? `<ul>${D.resources[b.id].map(r => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a> — ${esc(r.what)}${verify(r.verify)}</li>`).join('')}</ul>`
+      : `<p class="empty">No make-specific links yet. See the <a href="#/resources">general resources</a>.</p>`)}`;
+  return { title: b.name, crumbs: crumbsFor(b), html };
+}
+
+function pageMachine(b, m) {
+  const recent = store.get('recent', []).filter(id => id !== m.id); recent.unshift(m.id); store.set('recent', recent.slice(0, 8));
+  const pinned = store.get('pinned', []);
+  const chips = (m.chips || []).map(id => D.chips[id]).filter(Boolean);
+  const captured = chips.filter(c => c.pins).length;
+  const qr = D.quickref[m.id], conns = D.connectors[m.id] || [], pw = D.power[m.id], sym = D.symptoms[m.id] || [];
+  const facts = [['CPU', m.cpu], ['RAM', m.ram], ['ROM', m.rom], ['Video', m.video], ['Sound', m.sound], ['Software', m.os]].filter(f => f[1]);
+  const door = (n, href, title, desc) => `<li><a href="${href}"><span class="num">${n}</span><span class="d-title">${title}</span><span class="d-go">Open</span><span class="d-desc">${desc}</span></a></li>`;
+  const chipLink = id => { const c = D.chips[id]; return c ? `<a href="${chipHref(m, c)}">${esc(c.short)}</a>` : esc(id); };
+  const html = `
+    ${titleBlock({
+      kicker: `${esc(b.name)}, ${m.year || 'year unknown'}`,
+      title: esc(m.name),
+      aka: m.aka ? `also ${esc(m.aka)}` : '',
+      tag: esc(m.tagline || ''),
+      row: `<span class="status ${m.status}">${statusText[m.status]}</span>
+            <button type="button" class="pinbtn" id="pinbtn" aria-pressed="${pinned.includes(m.id)}">${pinned.includes(m.id) ? 'Pinned on home' : 'Pin to home'}</button>`,
+    })}
+    ${section('glance', 1, 'At a glance', facts.length
+      ? `<dl class="facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`
+      : notCaptured('Facts'))}
+    ${section('first', 2, 'First look', qr && qr.firstLook
+      ? `<ol class="steps">${qr.firstLook.map(s => `<li>${esc(s)}</li>`).join('')}</ol>`
+      : notCaptured('First-look notes'))}
+    ${section('contents', 3, 'Contents', `<ul class="doors">
+      ${door('3.1', `${machineHref(m)}/pinouts`, 'Pinouts', chips.length ? `${chips.length} chip${chips.length === 1 ? '' : 's'}, ${captured} with full pin tables. ${chips.map(c => esc(c.short)).join(', ')}.` : 'Chip inventory not captured yet.')}
+      ${door('3.2', `${machineHref(m)}/quickref`, 'Quick reference', qr ? `Keys and quirks, ${esc(qr.basic.dialect)} essentials, memory map.` : 'Keys, BASIC and memory map not captured yet.')}
+      ${door('3.3', `${machineHref(m)}/ports`, 'Ports and connectors', conns.length ? `${conns.length} connectors: ${conns.map(c => esc(c.name)).join(', ')}.` : 'Connector pinouts not captured yet.')}
+      ${door('3.4', `${machineHref(m)}/power`, 'Power and test points', pw ? `${pw.rails.length} rail${pw.rails.length === 1 ? '' : 's'}, ${pw.testPoints.length} test points to probe in order.` : 'Rails and test points not captured yet.')}
+      ${door('3.5', `${machineHref(m)}#faults`, 'Common faults', sym.length ? `${sym.length} symptoms with the chips to suspect first. Below on this page.` : 'Symptom table not captured yet.')}
+    </ul>`)}
+    ${section('faults', 4, 'Common faults', sym.length
+      ? `<table class="dt"><thead><tr><th>Symptom</th><th>Suspect first</th><th>Note</th></tr></thead><tbody>
+          ${sym.map(s => `<tr><td>${esc(s.symptom)}</td><td>${s.suspects.map(chipLink).join(', ')}</td><td class="muted">${esc(s.note)}</td></tr>`).join('')}</tbody></table>`
+      : notCaptured('Symptom table'))}`;
+  return { title: m.name, crumbs: crumbsFor(b, m), html, after() {
+    $('#pinbtn').addEventListener('click', e => {
+      let p = store.get('pinned', []); const on = p.includes(m.id);
+      p = on ? p.filter(x => x !== m.id) : [m.id, ...p]; store.set('pinned', p);
+      e.currentTarget.setAttribute('aria-pressed', String(!on)); e.currentTarget.textContent = on ? 'Pin to home' : 'Pinned on home';
+    });
+    $$('a[href$="#faults"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); jumpTo('faults'); }));
+  } };
+}
+
+function pagePinouts(b, m) {
+  const chips = (m.chips || []).map(id => D.chips[id]).filter(Boolean);
+  const row = (c, i) => `<tr class="linkrow" data-href="${chipHref(m, c)}">
+      <td class="mono" style="white-space:normal;max-width:9em">${esc((c.location || {})[m.id] || '—')}</td>
+      <td><a href="${chipHref(m, c)}">${esc(c.name)}</a>${c.verify ? verify(true) : ''}<span class="sub">${esc(c.role)}</span></td>
+      <td class="mono">${esc(c.pkg)}</td>
+      <td><span class="heat ${c.heat}">${heatText[c.heat] || c.heat}</span></td>
+      <td class="small">${c.pins ? (c.fails || []).join('; ') : `<span class="muted">Pinout not captured yet.</span> ${(c.fails || []).join('; ')}`}</td>
+    </tr>`;
+  const html = `
+    ${titleBlock({ kicker: `${esc(m.name)}`, title: 'Pinouts', tag: chips.length ? `${chips.length} chips. Hot parts fail first; start there.` : 'No chip inventory for this machine yet.' })}
+    ${section('chips', 1, 'Chips', chips.length
+      ? `<table class="dt"><thead><tr><th>Loc.</th><th>Chip</th><th>Package</th><th>Heat</th><th>Fails as</th></tr></thead><tbody>${chips.map(row).join('')}</tbody></table>
+         <p class="small muted">Tap a chip for its pin table. Pin tables are drawn from the top with the notch up.</p>`
+      : notCaptured('Chip inventory'))}
+    ${section('legend', 2, 'Reading the tables', `<p>Signals are typeset in <code>monospace</code>; a leading slash (<code>/RES</code>) means ${termBtn('active-low')}. Colour bars down the table edge group pins by function. Rows marked <span class="badge verify">verify</span> are reconstructed from secondary sources.</p>
+      <div class="chips">${Object.entries(D.pinTypes).map(([k, v]) => `<span class="chip"><span class="sw t-${k}"></span>${esc(v.label)}</span>`).join('')}</div>`)}`;
+  return { title: `${m.name} pinouts`, crumbs: crumbsFor(b, m, { label: 'Pinouts', href: `${machineHref(m)}/pinouts` }), html, after() {
+    $$('tr.linkrow').forEach(tr => tr.addEventListener('click', e => { if (e.target.closest('a,button')) return; location.hash = tr.dataset.href; }));
+  } };
+}
+
+/* ---------- The pinout page ---------- */
+let chipState = { flipped: false, filters: new Set(), active: null };
+
+function pageChip(b, m, chipId, pinNo) {
+  const c = D.chips[chipId];
+  if (!c) return page404();
+  chipState = { flipped: false, filters: new Set(), active: pinNo ? Number(pinNo) : null, chip: c, machine: m };
+  const n = c.pins ? c.pins.length : parseInt((c.pkg.match(/\d+/) || ['0'])[0], 10);
+  const others = machinesFor(c).filter(x => x.id !== m.id);
+  const html = `
+    ${titleBlock({
+      kicker: `${esc(m.name)}, ${esc((c.location || {})[m.id] || 'location not recorded')}`,
+      title: esc(c.name),
+      aka: esc(c.family || ''),
+      tag: esc(c.role),
+      row: `<span class="mono">${esc(c.pkg)}</span><span class="heat ${c.heat}">${heatText[c.heat] || c.heat}</span>${c.verify ? verify(true) : ''}${others.length ? `<span>Also in ${others.map(x => `<a href="${chipHref(x, c)}">${esc(shortName(x))}</a>`).join(', ')}</span>` : ''}`,
+      fig: glyph(c, false, false),
+    })}
+    ${section('package', 1, 'Package and orientation', `<div class="pkg-fig">
+        <figure id="bigglyph"></figure>
+        <div>
+          <p>${esc(c.summary)}</p>
+          <p class="small muted">${esc(c.pkg)}, ${n} pins. Viewed from the top with the notch up, pin 1 is top-left; pins 1 to ${n / 2} run down the left side and ${n / 2 + 1} to ${n} back up the right. The tables below mirror this: the right-hand table reads bottom to top in pin order, exactly as the chip sits on the board.</p>
+          <div class="toggle" role="group" aria-label="View side"><button type="button" data-flip="0" aria-pressed="true">From above</button><button type="button" data-flip="1" aria-pressed="false">From below</button></div>
+        </div></div>`)}
+    ${section('pins', 2, 'Pin table', c.pins ? `<div id="pinarea"></div>` : `<p class="empty">Pin table not captured yet. ${esc(c.summary)}</p>`)}
+    ${section('faults', 3, 'Failure modes', `<ul>${(c.fails || []).map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+        ${c.verifiedAgainst ? `<p class="small muted">Checked against: ${esc(c.verifiedAgainst)}.</p>` : ''}`)}
+    ${section('datasheets', 4, 'Datasheets', (c.datasheets || []).length
+      ? `<ul>${c.datasheets.map(d => `<li><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a>${verify(d.verify)}</li>`).join('')}</ul>`
+      : `<p class="empty">No datasheet links recorded.</p>`)}`;
+  return { title: `${c.short} pinout`, crumbs: crumbsFor(b, m, { label: 'Pinouts', href: `${machineHref(m)}/pinouts` }, { label: c.short, href: chipHref(m, c) }), html, after() {
+    renderPinArea();
+    $$('[data-flip]').forEach(btn => btn.addEventListener('click', () => {
+      chipState.flipped = btn.dataset.flip === '1';
+      $$('[data-flip]').forEach(x => x.setAttribute('aria-pressed', String(x === btn)));
+      renderPinArea();
+    }));
+    if (chipState.active) openPin(chipState.active, false);
+  } };
+}
+
+function renderPinArea() {
+  const { chip: c, flipped, filters, active } = chipState;
+  $('#bigglyph').innerHTML = glyph(c, true, flipped) + `<figcaption>${flipped ? 'From below: pin 1 top-right' : 'From above: pin 1 top-left'}</figcaption>`;
+  if (!c.pins) return;
+  const n = c.pins.length, half = n / 2;
+  const byN = Object.fromEntries(c.pins.map(p => [p.n, p]));
+  const counts = {};
+  c.pins.forEach(p => counts[p.type] = (counts[p.type] || 0) + 1);
+  const types = Object.keys(D.pinTypes).filter(t => counts[t]);
+  const row = (p, right) => {
+    const dim = filters.size && !filters.has(p.type) ? ' dim' : '';
+    const cells = [`<td class="bar"></td>`, `<td class="num">${p.n}</td>`, `<td class="nm" title="${esc(p.name)}">${esc(p.name)}</td>`, `<td class="dir">${dirShort[p.dir] || esc(p.dir)}</td>`, `<td class="vf">${p.verify ? '?' : ''}</td>`];
+    if (right) cells.reverse();
+    return `<tr class="t-${p.type}${dim}${active === p.n ? ' on' : ''}" data-pin="${p.n}" tabindex="0">${cells.join('')}</tr>`;
+  };
+  const leftPins = [], rightPins = [];
+  for (let i = 0; i < half; i++) { leftPins.push(byN[flipped ? n - i : i + 1]); rightPins.push(byN[flipped ? i + 1 : n - i]); }
+  const head = right => { const h = [`<th class="bar"></th>`, `<th class="num">Pin</th>`, `<th class="nm">Signal</th>`, `<th class="dir">Dir</th>`, `<th class="vf"></th>`]; if (right) h.reverse(); return `<thead><tr>${h.join('')}</tr></thead>`; };
+  $('#pinarea').innerHTML = `
+    <div class="pinhead">
+      <div class="chips" style="margin:0">${types.map(t => `<button type="button" class="chip" data-type="${t}" aria-pressed="${filters.has(t)}"><span class="sw t-${t}"></span>${esc(typeName(t))}<span class="n">${counts[t]}</span></button>`).join('')}
+        ${filters.size ? `<button type="button" class="chip clear" data-type="">Show all</button>` : ''}</div>
+    </div>
+    <div class="pins">
+      <div><p class="side-label">${flipped ? 'Right side as seen from above' : 'Left side'}, pins ${leftPins[0].n} to ${leftPins[half - 1].n}</p>
+        <table class="pintab left">${head(false)}<tbody>${leftPins.filter(Boolean).map(p => row(p, false)).join('')}</tbody></table></div>
+      <div><p class="side-label r">${flipped ? 'Left side as seen from above' : 'Right side'}, pins ${rightPins[0].n} down to ${rightPins[half - 1].n}</p>
+        <table class="pintab right">${head(true)}<tbody>${rightPins.filter(Boolean).map(p => row(p, true)).join('')}</tbody></table></div>
+    </div>
+    <p class="pins-note">Tap a row for the full note: direction, description, probe hint and related terms. <code>?</code> marks a reconstructed entry.</p>`;
+  $$('#pinarea .chip').forEach(btn => btn.addEventListener('click', () => {
+    const t = btn.dataset.type;
+    if (!t) chipState.filters.clear(); else if (chipState.filters.has(t)) chipState.filters.delete(t); else chipState.filters.add(t);
+    renderPinArea();
+  }));
+  $$('#pinarea tr[data-pin]').forEach(tr => {
+    tr.addEventListener('click', () => openPin(Number(tr.dataset.pin), true));
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPin(Number(tr.dataset.pin), true); } });
+  });
+}
+
+/* ---------- Margin note ---------- */
+const note = $('#note'), scrim = $('#scrim');
+const isDesktop = () => window.matchMedia('(min-width: 1024px)').matches;
+const isPhone = () => window.matchMedia('(max-width: 600px)').matches;
+
+function placeNote() {
+  const target = isDesktop() ? $('#rail') : document.body;
+  if (note.parentElement !== target) { if (isDesktop()) target.prepend(note); else target.appendChild(note); }
+}
+
+function openPin(n, scrollToRow) {
+  const { chip: c, machine: m } = chipState;
+  const p = c.pins && c.pins.find(x => x.n === n);
+  if (!p) return;
+  chipState.active = n;
+  $$('#pinarea tr[data-pin]').forEach(tr => tr.classList.toggle('on', Number(tr.dataset.pin) === n));
+  const idx = c.pins.indexOf(p), prev = c.pins[idx - 1], next = c.pins[idx + 1];
+  const where = (c.location || {})[m.id];
+  note.innerHTML = `
+    <div class="grip"></div>
+    <div class="note-head"><span class="kicker">${esc(c.short)}, pin ${p.n}${where ? ` (${esc(where)})` : ''}</span><button type="button" class="x" aria-label="Close note">×</button></div>
+    <h3><span class="sw t-${p.type}"></span>${esc(p.name)}${p.activeLow ? ' <span class="badge low">active low</span>' : ''}${p.verify ? verify(true) : ''}</h3>
+    <dl class="kv"><dt>Direction</dt><dd>${dirLabel[p.dir] || esc(p.dir)}</dd><dt>Type</dt><dd>${esc(typeName(p.type))}, ${esc((D.pinTypes[p.type] || {}).hint || '')}</dd></dl>
+    <p>${esc(p.desc)}</p>
+    ${p.probe ? `<p class="probe"><b>Probe:</b> ${esc(p.probe)}</p>` : ''}
+    ${p.terms && p.terms.length ? `<p class="small muted" style="margin-bottom:0">See also</p>${termList(p.terms)}` : ''}
+    ${(c.datasheets || []).length ? `<p class="ds" style="margin-top:12px"><span class="muted">Datasheets</span>${c.datasheets.map(d => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a>`).join('')}</p>` : ''}
+    <nav class="pn" aria-label="Neighbouring pins">
+      <button type="button" data-go="${prev ? prev.n : ''}" ${prev ? '' : 'disabled'}>‹ ${prev ? `${prev.n} ${esc(prev.name)}` : 'start'}</button>
+      <button type="button" data-go="${next ? next.n : ''}" ${next ? '' : 'disabled'}>${next ? `${next.n} ${esc(next.name)}` : 'end'} ›</button>
+    </nav>`;
+  placeNote();
+  note.hidden = false; note.classList.remove('closing');
+  scrim.hidden = isDesktop();
+  $('.x', note).addEventListener('click', closeNote);
+  $$('[data-go]', note).forEach(b => b.addEventListener('click', () => b.dataset.go && openPin(Number(b.dataset.go), true)));
+  history.replaceState(null, '', chipHref(m, c, n));
+  if (scrollToRow && isDesktop()) { /* keep the page still; the margin note sits beside the table */ }
+  else if (!scrollToRow) {
+    const tr = $(`#pinarea tr[data-pin="${n}"]`);
+    if (tr) { const y = tr.getBoundingClientRect().top + window.scrollY; window.scrollTo(0, isPhone() ? y - $('.topbar').offsetHeight - 24 : y - window.innerHeight / 2); }
+  }
+}
+function closeNote(immediate) {
+  if (note.hidden) return;
+  scrim.hidden = true;
+  const finish = () => { note.hidden = true; note.classList.remove('closing'); };
+  if (!immediate && !isDesktop() && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    note.classList.add('closing'); note.addEventListener('transitionend', finish, { once: true }); setTimeout(finish, 300);
+  } else finish();
+  chipState.active = null;
+  $$('#pinarea tr.on').forEach(tr => tr.classList.remove('on'));
+  if (chipState.chip && chipState.machine) history.replaceState(null, '', chipHref(chipState.machine, chipState.chip));
+}
+scrim.addEventListener('click', closeNote);
+window.matchMedia('(min-width: 1024px)').addEventListener('change', () => { if (!note.hidden) { placeNote(); scrim.hidden = isDesktop(); } });
+
+/* ---------- Quick reference ---------- */
+function pageQuickref(b, m) {
+  const qr = D.quickref[m.id];
+  const crumbs = crumbsFor(b, m, { label: 'Quick reference', href: `${machineHref(m)}/quickref` });
+  if (!qr) return { title: `${m.name} quick reference`, crumbs, html: `${titleBlock({ kicker: esc(m.name), title: 'Quick reference' })}${section('none', 1, 'Not captured', notCaptured('Keys, BASIC and memory map'))}` };
+  const html = `
+    ${titleBlock({ kicker: esc(m.name), title: 'Quick reference', tag: `${esc(qr.basic.dialect)}. Two levels: the essentials up front, the full word lists folded away.` })}
+    ${section('keys', 1, 'Keys and quirks', `<table class="dt"><thead><tr><th>Press</th><th>Does</th></tr></thead><tbody>
+      ${qr.keys.map(k => `<tr><td class="mono" style="white-space:normal">${esc(k.keys)}</td><td>${esc(k.does)}${verify(k.verify)}</td></tr>`).join('')}</tbody></table>`)}
+    ${section('basic', 2, 'BASIC', `
+      <h3><span class="num">2.1</span>Essentials</h3>
+      <table class="dt"><thead><tr><th>Type</th><th>Does</th></tr></thead><tbody>
+        ${qr.basic.essentials.map(e => `<tr><td class="mono" style="white-space:normal">${esc(e.cmd)}</td><td>${esc(e.does)}${verify(e.verify)}</td></tr>`).join('')}</tbody></table>
+      <h3><span class="num">2.2</span>Word lists by group</h3>
+      ${qr.basic.groups.map((g, i) => `<details class="grp"><summary><span class="num">2.2.${i + 1}</span>${esc(g.group)}<span class="count">${g.items.length} entries</span></summary>
+        <ul class="items">${g.items.map(it => `<li>${esc(it)}</li>`).join('')}</ul></details>`).join('')}
+      <h3><span class="num">2.3</span>Quirks</h3>
+      <ol class="steps">${qr.basic.quirks.map(q => `<li>${esc(q)}</li>`).join('')}</ol>`)}
+    ${section('memory', 3, 'Memory map', `<table class="dt"><thead><tr><th>Range</th><th>What lives there</th></tr></thead><tbody>
+      ${qr.memory.map(r => `<tr><td class="mono">${esc(r.range)}</td><td>${esc(r.what)}</td></tr>`).join('')}</tbody></table>`)}`;
+  return { title: `${m.name} quick reference`, crumbs, html };
+}
+
+/* ---------- Ports ---------- */
+function pagePorts(b, m) {
+  const conns = D.connectors[m.id] || [];
+  const crumbs = crumbsFor(b, m, { label: 'Ports', href: `${machineHref(m)}/ports` });
+  const html = `
+    ${titleBlock({ kicker: esc(m.name), title: 'Ports and connectors', tag: conns.length ? `${conns.length} connectors, numbered in the order you meet them on the bench: power first.` : '' })}
+    ${conns.length ? conns.map((c, i) => section(c.id, i + 1, c.name, `
+        <p class="muted small" style="margin-top:-8px">${esc(c.kind)}</p>
+        <p>${esc(c.summary)}</p>
+        <table class="dt"><thead><tr><th>Pin</th><th>Signal</th><th>Note</th></tr></thead><tbody>
+          ${c.pins.map(p => `<tr><td class="mono">${esc(p.n)}</td><td class="mono" style="white-space:normal">${esc(p.name)}</td><td class="muted">${esc(p.desc || '')}</td></tr>`).join('')}</tbody></table>
+        ${termList(c.terms)}`, verify(c.verify))).join('')
+      : section('none', 1, 'Not captured', notCaptured('Connector pinouts'))}`;
+  return { title: `${m.name} ports`, crumbs, html };
+}
+
+/* ---------- Power ---------- */
+function pagePower(b, m) {
+  const pw = D.power[m.id];
+  const crumbs = crumbsFor(b, m, { label: 'Power', href: `${machineHref(m)}/power` });
+  if (!pw) return { title: `${m.name} power`, crumbs, html: `${titleBlock({ kicker: esc(m.name), title: 'Power and test points' })}${section('none', 1, 'Not captured', notCaptured('Rails and test points'))}` };
+  const html = `
+    ${titleBlock({ kicker: esc(m.name), title: 'Power and test points', tag: 'Measure the rails before you suspect any chip. Then walk the test points in order.' })}
+    ${section('rails', 1, 'Rails', `<table class="dt"><thead><tr><th>Rail</th><th>Expect</th><th>Where to measure</th><th>Note</th></tr></thead><tbody>
+      ${pw.rails.map(r => `<tr><td class="mono">${esc(r.rail)}</td><td class="mono" style="white-space:normal">${esc(r.expect)}</td><td>${esc(r.where)}</td><td class="muted small">${esc(r.note || '')}</td></tr>`).join('')}</tbody></table>`)}
+    ${section('testpoints', 2, 'Test points', `<table class="dt"><thead><tr><th></th><th>Point</th><th>Where</th><th>Expect</th></tr></thead><tbody>
+      ${pw.testPoints.map((t, i) => `<tr><td class="num">${i + 1}</td><td>${esc(t.tp)}</td><td>${esc(t.where)}</td><td class="mono" style="white-space:normal">${esc(t.expect)}</td></tr>`).join('')}</tbody></table>
+      <p class="small muted">Pin references point at the chip pages under <a href="${machineHref(m)}/pinouts">Pinouts</a>; each pin note carries the probe hint.</p>`)}`;
+  return { title: `${m.name} power`, crumbs, html };
+}
+
+/* ---------- Glossary & resources ---------- */
+function pageGlossary(focusId) {
+  const ids = Object.keys(D.terms).sort((a, b) => D.terms[a].term.localeCompare(D.terms[b].term));
+  const html = `
+    ${titleBlock({ kicker: 'Appendix', title: 'Glossary', tag: 'Bench vocabulary. Every dotted term in the manual opens one of these.' })}
+    ${section('terms', 1, 'Terms', `<dl class="facts" style="gap:14px 22px">${ids.map(id => `<dt id="term-${id}" style="font-style:normal;font-weight:600;color:var(--ink)">${esc(D.terms[id].term)}</dt><dd><span>${esc(D.terms[id].short)}</span><br><span class="muted">${esc(D.terms[id].long)}</span></dd>`).join('')}</dl>`)}`;
+  return { title: 'Glossary', crumbs: [crumbHome, { label: 'Glossary', href: '#/glossary' }], html, after() {
+    if (focusId && D.terms[focusId]) { const el = $(`#term-${CSS.escape(focusId)}`); if (el) { el.scrollIntoView({ block: 'center' }); el.style.color = 'var(--accent)'; } }
+  } };
+}
+function pageResources() {
+  const group = (id, n, title, list) => section(id, n, title, `<ul class="index">${list.map(r => `<li><a class="row" href="${esc(r.url)}" target="_blank" rel="noopener"><span class="main"><span class="t">${esc(r.name)}</span><span class="d">${esc(r.what)}</span></span><span class="r">${r.verify ? 'verify link' : 'external'}</span></a></li>`).join('')}</ul>`);
+  const brandsWith = D.brands.filter(b => D.resources[b.id]);
+  const html = `
+    ${titleBlock({ kicker: 'Appendix', title: 'Resources', tag: 'Archives, datasheet mirrors and the communities that still fix these machines.' })}
+    ${group('general', 1, 'General', D.resources.general)}
+    ${brandsWith.map((b, i) => group(b.id, i + 2, b.name, D.resources[b.id])).join('')}`;
+  return { title: 'Resources', crumbs: [crumbHome, { label: 'Resources', href: '#/resources' }], html };
+}
+function page404() {
+  return { title: 'Not found', crumbs: [crumbHome], html: `${titleBlock({ title: 'Page not in this manual' })}<p class="lede" style="margin-top:20px">Nothing is filed under <code>${esc(location.hash)}</code>. <a href="#/">Back to the start</a>.</p>` };
+}
+
+/* ---------- Search ---------- */
+let INDEX = null;
+const KINDS = [['chip', 'Chips'], ['pin', 'Pins'], ['basic', 'BASIC'], ['key', 'Keys'], ['term', 'Terms'], ['port', 'Ports']];
+function buildIndex() {
+  if (INDEX) return INDEX;
+  const ix = [];
+  const add = (kind, title, detail, where, href, extra = '') => ix.push({ kind, title, detail, where, href, hay: `${title} ${detail} ${extra}`.toLowerCase() });
+  Object.values(D.chips).forEach(c => {
+    const m = homeMachineFor(c); if (!m) return;
+    const ms = machinesFor(c).map(shortName).join(', ');
+    add('chip', c.name, c.role, `${ms} › Pinouts`, chipHref(m, c), `${c.short} ${c.pkg} ${c.family || ''} ${(c.fails || []).join(' ')}`);
+    (c.pins || []).forEach(p => add('pin', `${c.short}, pin ${p.n} ${p.name}`, p.desc, `${shortName(m)} › ${c.short} pinout`, chipHref(m, c, p.n), `pin${p.n} ${p.type} ${typeName(p.type)} ${p.probe || ''}`));
+  });
+  Object.entries(D.quickref).forEach(([mid, qr]) => {
+    const m = D.machines[mid]; if (!m) return;
+    const base = `${machineHref(m)}/quickref`;
+    qr.basic.essentials.forEach(e => add('basic', e.cmd, e.does, `${shortName(m)} › ${qr.basic.dialect}`, base));
+    qr.basic.groups.forEach(g => g.items.forEach(it => add('basic', it, g.group, `${shortName(m)} › ${qr.basic.dialect}`, base)));
+    qr.keys.forEach(k => add('key', k.keys, k.does, `${shortName(m)} › Keys`, base));
+  });
+  Object.entries(D.terms).forEach(([id, t]) => add('term', t.term, t.short, 'Glossary', `#/glossary/${id}`, t.long));
+  Object.entries(D.connectors).forEach(([mid, list]) => {
+    const m = D.machines[mid]; if (!m) return;
+    list.forEach(c => {
+      add('port', c.name, `${c.kind}. ${c.summary}`, `${shortName(m)} › Ports`, `${machineHref(m)}/ports`);
+      c.pins.forEach(p => add('port', `${c.name}, pin ${p.n} ${p.name}`, p.desc || c.kind, `${shortName(m)} › Ports`, `${machineHref(m)}/ports`));
+    });
+  });
+  return INDEX = ix;
+}
+function search(q) {
+  const norm = q.trim().toLowerCase();
+  if (!norm) return [];
+  const toks = norm.split(/\s+/);
+  const out = [];
+  for (const e of buildIndex()) {
+    if (!toks.every(t => e.hay.includes(t))) continue;
+    const t = e.title.toLowerCase();
+    let score = t === norm ? 0 : t.startsWith(norm) ? 1 : t.includes(norm) ? 2 : e.hay.includes(norm) ? 3 : 4;
+    out.push({ ...e, score });
+  }
+  return out.sort((a, b) => a.score - b.score || a.title.localeCompare(b.title));
+}
+function pageSearch(q) {
+  const res = search(q);
+  const counts = {}; res.forEach(r => counts[r.kind] = (counts[r.kind] || 0) + 1);
+  const entry = r => `<a class="entry" href="${esc(r.href)}" data-kind="${r.kind}"><span class="e-title ${r.kind === 'chip' || r.kind === 'term' ? 'serif' : ''}">${esc(r.title)}</span><span class="e-detail">${esc(r.detail)}</span><span class="e-where">${esc(r.where)}</span></a>`;
+  const groups = KINDS.filter(([k]) => counts[k]);
+  const html = `
+    ${titleBlock({ kicker: 'Index', title: q ? `Results for “${esc(q)}”` : 'Search', tag: q ? `${res.length} entr${res.length === 1 ? 'y' : 'ies'} across ${groups.length} kind${groups.length === 1 ? '' : 's'}.` : 'Type a chip, a signal, a pin number, a BASIC word or a bench term.' })}
+    <form class="search-big" id="pagesearch" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="pageq" value="${esc(q)}" aria-label="Search" placeholder="/RAS, pin 40, DLOAD, tri-state"></form>
+    ${q ? `<div class="chips" id="kindchips">${KINDS.map(([k, label]) => `<button type="button" class="chip" data-kind="${k}" aria-pressed="false" ${counts[k] ? '' : 'disabled style="opacity:.4"'}>${label}<span class="n">${counts[k] || 0}</span></button>`).join('')}</div>` : ''}
+    ${groups.length ? groups.map(([k, label], i) => `<section data-sec id="k-${k}" data-kind="${k}"><h2><span class="num">${i + 1}</span>${label}</h2>${res.filter(r => r.kind === k).map(entry).join('')}</section>`).join('')
+      : q ? `<p class="empty">Nothing in the index matches “${esc(q)}”. Try a shorter word, a signal name like <code>/CAS</code>, or <code>pin 12</code>.</p>` : ''}`;
+  return { title: q ? `Search: ${q}` : 'Search', crumbs: [crumbHome, { label: 'Search', href: '#/search' }], html, after() {
+    const f = $('#pagesearch'), inp = $('#pageq');
+    f.addEventListener('submit', e => { e.preventDefault(); location.hash = `#/search?q=${encodeURIComponent(inp.value.trim())}`; });
+    if (!q) inp.focus();
+    const sel = new Set();
+    $$('#kindchips .chip').forEach(btn => btn.addEventListener('click', () => {
+      const k = btn.dataset.kind; sel.has(k) ? sel.delete(k) : sel.add(k);
+      btn.setAttribute('aria-pressed', String(sel.has(k)));
+      $$('section[data-kind]').forEach(s => s.hidden = sel.size && !sel.has(s.dataset.kind));
+      buildToc();
+    }));
+    /* arrows + Enter walk the entries */
+    const entries = () => $$('.entry').filter(a => !a.closest('[hidden]'));
+    inp.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { const l = entries(); if (l[0]) { e.preventDefault(); l[0].focus(); } } });
+    $('#main').addEventListener('keydown', e => {
+      if (!e.target.classList.contains('entry')) return;
+      const l = entries(), i = l.indexOf(e.target);
+      if (e.key === 'ArrowDown' && l[i + 1]) { e.preventDefault(); l[i + 1].focus(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? l[i - 1] : inp).focus(); }
+    });
+  } };
+}
+
+/* ============================================================
+   Router and page frame
+   ============================================================ */
+function parse() {
+  const raw = location.hash.replace(/^#\/?/, '');
+  const [path, qs] = raw.split('?');
+  return { seg: path.split('/').filter(Boolean).map(decodeURIComponent), q: new URLSearchParams(qs || '') };
+}
+function route() {
+  const { seg, q } = parse();
+  closeNote(true); closePop();
+  let page;
+  if (!seg.length) page = pageHome();
+  else if (seg[0] === 'search') page = pageSearch(q.get('q') || '');
+  else if (seg[0] === 'resources') page = pageResources();
+  else if (seg[0] === 'glossary') page = pageGlossary(seg[1]);
+  else {
+    const b = D.brands.find(x => x.id === seg[0]);
+    const m = b && D.machines[seg[1]];
+    if (!b) page = page404();
+    else if (!seg[1]) page = pageBrand(b);
+    else if (!m || m.brand !== b.id) page = page404();
+    else page = ({ undefined: () => pageMachine(b, m), pinouts: () => pagePinouts(b, m), chip: () => pageChip(b, m, seg[3], seg[4]), quickref: () => pageQuickref(b, m), ports: () => pagePorts(b, m), power: () => pagePower(b, m) }[seg[2]] || page404)();
+  }
+  render(page);
+}
+function render(page) {
+  document.title = `${page.title} — Retro Bench`;
+  $('#crumbs').innerHTML = page.crumbs.map(c => `<li><a href="${c.href}">${esc(c.label)}</a></li>`).join('');
+  $('#main').innerHTML = page.html;
+  buildToc();
+  window.scrollTo(0, 0);
+  if (page.after) page.after();
+}
+
+/* Section index: rail on desktop; the same list is cloned into a <details> for tablet / phone. */
+function buildToc() {
+  const secs = $$('#main section[data-sec]').filter(s => !s.hidden);
+  const items = secs.map(s => { const h = $('h2', s); const num = $('.num', h); return { id: s.id, num: num ? num.textContent : '', label: h ? h.textContent.replace(num ? num.textContent : '', '').replace(/verify$/, '').trim() : s.id }; });
+  const list = items.length > 1 ? `<p class="toc-title">On this page</p><ol>${items.map(i => `<li><a href="#" data-jump="${i.id}"><span class="num">${esc(i.num)}</span>${esc(i.label)}</a></li>`).join('')}</ol>` : '';
+  $('#toc').innerHTML = list;
+  let dd = $('#tocdd');
+  if (!dd) { dd = document.createElement('details'); dd.id = 'tocdd'; dd.className = 'toc-dd'; }
+  dd.innerHTML = list ? `<summary>Contents</summary><nav class="toc">${list}</nav>` : '';
+  dd.hidden = !list; dd.open = false;
+  const tb = $('#main .title-block, #main .masthead');
+  if (tb) tb.after(dd); else $('#main').prepend(dd);
+  $$('[data-jump]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); jumpTo(a.dataset.jump); dd.open = false; }));
+  watchSections(secs);
+}
+function jumpTo(id) {
+  const el = document.getElementById(id); if (!el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY - ($('.topbar').offsetHeight + 14);
+  window.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+let io = null;
+function watchSections(secs) {
+  if (io) io.disconnect();
+  if (!('IntersectionObserver' in window) || !secs.length) return;
+  io = new IntersectionObserver(entries => {
+    const vis = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+    if (!vis) return;
+    $$('#toc a').forEach(a => a.classList.toggle('on', a.dataset.jump === vis.target.id));
+  }, { rootMargin: '-80px 0px -60% 0px' });
+  secs.forEach(s => io.observe(s));
+}
+document.addEventListener('click', e => { const dd = $('#tocdd'); if (dd && dd.open && !dd.contains(e.target)) dd.open = false; });
+
+/* ---------- Glossary popovers ---------- */
+const pop = $('#pop');
+function openPop(btn) {
+  const t = D.terms[btn.dataset.term]; if (!t) return;
+  pop.innerHTML = `<button type="button" class="pop-x" aria-label="Close">×</button><h4>${esc(t.term)}</h4><p><b>${esc(t.short)}</b></p><p>${esc(t.long)}</p><a href="#/glossary/${esc(btn.dataset.term)}">Open in glossary</a>`;
+  pop.hidden = false;
+  const r = btn.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let left = Math.min(Math.max(12, r.left), window.innerWidth - pw - 12);
+  let top = r.bottom + 8; if (top + ph > window.innerHeight - 12) top = Math.max(12, r.top - ph - 8);
+  pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  $('.pop-x', pop).focus();
+}
+function closePop() { pop.hidden = true; }
+document.addEventListener('click', e => {
+  const t = e.target.closest('.term');
+  if (t) { e.preventDefault(); openPop(t); return; }
+  if (!pop.hidden && !pop.contains(e.target)) closePop();
+  if (e.target.classList.contains('pop-x')) closePop();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (!pop.hidden) closePop(); else if (!note.hidden) closeNote(); else { const dd = $('#tocdd'); if (dd) dd.open = false; } }
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if ((e.key === '/' && !typing) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) { e.preventDefault(); $('#q').focus(); $('#q').select(); }
+});
+
+/* ---------- Header search, lamp, boot ---------- */
+$('#searchform').addEventListener('submit', e => { e.preventDefault(); const v = $('#q').value.trim(); if (v) location.hash = `#/search?q=${encodeURIComponent(v)}`; });
+window.addEventListener('hashchange', () => { const { seg, q } = parse(); $('#q').value = seg[0] === 'search' ? (q.get('q') || '') : ''; route(); });
+
+const applyTheme = t => { document.documentElement.dataset.theme = t; $('#lamp-label').textContent = t === 'dark' ? 'Daylight' : 'Dim lamp'; };
+applyTheme(store.get('theme', null) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+$('#lamp').addEventListener('click', () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; store.set('theme', t); applyTheme(t); });
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if (!store.get('theme', null)) applyTheme(e.matches ? 'dark' : 'light'); });
+
+route();
+})();
+</script>
+</body>
+</html>

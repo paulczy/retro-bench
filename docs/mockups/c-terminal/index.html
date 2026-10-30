@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="en" data-theme="amber">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0d10">
+<title>Retro Bench — terminal</title>
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --bg:#0b0d10; --panel:#12161c; --panel2:#181d25; --line:#252b34; --line2:#333b47;
+  --fg:#d8dce1; --fg2:#8b95a1; --fg3:#5b6573;
+  --acc:#f0a830; --acc-dim:rgba(240,168,48,.14); --acc-line:rgba(240,168,48,.45); --on-acc:#0b0d10;
+  --red:#ff5a5a; --orange:#ff9e64;
+  --mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --prose:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --cmd-h:52px; --drawer-w:40%;
+  --t:160ms ease;
+}
+[data-theme="green"]{ --acc:#5fd97a; --acc-dim:rgba(95,217,122,.14); --acc-line:rgba(95,217,122,.45); }
+@media (prefers-reduced-motion: reduce){ :root{ --t:0s; } }
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:var(--bg); color:var(--fg); }
+body{ font:14px/1.45 var(--mono); -webkit-font-smoothing:antialiased; padding-top:var(--cmd-h); min-height:100vh; }
+a{ color:var(--acc); text-decoration:none; }
+a:hover{ text-decoration:underline; text-underline-offset:3px; }
+button{ font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+:focus-visible{ outline:2px solid var(--acc); outline-offset:2px; }
+.prose{ font-family:var(--prose); font-size:15px; line-height:1.55; max-width:68ch; }
+.muted{ color:var(--fg2); } .dim{ color:var(--fg3); }
+h1,h2,h3{ font-weight:600; margin:0; }
+h1{ font-size:22px; letter-spacing:-.01em; }
+h2{ font-size:15px; color:var(--fg2); font-weight:500; }
+h3{ font-size:14px; }
+code,kbd{ font-family:var(--mono); }
+hr{ border:0; border-top:1px solid var(--line); margin:20px 0; }
+table{ border-collapse:collapse; width:100%; }
+th{ text-align:left; font-weight:500; color:var(--fg2); font-size:12px; padding:8px 10px; border-bottom:1px solid var(--line2); }
+td{ padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+
+/* bracketed label: [ text ] */
+.bk{ color:var(--fg2); white-space:nowrap; min-height:32px; display:inline-flex; align-items:center; gap:4px; padding:0 2px; }
+.bk::before{ content:"["; color:var(--fg3); } .bk::after{ content:"]"; color:var(--fg3); }
+.bk:hover, .bk.on{ color:var(--acc); } .bk.on::before,.bk.on::after{ color:var(--acc-line); }
+.key{ color:var(--acc); } .key::before{ content:"["; color:var(--fg3); } .key::after{ content:"]"; color:var(--fg3); }
+
+.badge{ display:inline-block; font-size:11px; line-height:18px; padding:0 6px; border:1px solid var(--line2); border-radius:3px; color:var(--fg2); vertical-align:middle; white-space:nowrap; }
+.badge.vf{ color:var(--acc); border-color:var(--acc-line); }
+.badge.hot{ color:var(--red); border-color:rgba(255,90,90,.5); }
+.badge.warm{ color:var(--orange); border-color:rgba(255,158,100,.5); }
+.badge.cool{ color:var(--fg2); }
+.badge.ready{ color:var(--acc); border-color:var(--acc-line); }
+.badge.planned{ color:var(--fg3); border-style:dashed; }
+.badge.low{ color:var(--fg); border-color:var(--line2); background:var(--panel2); }
+
+/* ---------- command line ---------- */
+.cmd{ position:fixed; top:0; left:0; right:0; height:var(--cmd-h); z-index:40; background:var(--panel); border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; padding:0 16px; }
+.cmd .prompt{ color:var(--acc); font-size:18px; user-select:none; }
+.cmd input{ flex:1; min-width:0; height:40px; background:transparent; border:0; color:var(--fg); font:16px var(--mono); outline:none; caret-color:var(--acc); }
+.cmd input::placeholder{ color:var(--fg3); }
+.cmd .brand{ color:var(--fg2); font-size:13px; }
+.cmd .brand b{ color:var(--fg); font-weight:600; }
+.cmd .right{ display:flex; align-items:center; gap:10px; font-size:12px; color:var(--fg2); }
+.pwa{ display:inline-flex; align-items:center; gap:6px; color:var(--fg2); }
+.pwa i{ width:7px; height:7px; background:var(--acc); display:inline-block; border-radius:1px; }
+@media (max-width:640px){ .cmd .pwa span, .cmd .brand{ display:none; } .cmd{ padding:0 12px; } }
+
+.results{ position:fixed; top:var(--cmd-h); left:16px; right:16px; max-width:820px; max-height:calc(100vh - var(--cmd-h) - 24px); overflow:auto; z-index:39; background:var(--panel); border:1px solid var(--line2); border-top:0; }
+.results[hidden]{ display:none; }
+.rg{ display:grid; grid-template-columns:96px 1fr; border-top:1px solid var(--line); }
+.rg:first-child{ border-top:0; }
+.rg .gl{ color:var(--fg3); padding:10px 0 10px 12px; font-size:12px; }
+.ri{ display:block; padding:9px 12px; color:var(--fg); border-left:1px solid var(--line); min-height:44px; }
+.ri:hover{ text-decoration:none; background:var(--panel2); }
+.ri.on{ background:var(--acc-dim); }
+.ri b{ font-weight:500; } .ri b mark{ background:none; color:var(--acc); }
+.ri small{ display:block; color:var(--fg2); font-size:12px; font-family:var(--prose); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rfoot{ padding:8px 12px; color:var(--fg3); font-size:12px; border-top:1px solid var(--line); display:flex; justify-content:space-between; }
+.rempty{ padding:14px 12px; color:var(--fg2); }
+
+/* ---------- layout ---------- */
+.wrap{ transition:margin-right var(--t); }
+body.drawer-open .wrap{ margin-right:var(--drawer-w); }
+.crumbs{ padding:12px 24px 0; color:var(--fg3); font-size:13px; display:flex; flex-wrap:wrap; gap:0 2px; }
+.crumbs a{ color:var(--fg2); } .crumbs a:hover{ color:var(--acc); } .crumbs span{ color:var(--fg); }
+main{ padding:16px 24px 56px; max-width:1180px; }
+@media (max-width:640px){ .crumbs{ padding:10px 14px 0; } main{ padding:12px 14px 48px; } }
+.head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 14px; margin-bottom:6px; }
+.head .sub{ color:var(--fg2); }
+.sect{ margin-top:28px; }
+.sect > h2{ margin-bottom:10px; display:flex; align-items:center; gap:10px; }
+.sect > h2::after{ content:""; flex:1; border-top:1px solid var(--line); }
+.row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+
+/* ---------- home ---------- */
+.boot{ margin-top:8px; }
+.boot .hint{ color:var(--fg2); margin:4px 0 20px; }
+.boot .hint code{ color:var(--acc); }
+.tiles{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; }
+.tile{ display:block; border:1px solid var(--line); padding:14px 16px 12px; color:var(--fg); min-height:112px; background:var(--panel); transition:border-color var(--t); }
+.tile:hover,.tile:focus-visible{ border-color:var(--acc-line); text-decoration:none; }
+.tile .t{ display:flex; align-items:baseline; gap:10px; font-size:16px; font-weight:600; }
+.tile .b{ color:var(--fg2); font-family:var(--prose); font-size:13px; margin:6px 0 10px; line-height:1.4; }
+.tile .m{ color:var(--fg3); font-size:12px; }
+.tile .m b{ color:var(--acc); font-weight:500; }
+.recent{ display:flex; flex-wrap:wrap; gap:8px; }
+.recent a{ border:1px solid var(--line); padding:8px 12px; color:var(--fg); min-height:44px; display:inline-flex; align-items:center; gap:8px; }
+.recent a:hover{ border-color:var(--acc-line); text-decoration:none; }
+.recent a small{ color:var(--fg3); }
+.links{ display:flex; flex-wrap:wrap; gap:4px 18px; margin-top:8px; }
+
+/* ---------- menu list ---------- */
+.menu{ border-top:1px solid var(--line); }
+.menu a, .menu .item{ display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:10px; min-height:52px; padding:6px 10px 6px 0; border-bottom:1px solid var(--line); color:var(--fg); }
+.menu a:hover{ text-decoration:none; background:var(--panel); }
+.menu .nm{ font-weight:500; }
+.menu .nm small{ display:block; font-weight:400; color:var(--fg2); font-family:var(--prose); font-size:13px; }
+.menu .rt{ color:var(--fg3); font-size:12px; text-align:right; }
+.menu .rt .badge{ margin-left:6px; }
+
+/* ---------- machine status block ---------- */
+.status{ display:grid; grid-template-columns:max-content 1fr max-content 1fr; gap:4px 14px; border:1px solid var(--line); padding:12px 14px; background:var(--panel); margin:14px 0 20px; }
+.status dt{ color:var(--fg3); } .status dd{ margin:0; color:var(--fg); overflow-wrap:anywhere; }
+@media (max-width:760px){ .status{ grid-template-columns:max-content 1fr; } }
+.first{ margin:0; padding:0; list-style:none; }
+.first li{ font-family:var(--prose); font-size:15px; line-height:1.5; padding:4px 0 4px 18px; position:relative; max-width:72ch; }
+.first li::before{ content:">"; position:absolute; left:0; color:var(--acc); font-family:var(--mono); }
+.two{ display:grid; grid-template-columns:1fr 1fr; gap:0 32px; }
+@media (max-width:900px){ .two{ grid-template-columns:1fr; } }
+
+/* fault table */
+.faults td:first-child{ font-weight:500; white-space:nowrap; }
+.faults .note{ font-family:var(--prose); color:var(--fg2); font-size:13px; }
+.chipbtn{ color:var(--acc); border:1px solid var(--acc-line); padding:2px 8px; margin:2px 4px 2px 0; border-radius:3px; min-height:30px; }
+.chipbtn:hover{ background:var(--acc-dim); }
+@media (max-width:640px){ .faults td:first-child{ white-space:normal; } .faults th:nth-child(3), .faults td:nth-child(3){ display:none; } }
+
+/* ---------- chip list ---------- */
+.chips a{ grid-template-columns:72px 1fr auto; }
+.chips .loc{ color:var(--fg3); }
+.chips .fails{ color:var(--fg2); font-family:var(--prose); font-size:13px; }
+
+/* ---------- chip page ---------- */
+.ctl{ display:flex; flex-wrap:wrap; gap:4px 14px; align-items:center; margin:16px 0 10px; color:var(--fg3); font-size:13px; }
+.ctl .grp{ display:inline-flex; align-items:center; gap:2px; }
+.legend{ display:flex; flex-wrap:wrap; gap:4px 12px; font-size:12px; color:var(--fg2); margin-left:auto; }
+.legend i, .ty i{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+.pinwrap{ display:grid; grid-template-columns:300px 1fr; gap:0 24px; align-items:start; }
+.glyph{ position:sticky; top:calc(var(--cmd-h) + 10px); }
+.glyph svg{ width:100%; height:auto; display:block; }
+.glyph .cap{ text-align:center; color:var(--fg3); font-size:12px; margin-top:6px; }
+.glyph text{ font-family:var(--mono); fill:var(--fg2); font-size:11px; }
+.glyph text.n{ fill:var(--fg3); font-size:10px; }
+.glyph .hit{ fill:transparent; cursor:pointer; }
+.glyph .hit.hl{ fill:var(--acc-dim); }
+.glyph .hit.sel{ fill:var(--acc-dim); stroke:var(--acc); stroke-width:1.5; }
+.glyph .body{ fill:var(--panel2); stroke:var(--line2); }
+.glyph .notch{ fill:var(--bg); stroke:var(--line2); }
+.glyph line.pin{ stroke-width:6; stroke-linecap:butt; pointer-events:none; }
+.glyph .one{ fill:var(--fg); }
+.strip{ display:none; }
+.pins{ font-size:13px; }
+.pins thead th{ position:sticky; top:var(--cmd-h); background:var(--bg); z-index:2; }
+.pins th.sortable{ cursor:pointer; } .pins th.sortable:hover{ color:var(--acc); }
+.pins th.sorted{ color:var(--acc); }
+.pins tr{ cursor:pointer; }
+.pins tr.hl td{ background:var(--acc-dim); }
+.pins tr.sel td{ background:var(--acc-dim); box-shadow:inset 2px 0 0 var(--acc); }
+.pins td{ padding:0 10px; height:44px; white-space:nowrap; }
+.pins td.n{ color:var(--fg3); width:40px; text-align:right; }
+.pins td.nm{ font-weight:600; width:90px; }
+.pins td.dir{ color:var(--fg2); width:48px; }
+.pins td.ty{ width:96px; color:var(--fg2); }
+.pins td.fn{ color:var(--fg2); font-family:var(--prose); font-size:13px; max-width:0; width:100%; overflow:hidden; text-overflow:ellipsis; }
+.pins td.fn .badge{ margin-left:6px; }
+@media (max-width:1023px){ .pinwrap{ grid-template-columns:240px 1fr; gap:0 16px; } .pins td.ty{ display:none; } .pins th:nth-child(4){ display:none; } }
+@media (max-width:1400px){ body.drawer-open .pinwrap{ grid-template-columns:240px 1fr; gap:0 16px; } body.drawer-open .pins td.ty, body.drawer-open .pins th:nth-child(4){ display:none; } }
+@media (max-width:640px){
+  .pinwrap{ display:block; }
+  .glyph{ display:none; }
+  .strip{ display:flex; overflow-x:auto; gap:4px; padding:6px 0 10px; margin-bottom:6px; border-bottom:1px solid var(--line); -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; }
+  .strip button{ flex:0 0 52px; height:56px; border:1px solid var(--line); border-top-width:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; font-size:11px; color:var(--fg); scroll-snap-align:start; background:var(--panel); }
+  .strip button small{ color:var(--fg3); font-size:10px; }
+  .strip button.hl, .strip button.sel{ background:var(--acc-dim); border-left-color:var(--acc); border-right-color:var(--acc); border-bottom-color:var(--acc); }
+  .pins td.fn{ white-space:normal; max-width:none; }
+  .pins td{ height:auto; padding:8px 8px; }
+  .pins td.dir, .pins th:nth-child(3){ display:none; }
+  .legend{ margin-left:0; }
+}
+
+/* ---------- quick ref panels ---------- */
+.panel{ border:1px solid var(--line); margin-bottom:12px; background:var(--panel); }
+.panel-h{ width:100%; display:flex; align-items:center; gap:12px; min-height:48px; padding:0 14px; text-align:left; }
+.panel-h .tg{ color:var(--acc); width:14px; }
+.panel-h .count{ margin-left:auto; color:var(--fg3); font-size:12px; }
+.panel-h h2{ color:var(--fg); font-weight:600; }
+.panel-b{ padding:4px 14px 16px; border-top:1px solid var(--line); }
+.panel.closed .panel-b{ display:none; }
+.keys td:first-child{ font-weight:600; white-space:nowrap; width:1%; }
+.keys td:last-child{ font-family:var(--prose); color:var(--fg2); }
+.ess{ display:grid; grid-template-columns:1fr 1fr; gap:0 20px; margin:8px 0 6px; }
+.ess div{ display:grid; grid-template-columns:minmax(120px,42%) 1fr; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); }
+.ess b{ font-weight:600; color:var(--fg); overflow-wrap:anywhere; }
+.ess span{ color:var(--fg2); font-family:var(--prose); font-size:13px; }
+@media (max-width:900px){ .ess{ grid-template-columns:1fr; } }
+.grp{ border-top:1px solid var(--line); }
+.grp-h{ width:100%; display:flex; align-items:center; gap:10px; min-height:44px; text-align:left; }
+.grp-h .tg{ color:var(--acc); width:14px; } .grp-h .count{ margin-left:auto; color:var(--fg3); font-size:12px; }
+.grp-b{ display:none; padding:2px 0 12px 24px; display:none; }
+.grp.open .grp-b{ display:flex; flex-wrap:wrap; gap:6px; }
+.grp-b code{ border:1px solid var(--line2); padding:4px 8px; font-size:13px; background:var(--bg); }
+.quirks li{ font-family:var(--prose); color:var(--fg2); padding:3px 0; }
+.mem td:first-child{ color:var(--acc); white-space:nowrap; width:1%; }
+
+/* ---------- ports / power ---------- */
+.conn{ border:1px solid var(--line); margin-bottom:14px; background:var(--panel); }
+.conn.hi{ border-color:var(--acc-line); }
+.conn .ch{ padding:12px 14px 0; }
+.conn .ch p{ margin:6px 0 10px; }
+.conn table{ font-size:13px; } .conn td:first-child{ color:var(--fg3); width:1%; white-space:nowrap; text-align:right; }
+.conn td:nth-child(2){ font-weight:600; white-space:nowrap; } .conn td:last-child{ font-family:var(--prose); color:var(--fg2); }
+.rails td:first-child{ font-weight:600; white-space:nowrap; } .rails td{ font-size:13px; }
+.rails .ex{ color:var(--acc); white-space:nowrap; } .rails .note{ font-family:var(--prose); color:var(--fg2); }
+@media (max-width:640px){ .rails th:nth-child(4), .rails td:nth-child(4){ display:none; } .rails td:first-child{ white-space:normal; } }
+
+/* ---------- glossary / resources / search ---------- */
+.terms{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:8px; }
+.terms button{ text-align:left; border:1px solid var(--line); padding:10px 12px; min-height:56px; background:var(--panel); color:var(--fg); }
+.terms button:hover{ border-color:var(--acc-line); }
+.terms button b{ display:block; font-weight:600; } .terms button span{ color:var(--fg2); font-family:var(--prose); font-size:13px; }
+.res td:first-child{ white-space:nowrap; } .res td:last-child{ font-family:var(--prose); color:var(--fg2); }
+.sr .rg{ border:1px solid var(--line); margin-bottom:10px; }
+.term{ color:var(--fg); border-bottom:1px dotted var(--acc); padding:0 1px; min-height:28px; line-height:1.4; }
+.term:hover{ color:var(--acc); }
+.termrow{ display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:8px; }
+.empty{ border:1px dashed var(--line2); padding:18px 16px; color:var(--fg2); font-family:var(--prose); max-width:60ch; }
+.empty code{ color:var(--acc); }
+
+/* ---------- drawer ---------- */
+.drawer{ position:fixed; top:var(--cmd-h); right:0; bottom:0; width:var(--drawer-w); background:var(--panel); border-left:1px solid var(--line2); z-index:30; transform:translateX(100%); transition:transform var(--t); display:flex; flex-direction:column; visibility:hidden; }
+.drawer.open{ transform:none; visibility:visible; }
+.dr-h{ display:flex; align-items:center; gap:10px; min-height:48px; padding:0 14px; border-bottom:1px solid var(--line); color:var(--fg3); font-size:13px; }
+.dr-h .ttl{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dr-h .x{ display:inline-flex; }
+.dr-b{ overflow:auto; padding:18px 20px 40px; }
+.dr-b h1{ font-size:24px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.dr-b h1 .pn{ color:var(--fg3); font-size:14px; font-weight:400; }
+.dr-b .meta{ display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; margin:10px 0 14px; color:var(--fg2); font-size:13px; }
+.dr-b .desc{ margin:0 0 14px; }
+.dr-b .probe{ border-left:2px solid var(--acc); padding:8px 12px; margin:14px 0; background:var(--bg); font-family:var(--prose); font-size:14px; }
+.dr-b .probe b{ font-family:var(--mono); color:var(--acc); font-weight:500; font-size:12px; display:block; margin-bottom:2px; }
+.dr-b h3{ color:var(--fg2); font-weight:500; margin:18px 0 6px; font-size:12px; }
+.dr-b ul{ margin:0; padding-left:0; list-style:none; }
+.dr-b li{ padding:5px 0; } .dr-b li a{ overflow-wrap:anywhere; }
+.pn-nav{ display:flex; justify-content:space-between; margin-top:24px; padding-top:12px; border-top:1px solid var(--line); }
+.pn-nav button{ min-width:44px; }
+@media (max-width:480px), (max-width:1023px) and (orientation:portrait){
+  :root{ --drawer-w:100%; }
+  body.drawer-open .wrap{ margin-right:0; }
+  .drawer{ border-left:0; }
+  .dr-h .x{ display:none; }
+}
+
+/* ---------- popover ---------- */
+.pop{ position:absolute; z-index:50; width:min(340px, calc(100vw - 24px)); background:var(--panel2); border:1px solid var(--line2); padding:12px 14px; }
+.pop[hidden]{ display:none; }
+.pop b{ display:block; margin-bottom:4px; }
+.pop p{ margin:0 0 10px; font-family:var(--prose); font-size:14px; color:var(--fg2); }
+.scrim{ position:fixed; inset:0; z-index:29; display:none; }
+body.drawer-open.narrow .scrim{ display:block; }
+</style>
+</head>
+<body>
+
+<header class="cmd">
+  <span class="prompt" aria-hidden="true">&gt;</span>
+  <input id="cmd" type="search" autocomplete="off" spellcheck="false" placeholder="search · try: ted pin 10" aria-label="Search and command line" enterkeyhint="go">
+  <div class="right">
+    <button class="bk" id="theme" title="Toggle phosphor colour">amber</button>
+    <span class="pwa" title="Mock PWA status"><i></i><span>installed · works offline</span></span>
+  </div>
+</header>
+<div id="results" class="results" hidden role="listbox"></div>
+
+<div class="wrap">
+  <nav class="crumbs" id="crumbs" aria-label="Path"></nav>
+  <main id="main"></main>
+</div>
+
+<aside id="drawer" class="drawer" aria-label="Detail">
+  <div class="dr-h">
+    <button class="bk" id="dr-back">&larr; back</button>
+    <span class="ttl" id="dr-title"></span>
+    <button class="bk x" id="dr-close">esc</button>
+  </div>
+  <div class="dr-b" id="dr-body"></div>
+</aside>
+<div class="scrim" id="scrim"></div>
+<div id="pop" class="pop" hidden role="dialog"><b></b><p></p><button class="bk" id="pop-more">full definition</button></div>
+
+<script src="../shared/data.js"></script>
+<script>
+(() => {
+'use strict';
+const D = window.RCS;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('rbc:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('rbc:' + k, JSON.stringify(v)); } catch {} },
+};
+
+const PIN_COLORS = {
+  power: '#ff5a5a', ground: '#8a929c', clock: '#ffe066', addr: '#5aa9ff', data: '#2fd1a8', ctrl: '#c88bff',
+  io: '#ff86c8', video: '#ff9e64', audio: '#b8e986', kbd: '#d9c7a0', serial: '#6ee7f7', nc: '#3f4650',
+};
+const DIR = { in: 'in', out: 'out', bidir: 'i/o', '-': '—' };
+
+const state = {
+  theme: LS.get('theme', 'amber'), recent: LS.get('recent', []),
+  sort: 'num', flip: false, pin: null, stack: [], results: [], sel: -1, route: null,
+};
+
+/* ---------- routing helpers ---------- */
+const href = (...parts) => '#/' + parts.map(encodeURIComponent).join('/');
+function parseHash() {
+  const h = location.hash.replace(/^#\/?/, '');
+  const [path, qs] = h.split('?');
+  return { parts: path.split('/').filter(Boolean).map(decodeURIComponent), q: new URLSearchParams(qs || '') };
+}
+const brandOf = m => D.brands.find(b => b.id === m.brand);
+const machineHref = m => href(m.brand, m.id);
+function preferredMachine(chip) {
+  const ms = (chip.machines || []).map(id => D.machines[id]).filter(Boolean);
+  return ms.find(m => m.status === 'ready') || ms[0] || null;
+}
+function chipHref(chip, m, pin) {
+  m = m || preferredMachine(chip);
+  if (!m) return '#/';
+  return href(m.brand, m.id, 'chip', chip.id) + (pin ? '?pin=' + pin : '');
+}
+const badge = (t, cls = '') => `<span class="badge ${cls}">${esc(t)}</span>`;
+const vbadge = v => v ? badge('verify', 'vf') : '';
+const termTag = id => D.terms[id] ? `<button class="term" data-term="${id}">${esc(D.terms[id].term)}</button>` : '';
+const termRow = ids => ids && ids.length ? `<div class="termrow">${ids.map(termTag).join('')}</div>` : '';
+const tyDot = t => `<i style="background:${PIN_COLORS[t] || PIN_COLORS.nc}"></i>`;
+
+/* ---------- search index ---------- */
+const idx = [];
+const chipAlias = {}, machineAlias = {};
+const SECTIONS = {
+  keys: ['quickref', 'sec=keys', 'Keys & quirks'], keyboard: ['quickref', 'sec=keys', 'Keys & quirks'],
+  basic: ['quickref', 'sec=basic', 'BASIC essentials'], memory: ['quickref', 'sec=memory', 'Memory map'], map: ['quickref', 'sec=memory', 'Memory map'],
+  quickref: ['quickref', '', 'Quick reference'], quick: ['quickref', '', 'Quick reference'], ref: ['quickref', '', 'Quick reference'],
+  pinouts: ['pinouts', '', 'Pinouts'], pinout: ['pinouts', '', 'Pinouts'], chips: ['pinouts', '', 'Pinouts'],
+  ports: ['ports', '', 'Ports & connectors'], connectors: ['ports', '', 'Ports & connectors'], connector: ['ports', '', 'Ports & connectors'],
+  power: ['power', '', 'Power & test points'], rails: ['power', '', 'Power & test points'], test: ['power', '', 'Power & test points'],
+  faults: ['', 'faults', 'Common faults'], symptoms: ['', 'faults', 'Common faults'],
+};
+function addAlias(map, word, id) {
+  word = word.toLowerCase().replace(/[^a-z0-9/+\-.]/g, '');
+  if (word.length < 2 || /^(the|and|cpu|rom|ram|dram|chip|keyboard|encoder|mask|series)$/.test(word)) return;
+  (map[word] = map[word] || []).includes(id) || map[word].push(id);
+}
+function buildIndex() {
+  for (const m of Object.values(D.machines)) {
+    const b = brandOf(m);
+    idx.push({ g: 'Machines', t: m.name, s: [m.aka, m.year, m.status].filter(Boolean).join(' · '), h: machineHref(m), k: `${m.id} ${m.name} ${m.aka || ''} ${b.name}`.toLowerCase() });
+    addAlias(machineAlias, m.id, m.id);
+    (m.name + ' ' + (m.aka || '')).split(/[\s,()]+/).forEach(w => addAlias(machineAlias, w, m.id));
+  }
+  Object.assign(machineAlias, { iie: ['apple2e'], '2e': ['apple2e'], '//e': ['apple2e'], 'plus/4': ['plus4'], 'plus4': ['plus4'], c16: ['c16'], c64: ['c64'], c128: ['c128'], vic: ['vic20'], pet: ['pet'] });
+  for (const c of Object.values(D.chips)) {
+    const m = preferredMachine(c);
+    idx.push({ g: 'Chips', t: c.name, s: `${c.role} · ${c.pkg}${m ? ' · ' + m.name : ''}${c.pins ? '' : ' · not captured yet'}`, h: m ? chipHref(c, m) : '#/', k: `${c.id} ${c.name} ${c.short} ${c.role} ${c.family || ''}`.toLowerCase() });
+    addAlias(chipAlias, c.id, c.id); addAlias(chipAlias, c.short, c.id);
+    c.name.split(/[\s/]+/).forEach(w => addAlias(chipAlias, w, c.id));
+    if (c.pins) for (const p of c.pins) {
+      idx.push({ g: 'Pins', t: `${c.short} pin ${p.n} · ${p.name}`, s: p.desc, h: chipHref(c, m, p.n), k: `${p.name} pin ${p.n} ${c.short} ${p.desc}`.toLowerCase(), pin: p.name.toLowerCase() });
+    }
+  }
+  for (const [mid, qr] of Object.entries(D.quickref)) {
+    const m = D.machines[mid], base = href(m.brand, mid, 'quickref');
+    for (const e of qr.basic.essentials) idx.push({ g: 'BASIC', t: e.cmd, s: `${e.does} — ${m.name}`, h: base + '?sec=basic', k: `${e.cmd} ${e.does} ${m.name}`.toLowerCase() });
+    qr.basic.groups.forEach((g, gi) => g.items.forEach(it => idx.push({ g: 'BASIC', t: it, s: `${g.group} — ${qr.basic.dialect}`, h: base + '?sec=basic&g=' + gi, k: `${it} ${g.group} ${m.name}`.toLowerCase() })));
+    for (const k of qr.keys) idx.push({ g: 'Keys', t: k.keys, s: `${k.does} — ${m.name}`, h: base + '?sec=keys', k: `${k.keys} ${k.does} ${m.name}`.toLowerCase() });
+    for (const r of qr.memory) idx.push({ g: 'Memory', t: r.range, s: `${r.what} — ${m.name}`, h: base + '?sec=memory', k: `${r.range} ${r.what} ${m.name}`.toLowerCase() });
+  }
+  for (const [id, t] of Object.entries(D.terms)) idx.push({ g: 'Terms', t: t.term, s: t.short, h: '#/glossary?term=' + id, k: `${id} ${t.term} ${t.short}`.toLowerCase(), term: id });
+  for (const [mid, list] of Object.entries(D.connectors)) {
+    const m = D.machines[mid];
+    for (const c of list) idx.push({ g: 'Connectors', t: c.name, s: `${c.kind} — ${m.name}`, h: href(m.brand, mid, 'ports') + '?c=' + c.id, k: `${c.name} ${c.kind} ${m.name} ${c.pins.map(p => p.name).join(' ')}`.toLowerCase() });
+  }
+  for (const [mid, list] of Object.entries(D.symptoms)) {
+    const m = D.machines[mid];
+    for (const s of list) idx.push({ g: 'Faults', t: s.symptom, s: `${s.suspects.map(id => D.chips[id].short).join(', ')} — ${m.name}`, h: machineHref(m) + '?sec=faults', k: `${s.symptom} ${s.note} ${m.name}`.toLowerCase() });
+  }
+}
+const GROUP_ORDER = ['Go', 'Pins', 'Machines', 'Chips', 'BASIC', 'Keys', 'Memory', 'Terms', 'Connectors', 'Faults'];
+
+function search(raw, limit = 6) {
+  const q = raw.trim().toLowerCase();
+  if (!q) return [];
+  const words = q.split(/\s+/);
+  const out = [];
+  const seen = new Set();
+  const push = r => { if (!seen.has(r.h + r.t)) { seen.add(r.h + r.t); out.push(r); } };
+
+  // mini-syntax: <chip> pin <n> | <chip> <n>
+  const chipWord = words.find(w => chipAlias[w]);
+  const numM = q.match(/\bpin\s*(\d+)\b/) || (chipWord && q.match(/\b(\d{1,2})\b(?!\s*mhz)/));
+  const machWord = words.find(w => machineAlias[w]);
+  const secWord = words.find(w => SECTIONS[w]);
+  if (chipWord && numM) {
+    const n = +numM[1];
+    for (const cid of chipAlias[chipWord]) {
+      const c = D.chips[cid]; const p = c.pins && c.pins.find(p => p.n === n);
+      if (p) push({ g: 'Go', t: `${c.short} pin ${p.n} · ${p.name}`, s: p.desc, h: chipHref(c, machWord ? D.machines[machineAlias[machWord][0]] : null, p.n) });
+    }
+  }
+  if (machWord) {
+    for (const mid of machineAlias[machWord]) {
+      const m = D.machines[mid];
+      if (secWord) {
+        const [sec, qs, label] = SECTIONS[secWord];
+        push({ g: 'Go', t: `${m.name} › ${label}`, s: m.tagline, h: (sec ? href(m.brand, mid, sec) : machineHref(m)) + (qs ? '?' + qs : '') });
+      } else if (chipWord) {
+        for (const cid of chipAlias[chipWord]) if (D.chips[cid].machines.includes(mid)) push({ g: 'Go', t: `${D.chips[cid].name} on ${m.name}`, s: D.chips[cid].role, h: chipHref(D.chips[cid], m) });
+      } else if (words.length === 1) push({ g: 'Go', t: m.name, s: m.tagline, h: machineHref(m) });
+    }
+  }
+  if (!machWord && secWord && words.length === 1) {
+    for (const m of Object.values(D.machines).filter(m => m.status === 'ready')) {
+      const [sec, qs, label] = SECTIONS[secWord];
+      push({ g: 'Go', t: `${m.name} › ${label}`, s: m.tagline, h: (sec ? href(m.brand, m.id, sec) : machineHref(m)) + (qs ? '?' + qs : '') });
+    }
+  }
+
+  // generic substring / all-words match
+  const pinOnly = q.startsWith('/');
+  const scored = [];
+  for (const r of idx) {
+    if (pinOnly && r.g !== 'Pins' && r.g !== 'Terms') continue;
+    const tl = r.t.toLowerCase();
+    let sc = 0;
+    if (pinOnly) { if (r.pin && r.pin.startsWith(q)) sc = 3; else if (r.pin && r.pin.includes(q)) sc = 2; else if (tl.includes(q)) sc = 1; }
+    else if (tl === q) sc = 5; else if (tl.startsWith(q)) sc = 4; else if (tl.includes(q)) sc = 3;
+    else if (words.every(w => /^\d+$/.test(w) ? new RegExp('\\b' + w + '\\b').test(r.k) : r.k.includes(w))) sc = 1 + (r.k.includes(q) ? 1 : 0);
+    if (sc) scored.push([sc, r]);
+  }
+  scored.sort((a, b) => b[0] - a[0]);
+  const perGroup = {};
+  for (const [, r] of scored) {
+    perGroup[r.g] = (perGroup[r.g] || 0) + 1;
+    if (perGroup[r.g] <= limit) push(r);
+  }
+  return out;
+}
+function groupResults(list) {
+  const groups = new Map();
+  for (const r of list) { if (!groups.has(r.g)) groups.set(r.g, []); groups.get(r.g).push(r); }
+  return GROUP_ORDER.filter(g => groups.has(g)).map(g => [g, groups.get(g)]);
+}
+function hl(text, q) {
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0 || !q) return esc(text);
+  return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+}
+function resultsHTML(list, q, flat) {
+  if (!list.length) return `<div class="rempty">Nothing matches <code>${esc(q)}</code>. Try a chip and pin (<code>ted pin 10</code>), a signal (<code>/ras</code>), or a machine and section (<code>c16 keys</code>).</div>`;
+  let i = 0, html = '';
+  for (const [g, items] of groupResults(list)) {
+    html += `<div class="rg"><div class="gl">${g === 'Go' ? 'go' : esc(g.toLowerCase())}</div><div>`;
+    for (const r of items) { if (flat) flat.push(r); html += `<a class="ri" data-i="${i++}" href="${r.h}"><b>${hl(r.t, q.trim())}</b><small>${esc(r.s || '')}</small></a>`; }
+    html += '</div></div>';
+  }
+  return html;
+}
+
+/* ---------- command line ---------- */
+const cmd = $('#cmd'), resBox = $('#results');
+function showResults() {
+  const q = cmd.value;
+  if (!q.trim()) { hideResults(); return; }
+  const flat = [];
+  state.results = flat; state.sel = -1;
+  resBox.innerHTML = resultsHTML(search(q), q, flat) + `<div class="rfoot"><span>↑↓ move · enter open · esc close</span><a href="#/search?q=${encodeURIComponent(q)}">all results</a></div>`;
+  resBox.hidden = false;
+}
+function hideResults() { resBox.hidden = true; state.sel = -1; }
+function moveSel(d) {
+  if (!state.results.length) return;
+  state.sel = (state.sel + d + state.results.length) % state.results.length;
+  $$('.ri', resBox).forEach((el, i) => el.classList.toggle('on', i === state.sel));
+  const on = $('.ri.on', resBox); if (on) on.scrollIntoView({ block: 'nearest' });
+}
+cmd.addEventListener('input', showResults);
+cmd.addEventListener('focus', () => { if (cmd.value.trim()) showResults(); });
+cmd.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); if (resBox.hidden) showResults(); moveSel(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); moveSel(-1); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    const r = state.sel >= 0 ? state.results[state.sel] : (state.results.length === 1 || (state.results[0] && state.results[0].g === 'Go')) ? state.results[0] : null;
+    if (r) location.hash = r.h; else if (cmd.value.trim()) location.hash = '#/search?q=' + encodeURIComponent(cmd.value.trim());
+    hideResults(); cmd.blur();
+  } else if (e.key === 'Escape') { hideResults(); cmd.blur(); }
+});
+resBox.addEventListener('click', e => { if (e.target.closest('a')) { hideResults(); cmd.blur(); } });
+
+/* ---------- theme ---------- */
+function applyTheme() {
+  document.documentElement.dataset.theme = state.theme;
+  $('#theme').textContent = state.theme;
+  $('meta[name=theme-color]').content = '#0b0d10';
+}
+$('#theme').addEventListener('click', () => { state.theme = state.theme === 'amber' ? 'green' : 'amber'; LS.set('theme', state.theme); applyTheme(); });
+
+/* ---------- drawer ---------- */
+const drawer = $('#drawer'), drBody = $('#dr-body'), drTitle = $('#dr-title');
+function openDrawer(view, replace = false) {
+  if (replace) state.stack = [view]; else state.stack.push(view);
+  renderDrawer();
+  drawer.classList.add('open'); document.body.classList.add('drawer-open');
+  drBody.scrollTop = 0;
+}
+function closeDrawer() {
+  if (!drawer.classList.contains('open')) return;
+  drawer.classList.remove('open'); document.body.classList.remove('drawer-open');
+  state.stack = [];
+  if (state.pin != null) { state.pin = null; $$('[data-pin].sel').forEach(el => el.classList.remove('sel')); setQuery('pin', null); }
+}
+function drawerBack() { if (state.stack.length > 1) { state.stack.pop(); renderDrawer(); } else closeDrawer(); }
+$('#dr-back').addEventListener('click', drawerBack);
+$('#dr-close').addEventListener('click', closeDrawer);
+$('#scrim').addEventListener('click', closeDrawer);
+function renderDrawer() {
+  const v = state.stack[state.stack.length - 1];
+  $('#dr-back').textContent = state.stack.length > 1 ? '← back' : (document.body.classList.contains('narrow') ? '← back' : '← close');
+  if (v.kind === 'pin') { drTitle.textContent = `${v.chip.short} · pin ${v.n} of ${v.chip.pins.length}`; drBody.innerHTML = pinDetailHTML(v.chip, v.m, v.n); }
+  else if (v.kind === 'term') { drTitle.textContent = 'glossary'; drBody.innerHTML = termDetailHTML(v.id); }
+  else if (v.kind === 'chip') { drTitle.textContent = `${v.chip.pkg} · ${v.chip.role}`; drBody.innerHTML = chipSummaryHTML(v.chip, v.m); }
+}
+function pinDetailHTML(chip, m, n) {
+  const p = chip.pins.find(p => p.n === n);
+  if (!p) return '<p class="muted">No such pin.</p>';
+  const i = chip.pins.indexOf(p), prev = chip.pins[i - 1], next = chip.pins[i + 1];
+  const loc = chip.location && chip.location[m.id];
+  return `
+    <h1><span class="pn">pin ${p.n}</span>${esc(p.name)}</h1>
+    <div class="meta">
+      <span class="ty">${tyDot(p.type)}${esc(D.pinTypes[p.type]?.label || p.type)}</span>
+      <span>· ${esc(DIR[p.dir] || p.dir)}${p.dir === 'bidir' ? ' (bidirectional)' : p.dir === 'in' ? 'put' : p.dir === 'out' ? 'put' : ''}</span>
+      ${p.activeLow ? badge('active low', 'low') : ''} ${vbadge(p.verify)}
+    </div>
+    <p class="prose desc">${esc(p.desc)}</p>
+    ${p.probe ? `<div class="probe"><b>probe</b>${esc(p.probe)}</div>` : ''}
+    ${p.terms && p.terms.length ? `<h3>related terms</h3>${termRow(p.terms)}` : ''}
+    <h3>chip</h3>
+    <ul><li><a href="${chipHref(chip, m)}">${esc(chip.name)}</a> <span class="dim">· ${esc(chip.pkg)}${loc ? ' · ' + esc(loc) : ''} · ${esc(m.name)}</span></li></ul>
+    ${chip.datasheets && chip.datasheets.length ? `<h3>datasheets</h3><ul>${chip.datasheets.map(d => `<li><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a> ${vbadge(d.verify)}</li>`).join('')}</ul>` : ''}
+    <div class="pn-nav">
+      <button class="bk" data-goto-pin="${prev ? prev.n : ''}" ${prev ? '' : 'disabled'}>&larr; ${prev ? `pin ${prev.n} ${esc(prev.name)}` : 'first'}</button>
+      <button class="bk" data-goto-pin="${next ? next.n : ''}" ${next ? '' : 'disabled'}>${next ? `pin ${next.n} ${esc(next.name)}` : 'last'} &rarr;</button>
+    </div>`;
+}
+function termDetailHTML(id) {
+  const t = D.terms[id];
+  if (!t) return '<p class="muted">Unknown term.</p>';
+  const uses = [];
+  for (const c of Object.values(D.chips)) if (c.pins) for (const p of c.pins) if (p.terms && p.terms.includes(id)) uses.push([c, p]);
+  return `
+    <h1>${esc(t.term)}</h1>
+    <p class="prose desc muted">${esc(t.short)}</p>
+    <p class="prose desc">${esc(t.long)}</p>
+    ${uses.length ? `<h3>pins that use this (${uses.length})</h3><ul>${uses.slice(0, 12).map(([c, p]) => `<li><a href="${chipHref(c, null, p.n)}">${esc(c.short)} pin ${p.n} · ${esc(p.name)}</a></li>`).join('')}${uses.length > 12 ? `<li class="dim">and ${uses.length - 12} more</li>` : ''}</ul>` : ''}
+    <h3>&nbsp;</h3><a href="#/glossary">all terms</a>`;
+}
+function chipSummaryHTML(chip, m) {
+  const loc = chip.location && chip.location[m.id];
+  return `
+    <h1>${esc(chip.name)}</h1>
+    <div class="meta">${badge(chip.heat, chip.heat)} <span>${esc(chip.pkg)}</span>${loc ? `<span>· ${esc(loc)}</span>` : ''}${chip.family ? `<span>· ${esc(chip.family)}</span>` : ''} ${vbadge(chip.verify)}</div>
+    <p class="prose desc">${esc(chip.summary)}</p>
+    <h3>fails as</h3><ul>${chip.fails.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+    <h3>&nbsp;</h3>
+    ${chip.pins ? `<a class="bk on" href="${chipHref(chip, m)}">open pinout · ${chip.pins.length} pins</a>` : `<span class="dim">pinout not captured yet</span>`}`;
+}
+
+/* ---------- popover ---------- */
+const pop = $('#pop');
+let popTerm = null;
+function showPop(btn) {
+  const t = D.terms[btn.dataset.term]; if (!t) return;
+  popTerm = btn.dataset.term;
+  $('b', pop).textContent = t.term; $('p', pop).textContent = t.short;
+  pop.hidden = false;
+  const r = btn.getBoundingClientRect();
+  const w = pop.offsetWidth;
+  let left = r.left + window.scrollX; const maxLeft = window.scrollX + window.innerWidth - w - 12;
+  if (left > maxLeft) left = Math.max(12, maxLeft);
+  pop.style.left = left + 'px'; pop.style.top = (r.bottom + window.scrollY + 6) + 'px';
+}
+function hidePop() { pop.hidden = true; popTerm = null; }
+$('#pop-more').addEventListener('click', () => { const id = popTerm; hidePop(); openDrawer({ kind: 'term', id }); });
+
+/* ---------- global clicks & keys ---------- */
+document.addEventListener('click', e => {
+  const term = e.target.closest('.term');
+  if (term) { e.preventDefault(); showPop(term); return; }
+  if (!pop.hidden && !e.target.closest('#pop')) hidePop();
+  if (!resBox.hidden && !e.target.closest('#results') && !e.target.closest('.cmd')) hideResults();
+  const chipBtn = e.target.closest('[data-chip]');
+  if (chipBtn) { const m = D.machines[chipBtn.dataset.m]; openDrawer({ kind: 'chip', chip: D.chips[chipBtn.dataset.chip], m }, true); return; }
+  const gp = e.target.closest('[data-goto-pin]');
+  if (gp && gp.dataset.gotoPin) { selectPin(+gp.dataset.gotoPin, true); return; }
+  const pinEl = e.target.closest('#main [data-pin]');
+  if (pinEl) { selectPin(+pinEl.dataset.pin, pinEl.closest('.glyph, .strip') != null); return; }
+  const ph = e.target.closest('.panel-h');
+  if (ph) { ph.closest('.panel').classList.toggle('closed'); ph.setAttribute('aria-expanded', String(!ph.closest('.panel').classList.contains('closed'))); return; }
+  const gh = e.target.closest('.grp-h');
+  if (gh) { gh.closest('.grp').classList.toggle('open'); gh.setAttribute('aria-expanded', String(gh.closest('.grp').classList.contains('open'))); return; }
+  const sort = e.target.closest('[data-sort]');
+  if (sort) { state.sort = sort.dataset.sort; rerenderChipTable(); return; }
+  const flip = e.target.closest('[data-flip]');
+  if (flip) { state.flip = !state.flip; rerenderGlyph(); return; }
+  const tb = e.target.closest('[data-term-open]');
+  if (tb) { openDrawer({ kind: 'term', id: tb.dataset.termOpen }, true); return; }
+});
+// hover sync on the chip page
+$('#main').addEventListener('mouseover', e => { const el = e.target.closest('[data-pin]'); if (el) $$(`[data-pin="${el.dataset.pin}"]`, $('#main')).forEach(x => x.classList.add('hl')); });
+$('#main').addEventListener('mouseout', e => { const el = e.target.closest('[data-pin]'); if (el) $$(`[data-pin="${el.dataset.pin}"]`, $('#main')).forEach(x => x.classList.remove('hl')); });
+
+document.addEventListener('keydown', e => {
+  const inInput = e.target.matches('input, textarea, select');
+  if (((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !inInput)) { e.preventDefault(); cmd.focus(); cmd.select(); return; }
+  if (e.key === 'Escape') {
+    if (!pop.hidden) hidePop();
+    else if (!resBox.hidden) { hideResults(); cmd.blur(); }
+    else if (drawer.classList.contains('open')) closeDrawer();
+    return;
+  }
+  if (inInput || e.ctrlKey || e.metaKey || e.altKey) return;
+  const { parts } = parseHash();
+  const k = e.key.toLowerCase();
+  if (!parts.length && /^[1-7]$/.test(k)) { const b = D.brands[+k - 1]; if (b) location.hash = href(b.id); }
+  else if (parts.length === 1 && /^[1-9]$/.test(k)) { const b = D.brands.find(b => b.id === parts[0]); const mid = b && b.machines[+k - 1]; if (mid) location.hash = href(b.id, mid); }
+  else if (parts.length === 2 && 'pqcvf'.includes(k)) {
+    const m = D.machines[parts[1]]; if (!m) return;
+    const map = { p: 'pinouts', q: 'quickref', c: 'ports', v: 'power' };
+    if (k === 'f') { const el = $('#faults'); if (el) el.scrollIntoView({ block: 'start' }); }
+    else location.hash = href(m.brand, m.id, map[k]);
+  }
+});
+
+/* ---------- query helpers ---------- */
+function setQuery(key, val) {
+  const { parts, q } = parseHash();
+  if (val == null) q.delete(key); else q.set(key, val);
+  const qs = q.toString();
+  history.replaceState(null, '', '#/' + parts.map(encodeURIComponent).join('/') + (qs ? '?' + qs : ''));
+}
+
+/* ---------- renderers ---------- */
+function crumbsHTML(list) {
+  let html = `<a href="#/">~</a>`;
+  list.forEach(([label, h], i) => { html += `<span class="dim">/</span>` + (h && i < list.length - 1 ? `<a href="${h}">${esc(label)}</a>` : `<span>${esc(label)}</span>`); });
+  return html;
+}
+
+function rHome() {
+  const recent = state.recent.map(id => D.machines[id]).filter(Boolean);
+  const tiles = D.brands.map((b, i) => {
+    const ms = b.machines.map(id => D.machines[id]).filter(Boolean);
+    const ready = ms.filter(m => m.status === 'ready').length;
+    return `<a class="tile" href="${href(b.id)}"><div class="t"><span class="key">${i + 1}</span>${esc(b.name)}</div><div class="b">${esc(b.blurb)}</div><div class="m">${ms.length} machine${ms.length === 1 ? '' : 's'}${ready ? ` · <b>${ready} ready</b>` : ''}</div></a>`;
+  }).join('');
+  return `
+    <div class="boot">
+      <h1>Retro Bench</h1>
+      <p class="hint">Pick a brand, press its number, or type at the prompt. <span class="dim">try:</span> <code>ted pin 10</code> <span class="dim">·</span> <code>/ras</code> <span class="dim">·</span> <code>c16 keys</code> <span class="dim">·</span> <code>poke</code></p>
+      <div class="tiles">${tiles}</div>
+    </div>
+    <div class="sect"><h2>recent</h2>
+      ${recent.length ? `<div class="recent">${recent.map(m => `<a href="${machineHref(m)}">${esc(m.name)}<small>${esc(brandOf(m).name)}</small></a>`).join('')}</div>`
+        : `<div class="empty">Nothing yet. Open a machine and it will appear here for one-tap return.</div>`}
+    </div>
+    <div class="sect"><h2>also</h2>
+      <div class="links"><a href="#/glossary">glossary · ${Object.keys(D.terms).length} terms</a><a href="#/resources">resources &amp; links</a><a href="#/search?q=/res">search: every /RES pin</a></div>
+    </div>`;
+}
+
+function rBrand(b) {
+  const ms = b.machines.map(id => D.machines[id]).filter(Boolean);
+  const label = { ready: 'ready', sheet: 'cheat sheet only', planned: 'planned' };
+  return `
+    <div class="head"><h1>${esc(b.name)}</h1><span class="sub prose">${esc(b.blurb)}</span></div>
+    <div class="menu">${ms.map((m, i) => `
+      <a href="${machineHref(m)}">
+        <span class="key">${i + 1}</span>
+        <span class="nm">${esc(m.name)}${m.aka ? ` <span class="dim">· ${esc(m.aka)}</span>` : ''}<small>${esc(m.tagline || '')}</small></span>
+        <span class="rt">${m.year || ''}${badge(label[m.status] || m.status, m.status)}</span>
+      </a>`).join('')}
+    </div>
+    <p class="dim" style="margin-top:14px">ready = full pin data in the app · cheat sheet only = sheet exists in the repo, not yet imported · planned = nothing captured yet</p>`;
+}
+
+function rMachine(m) {
+  const b = brandOf(m), qr = D.quickref[m.id], chips = m.chips.map(id => D.chips[id]).filter(Boolean);
+  const withPins = chips.filter(c => c.pins).length;
+  const conns = D.connectors[m.id] || [], pw = D.power[m.id], sym = D.symptoms[m.id] || [];
+  const kv = [['cpu', m.cpu], ['ram', m.ram], ['rom', m.rom], ['video', m.video], ['sound', m.sound], ['os', m.os]].filter(([, v]) => v);
+  const menu = [
+    ['P', 'pinouts', 'Pinouts', chips.length ? `${chips.length} chips` : 'no chips captured', withPins ? `${withPins} with pins` : ''],
+    ['Q', 'quickref', 'Quick reference', qr ? 'keys · BASIC · memory' : 'not captured yet', qr ? `${qr.keys.length} keys · ${qr.basic.essentials.length} BASIC` : ''],
+    ['C', 'ports', 'Connectors', conns.length ? `${conns.length} ports` : 'not captured yet', ''],
+    ['V', 'power', 'Power & test points', pw ? `${pw.rails.length} rails · ${pw.testPoints.length} test points` : 'not captured yet', ''],
+  ];
+  return `
+    <div class="head"><h1>${esc(m.name)}</h1><span class="sub">${esc(m.aka || '')}${m.year ? ` · ${m.year}` : ''} ${badge(m.status, m.status)}</span></div>
+    ${m.tagline ? `<p class="prose muted" style="margin:0">${esc(m.tagline)}</p>` : ''}
+    <dl class="status">${kv.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+    ${m.status !== 'ready' ? `<div class="empty" style="margin-bottom:18px">${m.status === 'sheet' ? `A cheat sheet for the ${esc(m.name)} exists in the repo but has not been imported yet. The menu below shows what is captured.` : `Nothing captured for the ${esc(m.name)} yet.`}</div>` : ''}
+    <div class="two">
+      <div>
+        <div class="menu">${menu.map(([k, sec, name, sub, rt]) => `<a href="${href(b.id, m.id, sec)}"><span class="key">${k}</span><span class="nm">${name}<small>${esc(sub)}</small></span><span class="rt">${esc(rt)}</span></a>`).join('')}
+          <a href="#faults" data-local="faults"><span class="key">F</span><span class="nm">Faults<small>${sym.length ? 'symptom → suspect chips' : 'not captured yet'}</small></span><span class="rt">${sym.length ? sym.length + ' symptoms' : ''}</span></a>
+        </div>
+      </div>
+      <div>${qr ? `<div class="sect" style="margin-top:0"><h2>first look</h2><ul class="first">${qr.firstLook.map(s => `<li>${esc(s)}</li>`).join('')}</ul></div>` : ''}</div>
+    </div>
+    <div class="sect" id="faults"><h2>common faults</h2>
+      ${sym.length ? `<table class="faults"><thead><tr><th>symptom</th><th>suspects</th><th>note</th></tr></thead><tbody>
+        ${sym.map(s => `<tr><td>${esc(s.symptom)}</td><td>${s.suspects.map(id => D.chips[id] ? `<button class="chipbtn" data-chip="${id}" data-m="${m.id}">${esc(D.chips[id].short)}</button>` : '').join('')}</td><td class="note">${esc(s.note || '')}</td></tr>`).join('')}
+      </tbody></table>` : `<div class="empty">No symptom table for this machine yet.</div>`}
+    </div>`;
+}
+
+function rPinouts(m) {
+  const b = brandOf(m), chips = m.chips.map(id => D.chips[id]).filter(Boolean);
+  if (!chips.length) return `<div class="head"><h1>Pinouts</h1><span class="sub">${esc(m.name)}</span></div><div class="empty">No chips captured for the ${esc(m.name)} yet. Try the <a href="${href('commodore', 'c16', 'pinouts')}">C16</a> or <a href="${href('apple', 'apple2e', 'pinouts')}">Apple IIe</a> for the full set.</div>`;
+  return `
+    <div class="head"><h1>Pinouts</h1><span class="sub">${esc(m.name)} · ${chips.length} chips</span></div>
+    <div class="menu chips">${chips.map(c => {
+      const loc = c.location && c.location[m.id];
+      return `<a href="${c.pins ? chipHref(c, m) : href(b.id, m.id, 'pinouts')}" ${c.pins ? '' : `data-chip="${c.id}" data-m="${m.id}"`}>
+        <span class="loc">${esc(loc ? loc.split(/[ ,(]/)[0] : c.pkg)}</span>
+        <span class="nm">${esc(c.name)} <span class="dim">· ${esc(c.pkg)}</span>${c.pins ? '' : ' ' + badge('not captured yet')}<small>${esc(c.role)}<br>${esc(c.fails.join(' · '))}</small></span>
+        <span class="rt">${badge(c.heat, c.heat)}${vbadge(c.verify)}</span>
+      </a>`; }).join('')}</div>`;
+}
+
+function sortedPins(chip) {
+  const pins = chip.pins.slice();
+  if (state.sort === 'name') pins.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }) || a.n - b.n);
+  return pins;
+}
+function glyphSVG(chip) {
+  const N = chip.pins.length, half = Math.ceil(N / 2), pitch = 30, top = 36, bx = 104, bw = 112, W = 320;
+  const bodyH = half * pitch + 12, H = top + bodyH + 12;
+  const byN = Object.fromEntries(chip.pins.map(p => [p.n, p]));
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(chip.short)} ${esc(chip.pkg)} seen from ${state.flip ? 'below' : 'above'}, notch up">`;
+  s += `<rect class="body" x="${bx}" y="${top}" width="${bw}" height="${bodyH}" rx="3"/>`;
+  s += `<path class="notch" d="M ${bx + bw / 2 - 12} ${top} A 12 12 0 0 0 ${bx + bw / 2 + 12} ${top}"/>`;
+  for (let i = 0; i < half; i++) {
+    const y = top + 6 + i * pitch + pitch / 2;
+    const L = state.flip ? N - i : i + 1, R = state.flip ? i + 1 : N - i;
+    for (const [n, side] of [[L, 'l'], [R, 'r']]) {
+      const p = byN[n]; if (!p) continue;
+      const col = PIN_COLORS[p.type] || PIN_COLORS.nc;
+      if (side === 'l') {
+        s += `<line class="pin" x1="${bx - 26}" x2="${bx}" y1="${y}" y2="${y}" stroke="${col}"/>`;
+        if (n === 1) s += `<rect class="one" x="${bx - 30}" y="${y - 5}" width="10" height="10"/>`;
+        s += `<text class="n" x="${bx - 34}" y="${y + 3}" text-anchor="end">${n}</text><text x="${bx + 6}" y="${y + 4}">${esc(p.name)}</text>`;
+        s += `<rect class="hit" data-pin="${n}" x="0" y="${y - pitch / 2}" width="${W / 2}" height="${pitch}"><title>pin ${n} ${esc(p.name)}</title></rect>`;
+      } else {
+        s += `<line class="pin" x1="${bx + bw}" x2="${bx + bw + 26}" y1="${y}" y2="${y}" stroke="${col}"/>`;
+        if (n === 1) s += `<rect class="one" x="${bx + bw + 20}" y="${y - 5}" width="10" height="10"/>`;
+        s += `<text class="n" x="${bx + bw + 34}" y="${y + 3}">${n}</text><text x="${bx + bw - 6}" y="${y + 4}" text-anchor="end">${esc(p.name)}</text>`;
+        s += `<rect class="hit" data-pin="${n}" x="${W / 2}" y="${y - pitch / 2}" width="${W / 2}" height="${pitch}"><title>pin ${n} ${esc(p.name)}</title></rect>`;
+      }
+    }
+  }
+  return s + '</svg>';
+}
+function pinTableHTML(chip) {
+  const th = (k, label) => `<th class="sortable ${state.sort === k ? 'sorted' : ''}" data-sort="${k}">${label}${state.sort === k ? ' ↓' : ''}</th>`;
+  return `<table class="pins"><thead><tr>${th('num', '#')}${th('name', 'name')}<th>dir</th><th>type</th><th>function</th></tr></thead><tbody>
+    ${sortedPins(chip).map(p => `<tr data-pin="${p.n}" class="${state.pin === p.n ? 'sel' : ''}" tabindex="0">
+      <td class="n">${p.n}</td><td class="nm">${esc(p.name)}</td><td class="dir">${esc(DIR[p.dir] || p.dir)}</td>
+      <td class="ty">${tyDot(p.type)}${esc(D.pinTypes[p.type]?.label || p.type)}</td>
+      <td class="fn">${esc(p.desc)}${p.verify ? vbadge(true) : ''}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+function stripHTML(chip) {
+  return `<div class="strip" aria-label="Pins">${chip.pins.map(p => `<button data-pin="${p.n}" class="${state.pin === p.n ? 'sel' : ''}" style="border-top-color:${PIN_COLORS[p.type] || PIN_COLORS.nc}"><small>${p.n}</small>${esc(p.name)}</button>`).join('')}</div>`;
+}
+function rChip(m, chip) {
+  const loc = chip.location && chip.location[m.id];
+  const head = `
+    <div class="head"><h1>${esc(chip.name)}</h1><span class="sub">${esc(chip.pkg)}${loc ? ` · ${esc(loc)}` : ''} · ${esc(m.name)}</span>${badge(chip.heat, chip.heat)}${vbadge(chip.verify)}</div>
+    <p class="prose muted" style="margin:0 0 6px">${esc(chip.role)}${chip.family ? ` · ${esc(chip.family)}` : ''}</p>
+    <p class="prose" style="margin:0">${esc(chip.summary)}</p>
+    <p class="muted" style="margin:8px 0 0"><span class="dim">fails as:</span> ${chip.fails.map(esc).join(' · ')}</p>`;
+  if (!chip.pins) return head + `<div class="empty" style="margin-top:18px">Pinout not captured yet for the ${esc(chip.short)}. ${chip.datasheets && chip.datasheets.length ? 'Datasheets: ' + chip.datasheets.map(d => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a> ${vbadge(d.verify)}`).join(', ') : ''}</div>`;
+  const types = [...new Set(chip.pins.map(p => p.type))];
+  return head + `
+    <div class="ctl">
+      <span class="grp">view <button class="bk ${state.flip ? '' : 'on'}" data-flip>${state.flip ? 'from below' : 'from above'}</button></span>
+      <span class="grp">sort <button class="bk ${state.sort === 'num' ? 'on' : ''}" data-sort="num">pin #</button><button class="bk ${state.sort === 'name' ? 'on' : ''}" data-sort="name">name</button></span>
+      <span class="legend">${types.map(t => `<span>${tyDot(t)}${esc(D.pinTypes[t]?.label || t)}</span>`).join('')}</span>
+    </div>
+    <div class="pinwrap">
+      <div class="glyph" id="glyph">${glyphSVG(chip)}<div class="cap">${esc(chip.pkg)} · ${state.flip ? 'from below (mirrored)' : 'from above'} · notch up · pin 1 marked</div></div>
+      <div>${stripHTML(chip)}<div id="pintable">${pinTableHTML(chip)}</div></div>
+    </div>`;
+}
+function rerenderChipTable() { const r = state.route; if (r && r.chip) { $('#pintable').innerHTML = pinTableHTML(r.chip); } }
+function rerenderGlyph() { const r = state.route; if (r && r.chip) { $('#glyph').innerHTML = glyphSVG(r.chip) + `<div class="cap">${esc(r.chip.pkg)} · ${state.flip ? 'from below (mirrored)' : 'from above'} · notch up · pin 1 marked</div>`; if (state.pin != null) $$(`.glyph [data-pin="${state.pin}"]`).forEach(el => el.classList.add('sel')); } }
+function selectPin(n, scrollRow) {
+  const r = state.route; if (!r || !r.chip) return;
+  state.pin = n;
+  $$('#main [data-pin]').forEach(el => el.classList.toggle('sel', +el.dataset.pin === n));
+  const row = $(`#pintable tr[data-pin="${n}"]`);
+  if (row && scrollRow) row.scrollIntoView({ block: 'nearest' });
+  const strip = $(`.strip [data-pin="${n}"]`);
+  if (strip && !scrollRow) strip.scrollIntoView({ block: 'nearest', inline: 'center' });
+  setQuery('pin', n);
+  openDrawer({ kind: 'pin', chip: r.chip, m: r.m, n }, true);
+}
+
+function rQuickref(m, q) {
+  const qr = D.quickref[m.id];
+  if (!qr) return `<div class="head"><h1>Quick reference</h1><span class="sub">${esc(m.name)}</span></div><div class="empty">Keys, BASIC and memory map are not captured for the ${esc(m.name)} yet.</div>`;
+  const sec = q.get('sec'), openG = q.get('g');
+  const panel = (id, title, count, body) => `<section class="panel" id="sec-${id}" data-sec="${id}"><button class="panel-h" aria-expanded="true"><span class="tg">−</span><h2>${title}</h2><span class="count">${count}</span></button><div class="panel-b">${body}</div></section>`;
+  const keys = `<table class="keys"><tbody>${qr.keys.map(k => `<tr><td>${esc(k.keys)}</td><td>${esc(k.does)} ${vbadge(k.verify)}</td></tr>`).join('')}</tbody></table>`;
+  const basic = `
+    <p class="dim" style="margin:10px 0 0">${esc(qr.basic.dialect)} · essentials first, groups expand inline</p>
+    <div class="ess">${qr.basic.essentials.map(e => `<div><b>${esc(e.cmd)}</b><span>${esc(e.does)} ${vbadge(e.verify)}</span></div>`).join('')}</div>
+    ${qr.basic.groups.map((g, i) => `<div class="grp ${String(i) === openG ? 'open' : ''}"><button class="grp-h" aria-expanded="${String(i) === openG}"><span class="tg">+</span>${esc(g.group)}<span class="count">${g.items.length}</span></button><div class="grp-b">${g.items.map(it => `<code>${esc(it)}</code>`).join('')}</div></div>`).join('')}
+    ${qr.basic.quirks ? `<h3 style="margin:16px 0 4px;color:var(--fg2);font-weight:500">quirks</h3><ul class="quirks" style="margin:0;padding-left:18px">${qr.basic.quirks.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}`;
+  const mem = `<table class="mem"><tbody>${qr.memory.map(r => `<tr><td>${esc(r.range)}</td><td>${esc(r.what)}</td></tr>`).join('')}</tbody></table>`;
+  return `
+    <div class="head"><h1>Quick reference</h1><span class="sub">${esc(m.name)}</span></div>
+    ${panel('keys', 'Keys &amp; quirks', qr.keys.length, keys)}
+    ${panel('basic', 'BASIC essentials', `${qr.basic.essentials.length} + ${qr.basic.groups.length} groups`, basic)}
+    ${panel('memory', 'Memory map', qr.memory.length, mem)}`;
+}
+
+function rPorts(m, q) {
+  const list = D.connectors[m.id];
+  if (!list) return `<div class="head"><h1>Ports &amp; connectors</h1><span class="sub">${esc(m.name)}</span></div><div class="empty">Connector pinouts are not captured for the ${esc(m.name)} yet.</div>`;
+  const hi = q.get('c');
+  return `
+    <div class="head"><h1>Ports &amp; connectors</h1><span class="sub">${esc(m.name)} · ${list.length}</span></div>
+    ${list.map(c => `<section class="conn ${c.id === hi ? 'hi' : ''}" id="c-${c.id}">
+      <div class="ch"><div class="row"><h3>${esc(c.name)}</h3><span class="dim">${esc(c.kind)}</span>${vbadge(c.verify)}</div>
+      <p class="prose muted">${esc(c.summary)}</p>${termRow(c.terms)}</div>
+      <table><tbody>${c.pins.map(p => `<tr><td>${esc(p.n)}</td><td>${esc(p.name)}</td><td>${esc(p.desc || '')}</td></tr>`).join('')}</tbody></table>
+    </section>`).join('')}`;
+}
+
+function linkPins(text, m) {
+  // "TED pin 14", "7501 pin 40", "TED pins 10, 11", "CPU pin 8", "slot pin 25"
+  const chips = m.chips.map(id => D.chips[id]).filter(c => c && c.pins);
+  const find = w => chips.find(c => c.short.toLowerCase() === w.toLowerCase() || (w.toLowerCase() === 'cpu' && c.role === 'CPU'));
+  return esc(text).replace(/\b([A-Za-z0-9\-]+)\s+pins?\s+(\d+(?:\s*,\s*\d+)*)/g, (all, word, nums) => {
+    const c = find(word); if (!c) return all;
+    return esc(word) + ' pin' + (nums.includes(',') ? 's' : '') + ' ' + nums.split(/\s*,\s*/).map(n => `<a href="${chipHref(c, m, +n)}">${n}</a>`).join(', ');
+  });
+}
+function rPower(m) {
+  const pw = D.power[m.id];
+  if (!pw) return `<div class="head"><h1>Power &amp; test points</h1><span class="sub">${esc(m.name)}</span></div><div class="empty">Rails and test points are not captured for the ${esc(m.name)} yet.</div>`;
+  return `
+    <div class="head"><h1>Power &amp; test points</h1><span class="sub">${esc(m.name)}</span></div>
+    <div class="sect" style="margin-top:14px"><h2>rails</h2>
+      <table class="rails"><thead><tr><th>rail</th><th>expect</th><th>where</th><th>note</th></tr></thead><tbody>
+      ${pw.rails.map(r => `<tr><td>${esc(r.rail)}</td><td class="ex">${esc(r.expect)}</td><td>${linkPins(r.where, m)}</td><td class="note">${esc(r.note || '')}</td></tr>`).join('')}</tbody></table></div>
+    <div class="sect"><h2>test points</h2>
+      <table class="rails"><thead><tr><th>point</th><th>expect</th><th>where</th></tr></thead><tbody>
+      ${pw.testPoints.map(t => `<tr><td>${esc(t.tp)}</td><td class="ex">${esc(t.expect)}</td><td>${linkPins(t.where, m)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="dim" style="margin-top:14px">Pin references link straight to the pin on the chip drawing.</p>`;
+}
+
+function rSearch(q) {
+  const list = q ? search(q, 50) : [];
+  return `
+    <div class="head"><h1>Search</h1><span class="sub">${q ? `${list.length} result${list.length === 1 ? '' : 's'} for <code>${esc(q)}</code>` : 'type at the prompt above'}</span></div>
+    <div class="sr">${q ? resultsHTML(list, q) : `<div class="empty">Search across chips, pins, BASIC commands, keys, glossary terms and connectors. Mini-syntax: <code>ted pin 10</code>, <code>/ras</code>, <code>c16 keys</code>, <code>2e basic</code>, <code>pin 40</code>.</div>`}</div>`;
+}
+function rGlossary() {
+  const terms = Object.entries(D.terms).sort((a, b) => a[1].term.localeCompare(b[1].term));
+  return `
+    <div class="head"><h1>Glossary</h1><span class="sub">${terms.length} terms · tap one for the full definition</span></div>
+    <div class="terms">${terms.map(([id, t]) => `<button data-term-open="${id}"><b>${esc(t.term)}</b><span>${esc(t.short)}</span></button>`).join('')}</div>`;
+}
+function rResources() {
+  const sec = (title, list) => `<div class="sect"><h2>${esc(title)}</h2><table class="res"><tbody>${list.map(r => `<tr><td><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a> ${vbadge(r.verify)}</td><td>${esc(r.what)}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="head"><h1>Resources</h1><span class="sub">external links, open in a new tab</span></div>` +
+    Object.entries(D.resources).map(([k, list]) => sec(k === 'general' ? 'general' : (D.brands.find(b => b.id === k)?.name || k), list)).join('');
+}
+const rNotFound = p => `<div class="head"><h1>No such path</h1></div><div class="empty"><code>#/${esc(p.join('/'))}</code> is not a screen. <a href="#/">Back to the boot menu</a>.</div>`;
+
+/* ---------- router ---------- */
+function render() {
+  const { parts, q } = parseHash();
+  hideResults(); hidePop();
+  const keepDrawer = parts[2] === 'chip' && q.has('pin');
+  if (!keepDrawer) closeDrawer();
+  let html, crumbs = [], route = { parts };
+  document.body.dataset.route = parts[0] || 'home';
+  if (parts[0] !== 'search' && document.activeElement !== cmd) cmd.value = '';
+  if (!parts.length) { html = rHome(); }
+  else if (parts[0] === 'search') { const s = q.get('q') || ''; html = rSearch(s); crumbs = [['search', '']]; cmd.value = s; }
+  else if (parts[0] === 'glossary') { html = rGlossary(); crumbs = [['glossary', '']]; }
+  else if (parts[0] === 'resources') { html = rResources(); crumbs = [['resources', '']]; }
+  else {
+    const b = D.brands.find(b => b.id === parts[0]);
+    const m = parts[1] ? D.machines[parts[1]] : null;
+    if (!b || (parts[1] && (!m || m.brand !== b.id))) { html = rNotFound(parts); }
+    else if (!m) { html = rBrand(b); crumbs = [[b.id, href(b.id)]]; }
+    else {
+      route.m = m;
+      crumbs = [[b.id, href(b.id)], [m.id, machineHref(m)]];
+      const sec = parts[2];
+      if (!sec) { html = rMachine(m); touchRecent(m); }
+      else if (sec === 'pinouts') { html = rPinouts(m); crumbs.push(['pinouts', href(b.id, m.id, 'pinouts')]); }
+      else if (sec === 'chip') {
+        const chip = D.chips[parts[3]];
+        if (!chip) html = rNotFound(parts);
+        else { route.chip = chip; state.pin = q.has('pin') ? +q.get('pin') : null; html = rChip(m, chip); crumbs.push(['pinouts', href(b.id, m.id, 'pinouts')], [chip.short.toLowerCase(), '']); }
+      }
+      else if (sec === 'quickref') { html = rQuickref(m, q); crumbs.push(['quickref', '']); }
+      else if (sec === 'ports') { html = rPorts(m, q); crumbs.push(['ports', '']); }
+      else if (sec === 'power') { html = rPower(m); crumbs.push(['power', '']); }
+      else html = rNotFound(parts);
+    }
+  }
+  state.route = route;
+  $('#crumbs').innerHTML = crumbsHTML(crumbs);
+  $('#main').innerHTML = html;
+  // post-render
+  if (route.chip && q.has('pin')) {
+    const n = +q.get('pin');
+    if (route.chip.pins && route.chip.pins.some(p => p.n === n)) { state.pin = n; $$('#main [data-pin]').forEach(el => el.classList.toggle('sel', +el.dataset.pin === n)); openDrawer({ kind: 'pin', chip: route.chip, m: route.m, n }, true); }
+  } else if (parts[0] === 'glossary' && q.get('term')) { openDrawer({ kind: 'term', id: q.get('term') }, true); setQuery('term', null); }
+  const scrollTo = parts[2] === 'quickref' && q.get('sec') ? '#sec-' + q.get('sec') : parts[2] === 'ports' && q.get('c') ? '#c-' + q.get('c') : (parts.length === 2 && q.get('sec') === 'faults') ? '#faults' : null;
+  if (scrollTo && $(scrollTo)) { const el = $(scrollTo); requestAnimationFrame(() => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 60)); }
+  else window.scrollTo(0, 0);
+  document.title = `Retro Bench${crumbs.length ? ' · ' + crumbs.map(c => c[0]).join('/') : ''}`;
+}
+function touchRecent(m) {
+  state.recent = [m.id, ...state.recent.filter(id => id !== m.id)].slice(0, 6);
+  LS.set('recent', state.recent);
+}
+// in-page anchors (faults) without re-render
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[data-local]');
+  if (a) { e.preventDefault(); const el = $('#' + a.dataset.local); if (el) el.scrollIntoView({ block: 'start' }); }
+});
+
+/* ---------- narrow-mode flag (drawer becomes full screen) ---------- */
+const mq = matchMedia('(max-width:480px), (max-width:1023px) and (orientation:portrait)');
+const setNarrow = () => document.body.classList.toggle('narrow', mq.matches);
+mq.addEventListener('change', setNarrow); setNarrow();
+
+/* ---------- boot ---------- */
+buildIndex();
+applyTheme();
+window.addEventListener('hashchange', render);
+render();
+})();
+</script>
+</body>
+</html>

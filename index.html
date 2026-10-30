@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Retro Bench</title>
+<meta name="description" content="Offline pinouts, quick reference and test points for 8-bit computer repair.">
+<meta name="theme-color" content="#f8f8f8">
+<link rel="stylesheet" href="dist/app.css">
+<script>try{const t=JSON.parse(localStorage.getItem('rb-theme'));if(t)document.documentElement.dataset.theme=t;else if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.dataset.theme='dark';}catch{}</script>
+</head>
+<body class="bg-ground text-ink">
+<div class="lg:grid lg:grid-cols-[256px_1fr] min-h-dvh">
+
+  <!-- Phone / tablet top bar: 48px, the screen's name, a menu button, one action -->
+  <header id="topbar" class="lg:hidden sticky top-0 z-30 h-12 flex items-center gap-2 px-2 bg-ground border-b border-border">
+    <button class="h-11 w-11 flex items-center justify-center rounded-control" data-act="menu" aria-label="Open navigation" aria-controls="navsheet">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span id="topbar-title" class="flex-1 truncate font-medium">Retro Bench</span>
+    <button class="h-11 w-11 flex items-center justify-center rounded-control" data-act="palette" aria-label="Search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    </button>
+  </header>
+
+  <!-- Sidebar: on the ground, one hairline, no top bar (desktop) / full-screen sheet (phone) -->
+  <nav id="sidebar" class="hidden lg:flex flex-col lg:sticky lg:top-0 lg:h-dvh overflow-y-auto border-r border-border bg-ground" aria-label="Primary"></nav>
+
+  <main id="main" class="min-w-0 px-4 pt-4 pb-24 lg:px-pad lg:pt-8 lg:pb-16"></main>
+</div>
+
+<!-- Phone nav sheet -->
+<div id="navsheet" class="fixed inset-0 z-40 bg-ground overflow-y-auto" hidden role="dialog" aria-label="Navigation"></div>
+
+<!-- Phone bottom sheet for pin detail -->
+<div id="scrim" class="fixed inset-0 z-40 bg-black/30" hidden></div>
+<section id="sheet" class="fixed inset-x-0 bottom-0 z-50 max-h-[82dvh] overflow-y-auto float rounded-b-none translate-y-full transition-transform duration-200 motion-reduce:transition-none" aria-label="Pin detail"></section>
+
+<!-- Glossary popover -->
+<div id="popover" class="fixed z-50 w-[min(360px,calc(100vw-24px))] p-4 float" hidden role="dialog" aria-label="Definition"></div>
+
+<!-- Command palette -->
+<div id="palette" class="fixed inset-0 z-50 bg-black/30 flex items-start justify-center pt-[12vh] px-3" hidden>
+  <div class="w-full max-w-[640px] float overflow-hidden" role="dialog" aria-label="Search">
+    <div class="flex items-center gap-3 h-12 px-4 border-b border-border">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-muted"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="pal-input" type="text" class="flex-1 bg-transparent outline-none text-section placeholder:text-muted" placeholder="Chip, pin (/RAS, pin 40), BASIC word, key, term" autocomplete="off" spellcheck="false">
+      <span class="kbd">Esc</span>
+    </div>
+    <div id="pal-results" class="max-h-[60vh] overflow-y-auto p-2"></div>
+  </div>
+</div>
+
+<svg width="0" height="0" class="absolute" aria-hidden="true">
+  <defs>
+    <pattern id="mk-hatch" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)"><rect width="1.6" height="4" fill="var(--pin-ink)"/></pattern>
+    <pattern id="mk-stripe" patternUnits="userSpaceOnUse" width="10" height="10"><rect width="10" height="3.5" fill="var(--pin-ink)"/><rect y="6.5" width="10" height="3.5" fill="var(--pin-ink)"/></pattern>
+  </defs>
+</svg>
+
+<script src="src/data.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>

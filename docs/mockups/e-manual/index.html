@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Retro Bench — Service Manual</title>
+<style>
+/* ---------- faces ---------- */
+@font-face { font-family: 'Archivo'; src: url(fonts/archivo-latin.woff2) format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Plex Mono'; src: url(fonts/plex-mono-400-latin.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Plex Mono'; src: url(fonts/plex-mono-600-latin.woff2) format('woff2'); font-weight: 600; font-display: swap; }
+
+/* ---------- page ---------- */
+:root {
+  --paper: #fbfaf6; --ink: #000; --spot: #d9532b;
+  --sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'Plex Mono', 'IBM Plex Mono', 'Courier New', monospace;
+  --margin: clamp(16px, 5vw, 72px);
+  --rule: 3px;
+  --t: 160ms ease;
+}
+@media (prefers-reduced-motion: reduce) { :root { --t: 0s; } }
+* { box-sizing: border-box; }
+html { background: var(--paper); color: var(--ink); -webkit-text-size-adjust: 100%; }
+body { margin: 0; font: 400 17px/1.55 var(--sans); min-height: 100vh; }
+a { color: inherit; text-decoration: none; }
+a:hover, .term:hover { color: var(--spot); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--spot); outline-offset: 3px; }
+.mono { font-family: var(--mono); }
+.num { color: var(--spot); font-weight: 800; }
+.ol { text-decoration: overline; text-decoration-thickness: 2px; text-underline-offset: 2px; }
+.dag { color: var(--spot); font-weight: 700; }
+.spot { color: var(--spot); }
+p { margin: 0 0 1em; max-width: 68ch; }
+h1, h2, h3 { margin: 0; font-weight: 800; letter-spacing: -0.02em; line-height: 0.98; text-transform: uppercase; }
+h1 { font-size: clamp(36px, 5.2vw, 64px); margin: 56px 0 18px; }
+h1 .num { display: block; font-size: 0.5em; letter-spacing: 0; margin-bottom: 10px; }
+h1 .num.inline { display: inline; font-size: 1em; margin: 0 0.15em 0 0; }
+h2 { font-size: clamp(24px, 3vw, 34px); margin: 72px 0 20px; padding-top: 18px; border-top: var(--rule) solid var(--ink); }
+h2 .num { margin-right: 0.3em; }
+h3 { font-size: 19px; letter-spacing: 0; margin: 36px 0 12px; }
+h3 .num { margin-right: 0.4em; }
+.lede { font-size: 20px; line-height: 1.45; max-width: 60ch; }
+.small { font-size: 14px; line-height: 1.45; }
+.note { border-left: var(--rule) solid var(--spot); padding: 2px 0 2px 18px; margin: 20px 0; max-width: 68ch; }
+
+/* running header */
+.running { position: sticky; top: 0; z-index: 20; background: var(--paper); border-bottom: var(--rule) solid var(--ink); }
+.running .in { max-width: 1120px; margin: 0 auto; padding: 4px var(--margin); min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+.running .crumb { overflow: hidden; text-overflow: ellipsis; }
+.running .crumb .sep { margin: 0 0.5em; }
+.running .crumb .here { color: var(--spot); }
+.running .lookup-link { flex: none; min-height: 44px; display: inline-flex; align-items: center; }
+.running .lookup-link::before { content: ''; display: inline-block; width: 14px; height: 2px; background: var(--ink); margin-right: 8px; }
+
+.page { max-width: 1120px; margin: 0 auto; padding: 0 var(--margin) 48px; }
+footer.colophon { max-width: 1120px; margin: 96px auto 0; padding: 20px var(--margin) 96px; border-top: var(--rule) solid var(--ink);
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+footer.colophon .fn { flex-basis: 100%; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 14px; max-width: 72ch; }
+
+/* ---------- cover ---------- */
+.cover { padding-top: 72px; }
+.cover .imprint { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 40px; }
+.cover h1 { font-size: clamp(64px, 12vw, 152px); line-height: 0.86; margin: 0 0 32px; letter-spacing: -0.035em; }
+.cover h1 .spot { display: block; }
+.cover .lede { margin-bottom: 40px; }
+
+/* lookup line */
+.lookup { display: flex; align-items: flex-end; gap: 14px; max-width: 640px; margin: 8px 0 24px; }
+.lookup label { font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: -0.01em; white-space: nowrap; padding-bottom: 8px; }
+.lookup input { flex: 1; min-width: 0; font: 400 20px/1.2 var(--mono); background: transparent; border: 0; border-bottom: var(--rule) solid var(--ink); border-radius: 0; padding: 10px 2px; color: var(--ink); outline: none; }
+.lookup input:focus { border-color: var(--spot); }
+.lookup input::placeholder { color: var(--ink); opacity: 0.35; }
+.lookup input { -webkit-appearance: none; appearance: none; }
+.lookup input::-webkit-search-cancel-button, .lookup input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+.lookup button { min-height: 44px; min-width: 44px; font-weight: 800; text-transform: uppercase; font-size: 14px; letter-spacing: 0.08em; border-bottom: var(--rule) solid transparent; }
+.lookup button:hover { color: var(--spot); }
+
+/* contents list with dotted leaders */
+.toc { list-style: none; margin: 0; padding: 0; }
+.toc li { display: flex; align-items: baseline; gap: 12px; min-height: 44px; padding: 6px 0; }
+.toc .n { flex: none; width: 3.2ch; color: var(--spot); font-weight: 800; }
+.toc .t { white-space: nowrap; }
+.toc .dots { flex: 1; border-bottom: 2px dotted var(--ink); margin: 0 6px; position: relative; top: -5px; min-width: 24px; }
+.toc .st { flex: none; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.toc li.lvl1 { margin-top: 18px; font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: -0.01em; }
+.toc li.lvl1 .n { width: 2.4ch; }
+.toc li.lvl1:first-child { margin-top: 0; }
+.toc li.lvl2 { padding-left: 3.2ch; }
+.toc li.lvl2 .n { width: 4ch; }
+.two-col { columns: 2; column-gap: 64px; }
+.two-col > * { break-inside: avoid; }
+
+/* manual lists */
+ol.man { list-style: none; margin: 0; padding: 0; }
+ol.man > li { display: grid; grid-template-columns: 4.5ch 1fr; gap: 0 18px; padding: 14px 0; align-items: baseline; }
+ol.man > li > .n { color: var(--spot); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: -0.02em; }
+ol.man > li > .n a, ol.man > li > .n button { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; color: var(--spot); margin: -10px 0; }
+ol.man > li > .n a:hover { color: var(--ink); }
+ol.man .ttl { font-weight: 800; font-size: 21px; letter-spacing: -0.01em; text-transform: uppercase; display: block; }
+ol.man .ttl a:hover { color: var(--spot); }
+ol.man .sub { display: block; margin-top: 2px; }
+ol.man.letters > li > .n { font-size: 22px; text-transform: uppercase; }
+ol.man.tight > li { padding: 8px 0; }
+ol.man li p { margin: 4px 0 0; }
+.wordmark { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+.flag { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--spot); margin-left: 0.6em; }
+
+/* spec sheet */
+.spec { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px 40px; margin: 32px 0 0; }
+.spec div { border-top: var(--rule) solid var(--ink); padding-top: 10px; }
+.spec dt { font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: -0.01em; line-height: 1; margin-bottom: 8px; }
+.spec dd { margin: 0; font: 400 15.5px/1.45 var(--mono); }
+
+/* troubleshooting chart */
+.chart { margin: 24px 0 0; }
+.chart .row { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(0, 1.4fr); gap: 0 32px; padding: 16px 0; align-items: baseline; }
+.chart .row + .row { border-top: 2px dotted var(--ink); }
+.chart .sym { font-weight: 800; font-size: 21px; letter-spacing: -0.01em; text-transform: uppercase; line-height: 1.1; }
+.chart .refs { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
+.chart .refs a { display: inline-flex; align-items: center; min-height: 44px; margin: -10px 0; font-weight: 800; }
+.chart .refs a .n { font-size: 24px; margin-right: 6px; }
+.chart .refs a:hover .n { color: var(--ink); }
+.chart .note-t { margin: 6px 0 0; }
+
+/* in-this-section */
+.subsecs { margin-top: 28px; }
+
+/* ---------- figure: DIP ---------- */
+.figure { margin: 32px 0 0; }
+.figure .tools { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: center; margin-bottom: 20px; }
+.figure .tools button { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+.figure .tools button .box { width: 18px; height: 18px; border: 2px solid var(--ink); display: inline-block; position: relative; }
+.figure .tools button[aria-pressed="true"] .box { background: var(--spot); border-color: var(--spot); }
+.figure .tools .legend { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.figure .tools .legend svg { width: 14px; height: 14px; vertical-align: -2px; margin-right: 5px; }
+.comp { display: flex; align-items: flex-start; gap: 0; }
+.comp .fig { flex: none; }
+.comp .margin { flex: 1; min-width: 0; }
+.comp.below { flex-direction: column; }
+.comp.below .margin { width: 100%; }
+svg.dip { display: block; overflow: visible; }
+svg.dip text { font-family: var(--mono); font-size: 15px; fill: var(--ink); }
+svg.dip .num { font-family: var(--sans); font-weight: 700; font-size: 13px; }
+svg.dip .body { fill: var(--paper); stroke: var(--ink); stroke-width: 3; }
+svg.dip .notch { fill: var(--paper); stroke: var(--ink); stroke-width: 3; }
+svg.dip .stub { fill: var(--ink); }
+svg.dip .hit { fill: transparent; cursor: pointer; }
+svg.dip .pin:hover .name, svg.dip .pin:hover .num { fill: var(--spot); }
+svg.dip .pin:focus-visible { outline: none; }
+svg.dip .pin:focus-visible .hit { stroke: var(--spot); stroke-width: 3; stroke-dasharray: 4 4; }
+svg.dip .pin.sel .name, svg.dip .pin.sel .num { fill: var(--spot); font-weight: 600; }
+svg.dip .pin.sel .stub, svg.dip .pin.sel .mark { fill: var(--spot); }
+svg.dip .pin.sel .mark.hollow { fill: var(--paper); stroke: var(--spot); }
+svg.dip .mark { fill: var(--ink); }
+svg.dip .mark.hollow { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+svg.dip .leader { fill: none; stroke: var(--spot); stroke-width: 3; stroke-linejoin: round; }
+svg.dip .leader-dot { fill: var(--spot); }
+svg.dip .chipname { font-family: var(--sans); font-weight: 800; font-size: 18px; letter-spacing: 0.02em; text-anchor: middle; }
+svg.dip .p1 { fill: var(--ink); }
+svg.dip .caption { font-family: var(--sans); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; text-anchor: middle; }
+
+/* callout box */
+.callout { position: relative; border: 2px solid var(--ink); padding: 24px 24px 20px; margin-left: 0; transition: opacity var(--t); }
+.comp:not(.below) .callout { margin-left: -2px; }
+.comp.below .callout { margin-top: -2px; }
+.callout .tab { position: absolute; top: -2px; left: -2px; background: var(--spot); color: var(--paper); font-weight: 800; font-size: 22px; line-height: 1; padding: 7px 12px 6px; letter-spacing: -0.02em; min-width: 48px; text-align: center; }
+.callout.right .tab { left: auto; right: -2px; }
+.callout .pname { font: 600 28px/1.1 var(--mono); margin: 24px 0 4px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.callout .pname svg { width: 18px; height: 18px; }
+.callout .pmeta { font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 18px; }
+.callout p { margin: 0 0 12px; }
+.callout .probe { border-top: 2px dotted var(--ink); padding-top: 12px; margin-top: 16px; }
+.callout .probe b, .callout .seealso b, .callout .refs b { font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: 0.1em; display: block; margin-bottom: 4px; }
+.callout .seealso { margin-top: 16px; }
+.callout .seealso .term { margin-right: 14px; }
+.callout .refs { margin-top: 16px; }
+.callout .refs a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; display: inline-block; min-height: 32px; }
+.callout .pnav { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; border-top: 2px solid var(--ink); padding-top: 10px; }
+.callout .pnav button { min-height: 44px; font-weight: 700; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; }
+.callout .pnav button .mono { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.callout .pnav button:hover { color: var(--spot); }
+.margin .hint { padding: 36px 0 0 40px; max-width: 34ch; }
+.comp.below .margin .hint { padding: 20px 0 0; }
+
+/* pin functions list */
+.pinfn { list-style: none; margin: 24px 0 0; padding: 0; columns: 2; column-gap: 56px; }
+.pinfn li { break-inside: avoid; }
+.pinfn button { display: grid; grid-template-columns: 3ch 9ch 1fr; gap: 0 12px; align-items: baseline; width: 100%; text-align: left; min-height: 44px; padding: 6px 0; }
+.pinfn button .n { color: var(--spot); font-weight: 800; font-size: 17px; }
+.pinfn button .nm { font: 600 15px var(--mono); }
+.pinfn button .d { font-size: 15px; line-height: 1.4; }
+.pinfn button:hover .nm, .pinfn button:hover .d { color: var(--spot); }
+.pinfn li.sel button .nm, .pinfn li.sel button .d { color: var(--spot); }
+
+/* keystrokes */
+.keys { margin: 24px 0 0; }
+.keys .row { display: grid; grid-template-columns: minmax(200px, 300px) 1fr; gap: 0 28px; padding: 10px 0; align-items: start; }
+.keys kbd { font: 600 15px/1.3 var(--mono); border: 2px solid var(--ink); padding: 8px 12px; display: inline-block; min-height: 44px; }
+.keys .does { padding-top: 10px; }
+
+/* commands */
+.cmds { list-style: none; margin: 16px 0 0; padding: 0; }
+.cmds li { display: grid; grid-template-columns: minmax(220px, 34%) 1fr; gap: 0 28px; padding: 10px 0; align-items: baseline; }
+.cmds .c { font: 600 16px/1.4 var(--mono); }
+details.grp { border-top: 2px dotted var(--ink); }
+details.grp:last-of-type { border-bottom: 2px dotted var(--ink); }
+details.grp summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 16px; min-height: 56px; font-weight: 800; font-size: 19px; letter-spacing: -0.01em; text-transform: uppercase; }
+details.grp summary::-webkit-details-marker { display: none; }
+details.grp summary .n { color: var(--spot); width: 4ch; }
+details.grp summary::after { content: '+'; margin-left: auto; font-size: 28px; font-weight: 500; color: var(--spot); }
+details.grp[open] summary::after { content: '–'; }
+details.grp ul { list-style: none; margin: 0 0 20px 4ch; padding: 0; columns: 2; column-gap: 40px; }
+details.grp ul li { font: 400 15px/1.5 var(--mono); padding: 4px 0; break-inside: avoid; }
+
+/* memory map drawing */
+.memmap { margin: 24px 0 0; max-width: 720px; }
+.memmap .blk { display: grid; grid-template-columns: 15ch 1fr; gap: 0 20px; align-items: stretch; }
+.memmap .addr { font: 400 14px/1.3 var(--mono); text-align: right; padding-top: 12px; }
+.memmap .cell { border: 3px solid var(--ink); border-top-width: 0; padding: 12px 16px; font-weight: 700; min-height: 54px; display: flex; align-items: center; }
+.memmap .blk:first-child .cell { border-top-width: 3px; }
+.memmap .cell.rom { background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(0,0,0,.12) 7px 9px); }
+.memmap .cell.io { background: repeating-linear-gradient(0deg, transparent 0 5px, rgba(0,0,0,.14) 5px 6px); }
+.memmap .key { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.memmap .key span::before { content: ''; display: inline-block; width: 22px; height: 14px; border: 2px solid var(--ink); vertical-align: -2px; margin-right: 8px; }
+.memmap .key .krom::before { background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(0,0,0,.3) 4px 6px); }
+.memmap .key .kio::before { background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,.3) 3px 4px); }
+
+/* connector legend */
+.legend-list { list-style: none; margin: 16px 0 0; padding: 0; max-width: 720px; }
+.legend-list li { display: grid; grid-template-columns: 6ch 14ch 1fr; gap: 0 16px; padding: 8px 0; align-items: baseline; border-top: 2px dotted var(--ink); }
+.legend-list li:first-child { border-top: 0; }
+.legend-list .n { font: 600 16px var(--mono); color: var(--spot); }
+.legend-list .nm { font: 600 16px var(--mono); }
+.legend-list .d { font-size: 15.5px; }
+
+/* test points: TP callouts hanging in the margin, in probing order */
+.tps { margin-top: 28px; max-width: 820px; }
+.tp { display: grid; grid-template-columns: 72px minmax(160px, 1fr) minmax(0, 1.3fr); gap: 0 28px; padding: 18px 0; align-items: start; }
+.tp + .tp { border-top: 2px dotted var(--ink); }
+.tp .tab { background: var(--spot); color: var(--paper); font-weight: 800; font-size: 16px; padding: 7px 0 6px; line-height: 1; text-align: center; margin-top: 2px; }
+.tp .t { font-weight: 800; font-size: 21px; text-transform: uppercase; letter-spacing: -0.01em; line-height: 1.05; }
+.tp .w { font: 400 15px/1.45 var(--mono); margin-top: 6px; }
+.tp .e { font-weight: 700; }
+.rails .row { display: grid; grid-template-columns: minmax(160px, 220px) 1fr; gap: 0 32px; padding: 18px 0; align-items: baseline; }
+.rails .row + .row { border-top: 2px dotted var(--ink); }
+.rails .rail { font-weight: 800; font-size: 26px; letter-spacing: -0.02em; line-height: 1; }
+.rails .exp { font: 600 16px var(--mono); }
+.rails .where { font: 400 15px/1.45 var(--mono); margin-top: 6px; }
+.rails .rn { margin: 6px 0 0; }
+
+/* index / search */
+.ix-group { margin-top: 36px; }
+.ix-group h3 { margin-top: 0; }
+.ix { list-style: none; margin: 0; padding: 0; }
+.ix li a { display: block; min-height: 44px; padding: 8px 0 8px 12px; margin-left: -12px; border-left: var(--rule) solid transparent; }
+.ix li.sel a { border-left-color: var(--spot); }
+.ix li a:hover { color: inherit; }
+.ix .line { display: flex; align-items: baseline; gap: 10px; }
+.ix .t { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ix .t.mono { font: 600 16px var(--mono); }
+.ix .dots { flex: 1; border-bottom: 2px dotted var(--ink); position: relative; top: -5px; min-width: 16px; }
+.ix .loc { flex: none; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--spot); }
+.ix .s { font-size: 14.5px; line-height: 1.4; max-width: 70ch; }
+.ix li a:hover .t { color: var(--spot); }
+
+/* glossary */
+.dict { margin-top: 24px; }
+.dict dt { font-weight: 800; font-size: 22px; letter-spacing: -0.01em; text-transform: uppercase; margin-top: 32px; scroll-margin-top: 120px; }
+.dict dt .n { font-size: 15px; letter-spacing: 0.06em; margin-right: 0.8em; }
+.dict dd { margin: 4px 0 0; max-width: 68ch; }
+.dict dd .short { font-weight: 700; }
+.dict dt.focus { color: var(--spot); }
+
+/* glossary term + popover */
+.term { border-bottom: 2px dotted var(--spot); padding: 0; line-height: inherit; text-align: left; }
+#pop { position: fixed; z-index: 40; width: min(380px, calc(100vw - 32px)); background: var(--paper); border: 2px solid var(--ink); padding: 18px 20px 14px; transition: opacity var(--t); }
+#pop[hidden] { display: none; }
+#pop .tab { position: absolute; top: -2px; left: -2px; background: var(--ink); color: var(--paper); font-weight: 800; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 10px; }
+#pop h4 { margin: 14px 0 2px; font-weight: 800; font-size: 20px; letter-spacing: -0.01em; text-transform: uppercase; }
+#pop .short { font-weight: 700; margin-bottom: 6px; }
+#pop p { font-size: 15px; margin: 0 0 8px; }
+#pop .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+#pop .foot a { color: var(--spot); min-height: 44px; display: inline-flex; align-items: center; }
+#pop .foot button { min-height: 44px; min-width: 44px; }
+
+/* phone bottom line */
+.bar { display: none; }
+.empty { margin: 32px 0; max-width: 60ch; }
+.mark-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 8px; }
+.mark-btn .box { width: 16px; height: 16px; border: 2px solid var(--ink); display: inline-block; }
+.mark-btn[aria-pressed="true"] .box { background: var(--spot); border-color: var(--spot); }
+.references a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.references li { min-height: 36px; }
+
+/* ---------- tablet ---------- */
+@media (max-width: 1023px) {
+  .two-col { columns: 1; }
+  .pinfn { columns: 1; }
+  h2 { margin-top: 56px; }
+}
+/* ---------- phone ---------- */
+@media (max-width: 700px) {
+  body { font-size: 16px; }
+  .running .in { font-size: 11px; letter-spacing: 0.08em; }
+  .running .hide-phone { display: none; }
+  h1 { margin-top: 36px; }
+  h2 { margin-top: 48px; }
+  .cover { padding-top: 40px; }
+  .lookup { flex-wrap: wrap; }
+  .lookup label { font-size: 18px; flex-basis: 100%; padding-bottom: 0; }
+  .toc li { flex-wrap: wrap; }
+  .toc li.lvl1 { font-size: 19px; }
+  ol.man > li { grid-template-columns: 3.5ch 1fr; }
+  ol.man > li > .n { font-size: 22px; }
+  ol.man .ttl { font-size: 18px; }
+  .spec { grid-template-columns: 1fr 1fr; gap: 22px 20px; }
+  .spec dt { font-size: 17px; }
+  .spec dd { font-size: 13.5px; }
+  .chart .row { grid-template-columns: 1fr; gap: 8px; }
+  .chart .sym { font-size: 18px; }
+  .keys .row { grid-template-columns: 1fr; gap: 6px; }
+  .keys .does { padding-top: 0; padding-bottom: 8px; }
+  .cmds li { grid-template-columns: 1fr; gap: 2px; }
+  details.grp ul { columns: 1; margin-left: 0; }
+  .memmap .blk { grid-template-columns: 11ch 1fr; gap: 0 10px; }
+  .memmap .addr { font-size: 12px; }
+  .legend-list li { grid-template-columns: 5ch 1fr; }
+  .legend-list .d { grid-column: 2; }
+  .callout { padding: 20px 16px 16px; }
+  .callout .pname { font-size: 24px; }
+  .rails .row { grid-template-columns: 1fr; gap: 6px; }
+  .tp { grid-template-columns: 56px 1fr; gap: 6px 16px; }
+  .tp .e { grid-column: 2; }
+  .pinfn button { grid-template-columns: 3ch 8ch 1fr; gap: 0 8px; }
+  .bar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--paper); border-top: var(--rule) solid var(--ink);
+    padding-bottom: env(safe-area-inset-bottom); }
+  .bar a { flex: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .bar a.here { color: var(--spot); }
+  .bar a.off { opacity: 0.3; pointer-events: none; }
+  .bar a + a { border-left: 2px solid var(--ink); }
+  footer.colophon { padding-bottom: 120px; }
+  .ix .line { flex-wrap: wrap; }
+  .ix .dots { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="running"><div class="in" id="running"></div></header>
+<main class="page" id="main"></main>
+<footer class="colophon" id="foot"></footer>
+<nav class="bar" id="bar" aria-label="Manual navigation"></nav>
+<div id="pop" hidden role="dialog" aria-label="Glossary note"></div>
+
+<script src="../shared/data.js"></script>
+<script>
+(() => {
+'use strict';
+const D = window.RCS;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const STATUS = { ready: 'Complete', sheet: 'Sheet only', planned: 'Planned' };
+const HEAT = { cool: 'runs cool', warm: 'runs warm', hot: 'runs hot' };
+const DIR = { in: 'Input', out: 'Output', bidir: 'Bidirectional', '-': 'Supply' };
+const SUB = { pinouts: ['1', 'Components and pinouts'], ports: ['2', 'Ports and connectors'], power: ['3', 'Power and test points'], quickref: ['4', 'Operation'] };
+const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const state = {
+  recents: LS.get('rcs-e-recent', []), marks: LS.get('rcs-e-marks', []),
+  flip: false, pin: null, chipId: null, ctx: {}, selIdx: 0, results: [],
+};
+
+/* ---------- numbering: the manual's sections ---------- */
+const brandOf = m => D.brands.find(b => b.id === m.brand);
+const brandSec = b => D.brands.indexOf(b) + 2;                 /* Section 1 is "Before you start" */
+const machSec = m => { const b = brandOf(m); return `${brandSec(b)}.${b.machines.indexOf(m.id) + 1}`; };
+const mPath = m => `#/${m.brand}/${m.id}`;
+const chipPath = (m, c) => `${mPath(m)}/chip/${c.id}`;
+const figChip = (m, c) => { const i = m.chips.indexOf(c.id); return `${machSec(m)}-${i < 0 ? '?' : i + 2}`; };
+const figConn = (m, i) => `${machSec(m)}-${m.chips.length + 2 + i}`;
+const dag = () => '<span class="dag" title="Reconstructed from the sheets; not yet checked against a datasheet">†</span>';
+const DAG_NOTE = '† Reconstructed from the cheat sheets and not yet checked against a datasheet or a board.';
+
+/* marks for the pin convention: filled dot supply, hollow dot ground, triangle clock */
+const markSVG = (type, cls = '') => {
+  if (type === 'power') return `<svg viewBox="0 0 16 16" class="${cls}"><circle cx="8" cy="8" r="6" fill="currentColor"/></svg>`;
+  if (type === 'ground') return `<svg viewBox="0 0 16 16" class="${cls}"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
+  if (type === 'clock') return `<svg viewBox="0 0 16 16" class="${cls}"><path d="M8 1.5 15 14H1z" fill="currentColor"/></svg>`;
+  return '';
+};
+const pinName = p => p.name.startsWith('/') ? `<span class="ol">${esc(p.name.slice(1))}</span>` : esc(p.name);
+
+/* Plus/4 shares C16 data; other stubs have none */
+function dataFor(table, m) {
+  if (table[m.id]) return { data: table[m.id], shared: null };
+  if (m.id === 'plus4' && table.c16) return { data: table.c16, shared: D.machines.c16 };
+  return { data: null, shared: null };
+}
+const sharedNote = shared => shared ? `<p class="note small">Shown from the ${esc(shared.name)} sheet (Section ${machSec(shared)}): the 264 series shares this data.</p>` : '';
+function touchRecent(id) {
+  const r = [id, ...state.recents.filter(x => x !== id)].slice(0, 5);
+  if (r.join() !== state.recents.join()) { state.recents = r; LS.set('rcs-e-recent', r); }
+}
+const terms = (ids, label = 'See also') => {
+  const list = (ids || []).filter(id => D.terms[id]);
+  return list.length ? `<div class="seealso"><b>${label}</b>${list.map(id => `<button class="term" data-term="${id}">${esc(D.terms[id].term)}</button>`).join('')}</div>` : '';
+};
+const references = (list, title = 'References') => list && list.length ? `<div class="refs references"><b>${title}</b><ul class="small" style="margin:0;padding-left:1.2em">${list.map(d => `<li><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a>${d.verify ? dag() : ''}</li>`).join('')}</ul></div>` : '';
+
+/* ---------- index for "Look up" ---------- */
+let INDEX = null;
+function buildIndex() {
+  const ix = [];
+  for (const m of Object.values(D.machines)) {
+    ix.push({ group: 'Machines', title: m.name, sub: [m.aka, m.cpu, STATUS[m.status]].filter(Boolean).join(' - '), keys: `${m.id} ${m.aka || ''} ${brandOf(m).name}`, href: mPath(m), loc: `Section ${machSec(m)}` });
+  }
+  for (const c of Object.values(D.chips)) {
+    const ms = c.machines.map(id => D.machines[id]).filter(Boolean);
+    const home = ms.find(m => m.status === 'ready') || ms[0];
+    if (!home) continue;
+    const fig = c.pins ? `Fig. ${figChip(home, c)}` : `Section ${machSec(home)}.1`;
+    ix.push({ group: 'Chips', title: c.name, sub: `${c.role} - ${c.pkg} - ${ms.map(m => m.name).join(', ')}${c.pins ? '' : ' - pinout not captured'}`, keys: `${c.short} ${c.family || ''} ${c.role}`, href: c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`, loc: fig });
+    if (c.pins) for (const p of c.pins) {
+      ix.push({ group: 'Pins', title: `${p.name}  (${c.short} pin ${p.n})`, mono: true, sub: `${home.name} - ${p.desc}`, keys: `pin ${p.n} ${p.name} ${p.name.replace('/', '')} ${c.short} ${c.name}`, href: `${chipPath(home, c)}?pin=${p.n}`, loc: `Fig. ${figChip(home, c)}, pin ${p.n}` });
+    }
+  }
+  for (const [id, q] of Object.entries(D.quickref)) {
+    const m = D.machines[id], s = machSec(m) + '.4';
+    for (const e of q.basic.essentials) ix.push({ group: 'BASIC', title: e.cmd, mono: true, sub: `${m.name} - ${e.does}`, keys: q.basic.dialect, href: `${mPath(m)}/quickref?tab=basic`, loc: `${s} B` });
+    for (const g of q.basic.groups) for (const it of g.items) ix.push({ group: 'BASIC', title: it, mono: true, sub: `${m.name} - ${g.group}`, keys: q.basic.dialect, href: `${mPath(m)}/quickref?tab=basic`, loc: `${s} B` });
+    for (const k of q.keys) ix.push({ group: 'Keys', title: k.keys, sub: `${m.name} - ${k.does}`, keys: '', href: `${mPath(m)}/quickref?tab=keys`, loc: `${s} A` });
+    for (const r of q.memory) ix.push({ group: 'Memory', title: `${r.range}  ${r.what}`, mono: true, sub: m.name, keys: r.what, href: `${mPath(m)}/quickref?tab=memory`, loc: `${s} D` });
+  }
+  for (const [id, t] of Object.entries(D.terms)) ix.push({ group: 'Glossary', title: t.term, sub: t.short, keys: id + ' ' + t.long, href: `#/glossary?term=${id}`, loc: 'Appendix A' });
+  for (const [mid, list] of Object.entries(D.connectors)) {
+    const m = D.machines[mid];
+    list.forEach((c, i) => ix.push({ group: 'Connectors', title: c.name, sub: `${m.name} - ${c.kind}`, keys: c.pins.map(p => p.name).join(' '), href: `${mPath(m)}/ports#conn-${c.id}`, loc: `Fig. ${figConn(m, i)}` }));
+  }
+  ix.push({ group: 'Pages', title: 'Glossary', sub: 'All terms', href: '#/glossary', loc: 'Appendix A' }, { group: 'Pages', title: 'References', sub: 'External archives and communities', href: '#/resources', loc: 'Appendix B' });
+  INDEX = ix;
+}
+const GROUP_ORDER = ['Machines', 'Chips', 'Pins', 'BASIC', 'Keys', 'Memory', 'Glossary', 'Connectors', 'Pages'];
+function search(q, perGroup = 8) {
+  q = q.trim().toLowerCase();
+  if (!q) return [];
+  if (!INDEX) buildIndex();
+  const hits = [];
+  for (const it of INDEX) {
+    const t = it.title.toLowerCase(), k = (it.keys || '').toLowerCase(), s = (it.sub || '').toLowerCase();
+    let score = 0;
+    if (t === q) score = 100; else if (t.startsWith(q)) score = 80; else if (t.includes(q)) score = 60;
+    else if (k.includes(q)) score = 40; else if (s.includes(q)) score = 20;
+    if (score) hits.push({ ...it, score });
+  }
+  hits.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
+  const groups = new Map();
+  for (const h of hits) { if (!groups.has(h.group)) groups.set(h.group, []); const g = groups.get(h.group); if (g.length < perGroup) g.push(h); }
+  return GROUP_ORDER.filter(g => groups.has(g)).map(g => ({ group: g, items: groups.get(g) }));
+}
+
+/* ---------- router ---------- */
+function parseHash() {
+  const h = location.hash.replace(/^#/, '') || '/';
+  const [path, qs = ''] = h.split('?');
+  return { path, segs: path.split('/').filter(Boolean), q: Object.fromEntries(new URLSearchParams(qs)) };
+}
+function render() {
+  const r = parseHash();
+  const [a, b, c, d] = r.segs;
+  const ctx = { route: r };
+  let html, crumb = [], after = null;
+  if (!a) { html = viewHome(); }
+  else if (a === 'search') { html = viewSearch(r.q.q || ''); crumb = [['Index']]; after = () => { const i = $('#ix-input'); if (i && !isPhone()) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }; }
+  else if (a === 'resources') { html = viewResources(); crumb = [['Appendix B']]; }
+  else if (a === 'glossary') { html = viewGlossary(r.q.term); crumb = [['Appendix A']]; after = () => { const el = r.q.term && document.getElementById('term-' + r.q.term); if (el) el.scrollIntoView({ block: 'start' }); }; }
+  else {
+    const brand = D.brands.find(x => x.id === a);
+    const m = brand && D.machines[b];
+    if (!brand) html = viewNotFound();
+    else if (!b) { ctx.brand = brand; html = viewBrand(brand); crumb = [[`Section ${brandSec(brand)}`], [brand.name]]; }
+    else if (!m || m.brand !== brand.id) html = viewNotFound();
+    else {
+      ctx.brand = brand; ctx.machine = m; touchRecent(m.id);
+      const sec = machSec(m);
+      crumb = [[`Section ${sec}`], [m.name]];
+      if (!c) html = viewMachine(brand, m);
+      else if (c === 'pinouts') { html = viewPinouts(brand, m); crumb = [[`Section ${sec}.1`], [m.name]]; }
+      else if (c === 'quickref') { html = viewQuickref(brand, m); crumb = [[`Section ${sec}.4`], [m.name]]; after = () => { const el = r.q.tab && document.getElementById('op-' + r.q.tab); if (el) el.scrollIntoView({ block: 'start' }); }; }
+      else if (c === 'ports') { html = viewPorts(brand, m); crumb = [[`Section ${sec}.2`], [m.name]]; }
+      else if (c === 'power') { html = viewPower(brand, m); crumb = [[`Section ${sec}.3`], [m.name]]; }
+      else if (c === 'chip' && D.chips[d] && D.chips[d].pins) {
+        const chip = D.chips[d]; ctx.chip = chip;
+        if (state.chipId !== chip.id) { state.chipId = chip.id; state.pin = null; state.flip = false; }
+        if (r.q.pin) state.pin = Number(r.q.pin);
+        html = viewChip(brand, m, chip);
+        crumb = [[`Fig. ${figChip(m, chip)}`], [m.name]];
+        after = placeCallout;
+      } else html = viewNotFound();
+    }
+  }
+  if (!ctx.chip) { state.chipId = null; state.pin = null; }
+  state.ctx = ctx;
+  $('#main').innerHTML = html;
+  renderRunning(crumb); renderFoot(crumb); renderBar();
+  closePop();
+  window.scrollTo(0, 0);
+  if (after) after();
+  document.title = (ctx.chip ? `Fig. ${figChip(ctx.machine, ctx.chip)} ${ctx.chip.short} - ` : ctx.machine ? `${ctx.machine.name} - ` : '') + 'Retro Bench Service Manual';
+}
+function renderRunning(crumb) {
+  const sep = '<span class="sep">·</span>';
+  const parts = [`<a href="#/">Retro Bench</a><span class="hide-phone">${sep}Service Manual</span>`, ...crumb.map((c, i) => `<span class="${i === crumb.length - 1 ? 'here' : ''}">${esc(c[0])}</span>`)];
+  $('#running').innerHTML = `<div class="crumb">${parts.join(sep)}</div><a class="lookup-link" href="#/search">Look up</a>`;
+}
+function renderFoot(crumb) {
+  const label = crumb.length ? crumb.map(c => c[0]).join(' · ') : 'Contents';
+  $('#foot').innerHTML = `<span>— ${esc(label)} —</span><span>Installed copy · works offline</span><span class="fn">${DAG_NOTE} Data from the bench cheat sheets in this repository; nothing has been re-checked on a physical board.</span>`;
+}
+function renderBar() {
+  const { machine: m, brand, route } = state.ctx;
+  const [a, , c] = route.segs;
+  const sec = m ? mPath(m) : brand ? '#/' + brand.id : null;
+  const fig = m && m.chips.length ? `${mPath(m)}/pinouts` : null;
+  const link = (href, label, here, off) => `<a href="${href || '#/'}" class="${here ? 'here' : ''}${off ? ' off' : ''}">${label}</a>`;
+  $('#bar').innerHTML = link('#/', 'Contents', !a) + link(sec, 'Section', !!sec && !c, !sec) + link(fig, 'Fig.', c === 'pinouts' || c === 'chip', !fig) + link('#/search', 'Look up', a === 'search');
+}
+const isPhone = () => matchMedia('(max-width: 700px)').matches;
+const beside = () => matchMedia('(min-width: 1024px)').matches;
+
+/* ---------- views ---------- */
+function lookupForm(value = '', id = 'home-input') {
+  return `<form class="lookup" data-act="lookup"><label for="${id}">Look up:</label><input id="${id}" type="search" value="${esc(value)}" placeholder="a chip, a pin, a command, a term" autocomplete="off" spellcheck="false"><button type="submit">Find</button></form>`;
+}
+function viewHome() {
+  const recents = state.recents.map(id => D.machines[id]).filter(Boolean);
+  const marks = state.marks.map(id => D.machines[id]).filter(Boolean);
+  const toc = [];
+  toc.push(`<li class="lvl1"><span class="n">1</span><a class="t" href="#sec1">Before you start</a><span class="dots"></span><span class="st">Read first</span></li>`);
+  for (const b of D.brands) {
+    toc.push(`<li class="lvl1"><span class="n">${brandSec(b)}</span><a class="t" href="#/${b.id}">${esc(b.name)}</a></li>`);
+    for (const id of b.machines) {
+      const m = D.machines[id];
+      toc.push(`<li class="lvl2"><span class="n">${machSec(m)}</span><a class="t" href="${mPath(m)}">${esc(m.name)}</a><span class="dots"></span><span class="st">${STATUS[m.status]}</span></li>`);
+    }
+  }
+  toc.push(`<li class="lvl1"><span class="n">A</span><a class="t" href="#/glossary">Glossary</a><span class="dots"></span><span class="st">${Object.keys(D.terms).length} terms</span></li>`);
+  toc.push(`<li class="lvl1"><span class="n">B</span><a class="t" href="#/resources">References</a><span class="dots"></span><span class="st">Archives</span></li>`);
+  toc.push(`<li class="lvl1"><span class="n">—</span><a class="t" href="#/search">Index</a><span class="dots"></span><span class="st">Look up</span></li>`);
+  const bookmarks = (marks.length || recents.length) ? `
+    <h2>Bookmarks</h2>
+    <ul class="toc">${marks.map(m => `<li><span class="n" style="width:4ch">${machSec(m)}</span><a class="t" href="${mPath(m)}">${esc(m.name)}</a><span class="dots"></span><span class="st">Marked</span></li>`).join('')}
+    ${recents.filter(m => !marks.includes(m)).map(m => `<li><span class="n" style="width:4ch">${machSec(m)}</span><a class="t" href="${mPath(m)}">${esc(m.name)}</a><span class="dots"></span><span class="st">Last opened</span></li>`).join('')}</ul>` : '';
+  return `
+    <section class="cover">
+      <p class="imprint">Retro Bench · 8-bit computers · bench edition</p>
+      <h1>Service <span class="spot">Manual</span></h1>
+      <p class="lede">Pinouts, test points and operating notes for the machines on the bench. Commodore, Apple, Atari, Coleco, Sinclair, Texas Instruments and Tandy, numbered by section so you can find a figure with dirty fingers.</p>
+      ${lookupForm()}
+    </section>
+    ${bookmarks}
+    <h2>Contents</h2>
+    <ul class="toc two-col">${toc.join('')}</ul>
+    <h2 id="sec1"><span class="num">1</span>Before you start</h2>
+    <p class="lede">Four checks before any chip comes out of its socket. They find most faults and they stop you blaming a chip for a power supply.</p>
+    <ol class="man letters">
+      <li><span class="n">a</span><div><span class="ttl">Supply</span><p>Measure the +5 V rail at a chip, not at the regulator. Below 4.75 V or above 5.25 V, stop and fix the supply first. The section on power and test points lists the pins to probe.</p></div></li>
+      <li><span class="n">b</span><div><span class="ttl">Reset</span><p>The reset line must go LOW briefly at power-on and then stay HIGH. Stuck LOW is a dead machine; pulsing is a machine that keeps restarting.</p></div></li>
+      <li><span class="n">c</span><div><span class="ttl">Clock</span><p>Look for the master clock at the crystal and the CPU clock at the CPU. No clock means no machine, however good everything else looks.</p></div></li>
+      <li><span class="n">d</span><div><span class="ttl">Heat</span><p>Touch the big chips after a minute. Hot is normal for TED, PLA and VIC-II; too hot to hold means a short. Pull socketed chips one at a time.</p></div></li>
+    </ol>`;
+}
+function viewBrand(b) {
+  return `<h1><span class="num">Section ${brandSec(b)}</span>${esc(b.name)}</h1>
+    <p class="lede">${esc(b.blurb)}</p>
+    <ol class="man">${b.machines.map(id => { const m = D.machines[id]; return `<li><span class="n"><a href="${mPath(m)}">${machSec(m)}</a></span><div><span class="ttl"><a href="${mPath(m)}">${esc(m.name)}</a><span class="flag">${STATUS[m.status]}</span></span><span class="sub">${esc(m.tagline || '')}${m.aka ? ` <span class="small">(${esc(m.aka)}, ${m.year})</span>` : m.year ? ` <span class="small">(${m.year})</span>` : ''}</span></div></li>`; }).join('')}</ol>
+    ${D.resources[b.id] ? `<h2>References for this section</h2><ol class="man tight references">${D.resources[b.id].map((r, i) => `<li><span class="n">B.${i + 1}</span><div><a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name)}</b></a>${r.verify ? dag() : ''} <span class="small">${esc(r.what)}</span></div></li>`).join('')}</ol>` : ''}`;
+}
+function specSheet(m) {
+  const rows = [['CPU', m.cpu], ['RAM', m.ram], ['ROM', m.rom], ['Video', m.video], ['Sound', m.sound], ['System', m.os], ['Year', m.year]].filter(r => r[1]);
+  return `<dl class="spec">${rows.map(r => `<div><dt>${r[0]}</dt><dd>${esc(r[1])}</dd></div>`).join('')}</dl>`;
+}
+function viewMachine(b, m) {
+  const sec = machSec(m);
+  const sy = dataFor(D.symptoms, m), qr = dataFor(D.quickref, m);
+  const marked = state.marks.includes(m.id);
+  const subs = Object.entries(SUB).map(([k, [n, label]]) => {
+    const has = k === 'pinouts' ? m.chips.length : k === 'ports' ? dataFor(D.connectors, m).data : k === 'power' ? dataFor(D.power, m).data : qr.data;
+    return `<li><span class="n" style="width:5ch">${sec}.${n}</span>${has ? `<a class="t" href="${mPath(m)}/${k}">${label}</a><span class="dots"></span><span class="st">${k === 'pinouts' ? `${m.chips.length} parts` : 'See'}</span>` : `<span class="t" style="opacity:.45">${label}</span><span class="dots"></span><span class="st" style="opacity:.45">Not yet</span>`}</li>`;
+  }).join('');
+  const comps = m.chips.length ? `
+    <h2 id="fig1"><span class="num">Fig. ${sec}-1</span>Major components</h2>
+    <p>Figure numbers are the pinout figures. Tap a number to open it.</p>
+    <ol class="man">${m.chips.map((id, i) => { const c = D.chips[id]; if (!c) return ''; const loc = c.location && c.location[m.id]; const fig = figChip(m, c);
+      return `<li id="comp-${i + 1}"><span class="n">${c.pins ? `<a href="${chipPath(m, c)}" aria-label="Figure ${fig}, ${esc(c.name)}">${i + 1}</a>` : `${i + 1}`}</span>
+        <div><span class="ttl">${c.pins ? `<a href="${chipPath(m, c)}">${esc(c.name)}</a>` : esc(c.name)}${c.verify ? dag() : ''}${c.pins ? `<span class="flag">Fig. ${fig}</span>` : '<span class="flag" style="color:inherit;opacity:.5">Pinout not captured</span>'}</span>
+        <span class="sub">${esc(c.role)}. ${esc(c.pkg)}${loc ? `, ${esc(loc)}` : ''}; ${HEAT[c.heat] || ''}.</span></div></li>`; }).join('')}</ol>` : '';
+  const chart = sy.data ? `
+    <h2><span class="num">${sec}</span>Troubleshooting chart</h2>
+    ${sharedNote(sy.shared)}
+    <div class="chart">${sy.data.map(s => `<div class="row"><div class="sym">${esc(s.symptom)}</div><div><div class="refs">${s.suspects.map(id => { const c = D.chips[id]; const i = m.chips.indexOf(id); return c ? `<a href="${c.pins ? chipPath(m, c) : mPath(m) + '/pinouts'}"><span class="n">${i < 0 ? '–' : i + 1}</span>${esc(c.short)}</a>` : ''; }).join('')}</div>${s.note ? `<p class="note-t">${esc(s.note)}</p>` : ''}</div></div>`).join('')}</div>` : '';
+  const first = qr.data ? `
+    <h2><span class="num">${sec}</span>First look</h2>
+    ${sharedNote(qr.shared)}
+    <ol class="man letters tight">${qr.data.firstLook.map((t, i) => `<li><span class="n">${LETTERS[i]}</span><div>${esc(t)}</div></li>`).join('')}</ol>` : '';
+  const stub = (!m.chips.length && !qr.data) ? `<p class="note">This section is a cheat sheet only. The pinout figures, operation notes and test points have not been drawn yet. See <a href="#/resources" style="text-decoration:underline">Appendix B</a> for the archives this section will be built from.</p>` : '';
+  return `<h1><span class="num">Section ${sec}</span>${esc(m.name)}</h1>
+    <p class="lede">${esc(m.tagline || '')}${m.aka ? ` Also sold as ${esc(m.aka)}.` : ''}</p>
+    <button class="mark-btn" data-act="mark" data-id="${m.id}" aria-pressed="${marked}"><span class="box"></span>${marked ? 'Bookmarked on the contents page' : 'Bookmark this section'}</button>
+    ${specSheet(m)}
+    ${stub}
+    <h2>In this section</h2>
+    <ul class="toc subsecs">${subs}</ul>
+    ${comps}${chart}${first}`;
+}
+function viewPinouts(b, m) {
+  const sec = machSec(m);
+  if (!m.chips.length) return `<h1><span class="num">Section ${sec}.1</span>${esc(m.name)}: components</h1><p class="note">No pinouts have been drawn for this machine yet.</p>`;
+  return `<h1><span class="num">Section ${sec}.1</span>Components and pinouts</h1>
+    <p class="lede">One figure per chip, numbered as in Fig. ${sec}-1. Each figure draws the package from the top, notch up, with pin 1 at the dot.</p>
+    <ol class="man">${m.chips.map((id, i) => { const c = D.chips[id]; if (!c) return ''; const loc = c.location && c.location[m.id]; const fig = figChip(m, c);
+      return `<li><span class="n">${c.pins ? `<a href="${chipPath(m, c)}">${i + 1}</a>` : i + 1}</span><div>
+        <span class="ttl">${c.pins ? `<a href="${chipPath(m, c)}">${esc(c.name)}</a>` : esc(c.name)}${c.verify ? dag() : ''}<span class="flag">${c.pins ? `Fig. ${fig}` : ''}</span></span>
+        <span class="sub">${esc(c.role)}. ${esc(c.pkg)}${loc ? `, location ${esc(loc)}` : ''}, ${HEAT[c.heat] || ''}.${c.pins ? '' : ' <b>Pinout not captured yet.</b>'}</span>
+        <p class="small">Fails as: ${c.fails.map(esc).join('; ')}.</p></div></li>`; }).join('')}</ol>`;
+}
+
+/* ---------- chip figure ---------- */
+function dims() {
+  const phone = isPhone();
+  return phone ? { NL: 80, SL: 22, BW: 108, PAD: 16, GAP: 0 } : { NL: 120, SL: 30, BW: 160, PAD: 24, GAP: beside() ? 64 : 0 };
+}
+function chipSVG(chip) {
+  const pins = chip.pins, n = pins.length, half = n / 2;
+  const { NL, SL, BW, PAD, GAP } = dims();
+  const PT = 44, TOP = 40, BOT = 30;
+  const W = 2 * (PAD + NL + SL) + BW, H = TOP + half * PT + BOT;
+  const bodyX = PAD + NL + SL, bodyY = TOP - 14, bodyH = half * PT + 28, cy = bodyY + bodyH / 2;
+  let g = '', leader = '';
+  pins.forEach((p, i) => {
+    const leftNormally = i < half;
+    const row = leftNormally ? i : n - 1 - i;
+    const left = state.flip ? !leftNormally : leftNormally;
+    const y = TOP + row * PT + PT / 2;
+    const sel = state.pin === p.n;
+    const stubX = left ? bodyX - SL : bodyX + BW;
+    const nameX = left ? bodyX - SL - 10 : bodyX + BW + SL + 10;
+    const numX = left ? bodyX + 10 : bodyX + BW - 10;
+    const mx = stubX + SL / 2;
+    const mark = p.type === 'power' ? `<circle class="mark" cx="${mx}" cy="${y}" r="6"/>` : p.type === 'ground' ? `<circle class="mark hollow" cx="${mx}" cy="${y}" r="5.5"/>` : p.type === 'clock' ? `<path class="mark" d="M${mx} ${y - 7} L${mx + 7} ${y + 5} L${mx - 7} ${y + 5}Z"/>` : '';
+    const hitW = PAD + NL + SL + 40;
+    const label = p.name.startsWith('/') ? `<tspan text-decoration="overline">${esc(p.name.slice(1))}</tspan>` : esc(p.name);
+    g += `<g class="pin${sel ? ' sel' : ''}" data-pin="${p.n}" tabindex="0" role="button" aria-label="Pin ${p.n} ${esc(p.name)}" aria-pressed="${sel}">
+      <rect class="hit" x="${left ? 0 : W - hitW}" y="${y - PT / 2}" width="${hitW}" height="${PT}"/>
+      <rect class="stub" x="${stubX}" y="${y - 4}" width="${SL}" height="8"/>${mark}
+      <text class="num" x="${numX}" y="${y + 4.5}" text-anchor="${left ? 'start' : 'end'}">${p.n}</text>
+      <text class="name" x="${nameX}" y="${y + 5}" text-anchor="${left ? 'end' : 'start'}">${label}</text>
+    </g>`;
+    if (sel) {
+      /* leader from the pin's name out to the callout: margin on desktop, beneath on smaller screens */
+      const startX = left ? PAD - 4 : W - PAD + 4;
+      const edge = left ? 10 : W - 10;
+      let d;
+      if (GAP) d = left ? `M${startX} ${y} H${edge} V12 H${W + GAP}` : `M${startX} ${y} H${W + GAP}`;
+      else d = `M${startX} ${y} H${edge} V${H}`;
+      leader = `<path class="leader" d="${d}"/><circle class="leader-dot" cx="${startX}" cy="${y}" r="5"/>`;
+      state.leaderY = GAP ? (left ? 12 : y) : null;
+      state.leaderSide = left ? 'left' : 'right';
+    }
+  });
+  const p1x = state.flip ? bodyX + BW - 26 : bodyX + 26;
+  return `<svg class="dip" width="${W + GAP}" height="${H}" viewBox="0 0 ${W + GAP} ${H}" role="group" aria-label="${esc(chip.name)} ${esc(chip.pkg)} pinout, ${state.flip ? 'viewed from below' : 'top view'}">
+    <rect class="body" x="${bodyX}" y="${bodyY}" width="${BW}" height="${bodyH}"/>
+    <path class="notch" d="M ${bodyX + BW / 2 - 13} ${bodyY} A 13 13 0 0 0 ${bodyX + BW / 2 + 13} ${bodyY}"/>
+    <circle class="p1" cx="${p1x}" cy="${TOP + PT / 2}" r="4.5"/>
+    <text class="chipname" transform="rotate(-90 ${bodyX + BW / 2} ${cy})" x="${bodyX + BW / 2}" y="${cy + 6}">${esc(chip.short)}  ${esc(chip.pkg)}</text>
+    ${g}${leader}
+    <text class="caption" x="${W / 2}" y="${H - 6}">${state.flip ? 'Viewed from below · component side down' : 'Top view · notch up · pin 1 at the dot'}</text>
+  </svg>`;
+}
+function callout(chip, m, p) {
+  const i = chip.pins.indexOf(p);
+  const prev = chip.pins[(i - 1 + chip.pins.length) % chip.pins.length], next = chip.pins[(i + 1) % chip.pins.length];
+  const t = D.pinTypes[p.type];
+  return `<div class="callout ${state.leaderSide || ''}" id="callout">
+    <span class="tab">${p.n}</span>
+    <div class="pname">${pinName(p)}${markSVG(p.type)}</div>
+    <div class="pmeta">Pin ${p.n} of ${chip.pins.length} · ${DIR[p.dir] || p.dir} · ${t.label}${p.activeLow ? ' · active LOW' : ''}</div>
+    <p>${esc(p.desc)}${p.verify ? dag() : ''}</p>
+    ${p.probe ? `<div class="probe"><b>Probe</b>${esc(p.probe)}</div>` : ''}
+    ${terms(p.terms)}
+    ${references(chip.datasheets)}
+    <div class="pnav"><button data-pin="${prev.n}">← ${prev.n} <span class="mono">${pinName(prev)}</span></button><button data-pin="${next.n}"><span class="mono">${pinName(next)}</span> ${next.n} →</button></div>
+  </div>`;
+}
+function figureHTML(chip, m) {
+  const p = state.pin != null && chip.pins.find(x => x.n === state.pin);
+  const svg = chipSVG(chip);
+  const mode = beside() ? '' : ' below';
+  const right = p ? callout(chip, m, p) : `<p class="hint">Tap a pin number or a signal name. Its callout appears here with direction, what it does, what to probe for, and the terms it uses.</p>`;
+  return `<div class="comp${mode}"><div class="fig" id="fig">${svg}</div><div class="margin" id="margin">${right}</div></div>`;
+}
+function placeCallout(scroll) {
+  const margin = $('#margin'); if (!margin) return;
+  const co = $('#callout');
+  if (co && beside() && state.leaderY != null) margin.style.paddingTop = Math.max(0, state.leaderY - 18) + 'px';
+  else margin.style.paddingTop = '';
+  if (co && scroll && !beside()) {
+    const r = co.getBoundingClientRect();
+    if (r.top > innerHeight - 120 || r.bottom < 80) co.scrollIntoView({ block: 'start', behavior: reduced() ? 'auto' : 'smooth' });
+  }
+}
+function viewChip(b, m, chip) {
+  const sec = machSec(m), fig = figChip(m, chip), loc = chip.location && chip.location[m.id];
+  const compNo = m.chips.indexOf(chip.id) + 1;
+  return `<h1><span class="num">Fig. ${fig}</span>${esc(chip.short)} pinout</h1>
+    <p class="lede">${esc(chip.name)}. ${esc(chip.role)}. ${esc(chip.pkg)}${loc ? `, ${esc(loc)} on the ${esc(m.name)}` : ''}; ${HEAT[chip.heat] || ''}.${chip.verify ? ` <span class="dag">†</span> Pinout reconstructed; check before trusting it.` : ''}${compNo ? ` Component ${compNo} in <a href="${mPath(m)}#fig1" style="text-decoration:underline">Fig. ${sec}-1</a>.` : ''}</p>
+    <div class="figure">
+      <div class="tools">
+        <button data-act="flip" aria-pressed="${state.flip}"><span class="box"></span>View from below (component side down)</button>
+        <div class="legend" aria-label="Pin marks">
+          <span>${markSVG('power')}Supply</span><span>${markSVG('ground')}Ground</span><span>${markSVG('clock')}Clock</span><span><span class="ol" style="font-family:var(--mono);text-transform:none;letter-spacing:0;margin-right:5px">RES</span>Active low</span>
+        </div>
+      </div>
+      ${figureHTML(chip, m)}
+    </div>
+    <h2><span class="num">${fig}</span>Pin functions</h2>
+    <ol class="pinfn" id="pinfn">${chip.pins.map(p => `<li class="${state.pin === p.n ? 'sel' : ''}" data-pin-row="${p.n}"><button data-pin="${p.n}"><span class="n">${p.n}</span><span class="nm">${pinName(p)}</span><span class="d">${esc(p.desc)}${p.verify ? dag() : ''}</span></button></li>`).join('')}</ol>
+    <h2><span class="num">${fig}</span>Notes</h2>
+    <p>${esc(chip.summary)}</p>
+    <ol class="man letters tight">
+      <li><span class="n">a</span><div><b>Fails as.</b> ${chip.fails.map(esc).join('; ')}.</div></li>
+      <li><span class="n">b</span><div><b>Fitted in.</b> ${chip.machines.map(id => D.machines[id]).filter(Boolean).map(mm => `<a href="${chipPath(mm, chip)}" style="text-decoration:underline">${esc(mm.name)}</a>${chip.location && chip.location[mm.id] ? ` (${esc(chip.location[mm.id])})` : ''}`).join(', ')}.</div></li>
+      ${chip.family ? `<li><span class="n">c</span><div><b>Family.</b> ${esc(chip.family)}.</div></li>` : ''}
+      ${chip.verifiedAgainst ? `<li><span class="n">${chip.family ? 'd' : 'c'}</span><div><b>Checked against.</b> ${esc(chip.verifiedAgainst)}.</div></li>` : ''}
+    </ol>
+    ${chip.datasheets && chip.datasheets.length ? `<h2><span class="num">${fig}</span>References</h2><ol class="man tight references">${chip.datasheets.map((d, i) => `<li><span class="n">${i + 1}</span><div><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a>${d.verify ? dag() : ''}</div></li>`).join('')}</ol>` : ''}`;
+}
+function selectPin(n, scroll = true) {
+  const { chip, machine: m } = state.ctx; if (!chip) return;
+  state.pin = n;
+  const r = parseHash();
+  history.replaceState(null, '', `#${r.path}?pin=${n}`);
+  $('.figure .comp').outerHTML = figureHTML(chip, m);
+  document.querySelectorAll('#pinfn li').forEach(li => li.classList.toggle('sel', Number(li.dataset.pinRow) === n));
+  placeCallout(scroll);
+}
+function refreshFigure() {
+  const { chip, machine: m } = state.ctx; if (!chip) return;
+  $('.figure .comp').outerHTML = figureHTML(chip, m);
+  $('.figure .tools button[data-act="flip"]').setAttribute('aria-pressed', state.flip);
+  placeCallout(false);
+}
+
+/* ---------- operation (quick reference) ---------- */
+function viewQuickref(b, m) {
+  const sec = machSec(m);
+  const qr = dataFor(D.quickref, m);
+  if (!qr.data) return `<h1><span class="num">Section ${sec}.4</span>Operation</h1><p class="note">No operating notes for the ${esc(m.name)} yet.</p>`;
+  const q = qr.data;
+  const mem = q.memory.map(r => {
+    const w = r.what.toLowerCase();
+    const cls = /rom/.test(w) ? 'rom' : /(register|acia|user port|latch|switch|soft)/.test(w) ? 'io' : '';
+    return `<div class="blk"><div class="addr">${esc(r.range)}</div><div class="cell ${cls}">${esc(r.what)}</div></div>`;
+  }).join('');
+  return `<h1><span class="num">Section ${sec}.4</span>Operation</h1>
+    <p class="lede">${esc(m.name)}: keys, ${esc(q.basic.dialect)}, and the memory map. Two levels: the essentials are set out in full, the rest folds open by group.</p>
+    ${sharedNote(qr.shared)}
+    <ul class="toc"><li><span class="n">A</span><a class="t" href="#op-keys">Keys</a></li><li><span class="n">B</span><a class="t" href="#op-basic">BASIC essentials</a></li><li><span class="n">C</span><a class="t" href="#op-quirks">Quirks</a></li><li><span class="n">D</span><a class="t" href="#op-memory">Memory map</a></li></ul>
+
+    <h2 id="op-keys"><span class="num">A</span>Keys</h2>
+    <div class="keys">${q.keys.map(k => `<div class="row"><div><kbd>${esc(k.keys)}</kbd></div><div class="does">${esc(k.does)}${k.verify ? dag() : ''}</div></div>`).join('')}</div>
+
+    <h2 id="op-basic"><span class="num">B</span>${esc(q.basic.dialect)}</h2>
+    <h3>Essentials</h3>
+    <ul class="cmds">${q.basic.essentials.map(e => `<li><span class="c">${esc(e.cmd)}</span><span>${esc(e.does)}${e.verify ? dag() : ''}</span></li>`).join('')}</ul>
+    <h3>By group</h3>
+    ${q.basic.groups.map((g, i) => `<details class="grp"><summary><span class="n">B.${i + 1}</span>${esc(g.group)}<span class="small" style="font-weight:400;text-transform:none;letter-spacing:0">${g.items.length}</span></summary><ul>${g.items.map(it => `<li>${esc(it)}</li>`).join('')}</ul></details>`).join('')}
+
+    <h2 id="op-quirks"><span class="num">C</span>Quirks</h2>
+    <ol class="man letters tight">${q.basic.quirks.map((t, i) => `<li><span class="n">${LETTERS[i]}</span><div>${esc(t)}</div></li>`).join('')}</ol>
+
+    <h2 id="op-memory"><span class="num">D</span>Memory map</h2>
+    <p>Low addresses at the top. Hatched blocks are ROM; ruled blocks are registers and I/O.</p>
+    <div class="memmap">${mem}<div class="key"><span>RAM</span><span class="krom">ROM</span><span class="kio">I/O and registers</span></div></div>`;
+}
+
+/* ---------- ports / power ---------- */
+function viewPorts(b, m) {
+  const sec = machSec(m);
+  const cn = dataFor(D.connectors, m);
+  if (!cn.data) return `<h1><span class="num">Section ${sec}.2</span>Ports and connectors</h1><p class="note">No connector figures for the ${esc(m.name)} yet.</p>`;
+  const anyDag = cn.data.some(c => c.verify);
+  return `<h1><span class="num">Section ${sec}.2</span>Ports and connectors</h1>
+    <p class="lede">${esc(m.name)}: one figure per connector, with its legend. Pin numbers follow the connector, viewed from outside the case.</p>
+    ${sharedNote(cn.shared)}
+    ${cn.data.map((c, i) => `<h2 id="conn-${c.id}"><span class="num">Fig. ${figConn(m, i)}</span>${esc(c.name)}${c.verify ? dag() : ''}</h2>
+      <p><b>${esc(c.kind)}.</b> ${esc(c.summary)}</p>
+      <ol class="legend-list">${c.pins.map(p => `<li><span class="n">${esc(p.n)}</span><span class="nm">${esc(p.name)}</span>${p.desc ? `<span class="d">${esc(p.desc)}</span>` : ''}</li>`).join('')}</ol>
+      ${terms(c.terms)}`).join('')}
+    ${anyDag ? `<p class="small" style="margin-top:40px">${DAG_NOTE}</p>` : ''}`;
+}
+function viewPower(b, m) {
+  const sec = machSec(m);
+  const pw = dataFor(D.power, m);
+  if (!pw.data) return `<h1><span class="num">Section ${sec}.3</span>Power and test points</h1><p class="note">No power notes for the ${esc(m.name)} yet.</p>`;
+  return `<h1><span class="num">Section ${sec}.3</span>Power and test points</h1>
+    <p class="lede">${esc(m.name)}: rails first, then the test points in the order to probe them. Meter black lead on a ground pin.</p>
+    ${sharedNote(pw.shared)}
+    <h2><span class="num">${sec}.3</span>Rails</h2>
+    <div class="rails">${pw.data.rails.map(r => `<div class="row"><div class="rail">${esc(r.rail)}</div><div><div class="exp">${esc(r.expect)}</div><div class="where">${esc(r.where)}</div>${r.note ? `<p class="rn">${esc(r.note)}</p>` : ''}</div></div>`).join('')}</div>
+    <h2><span class="num">${sec}.3</span>Test points</h2>
+    <div class="tps">${pw.data.testPoints.map((t, i) => `<div class="tp"><span class="tab">TP${i + 1}</span><div><div class="t">${esc(t.tp)}</div><div class="w">${esc(t.where)}</div></div><div class="e">${esc(t.expect)}</div></div>`).join('')}</div>`;
+}
+
+/* ---------- index (search) ---------- */
+function resultsHTML(q) {
+  if (!q.trim()) return `<p class="empty">Type part of a signal name (<span class="mono">ras</span>, <span class="mono">reset</span>), a pin (<span class="mono">pin 40</span>), a chip, a BASIC keyword, a key, or a glossary term. Arrow keys move, Enter opens.</p>`;
+  const groups = search(q); state.results = groups.flatMap(g => g.items); state.selIdx = Math.min(state.selIdx, Math.max(0, state.results.length - 1));
+  if (!groups.length) return `<p class="empty">Nothing in the index for "${esc(q)}". Try a pin name without the slash, a chip number, or a BASIC keyword.</p>`;
+  let i = 0;
+  return groups.map(g => `<div class="ix-group"><h3>${g.group}</h3><ul class="ix">${g.items.map(it => { const idx = i++; return `<li class="${idx === state.selIdx ? 'sel' : ''}" data-idx="${idx}"><a href="${it.href}"><div class="line"><span class="t${it.mono ? ' mono' : ''}">${esc(it.title)}</span><span class="dots"></span><span class="loc">${esc(it.loc || '')}</span></div><div class="s">${esc(it.sub || '')}</div></a></li>`; }).join('')}</ul></div>`).join('');
+}
+function viewSearch(q) {
+  state.selIdx = 0;
+  return `<h1><span class="num">Index</span>Look up</h1>
+    <p class="lede">Chips, pins, BASIC, keys, memory, connectors and glossary terms, each with the figure or section it lives in.</p>
+    ${lookupForm(q, 'ix-input')}
+    <div id="ix-results">${resultsHTML(q)}</div>`;
+}
+
+/* ---------- appendices ---------- */
+function viewGlossary(focus) {
+  const entries = Object.entries(D.terms);
+  return `<h1><span class="num">Appendix A</span>Glossary</h1>
+    <p class="lede">The terms used in the figures. Anywhere else in the manual a dotted term opens its entry in place.</p>
+    <dl class="dict">${entries.map(([id, t], i) => `<dt id="term-${id}" class="${focus === id ? 'focus' : ''}"><span class="n">A.${i + 1}</span>${esc(t.term)}</dt><dd><span class="short">${esc(t.short)}</span> ${esc(t.long)}</dd>`).join('')}</dl>`;
+}
+function viewResources() {
+  const sec = (letter, title, list) => `<h2><span class="num">B.${letter}</span>${esc(title)}</h2><ol class="man tight references">${list.map((r, i) => `<li><span class="n">${i + 1}</span><div><a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name)}</b></a>${r.verify ? dag() : ''}<span class="sub">${esc(r.what)}</span></div></li>`).join('')}</ol>`;
+  let n = 1;
+  return `<h1><span class="num">Appendix B</span>References</h1>
+    <p class="lede">External archives and communities. Links open in a new tab; nothing here is bundled with the installed copy.</p>
+    ${sec(n++, 'General', D.resources.general)}
+    ${D.brands.filter(b => D.resources[b.id]).map(b => sec(n++, b.name, D.resources[b.id])).join('')}`;
+}
+function viewNotFound() {
+  return `<h1><span class="num">—</span>No such page</h1><p class="lede">This manual has no page at that address. <a href="#/" style="text-decoration:underline">Back to the contents.</a></p>`;
+}
+
+/* ---------- glossary note (popover) ---------- */
+function openPop(id, anchor) {
+  const t = D.terms[id]; if (!t) return;
+  const pop = $('#pop');
+  pop.innerHTML = `<span class="tab">Note</span><h4>${esc(t.term)}</h4><div class="short">${esc(t.short)}</div><p>${esc(t.long)}</p><div class="foot"><a href="#/glossary?term=${id}">Appendix A</a><button data-act="close-pop" aria-label="Close note">Close</button></div>`;
+  pop.hidden = false;
+  const r = anchor.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let x = Math.min(Math.max(16, r.left), innerWidth - pw - 16);
+  let y = r.bottom + 10; if (y + ph > innerHeight - 16) y = Math.max(16, r.top - ph - 10);
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+  pop.dataset.open = '1';
+}
+function closePop() { const p = $('#pop'); p.hidden = true; delete p.dataset.open; }
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const pop = $('#pop');
+  if (pop.dataset.open && !pop.contains(e.target) && !e.target.closest('[data-term]')) closePop();
+  const term = e.target.closest('[data-term]');
+  if (term) { e.preventDefault(); openPop(term.dataset.term, term); return; }
+  const pinEl = e.target.closest('[data-pin]');
+  if (pinEl) { selectPin(Number(pinEl.dataset.pin)); return; }
+  const act = e.target.closest('[data-act]');
+  if (!act) return;
+  const a = act.dataset.act;
+  if (a === 'flip') { state.flip = !state.flip; refreshFigure(); }
+  else if (a === 'close-pop') closePop();
+  else if (a === 'mark') { const id = act.dataset.id; state.marks = state.marks.includes(id) ? state.marks.filter(x => x !== id) : [...state.marks, id]; LS.set('rcs-e-marks', state.marks); render(); }
+});
+document.addEventListener('submit', e => {
+  const f = e.target.closest('[data-act="lookup"]'); if (!f) return;
+  e.preventDefault();
+  const q = f.querySelector('input').value.trim();
+  if (f.querySelector('#ix-input') && state.results[state.selIdx]) { location.hash = state.results[state.selIdx].href.replace(/^#/, ''); return; }
+  location.hash = '/search?q=' + encodeURIComponent(q);
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'ix-input') { const q = e.target.value; state.selIdx = 0; history.replaceState(null, '', '#/search?q=' + encodeURIComponent(q)); $('#ix-results').innerHTML = resultsHTML(q); }
+});
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName;
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA';
+  const onIndex = parseHash().segs[0] === 'search';
+  if (((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !typing)) {
+    e.preventDefault();
+    if (onIndex) { const i = $('#ix-input'); if (i) { i.focus(); i.select(); } } else location.hash = '/search';
+    return;
+  }
+  if (onIndex && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && state.results.length) {
+    e.preventDefault();
+    state.selIdx = e.key === 'ArrowDown' ? Math.min(state.selIdx + 1, state.results.length - 1) : Math.max(state.selIdx - 1, 0);
+    document.querySelectorAll('#ix-results li').forEach(li => li.classList.toggle('sel', Number(li.dataset.idx) === state.selIdx));
+    const sel = $('#ix-results li.sel'); if (sel) sel.scrollIntoView({ block: 'nearest' });
+    return;
+  }
+  if (e.key === 'Escape') { if ($('#pop').dataset.open) { closePop(); return; } if (typing) e.target.blur(); }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset && e.target.dataset.pin && e.target.tagName !== 'BUTTON') { e.preventDefault(); selectPin(Number(e.target.dataset.pin)); }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset && e.target.dataset.term && e.target.tagName !== 'BUTTON') { e.preventDefault(); openPop(e.target.dataset.term, e.target); }
+});
+/* in-page anchors (#sec1, #fig1, #conn-x) must not be treated as routes */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]'); if (!a) return;
+  const href = a.getAttribute('href');
+  if (href.startsWith('#/')) {
+    const [path, frag] = href.split('#').slice(1);
+    if (frag) { e.preventDefault(); const go = () => { const el = document.getElementById(frag); if (el) el.scrollIntoView({ block: 'start' }); }; if (parseHash().path === path) go(); else { location.hash = path; setTimeout(go, 0); } }
+    return;
+  }
+  const el = document.getElementById(href.slice(1));
+  if (el) { e.preventDefault(); el.scrollIntoView({ block: 'start', behavior: reduced() ? 'auto' : 'smooth' }); }
+});
+window.addEventListener('hashchange', render);
+let rw = null;
+window.addEventListener('resize', () => { clearTimeout(rw); rw = setTimeout(() => { if (state.ctx.chip) refreshFigure(); }, 120); });
+render();
+})();
+</script>
+</body>
+</html>

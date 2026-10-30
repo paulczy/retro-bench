@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Retro Bench RB-8 Pinout Analyzer</title>
+<style>
+/* ===== fonts (self-hosted) ===== */
+@font-face { font-family: 'Share Tech Mono'; src: url('fonts/share-tech-mono-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'B612'; src: url('fonts/b612-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'B612'; src: url('fonts/b612-700.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+
+/* ===== tokens ===== */
+:root {
+  --panel: #d6d2c8; --panel-2: #c9c5bb; --panel-3: #bbb7ad;
+  --engrave: #3b3a37; --engrave-dim: #76736c;
+  --cap: #e8e4db; --cap-side: #a39f94; --cap-edge: #8f8b81; --cap-down: #d2cec4;
+  --bezel: #23262a; --bezel-hi: #3a3e44;
+  --disp: #101418;
+  --ph-rgb: 240,168,48; --ph: rgb(var(--ph-rgb));
+  --ph-dim: rgba(var(--ph-rgb), .5); --ph-faint: rgba(var(--ph-rgb), .22); --ph-line: rgba(var(--ph-rgb), .35);
+  --led: #ff4a1c; --led-off: #4a1a10; --led-bg: #1a0804; --led-green: #4fd16a;
+  --ff-disp: 'Share Tech Mono', ui-monospace, Menlo, Consolas, monospace;
+  --ff-panel: 'B612', 'Segoe UI', system-ui, sans-serif;
+  --key-h: 46px;
+}
+:root[data-phos="green"] { --ph-rgb: 127,224,138; }
+@media (prefers-color-scheme: dark) {
+  :root { --panel: #5c5953; --panel-2: #524f49; --panel-3: #46443f; --engrave: #e3e0d8; --engrave-dim: #a39f96;
+          --cap: #77736b; --cap-side: #35332f; --cap-edge: #282623; --cap-down: #67635b; --bezel: #141618; --bezel-hi: #2a2d31; }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--panel-3); color: var(--engrave); font-family: var(--ff-panel); font-size: 12px;
+  -webkit-text-size-adjust: 100%; overscroll-behavior: none;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--ph); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+
+/* ===== the front panel ===== */
+.panel {
+  height: 100vh; height: 100dvh; display: grid;
+  grid-template-columns: minmax(0, 1fr) 136px 240px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "plate plate plate" "display softkeys controls" "fkeys fkeys fkeys";
+  gap: 14px 18px; padding: 16px 22px 18px;
+  background:
+    /* static matte texture: two offset dot fields */
+    radial-gradient(rgba(255,255,255,.18) .6px, transparent .7px) 0 0 / 5px 5px,
+    radial-gradient(rgba(0,0,0,.08) .6px, transparent .7px) 2px 3px / 7px 7px,
+    var(--panel);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), inset 0 0 0 2px rgba(0,0,0,.08);
+}
+.legend { font-family: var(--ff-panel); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--engrave); }
+.legend.dim { color: var(--engrave-dim); }
+
+/* model plate */
+.plate { grid-area: plate; display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 40px; }
+.plate .model { display: flex; align-items: baseline; gap: 14px; font-weight: 700; letter-spacing: .14em; font-size: 13px; text-transform: uppercase; }
+.plate .model b { font-size: 17px; letter-spacing: .1em; }
+.plate .model span { font-weight: 400; font-size: 11px; color: var(--engrave-dim); }
+.plate .model span::before { content: ""; display: inline-block; width: 1px; height: 12px; background: var(--engrave-dim); margin-right: 14px; vertical-align: -1px; }
+.plate-right { display: flex; align-items: center; gap: 24px; }
+.ind { display: inline-flex; align-items: center; gap: 8px; }
+.ind i { width: 9px; height: 9px; border-radius: 50%; background: var(--led-green); box-shadow: inset 0 0 0 1px rgba(0,0,0,.35), 0 0 4px rgba(79,209,106,.6); }
+/* phosphor slide switch */
+.switch { display: inline-flex; align-items: center; gap: 10px; }
+.switch .slot { position: relative; width: 48px; height: 22px; border-radius: 3px; background: var(--cap-side); box-shadow: inset 0 1px 3px rgba(0,0,0,.45); }
+.switch .slot::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 18px; border-radius: 2px; background: var(--cap); box-shadow: 0 1px 0 var(--cap-edge); transition: left .15s; }
+.switch[aria-checked="true"] .slot::after { left: 26px; }
+.switch .on { color: var(--engrave); } .switch .off { color: var(--engrave-dim); }
+
+/* display window */
+.bezel { grid-area: display; position: relative; overflow: hidden; min-width: 0; min-height: 0; background: var(--bezel); border-radius: 6px; padding: 10px;
+  box-shadow: inset 0 1px 0 var(--bezel-hi), 0 1px 0 rgba(255,255,255,.4), 0 -1px 0 rgba(0,0,0,.2); }
+.display {
+  position: relative; height: 100%; min-height: 0; display: flex; flex-direction: column; background: var(--disp); border-radius: 2px;
+  color: var(--ph); font-family: var(--ff-disp); font-size: 16px; line-height: 1.5;
+  text-shadow: 0 0 5px rgba(var(--ph-rgb), .35);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), inset 0 0 60px rgba(0,0,0,.6);
+  overflow: hidden;
+}
+.dhead { flex: none; display: flex; justify-content: space-between; gap: 12px; padding: 8px 16px 6px; border-bottom: 1px solid var(--ph-line); color: var(--ph-dim); white-space: nowrap; overflow: hidden; }
+.dhead .path { display: flex; gap: 0; min-width: 0; overflow: hidden; }
+.dhead .path button { color: var(--ph-dim); text-shadow: inherit; padding: 0; }
+.dhead .path button:hover { color: var(--ph); }
+.dhead .path .cur { color: var(--ph); }
+.dhead .path .sep { padding: 0 8px; opacity: .6; }
+.dbody { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 10px 16px 18px; scrollbar-color: var(--ph-faint) transparent; scrollbar-width: thin; }
+.dbody::-webkit-scrollbar { width: 8px; } .dbody::-webkit-scrollbar-thumb { background: var(--ph-faint); }
+.readout-zone { flex: none; max-height: 38%; overflow: auto; border-top: 1px solid var(--ph-line); padding: 8px 16px 12px; background: rgba(var(--ph-rgb), .03); scrollbar-width: thin; scrollbar-color: var(--ph-faint) transparent; }
+
+/* display text vocabulary */
+.ln { display: block; width: 100%; text-align: left; padding: 1px 0; color: var(--ph); text-shadow: inherit; white-space: pre-wrap; word-break: break-word; }
+.ln.dim, .dim { color: var(--ph-dim); }
+.ln.faint, .faint { color: var(--ph-faint); }
+.ln.hdr { color: var(--ph-dim); margin-top: 12px; letter-spacing: .05em; }
+.ln.hdr:first-child { margin-top: 0; }
+.ln.title { font-size: 20px; letter-spacing: .04em; padding: 2px 0 6px; }
+.ln.rule { color: var(--ph-faint); overflow: hidden; white-space: nowrap; }
+button.ln, a.ln { min-height: 44px; display: flex; align-items: center; gap: 14px; padding: 4px 8px; margin: 0 -8px; width: calc(100% + 16px); border-radius: 2px; text-decoration: none; }
+button.ln:hover, a.ln:hover { background: rgba(var(--ph-rgb), .07); }
+button.ln.on, .inv { background: var(--ph); color: var(--disp); text-shadow: none; }
+button.ln.on .dim, button.ln.on .faint { color: rgba(16,20,24,.65); }
+.ln .k { flex: none; width: 6ch; color: var(--ph-dim); white-space: nowrap; }
+.ln.on .k { color: inherit; }
+.ln .grow { flex: 1 1 auto; min-width: 0; }
+.ln .r { flex: none; margin-left: auto; color: var(--ph-dim); text-align: right; }
+.ln.on .r { color: inherit; }
+.row2 { display: block; font-size: 14px; color: var(--ph-dim); line-height: 1.35; }
+button.ln.on .row2 { color: rgba(16,20,24,.7); }
+.caret::before { content: "> "; }
+.uncal { display: inline-block; font-size: 12px; letter-spacing: .08em; padding: 0 5px; border: 1px solid var(--ph); line-height: 17px; vertical-align: 2px; margin-left: 6px; }
+.inv .uncal, .on .uncal { border-color: var(--disp); }
+.term { color: var(--ph); text-shadow: inherit; border-bottom: 1px dotted var(--ph); padding: 0 1px; min-height: 28px; display: inline; line-height: inherit; }
+.term:hover { background: rgba(var(--ph-rgb), .12); }
+.on .term, .inv .term { color: var(--disp); border-color: var(--disp); }
+.note { font-size: 14px; line-height: 1.4; color: var(--ph-dim); }
+p.ln { margin: 0; }
+.wrap { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+
+/* readouts: label above value, like a counter's annunciators */
+.readouts { display: flex; flex-wrap: wrap; gap: 10px 28px; padding: 8px 0 14px; }
+.readouts > div { min-width: 120px; max-width: 360px; }
+.readouts .lab { display: block; font-size: 12px; letter-spacing: .14em; color: var(--ph-dim); }
+.readouts .val { display: block; font-size: 17px; line-height: 1.3; }
+
+/* chip list / pin list columns */
+.cols { display: grid; grid-template-columns: 5ch 1fr auto; gap: 0 14px; align-items: center; width: 100%; }
+.pinlist .cols { grid-template-columns: 4ch 10ch 9ch 7ch minmax(0,1fr); }
+.pinlist .ln { min-height: 36px; }
+.pinlist .ln.hd { color: var(--ph-dim); font-size: 13px; letter-spacing: .08em; min-height: 28px; }
+.pinlist .ln.dimmed { opacity: .3; }
+
+/* chip drawing */
+.dip { display: block; width: 100%; max-width: 440px; height: auto; margin: 6px auto 0; overflow: visible; }
+.dip .body { fill: none; stroke: var(--ph); stroke-width: 1.5; }
+.dip .notch { fill: var(--disp); stroke: var(--ph); stroke-width: 1.5; }
+.dip .p1 { fill: var(--ph); }
+.dip .chipname { fill: var(--ph-dim); font-size: 14px; letter-spacing: .12em; text-anchor: middle; }
+.dip .caption { fill: var(--ph-dim); font-size: 13px; text-anchor: middle; }
+.dip text { font-family: var(--ff-disp); }
+.dip .pin { cursor: pointer; }
+.dip .pin .hit { fill: transparent; }
+.dip .pin:hover .hit { fill: rgba(var(--ph-rgb), .08); }
+.dip .pin .stub { fill: var(--disp); stroke: var(--ph); stroke-width: 1.2; }
+.dip .pin .num { fill: var(--ph-dim); font-size: 12px; }
+.dip .pin .name { fill: var(--ph); font-size: 15px; }
+.dip .pin .mark { fill: var(--ph); stroke: var(--ph); stroke-width: 1.2; }
+.dip .pin.t-ground .name, .dip .pin.t-ground .stub, .dip .pin.t-nc .name { opacity: .55; }
+.dip .pin.t-power .stub { fill: var(--ph); }
+.dip .pin.t-nc .name { font-size: 13px; }
+.dip .pin .nbg { fill: transparent; }
+.dip .pin.sel .nbg { fill: var(--ph); }
+.dip .pin.sel .name { fill: var(--disp); opacity: 1; }
+.dip .pin.sel .mark { fill: var(--disp); stroke: var(--disp); }
+.dip .pin.sel .stub { fill: var(--ph); opacity: 1; }
+.dip .pin.sel .num { fill: var(--ph); }
+.dip .pin.dimmed { opacity: .22; }
+.dip .pin:focus-visible { outline: none; }
+.dip .pin:focus-visible .hit { stroke: var(--ph); stroke-dasharray: 3 3; }
+.glyph { display: inline-block; width: 11px; height: 11px; vertical-align: -1px; margin-right: 6px; }
+.glyph.sq { background: currentColor; }
+.glyph.bar { height: 3px; background: currentColor; vertical-align: 3px; }
+.glyph.tri { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 11px solid currentColor; background: none; }
+
+/* cursor readout strip */
+.cur-strip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 0; font-size: 17px; }
+.cur-strip .sep { color: var(--ph-dim); padding: 0 9px; }
+.cur-strip .pinno { font-size: 22px; }
+.probe { margin-top: 6px; display: flex; gap: 12px; }
+.probe b { font-weight: 400; color: var(--ph-dim); flex: none; letter-spacing: .08em; font-size: 13px; padding-top: 2px; }
+
+/* search prompt */
+.prompt { display: flex; align-items: center; gap: 0; font-size: 20px; padding: 4px 0 10px; }
+.prompt input { flex: 1; background: none; border: 0; outline: 0; color: var(--ph); font: inherit; text-shadow: inherit; padding: 6px 0; min-width: 0; caret-color: var(--ph); }
+.prompt input::placeholder { color: var(--ph-faint); }
+.prompt input { -webkit-appearance: none; appearance: none; border-radius: 0; }
+.prompt input::-webkit-search-cancel-button, .prompt input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+.prompt .cursor { width: .6em; height: 1.1em; background: var(--ph); margin-left: 2px; display: none; }
+.prompt input:placeholder-shown + .cursor { display: block; }
+
+/* message box inside the display (glossary term) */
+.dlg { position: absolute; z-index: 5; max-width: min(460px, calc(100% - 40px)); background: var(--disp); color: var(--ph); font-family: var(--ff-disp); font-size: 15px; line-height: 1.45;
+  border: 1px solid var(--ph); outline: 1px solid var(--ph-faint); outline-offset: 2px; padding: 10px 14px 12px; text-shadow: 0 0 5px rgba(var(--ph-rgb), .35); box-shadow: 0 0 0 200vmax rgba(16,20,24,.5); }
+.dlg .t { font-size: 17px; letter-spacing: .04em; }
+.dlg .s { color: var(--ph-dim); margin: 2px 0 8px; }
+.dlg .foot { margin-top: 10px; display: flex; justify-content: space-between; gap: 12px; color: var(--ph-dim); font-size: 14px; }
+.dlg .foot button, .dlg .foot a { color: var(--ph); text-shadow: inherit; min-height: 32px; }
+
+/* soft keys */
+.softkeys { grid-area: softkeys; display: grid; grid-template-rows: repeat(8, minmax(0, 1fr)); gap: 10px; align-content: stretch; min-height: 0; }
+.key {
+  position: relative; display: flex; align-items: center; justify-content: center; text-align: center; min-height: 44px;
+  background: var(--cap); border-radius: 4px; color: var(--engrave); font-family: var(--ff-panel); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; line-height: 1.2;
+  padding: 6px 8px 8px; box-shadow: 0 3px 0 var(--cap-side), 0 4px 0 var(--cap-edge), 0 5px 3px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.7);
+  transition: transform .06s, box-shadow .06s; user-select: none; -webkit-user-select: none;
+}
+.key:active, .key[aria-pressed="true"]:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--cap-side), 0 2px 0 var(--cap-edge), 0 2px 2px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.5); background: var(--cap-down); }
+.key.blank { background: var(--cap); opacity: .5; box-shadow: 0 3px 0 var(--cap-side), 0 4px 0 var(--cap-edge), inset 0 1px 0 rgba(255,255,255,.6); cursor: default; }
+.key .led { position: absolute; left: 8px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--led-off); box-shadow: inset 0 0 0 1px rgba(0,0,0,.4); }
+.key[aria-pressed="true"] .led, .key.lit .led { background: var(--led); box-shadow: inset 0 0 0 1px rgba(0,0,0,.35), 0 0 5px rgba(255,74,28,.7); }
+.key .v { display: block; font-weight: 400; letter-spacing: .06em; color: var(--engrave-dim); margin-top: 3px; text-transform: none; font-size: 11px; }
+.key .v b { color: var(--engrave); font-weight: 700; }
+.key:disabled { opacity: .45; cursor: default; }
+.softkeys .key::before { content: ""; position: absolute; left: -12px; top: 50%; width: 8px; height: 1px; background: var(--engrave-dim); }
+
+/* right-hand controls: readout + knob */
+.controls { grid-area: controls; display: flex; flex-direction: column; align-items: center; gap: 12px; min-height: 0; padding-top: 6px; }
+.readout { width: 100%; background: var(--led-bg); border-radius: 3px; padding: 8px 12px; box-shadow: inset 0 2px 6px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.4); border: 2px solid var(--bezel);
+  font-family: var(--ff-disp); color: var(--led); text-shadow: 0 0 6px rgba(255,74,28,.55); }
+.readout .big { font-size: 28px; line-height: 1.1; letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.readout .small { font-size: 12px; letter-spacing: .1em; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.readout .small.off { opacity: .35; }
+.knob-wrap { position: relative; width: 196px; height: 196px; }
+.knob-wrap svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.knob-wrap .tick { stroke: var(--engrave-dim); stroke-width: 1.5; }
+.knob-wrap .tick.ready { stroke: var(--engrave); stroke-width: 2.5; }
+.knob-wrap .tick.cur { stroke: var(--led); stroke-width: 3; }
+.knob-wrap .detent { fill: transparent; cursor: pointer; }
+.knob-wrap .detent:hover + .tick, .knob-wrap .detent:hover ~ .tlabel { stroke: var(--engrave); }
+.knob-wrap .tlabel { font-family: var(--ff-panel); font-size: 9px; letter-spacing: .08em; fill: var(--engrave-dim); text-anchor: middle; pointer-events: none; }
+.knob-wrap .cap { fill: var(--cap); stroke: var(--cap-edge); stroke-width: 1.5; cursor: pointer; }
+.knob-wrap .cap-ring { fill: none; stroke: var(--cap-side); stroke-width: 6; pointer-events: none; }
+.knob-wrap .grip { stroke: var(--cap-side); stroke-width: 1.2; pointer-events: none; }
+.knob-wrap .pointer { stroke: var(--engrave); stroke-width: 3; stroke-linecap: round; pointer-events: none; transition: transform .25s; transform-origin: 98px 98px; }
+.knob-wrap .shade { pointer-events: none; }
+.controls .foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; }
+.controls .ptypes { display: grid; grid-template-columns: auto auto; gap: 4px 14px; font-size: 10px; letter-spacing: .08em; color: var(--engrave-dim); text-transform: uppercase; }
+.controls .ptypes span { display: inline-flex; align-items: center; gap: 6px; }
+.controls .ptypes .glyph { width: 9px; height: 9px; margin: 0; color: var(--engrave); }
+.controls .ptypes .glyph.bar { height: 3px; } .controls .ptypes .glyph.tri { border-bottom-width: 9px; border-left-width: 5px; border-right-width: 5px; }
+
+/* function keys */
+.fkeys { grid-area: fkeys; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; max-width: 760px; }
+.fkeys .key { min-height: var(--key-h); }
+.knob-mini { display: none; }
+
+/* ===== tablet ===== */
+@media (max-width: 1100px) {
+  .panel { grid-template-columns: minmax(0, 1fr) 124px 190px; gap: 12px 14px; padding: 12px 14px 14px; }
+  .knob-wrap { width: 160px; height: 160px; }
+  .knob-wrap .pointer { transform-origin: 98px 98px; }
+  .readout .big { font-size: 24px; }
+  .controls .ptypes { display: none; }
+  .fkeys { max-width: none; }
+}
+@media (max-width: 900px) {
+  .panel { grid-template-columns: minmax(0, 1fr) 118px; grid-template-areas: "plate plate" "display softkeys" "fkeys fkeys"; }
+  .controls { display: none; }
+  .knob-mini { display: inline-flex; align-items: center; gap: 10px; background: var(--led-bg); border: 2px solid var(--bezel); border-radius: 3px; padding: 4px 10px; min-height: 44px;
+    font-family: var(--ff-disp); color: var(--led); text-shadow: 0 0 6px rgba(255,74,28,.55); font-size: 18px; letter-spacing: .06em; box-shadow: inset 0 2px 6px rgba(0,0,0,.7); }
+  .knob-mini .legend { color: var(--led); opacity: .7; font-size: 9px; }
+  .softkeys { grid-template-rows: repeat(8, minmax(44px, 1fr)); gap: 8px; }
+  .softkeys .key { font-size: 10px; padding: 4px 6px 6px; }
+}
+/* ===== phone ===== */
+@media (max-width: 640px) {
+  :root { --key-h: 48px; }
+  .panel { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto; grid-template-areas: "plate" "display" "softkeys" "fkeys"; gap: 8px; padding: 8px 8px 10px; }
+  .plate { min-height: 36px; gap: 8px; flex-wrap: wrap; }
+  .plate .model { gap: 8px; font-size: 11px; } .plate .model b { font-size: 13px; } .plate .model span:last-child { display: none; }
+  .plate-right { gap: 12px; }
+  .ind { display: none; }
+  .switch .on, .switch .off { display: none; }
+  .bezel { padding: 6px; }
+  .display { font-size: 15px; }
+  .dhead { padding: 6px 10px 4px; font-size: 14px; }
+  .dbody { padding: 8px 10px 14px; }
+  .readout-zone { padding: 6px 10px 10px; max-height: 46%; }
+  .softkeys { display: flex; overflow-x: auto; gap: 8px; padding: 4px 2px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .softkeys::-webkit-scrollbar { display: none; }
+  .softkeys .key { flex: none; min-width: 92px; min-height: 44px; font-size: 10px; padding: 4px 10px 6px 18px; }
+  .softkeys .key::before { display: none; }
+  .softkeys .key.blank { display: none; }
+  .fkeys { gap: 8px; }
+  .fkeys .key { font-size: 10px; letter-spacing: .06em; padding: 4px 4px 6px; }
+  .fkeys .key .led { left: 6px; top: 6px; }
+  .readouts { gap: 6px 18px; } .readouts > div { min-width: 100px; } .readouts .val { font-size: 15px; }
+  .pinlist .cols { grid-template-columns: 4ch 9ch minmax(0,1fr); }
+  .pinlist .cols .c3, .pinlist .cols .c4 { display: none; }
+  .cur-strip { font-size: 15px; } .cur-strip .pinno { font-size: 19px; } .cur-strip .sep { padding: 0 6px; }
+  .dip { max-width: none; }
+  .knob-mini { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="panel" id="panel">
+  <header class="plate">
+    <div class="model"><b>Retro Bench</b><span>Model RB-8</span><span>Pinout Analyzer</span></div>
+    <div class="plate-right">
+      <button class="knob-mini" id="knob-mini" aria-label="Select machine"><span class="legend">Machine</span><span id="knob-mini-val">----</span></button>
+      <span class="ind legend dim" title="Mock PWA status"><i></i>Offline ready</span>
+      <button class="switch" id="phos" role="switch" aria-checked="false" aria-label="Phosphor colour"><span class="legend on" id="phos-a">Amber</span><span class="slot"></span><span class="legend off" id="phos-g">Green</span></button>
+    </div>
+  </header>
+
+  <main class="bezel">
+    <div class="display" id="display" aria-live="polite"></div>
+    <div class="dlg" id="dlg" hidden role="dialog"></div>
+  </main>
+
+  <aside class="softkeys" id="softkeys" aria-label="Soft keys"></aside>
+
+  <aside class="controls">
+    <div class="readout" id="readout"><div class="big">----</div><div class="small off">NO MACHINE</div></div>
+    <div class="knob-wrap" id="knob"></div>
+    <span class="legend">Machine select</span>
+    <div class="foot">
+      <div class="ptypes" aria-label="Display marks"><span><i class="glyph sq"></i>Power</span><span><i class="glyph bar"></i>Ground</span><span><i class="glyph tri"></i>Clock</span><span><i class="glyph" style="border:1px solid currentColor"></i>Signal</span></div>
+      <span class="legend dim">UNCAL = reconstructed data</span>
+    </div>
+  </aside>
+
+  <footer class="fkeys" id="fkeys" aria-label="Function keys"></footer>
+</div>
+
+<script src="../shared/data.js"></script>
+<script>
+(() => {
+'use strict';
+const D = window.RCS;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const DIR = { in: 'IN', out: 'OUT', bidir: 'BIDIR', '-': 'SUPPLY' };
+const STATUS = { ready: 'READY', sheet: 'SHEET', planned: 'PLANNED' };
+const HEAT = { cool: 'RUNS COOL', warm: 'RUNS WARM', hot: 'RUNS HOT' };
+const SHORT = { c16: 'C16', plus4: 'PLUS/4', c64: 'C64', c128: 'C128', vic20: 'VIC-20', pet: 'PET', apple2e: 'IIe', apple2: 'II', apple2plus: 'II+', apple2c: 'IIc', atari800: '800', adam: 'ADAM', colecovision: 'CV', zx81: 'ZX81', spectrum: 'ZX48', ti994a: '99/4A', coco12: 'COCO', coco3: 'COCO3', mc10: 'MC-10' };
+const UNCAL = '<span class="uncal" title="Reconstructed data; check against a datasheet">UNCAL</span>';
+const MACH_ORDER = D.brands.flatMap(b => b.machines);
+
+/* ---------- state ---------- */
+const state = {
+  phos: LS.get('rb8-phos', 'amber'), machine: LS.get('rb8-machine', null),
+  chipId: null, pin: null, flip: false, view: 'draw', filter: null, info: false,
+  qtab: 'keys', port: 0, pow: 'rails', res: 'general', sgroup: 'ALL', open: new Set(), glossAll: false,
+  sIdx: 0, sItems: [], ctx: {},
+};
+
+/* ---------- phosphor ---------- */
+function applyPhos() { document.documentElement.dataset.phos = state.phos; const sw = $('#phos'); sw.setAttribute('aria-checked', state.phos === 'green'); $('#phos-a').className = 'legend ' + (state.phos === 'amber' ? 'on' : 'off'); $('#phos-g').className = 'legend ' + (state.phos === 'green' ? 'on' : 'off'); }
+$('#phos').addEventListener('click', () => { state.phos = state.phos === 'amber' ? 'green' : 'amber'; LS.set('rb8-phos', state.phos); applyPhos(); });
+applyPhos();
+
+/* ---------- helpers ---------- */
+const brandOf = m => D.brands.find(b => b.id === m.brand);
+const mPath = m => `#/${m.brand}/${m.id}`;
+const chipPath = (m, c) => `${mPath(m)}/chip/${c.id}`;
+const go = h => { if (location.hash === h) render(); else location.hash = h; };
+function dataFor(table, m) {
+  if (table[m.id]) return { data: table[m.id], shared: null };
+  if (m.id === 'plus4' && table.c16) return { data: table.c16, shared: D.machines.c16 };
+  return { data: null, shared: null };
+}
+const sharedLn = s => s ? `<p class="ln dim note">Data shown from the ${esc(s.name)} sheet; the 264 series shares it.</p>` : '';
+const termBtns = ids => (ids || []).filter(id => D.terms[id]).map(id => `<button class="term" data-term="${id}">${esc(D.terms[id].term)}</button>`).join('  ');
+const rule = () => `<div class="ln rule" aria-hidden="true">${'-'.repeat(120)}</div>`;
+const hdr = t => `<div class="ln hdr">${esc(t)}</div>`;
+const mark = t => t === 'power' ? '<i class="glyph sq"></i>' : t === 'ground' ? '<i class="glyph bar"></i>' : t === 'clock' ? '<i class="glyph tri"></i>' : '';
+function currentMachine() { return state.ctx.machine || (state.machine && D.machines[state.machine]) || null; }
+function setMachine(id) { if (state.machine !== id) { state.machine = id; LS.set('rb8-machine', id); } }
+
+/* ---------- search index (ported) ---------- */
+let INDEX = null;
+function buildIndex() {
+  const ix = [];
+  for (const m of Object.values(D.machines)) ix.push({ group: 'MACHINES', title: m.name, sub: [m.aka, m.cpu, STATUS[m.status]].filter(Boolean).join(' / '), keys: `${m.id} ${m.aka || ''} ${brandOf(m).name}`, href: mPath(m) });
+  for (const c of Object.values(D.chips)) {
+    const ms = c.machines.map(id => D.machines[id]).filter(Boolean);
+    const home = ms.find(m => m.status === 'ready') || ms[0];
+    if (!home) continue;
+    ix.push({ group: 'CHIPS', title: c.name, sub: `${c.role} / ${c.pkg} / ${ms.map(m => m.name).join(', ')}`, keys: `${c.short} ${c.family || ''} ${c.role}`, href: c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`, tag: c.pins ? '' : 'NOT CAPTURED' });
+    if (c.pins) for (const p of c.pins) ix.push({ group: 'PINS', title: `${c.short} pin ${p.n}  ${p.name}`, sub: `${home.name} / ${p.desc}`, keys: `pin ${p.n} ${p.name} ${p.name.replace('/', '')} ${c.short} ${c.name}`, href: `${chipPath(home, c)}?pin=${p.n}` });
+  }
+  for (const [id, q] of Object.entries(D.quickref)) {
+    const m = D.machines[id];
+    for (const e of q.basic.essentials) ix.push({ group: 'BASIC', title: e.cmd, sub: `${m.name} / ${e.does}`, keys: q.basic.dialect, href: `${mPath(m)}/quickref?tab=basic` });
+    for (const g of q.basic.groups) for (const it of g.items) ix.push({ group: 'BASIC', title: it, sub: `${m.name} / ${g.group}`, keys: q.basic.dialect, href: `${mPath(m)}/quickref?tab=basic` });
+    for (const k of q.keys) ix.push({ group: 'KEYS', title: k.keys, sub: `${m.name} / ${k.does}`, keys: '', href: `${mPath(m)}/quickref?tab=keys` });
+    for (const r of q.memory) ix.push({ group: 'MEMORY', title: `${r.range}  ${r.what}`, sub: m.name, keys: r.what, href: `${mPath(m)}/quickref?tab=memory` });
+  }
+  for (const [id, t] of Object.entries(D.terms)) ix.push({ group: 'TERMS', title: t.term, sub: t.short, keys: id + ' ' + t.long, href: `#/glossary?term=${id}` });
+  for (const [mid, list] of Object.entries(D.connectors)) { const m = D.machines[mid]; for (const c of list) ix.push({ group: 'PORTS', title: c.name, sub: `${m.name} / ${c.kind}`, keys: c.pins.map(p => p.name).join(' '), href: `${mPath(m)}/ports?c=${c.id}` }); }
+  INDEX = ix;
+}
+const GROUP_ORDER = ['MACHINES', 'CHIPS', 'PINS', 'BASIC', 'KEYS', 'MEMORY', 'TERMS', 'PORTS'];
+function search(q, perGroup = 8) {
+  q = q.trim().toLowerCase(); if (!q) return [];
+  if (!INDEX) buildIndex();
+  const hits = [];
+  for (const it of INDEX) {
+    const t = it.title.toLowerCase(), k = (it.keys || '').toLowerCase(), s = (it.sub || '').toLowerCase();
+    let score = 0;
+    if (t === q) score = 100; else if (t.startsWith(q)) score = 80; else if (t.includes(q)) score = 60; else if (k.includes(q)) score = 40; else if (s.includes(q)) score = 20;
+    if (score) hits.push({ ...it, score });
+  }
+  hits.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
+  const groups = new Map();
+  for (const h of hits) { if (!groups.has(h.group)) groups.set(h.group, []); const g = groups.get(h.group); if (g.length < perGroup) g.push(h); }
+  return GROUP_ORDER.filter(g => groups.has(g)).map(g => ({ group: g, items: groups.get(g) }));
+}
+
+/* ---------- router ---------- */
+function parseHash() {
+  const h = location.hash.replace(/^#/, '') || '/';
+  const [path, qs = ''] = h.split('?');
+  return { path, segs: path.split('/').filter(Boolean), q: Object.fromEntries(new URLSearchParams(qs)) };
+}
+/* every screen returns { path:[{label,href}], body, zone?, keys:[...8], uncal? } */
+function render() {
+  const r = parseHash(); const [a, b, c, d] = r.segs;
+  const ctx = { route: r }; let scr;
+  if (!a) scr = scrHome();
+  else if (a === 'search') scr = scrSearch(r.q.q || '');
+  else if (a === 'resources') scr = scrResources();
+  else if (a === 'glossary') scr = scrGlossary(r.q.term);
+  else {
+    const brand = D.brands.find(x => x.id === a); const m = brand && D.machines[b];
+    if (!brand) scr = scrNotFound();
+    else if (!b) { ctx.brand = brand; scr = scrBrand(brand); }
+    else if (!m || m.brand !== brand.id) scr = scrNotFound();
+    else {
+      ctx.brand = brand; ctx.machine = m; setMachine(m.id);
+      if (!c) scr = scrMachine(m);
+      else if (c === 'pinouts') scr = scrPinouts(m);
+      else if (c === 'quickref') { if (r.q.tab) state.qtab = r.q.tab; scr = scrQuickref(m); }
+      else if (c === 'ports') { if (r.q.c) { const list = dataFor(D.connectors, m).data || []; const i = list.findIndex(x => x.id === r.q.c); if (i >= 0) state.port = i; } scr = scrPorts(m); }
+      else if (c === 'power') scr = scrPower(m);
+      else if (c === 'diag') scr = scrDiag(m);
+      else if (c === 'chip' && D.chips[d] && D.chips[d].pins) {
+        const chip = D.chips[d]; ctx.chip = chip;
+        if (state.chipId !== chip.id) { state.chipId = chip.id; state.pin = null; state.filter = null; state.flip = false; state.info = false; }
+        if (r.q.pin) { state.pin = Number(r.q.pin); state.info = false; }
+        scr = scrChip(m, chip);
+      } else scr = scrNotFound();
+    }
+  }
+  if (!ctx.chip) { state.chipId = null; state.pin = null; }
+  state.ctx = ctx;
+  paint(scr);
+  closeDlg();
+  renderPanel();
+  document.title = (ctx.chip ? `${ctx.chip.short} pinout` : ctx.machine ? ctx.machine.name : 'RB-8') + ' - Retro Bench';
+  if (a === 'glossary' && r.q.term) { const el = document.getElementById('g-' + r.q.term); if (el) el.scrollIntoView({ block: 'center' }); }
+  if (a === 'search') { const inp = $('#q'); if (inp && !matchMedia('(max-width: 640px)').matches) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } }
+}
+function paint(scr) {
+  const path = scr.path.map((p, i) => (i ? '<span class="sep">/</span>' : '') + (i < scr.path.length - 1 ? `<button data-go="${p.href}">${esc(p.label)}</button>` : `<span class="cur">${esc(p.label)}</span>`)).join('');
+  $('#display').innerHTML = `<div class="dhead"><div class="path">${path}</div><div>${scr.uncal ? UNCAL : ''}</div></div><div class="dbody" id="dbody">${scr.body}</div>${scr.zone != null ? `<div class="readout-zone" id="zone">${scr.zone}</div>` : ''}`;
+  const keys = (scr.keys || []).slice(0, 8); while (keys.length < 8) keys.push(null);
+  $('#softkeys').innerHTML = keys.map(k => !k ? '<span class="key blank" aria-hidden="true"></span>'
+    : `<button class="key${k.lit ? ' lit' : ''}" ${k.go ? `data-go="${k.go}"` : ''} ${k.act ? `data-act="${k.act}"` : ''} ${k.arg != null ? `data-arg="${esc(k.arg)}"` : ''} ${k.on != null ? `aria-pressed="${k.on}"` : ''} ${k.off ? 'disabled' : ''}><span class="led"></span><span>${esc(k.label)}${k.value ? `<span class="v">${k.value}</span>` : ''}</span></button>`).join('');
+}
+function renderPanel() {
+  const m = currentMachine(); const [a, , c] = state.ctx.route.segs;
+  const ro = $('#readout');
+  ro.innerHTML = m ? `<div class="big">${esc(SHORT[m.id] || m.id.toUpperCase())}</div><div class="small">${esc(m.name.toUpperCase())}</div>` : `<div class="big">----</div><div class="small off">NO MACHINE</div>`;
+  $('#knob-mini-val').textContent = m ? (SHORT[m.id] || m.id.toUpperCase()) : '----';
+  $('#knob').innerHTML = knobSVG(m);
+  const fk = (label, href, lit) => `<button class="key" data-go="${href}" aria-pressed="${lit}"><span class="led"></span><span>${label}</span></button>`;
+  $('#fkeys').innerHTML =
+    fk('Home', '#/', !a || (D.brands.some(b => b.id === a) && !state.ctx.machine)) +
+    fk('Machine', m ? mPath(m) : '#/', !!state.ctx.machine) +
+    fk('Search', '#/search', a === 'search') +
+    fk('Glossary', '#/glossary', a === 'glossary') +
+    fk('Links', '#/resources', a === 'resources');
+}
+function knobSVG(m) {
+  const n = MACH_ORDER.length, cx = 98, cy = 98, R = 76, span = 300, start = -150;
+  const ang = i => (start + i * span / (n - 1)) * Math.PI / 180;
+  const cur = m ? MACH_ORDER.indexOf(m.id) : -1;
+  let ticks = '';
+  MACH_ORDER.forEach((id, i) => {
+    const mm = D.machines[id], a = ang(i), s = Math.sin(a), co = -Math.cos(a);
+    const r1 = R - 2, r2 = mm.status === 'ready' ? R + 9 : R + 5;
+    ticks += `<g><rect class="detent" data-go="${mPath(mm)}" x="${cx + s * (R + 4) - 11}" y="${cy + co * (R + 4) - 11}" width="22" height="22" rx="4"><title>${esc(mm.name)} (${STATUS[mm.status]})</title></rect><line class="tick${mm.status === 'ready' ? ' ready' : ''}${i === cur ? ' cur' : ''}" x1="${cx + s * r1}" y1="${cy + co * r1}" x2="${cx + s * r2}" y2="${cy + co * r2}"/>${mm.status === 'ready' ? `<text class="tlabel" x="${cx + s * (R + 19)}" y="${cy + co * (R + 19) + 3}" style="text-anchor:${s < -0.3 ? 'end' : s > 0.3 ? 'start' : 'middle'}">${esc(SHORT[id])}</text>` : ''}</g>`;
+  });
+  const deg = cur >= 0 ? start + cur * span / (n - 1) : 180;
+  const grips = Array.from({ length: 24 }, (_, i) => { const a = i * 15 * Math.PI / 180; return `<line class="grip" x1="${cx + Math.sin(a) * 56}" y1="${cy - Math.cos(a) * 56}" x2="${cx + Math.sin(a) * 62}" y2="${cy - Math.cos(a) * 62}"/>`; }).join('');
+  return `<svg viewBox="0 0 196 196" role="group" aria-label="Machine select knob">
+    <defs><radialGradient id="kshade" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient></defs>
+    ${ticks}
+    <circle class="cap" data-go="#/" cx="${cx}" cy="${cy}" r="64"><title>Select machine</title></circle>
+    <circle class="shade" cx="${cx}" cy="${cy}" r="64" fill="url(#kshade)"/>
+    <circle class="cap-ring" cx="${cx}" cy="${cy}" r="60"/>
+    ${grips}
+    <line class="pointer" x1="${cx}" y1="${cy - 20}" x2="${cx}" y2="${cy - 58}" style="transform:rotate(${deg}deg)"/>
+  </svg>`;
+}
+
+/* ---------- screens ---------- */
+function scrHome() {
+  let body = `<div class="ln title">SELECT MACHINE</div><p class="ln dim note">Turn the knob or pick a line. READY = full pinouts and quick reference. SHEET = cheat sheet in the repo, not yet loaded. PLANNED = nothing yet.</p>`;
+  for (const br of D.brands) {
+    body += hdr(br.name.toUpperCase()) + br.machines.map(id => { const m = D.machines[id]; return `<button class="ln" data-go="${mPath(m)}" id="m-${id}"><span class="k">${esc(SHORT[id] || '')}</span><span class="grow">${esc(m.name)}<span class="row2">${esc(m.tagline || m.aka || '')}</span></span><span class="r">${STATUS[m.status]}</span></button>`; }).join('');
+  }
+  body += hdr('ALSO') + `<button class="ln" data-go="#/search"><span class="k">&gt;_</span><span class="grow">Search chips, pins, BASIC, keys, terms</span></button><button class="ln" data-go="#/glossary"><span class="k">A-Z</span><span class="grow">Glossary, ${Object.keys(D.terms).length} terms</span></button>`;
+  return { path: [{ label: 'RB-8' }], body, keys: D.brands.map(b => ({ label: b.name.split(' ')[0], go: '#/' + b.id })) };
+}
+function scrBrand(br) {
+  const body = `<div class="ln title">${esc(br.name.toUpperCase())}</div><p class="ln dim note">${esc(br.blurb)}</p>${rule()}` +
+    br.machines.map(id => { const m = D.machines[id]; return `<button class="ln" data-go="${mPath(m)}"><span class="k">${esc(SHORT[id] || '')}</span><span class="grow">${esc(m.name)} <span class="dim">${m.year || ''}${m.aka ? ' / ' + esc(m.aka) : ''}</span><span class="row2">${esc(m.tagline || '')}${m.cpu ? ' / ' + esc(m.cpu) : ''}</span></span><span class="r">${STATUS[m.status]}</span></button>`; }).join('') +
+    (D.resources[br.id] ? hdr('LINKS') + D.resources[br.id].slice(0, 3).map(r => `<a class="ln" href="${esc(r.url)}" target="_blank" rel="noopener"><span class="k">&#8599;</span><span class="grow">${esc(r.name)}${r.verify ? UNCAL : ''}<span class="row2">${esc(r.what)}</span></span></a>`).join('') : '');
+  const keys = br.machines.slice(0, 7).map(id => ({ label: SHORT[id] || id, go: mPath(D.machines[id]) }));
+  keys.push({ label: 'All makers', go: '#/' });
+  return { path: [{ label: 'RB-8', href: '#/' }, { label: br.name.toUpperCase() }], body, keys };
+}
+function machinePath(m, last) { const p = [{ label: 'RB-8', href: '#/' }, { label: brandOf(m).name.toUpperCase(), href: '#/' + m.brand }, { label: (SHORT[m.id] || m.id).toUpperCase(), href: mPath(m) }]; if (last) p.push({ label: last }); return p; }
+function machineKeys(m, cur) {
+  const chips = (m.chips || []).length, qr = dataFor(D.quickref, m).data, cn = dataFor(D.connectors, m).data, pw = dataFor(D.power, m).data, sy = dataFor(D.symptoms, m).data;
+  return [
+    { label: 'Pinouts', go: `${mPath(m)}/pinouts`, on: cur === 'pinouts', off: !chips },
+    { label: 'Quick ref', go: `${mPath(m)}/quickref`, on: cur === 'quickref', off: !qr },
+    { label: 'Ports', go: `${mPath(m)}/ports`, on: cur === 'ports', off: !cn },
+    { label: 'Power', go: `${mPath(m)}/power`, on: cur === 'power', off: !pw },
+    { label: 'Diagnostic', go: `${mPath(m)}/diag`, on: cur === 'diag', off: !sy },
+    null, null,
+    { label: 'Overview', go: mPath(m), on: cur === 'overview' },
+  ];
+}
+function scrMachine(m) {
+  const chips = (m.chips || []).map(id => D.chips[id]).filter(Boolean);
+  const qr = dataFor(D.quickref, m), sy = dataFor(D.symptoms, m);
+  const ro = [['CPU', m.cpu], ['RAM', m.ram], ['ROM', m.rom], ['VIDEO', m.video], ['SOUND', m.sound], ['SOFTWARE', m.os]].filter(x => x[1]);
+  let body = `<div class="ln title">${esc(m.name.toUpperCase())} <span class="dim" style="font-size:15px">${esc(m.aka || '')}${m.year ? ' / ' + m.year : ''}</span></div><p class="ln dim note">${esc(m.tagline || '')}</p>`;
+  body += `<div class="readouts">${ro.map(([l, v]) => `<div><span class="lab">${l}</span><span class="val">${esc(v)}</span></div>`).join('')}<div><span class="lab">STATUS</span><span class="val">${STATUS[m.status]}</span></div></div>`;
+  if (qr.data) body += hdr('FIRST LOOK') + qr.data.firstLook.map(b => `<p class="ln note" style="color:var(--ph)">- ${esc(b)}</p>`).join('') + sharedLn(qr.shared);
+  body += hdr(chips.length ? `CHIPS  (${chips.filter(c => c.pins).length} OF ${chips.length} DRAWN)` : 'CHIPS');
+  if (!chips.length) body += `<p class="ln dim note">No chips captured for this machine. The cheat sheet exists in the repo; its parts list is not loaded.</p>`;
+  else body += chips.map(c => chipLine(m, c)).join('');
+  if (sy.data) body += hdr('DIAGNOSTIC') + `<button class="ln" data-go="${mPath(m)}/diag"><span class="k">${sy.data.length}</span><span class="grow">symptoms with suspects<span class="row2">${esc(sy.data.map(s => s.symptom).join(' / '))}</span></span><span class="r">OPEN</span></button>`;
+  return { path: machinePath(m), body, keys: machineKeys(m, 'overview') };
+}
+function chipLine(m, c) {
+  const loc = c.location && c.location[m.id];
+  const inner = `<span class="k">${esc((loc || '').split(/[ ,(]/)[0] || '--')}</span><span class="grow">${esc(c.name)} <span class="dim">${esc(c.pkg)}</span>${c.verify ? UNCAL : ''}<span class="row2">${esc(c.role)}${c.pins ? '' : ' / NOT CAPTURED'}</span></span><span class="r">${c.heat === 'hot' ? 'HOT' : c.heat === 'warm' ? 'WARM' : 'COOL'}</span>`;
+  return c.pins ? `<button class="ln" data-go="${chipPath(m, c)}">${inner}</button>` : `<div class="ln" style="display:flex;gap:14px;align-items:center;min-height:44px;padding:4px 0;color:var(--ph-dim)">${inner}</div>`;
+}
+function scrPinouts(m) {
+  const chips = (m.chips || []).map(id => D.chips[id]).filter(Boolean).sort((a, b) => ({ hot: 0, warm: 1, cool: 2 }[a.heat] ?? 3) - ({ hot: 0, warm: 1, cool: 2 }[b.heat] ?? 3));
+  let body = `<div class="ln title">PINOUTS</div><p class="ln dim note">${esc(m.name)}. Hottest first. Pick a chip to draw it.</p>${rule()}`;
+  body += chips.length ? chips.map(c => chipLine(m, c)).join('') : `<p class="ln dim note">No chips captured yet.</p>`;
+  const drawn = chips.filter(c => c.pins);
+  const keys = drawn.slice(0, 7).map(c => ({ label: c.short, go: chipPath(m, c) })); keys.push({ label: 'Overview', go: mPath(m) });
+  return { path: machinePath(m, 'PINOUTS'), body, keys };
+}
+
+/* chip drawing: phosphor line art */
+function chipSVG(chip) {
+  const pins = chip.pins, n = pins.length, half = n / 2;
+  const PT = matchMedia('(max-width: 640px)').matches ? 48 : 32, NL = 104, SL = 18, BW = 120, TOP = 42, BOT = 30; /* phone: 48 viewBox units scale to ~44px rows */
+  const W = 2 * (NL + SL) + BW, H = TOP + half * PT + BOT;
+  const bodyX = NL + SL, bodyY = TOP - 10, bodyH = half * PT + 20, cy = bodyY + bodyH / 2;
+  let g = '';
+  pins.forEach((p, i) => {
+    const leftNormally = i < half, row = leftNormally ? i : n - 1 - i, left = state.flip ? !leftNormally : leftNormally;
+    const y = TOP + row * PT + PT / 2;
+    const dim = state.filter && p.type !== state.filter, sel = state.pin === p.n;
+    const nameX = left ? NL - 8 : W - NL + 8, nw = p.name.length * 8.6;
+    const mx = left ? nameX - nw - 20 : nameX + nw + 10;
+    let mk = '';
+    if (p.type === 'power') mk = `<rect class="mark" x="${mx}" y="${y - 4.5}" width="9" height="9"/>`;
+    else if (p.type === 'ground') mk = `<rect class="mark" x="${mx}" y="${y - 1.5}" width="10" height="3"/>`;
+    else if (p.type === 'clock') mk = `<path class="mark" d="M${mx} ${y + 5} l5 -10 l5 10 z"/>`;
+    const nbgW = Math.max(28, nw + 10);
+    g += `<g class="pin t-${p.type}${dim ? ' dimmed' : ''}${sel ? ' sel' : ''}" data-pin="${p.n}" tabindex="0" role="button" aria-label="Pin ${p.n} ${esc(p.name)}" aria-pressed="${sel}">
+      <rect class="hit" x="${left ? 0 : W - NL - SL}" y="${y - PT / 2}" width="${NL + SL}" height="${PT}" rx="3"/>
+      <rect class="nbg" x="${left ? nameX - nbgW + 4 : nameX - 4}" y="${y - 11}" width="${nbgW}" height="22" rx="2"/>
+      <rect class="stub" x="${left ? NL : W - NL - SL}" y="${y - 4}" width="${SL}" height="8"/>
+      <text class="num" x="${left ? bodyX + 8 : W - bodyX - 8}" y="${y + 4}" text-anchor="${left ? 'start' : 'end'}">${p.n}</text>
+      <text class="name" x="${nameX}" y="${y + 5}" text-anchor="${left ? 'end' : 'start'}">${esc(p.name)}</text>${mk}
+    </g>`;
+  });
+  const p1x = state.flip ? W - bodyX - 24 : bodyX + 24;
+  return `<svg class="dip" viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(chip.name)} ${esc(chip.pkg)} pinout, ${state.flip ? 'viewed from below' : 'top view'}">
+    <rect class="body" x="${bodyX}" y="${bodyY}" width="${BW}" height="${bodyH}" rx="2"/>
+    <path class="notch" d="M ${W / 2 - 11} ${bodyY} A 11 11 0 0 0 ${W / 2 + 11} ${bodyY}"/>
+    <circle class="p1" cx="${p1x}" cy="${TOP + PT / 2}" r="3.5"/>
+    <text class="chipname" transform="rotate(-90 ${W / 2} ${cy})" x="${W / 2}" y="${cy + 5}">${esc(chip.short.toUpperCase())}  ${esc(chip.pkg)}</text>
+    ${g}
+    <text class="caption" x="${W / 2}" y="${H - 6}">${state.flip ? 'BOTTOM VIEW  pins toward you, notch up' : 'TOP VIEW  notch up, pin 1 top left'}</text>
+  </svg>`;
+}
+function pinList(chip) {
+  return `<div class="pinlist"><div class="ln hd cols"><span>PIN</span><span>NAME</span><span class="c3">TYPE</span><span class="c4">DIR</span><span>FUNCTION</span></div>${chip.pins.map(p => {
+    const dim = state.filter && p.type !== state.filter;
+    return `<button class="ln cols${dim ? ' dimmed' : ''}${state.pin === p.n ? ' on' : ''}" data-pin="${p.n}"><span class="dim">${p.n}</span><span>${mark(p.type)}${esc(p.name)}</span><span class="c3 dim">${D.pinTypes[p.type].label.toUpperCase()}</span><span class="c4 dim">${DIR[p.dir]}</span><span class="row2" style="font-size:14px">${esc(p.desc)}</span></button>`; }).join('')}</div>`;
+}
+function datasheetLines(chip) {
+  if (!chip.datasheets || !chip.datasheets.length) return '';
+  return hdr('DATASHEETS') + chip.datasheets.map(d => `<a class="ln" href="${esc(d.url)}" target="_blank" rel="noopener" style="min-height:36px"><span class="k">&#8599;</span><span class="grow">${esc(d.label)}${d.verify ? UNCAL : ''}</span></a>`).join('') + (chip.verifiedAgainst ? `<p class="ln dim note">Checked against: ${esc(chip.verifiedAgainst)}</p>` : '');
+}
+function pinReadout(chip, p) {
+  const t = D.pinTypes[p.type];
+  return `<div class="cur-strip"><span><span class="dim">PIN </span><span class="pinno">${p.n}</span></span><span class="sep">&middot;</span><span>${mark(p.type)}${esc(p.name)}</span><span class="sep">&middot;</span><span>${DIR[p.dir]}</span><span class="sep">&middot;</span><span>${t.label.toUpperCase()}</span>${p.activeLow ? `<span class="sep">&middot;</span><button class="term" data-term="active-low" style="font-size:inherit">ACTIVE LOW</button>` : ''}${p.verify ? `<span class="sep">&middot;</span>${UNCAL}` : ''}</div>
+    <p class="ln" style="margin-top:4px">${esc(p.desc)}</p>
+    ${p.probe ? `<div class="probe"><b>PROBE</b><span>${esc(p.probe)}</span></div>` : ''}
+    ${(p.terms || []).filter(id => D.terms[id]).length ? `<div class="probe"><b>TERMS</b><span class="wrap">${termBtns(p.terms)}</span></div>` : ''}
+    ${datasheetLines(chip)}`;
+}
+function chipReadout(chip, m) {
+  const loc = chip.location && chip.location[m.id];
+  return `<div class="cur-strip"><span>${esc(chip.name.toUpperCase())}</span><span class="sep">&middot;</span><span>${esc(chip.pkg)}</span>${loc ? `<span class="sep">&middot;</span><span>${esc(loc)}</span>` : ''}<span class="sep">&middot;</span><span>${HEAT[chip.heat] || ''}</span>${chip.verify ? `<span class="sep">&middot;</span>${UNCAL}` : ''}</div>
+    <p class="ln note" style="margin-top:4px;color:var(--ph)">${esc(chip.summary)}</p>
+    <div class="probe"><b>FAILS AS</b><span>${esc(chip.fails.join(' / '))}</span></div>
+    <div class="probe"><b>FITTED IN</b><span class="wrap">${chip.machines.map(id => D.machines[id]).filter(Boolean).map(mm => `<button class="term" data-go="${chipPath(mm, chip)}">${esc(mm.name)}</button>`).join('  ')}</span></div>
+    ${datasheetLines(chip)}
+    <p class="ln dim note" style="margin-top:8px">Select a pin on the drawing for its readout.</p>`;
+}
+function scrChip(m, chip) {
+  const types = [...new Set(chip.pins.map(p => p.type))];
+  const p = state.pin != null ? chip.pins.find(x => x.n === state.pin) : null;
+  const i = p ? chip.pins.indexOf(p) : -1;
+  const prev = chip.pins[(i - 1 + chip.pins.length) % chip.pins.length], next = chip.pins[(i + 1) % chip.pins.length];
+  const body = `<div class="ln title">${esc(chip.name.toUpperCase())} <span class="dim" style="font-size:15px">${esc(chip.role)}</span></div>
+    ${state.filter ? `<p class="ln dim note">Showing ${esc(D.pinTypes[state.filter].label.toUpperCase())} pins. FILTER key cycles; ALL clears.</p>` : ''}
+    <div id="drawing">${state.view === 'draw' ? chipSVG(chip) : pinList(chip)}</div>`;
+  const zone = (p && !state.info) ? pinReadout(chip, p) : chipReadout(chip, m);
+  const keys = [
+    { label: state.flip ? 'Bottom view' : 'Top view', act: 'flip', value: state.flip ? 'tap for top' : 'tap for bottom' },
+    { label: state.view === 'draw' ? 'Drawing' : 'List', act: 'view', value: state.view === 'draw' ? 'tap for list' : 'tap for drawing' },
+    { label: 'Filter', act: 'filter', value: `<b>${state.filter ? esc(D.pinTypes[state.filter].label) : 'All'}</b>`, on: !!state.filter },
+    { label: 'Prev pin', act: 'pin', arg: p ? prev.n : chip.pins[chip.pins.length - 1].n },
+    { label: 'Next pin', act: 'pin', arg: p ? next.n : chip.pins[0].n },
+    { label: 'Chip info', act: 'info', on: !!(state.info || !p) },
+    null,
+    { label: 'All chips', go: `${mPath(m)}/pinouts` },
+  ];
+  return { path: machinePath(m, chip.short.toUpperCase()), body, zone, keys, uncal: !!chip.verify, types };
+}
+
+/* quick reference */
+function scrQuickref(m) {
+  const { data: q, shared } = dataFor(D.quickref, m);
+  const path = machinePath(m, 'QUICK REF');
+  if (!q) return { path, body: `<div class="ln title">QUICK REFERENCE</div><p class="ln dim note">Not captured for the ${esc(m.name)}. The cheat sheet exists; keys, BASIC and memory map are not loaded.</p>`, keys: machineKeys(m, 'quickref') };
+  const tab = ['keys', 'basic', 'memory', 'quirks', 'first'].includes(state.qtab) ? state.qtab : 'keys';
+  let body = `<div class="ln title">${{ keys: 'KEYS', basic: 'BASIC  ' + q.basic.dialect.toUpperCase(), memory: 'MEMORY MAP', quirks: 'QUIRKS', first: 'FIRST LOOK' }[tab]}</div>`;
+  let uncal = false;
+  if (tab === 'keys') body += q.keys.map(k => { if (k.verify) uncal = true; return `<div class="ln" style="min-height:36px;padding:5px 0"><span style="display:block">${esc(k.keys)}${k.verify ? UNCAL : ''}</span><span class="row2">${esc(k.does)}</span></div>`; }).join('');
+  else if (tab === 'basic') {
+    body += hdr('ESSENTIALS') + q.basic.essentials.map(e => { if (e.verify) uncal = true; return `<div class="ln" style="min-height:36px;padding:5px 0"><span style="display:block">${esc(e.cmd)}${e.verify ? UNCAL : ''}</span><span class="row2">${esc(e.does)}</span></div>`; }).join('');
+    body += hdr('EVERYTHING ELSE  (tap a group)') + q.basic.groups.map((g, i) => { const open = state.open.has('bg' + i); return `<button class="ln${open ? ' on' : ''}" data-act="toggle" data-arg="bg${i}" aria-expanded="${open}"><span class="k">${open ? '[-]' : '[+]'}</span><span class="grow">${esc(g.group)}</span><span class="r">${g.items.length}</span></button>${open ? `<div class="ln note" style="padding:6px 0 10px 24px;color:var(--ph)">${g.items.map(esc).join('<br>')}</div>` : ''}`; }).join('');
+  }
+  else if (tab === 'memory') body += q.memory.map(r => `<div class="ln" style="display:flex;gap:16px;min-height:34px;align-items:center"><span style="flex:none;width:15ch">${esc(r.range)}</span><span class="dim">${esc(r.what)}</span></div>`).join('');
+  else if (tab === 'quirks') body += q.basic.quirks.map(x => `<p class="ln" style="padding:4px 0">- ${esc(x)}</p>`).join('');
+  else body += q.firstLook.map(x => `<p class="ln" style="padding:4px 0">- ${esc(x)}</p>`).join('');
+  body += sharedLn(shared);
+  const keys = [['keys', 'Keys'], ['basic', 'BASIC'], ['memory', 'Memory'], ['quirks', 'Quirks'], ['first', 'First look']].map(([id, l]) => ({ label: l, act: 'qtab', arg: id, on: tab === id }));
+  keys.push(null, null, { label: 'Overview', go: mPath(m) });
+  return { path, body, keys, uncal };
+}
+function scrPorts(m) {
+  const { data: list, shared } = dataFor(D.connectors, m);
+  const path = machinePath(m, 'PORTS');
+  if (!list) return { path, body: `<div class="ln title">PORTS</div><p class="ln dim note">No connector pinouts loaded for the ${esc(m.name)}.</p>`, keys: machineKeys(m, 'ports') };
+  const i = Math.min(state.port, list.length - 1), c = list[i];
+  const body = `<div class="ln title">${esc(c.name.toUpperCase())} <span class="dim" style="font-size:15px">${esc(c.kind)}</span></div><p class="ln note" style="color:var(--ph)">${esc(c.summary)}</p>${rule()}` +
+    c.pins.map(p => `<div class="ln" style="display:flex;gap:16px;min-height:34px;align-items:center"><span class="dim" style="flex:none;width:6ch">${esc(p.n)}</span><span style="flex:none;min-width:12ch">${esc(p.name)}</span><span class="dim" style="font-size:14px">${esc(p.desc || '')}</span></div>`).join('') +
+    (c.terms ? `<div class="probe" style="margin-top:12px"><b>TERMS</b><span class="wrap">${termBtns(c.terms)}</span></div>` : '') +
+    `<p class="ln dim note" style="margin-top:12px">Pin numbers follow the connector's own convention; "?" means the sheet did not record it.</p>` + sharedLn(shared);
+  const keys = list.slice(0, 7).map((x, k) => ({ label: x.name.replace(/\s*\(.*\)/, '').split('/')[0].trim().slice(0, 16), act: 'port', arg: k, on: k === i }));
+  keys.push({ label: 'Overview', go: mPath(m) });
+  return { path, body, keys, uncal: !!c.verify };
+}
+function scrPower(m) {
+  const { data: pw, shared } = dataFor(D.power, m);
+  const path = machinePath(m, 'POWER');
+  if (!pw) return { path, body: `<div class="ln title">POWER</div><p class="ln dim note">No rail or test point data loaded for the ${esc(m.name)}.</p>`, keys: machineKeys(m, 'power') };
+  let body;
+  if (state.pow === 'rails') body = `<div class="ln title">RAILS</div><p class="ln dim note">Check every rail before suspecting a chip.</p>` + pw.rails.map(r => `<div class="readouts" style="padding:10px 0;border-bottom:1px solid var(--ph-faint)"><div style="min-width:140px"><span class="lab">RAIL</span><span class="val">${esc(r.rail)}</span></div><div><span class="lab">EXPECT</span><span class="val">${esc(r.expect)}</span></div><div style="flex:1 1 240px;max-width:none"><span class="lab">WHERE</span><span class="val" style="font-size:15px">${esc(r.where)}</span>${r.note ? `<span class="row2">${esc(r.note)}</span>` : ''}</div></div>`).join('');
+  else body = `<div class="ln title">TEST POINTS</div>` + pw.testPoints.map(t => `<div class="readouts" style="padding:10px 0;border-bottom:1px solid var(--ph-faint)"><div style="min-width:150px"><span class="lab">POINT</span><span class="val">${esc(t.tp)}</span></div><div style="min-width:180px"><span class="lab">WHERE</span><span class="val" style="font-size:15px">${esc(t.where)}</span></div><div style="flex:1 1 200px;max-width:none"><span class="lab">EXPECT</span><span class="val" style="font-size:15px">${esc(t.expect)}</span></div></div>`).join('');
+  body += sharedLn(shared);
+  return { path, body, keys: [{ label: 'Rails', act: 'pow', arg: 'rails', on: state.pow === 'rails' }, { label: 'Test points', act: 'pow', arg: 'tp', on: state.pow === 'tp' }, null, null, null, null, null, { label: 'Overview', go: mPath(m) }] };
+}
+function scrDiag(m) {
+  const { data: sy, shared } = dataFor(D.symptoms, m);
+  const path = machinePath(m, 'DIAGNOSTIC');
+  if (!sy) return { path, body: `<div class="ln title">DIAGNOSTIC</div><p class="ln dim note">No symptom table loaded for the ${esc(m.name)}.</p>`, keys: machineKeys(m, 'diag') };
+  const body = `<div class="ln title">DIAGNOSTIC</div><p class="ln dim note">Symptom, then the usual suspects. Pick a suspect to draw it.</p>` +
+    sy.map(s => `<div class="ln" style="padding:8px 0;border-bottom:1px solid var(--ph-faint)"><span style="display:block;font-size:17px">${esc(s.symptom)}</span><div class="probe"><b>SUSPECT</b><span class="wrap">${s.suspects.map(id => { const c = D.chips[id]; return c ? `<button class="term" data-go="${c.pins ? chipPath(m, c) : mPath(m) + '/pinouts'}">${esc(c.short)}</button>` : ''; }).join('  ')}</span></div><div class="probe"><b>NOTE</b><span class="note" style="color:var(--ph)">${esc(s.note)}</span></div></div>`).join('') + sharedLn(shared);
+  return { path, body, keys: machineKeys(m, 'diag') };
+}
+
+/* search */
+function resultLines(q) {
+  if (!q.trim()) { state.sItems = []; return `<p class="ln dim note">Type a chip, a pin like /RAS or pin 40, a BASIC keyword, a key combination or a term. Arrow keys move, RETURN opens.</p><p class="ln dim note">Try: <button class="term" data-go="#/search?q=ras">ras</button>  <button class="term" data-go="#/search?q=pin%2040">pin 40</button>  <button class="term" data-go="#/search?q=sound">sound</button>  <button class="term" data-go="#/search?q=reset">reset</button></p>`; }
+  let groups = search(q, 20);
+  if (state.sgroup !== 'ALL') groups = groups.filter(g => g.group === state.sgroup);
+  const items = groups.flatMap(g => g.items); state.sItems = items;
+  if (state.sIdx >= items.length) state.sIdx = 0;
+  if (!items.length) return `<p class="ln dim note">NO MATCH for "${esc(q)}"${state.sgroup !== 'ALL' ? ' in ' + state.sgroup : ''}. Try a pin name without the slash, a chip number, or a BASIC keyword.</p>`;
+  let i = 0;
+  return groups.map(g => hdr(`${g.group}  (${g.items.length})`) + g.items.map(it => { const idx = i++; return `<button class="ln${idx === state.sIdx ? ' on' : ''}" data-go="${it.href}" data-idx="${idx}" style="min-height:40px"><span class="grow">${esc(it.title)}${it.tag ? ` <span class="dim">${esc(it.tag)}</span>` : ''}<span class="row2">${esc(it.sub || '')}</span></span></button>`; }).join('')).join('');
+}
+function scrSearch(q) {
+  const all = q.trim() ? search(q, 20) : [];
+  const body = `<form class="prompt" id="sform" autocomplete="off"><span class="dim">&gt; </span><input id="q" type="search" value="${esc(q)}" placeholder="search" aria-label="Search" autocapitalize="off" spellcheck="false"><span class="cursor" aria-hidden="true"></span></form><div id="results">${resultLines(q)}</div>`;
+  const keys = [{ label: 'All', act: 'sgroup', arg: 'ALL', on: state.sgroup === 'ALL' }].concat(GROUP_ORDER.filter(g => g !== 'MACHINES').map(g => ({ label: g.charAt(0) + g.slice(1).toLowerCase(), act: 'sgroup', arg: g, on: state.sgroup === g, off: q.trim() ? !all.some(x => x.group === g) : false })));
+  return { path: [{ label: 'RB-8', href: '#/' }, { label: 'SEARCH' }], body, keys };
+}
+function scrGlossary(focus) {
+  const body = `<div class="ln title">GLOSSARY</div><p class="ln dim note">${Object.keys(D.terms).length} terms. Tap one to expand. Anywhere else in the display, dotted words open as a message box.</p>` +
+    Object.entries(D.terms).map(([id, t]) => { const open = state.glossAll || state.open.has('g' + id) || focus === id; return `<button class="ln${open ? ' on' : ''}" id="g-${id}" data-act="toggle" data-arg="g${id}" aria-expanded="${open}" style="min-height:40px"><span class="grow">${esc(t.term)}<span class="row2">${esc(t.short)}</span></span></button>${open ? `<p class="ln note" style="padding:6px 0 12px;color:var(--ph)">${esc(t.long)}</p>` : ''}`; }).join('');
+  return { path: [{ label: 'RB-8', href: '#/' }, { label: 'GLOSSARY' }], body, keys: [{ label: state.glossAll ? 'Collapse all' : 'Expand all', act: 'glossall', on: state.glossAll }, null, null, null, null, null, null, { label: 'Select machine', go: '#/' }] };
+}
+function scrResources() {
+  const groups = [['general', 'GENERAL'], ...D.brands.filter(b => D.resources[b.id]).map(b => [b.id, b.name.toUpperCase()])];
+  const cur = D.resources[state.res] ? state.res : 'general';
+  const body = `<div class="ln title">LINKS  ${esc(groups.find(g => g[0] === cur)[1])}</div><p class="ln dim note">External archives and communities. Open in a new tab.</p>` +
+    D.resources[cur].map(r => `<a class="ln" href="${esc(r.url)}" target="_blank" rel="noopener"><span class="k">&#8599;</span><span class="grow">${esc(r.name)}${r.verify ? UNCAL : ''}<span class="row2">${esc(r.what)}</span></span></a>`).join('');
+  const keys = groups.map(([id, l]) => ({ label: l, act: 'res', arg: id, on: cur === id })); while (keys.length < 7) keys.push(null); keys.push({ label: 'Select machine', go: '#/' });
+  return { path: [{ label: 'RB-8', href: '#/' }, { label: 'LINKS' }], body, keys, uncal: D.resources[cur].some(r => r.verify) };
+}
+function scrNotFound() { return { path: [{ label: 'RB-8', href: '#/' }, { label: 'NO SIGNAL' }], body: `<div class="ln title">NO SIGNAL</div><p class="ln dim note">That address has nothing on it.</p><button class="ln" data-go="#/"><span class="k">&gt;</span><span class="grow">Select machine</span></button>`, keys: [{ label: 'Select machine', go: '#/' }] }; }
+
+/* ---------- chip interactions (no full re-render) ---------- */
+function refreshChip() {
+  const { chip, machine } = state.ctx; if (!chip) return;
+  const scr = scrChip(machine, chip); paint(scr); renderPanel();
+}
+function selectPin(n) {
+  const { chip } = state.ctx; if (!chip) return;
+  state.pin = n; state.info = false;
+  history.replaceState(null, '', `${location.hash.split('?')[0]}?pin=${n}`);
+  refreshChip();
+  const z = $('#zone'); if (z) z.scrollTop = 0;
+  const sel = document.querySelector('#drawing .sel'); if (sel) sel.scrollIntoView({ block: 'nearest' });
+}
+
+/* ---------- message box (glossary term) ---------- */
+function openDlg(id, anchor) {
+  const t = D.terms[id]; if (!t) return;
+  const dlg = $('#dlg');
+  dlg.innerHTML = `<div class="t">${esc(t.term)}</div><div class="s">${esc(t.short)}</div><div>${esc(t.long)}</div><div class="foot"><a href="#/glossary?term=${id}">OPEN IN GLOSSARY</a><button data-act="close-dlg">CLOSE  [ESC]</button></div>`;
+  dlg.hidden = false;
+  const host = $('.bezel').getBoundingClientRect(), r = anchor.getBoundingClientRect(), pw = dlg.offsetWidth, ph = dlg.offsetHeight;
+  let x = Math.min(Math.max(14, r.left - host.left), host.width - pw - 14);
+  let y = r.bottom - host.top + 8; if (y + ph > host.height - 14) y = Math.max(14, r.top - host.top - ph - 8);
+  if (ph > host.height - 28) y = 14;
+  dlg.style.left = x + 'px'; dlg.style.top = y + 'px'; dlg.dataset.open = '1';
+  dlg.querySelector('button').focus();
+}
+function closeDlg() { const d = $('#dlg'); d.hidden = true; delete d.dataset.open; }
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const dlg = $('#dlg');
+  if (dlg.dataset.open && !dlg.contains(e.target)) { closeDlg(); if (!e.target.closest('[data-term]')) return; }
+  const term = e.target.closest('[data-term]');
+  if (term) { e.preventDefault(); openDlg(term.dataset.term, term); return; }
+  const pinEl = e.target.closest('[data-pin]');
+  if (pinEl) { selectPin(Number(pinEl.dataset.pin)); return; }
+  const goEl = e.target.closest('[data-go]');
+  if (goEl) { e.preventDefault(); if (goEl.dataset.idx != null) state.sIdx = Number(goEl.dataset.idx); go(goEl.dataset.go); return; }
+  const act = e.target.closest('[data-act]'); if (!act) return;
+  const a = act.dataset.act, arg = act.dataset.arg;
+  const { machine: m, chip } = state.ctx;
+  if (a === 'flip') { state.flip = !state.flip; refreshChip(); }
+  else if (a === 'view') { state.view = state.view === 'draw' ? 'list' : 'draw'; refreshChip(); }
+  else if (a === 'filter') { const types = [...new Set(chip.pins.map(p => p.type))]; const i = types.indexOf(state.filter); state.filter = i < 0 ? types[0] : types[i + 1] || null; refreshChip(); }
+  else if (a === 'pin') selectPin(Number(arg));
+  else if (a === 'info') { state.info = !state.info; refreshChip(); }
+  else if (a === 'qtab') { state.qtab = arg; history.replaceState(null, '', `${mPath(m)}/quickref?tab=${arg}`); paint(scrQuickref(m)); }
+  else if (a === 'port') { state.port = Number(arg); paint(scrPorts(m)); }
+  else if (a === 'pow') { state.pow = arg; paint(scrPower(m)); }
+  else if (a === 'res') { state.res = arg; paint(scrResources()); }
+  else if (a === 'sgroup') { state.sgroup = arg; state.sIdx = 0; const q = $('#q').value; paint(scrSearch(q)); $('#q').focus(); }
+  else if (a === 'toggle') { const top = $('#dbody').scrollTop; if (state.open.has(arg)) state.open.delete(arg); else state.open.add(arg); if (arg.startsWith('g')) state.glossAll = false; render(); $('#dbody').scrollTop = top; }
+  else if (a === 'glossall') { state.glossAll = !state.glossAll; state.open.clear(); render(); }
+  else if (a === 'close-dlg') closeDlg();
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'sform') return; e.preventDefault();
+  const it = state.sItems[state.sIdx]; if (it) go(it.href);
+});
+document.addEventListener('input', e => {
+  if (e.target.id !== 'q') return;
+  const q = e.target.value; state.sIdx = 0;
+  history.replaceState(null, '', '#/search?q=' + encodeURIComponent(q));
+  $('#results').innerHTML = resultLines(q);
+  /* keep soft keys honest about which groups have hits */
+  const all = q.trim() ? search(q, 20) : [];
+  document.querySelectorAll('#softkeys .key[data-act="sgroup"]').forEach(k => { const g = k.dataset.arg; k.disabled = g !== 'ALL' && q.trim() && !all.some(x => x.group === g); });
+});
+document.addEventListener('keydown', e => {
+  const tag = e.target.tagName, typing = tag === 'INPUT' || tag === 'TEXTAREA';
+  if (e.key === 'Escape') { if ($('#dlg').dataset.open) { e.preventDefault(); closeDlg(); return; } if (typing) e.target.blur(); return; }
+  if ((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); go('#/search'); $('#q') && $('#q').focus(); return; }
+  if (e.key === '/' && !typing) { e.preventDefault(); go('#/search'); $('#q') && $('#q').focus(); return; }
+  if (e.target.id === 'q') {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); const n = state.sItems.length; if (!n) return;
+      state.sIdx = e.key === 'ArrowDown' ? Math.min(state.sIdx + 1, n - 1) : Math.max(state.sIdx - 1, 0);
+      $('#results').innerHTML = resultLines(e.target.value);
+      const on = $('#results .ln.on'); if (on) on.scrollIntoView({ block: 'nearest' });
+    }
+    return;
+  }
+  if (typing) return;
+  const { chip } = state.ctx;
+  if (chip && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    e.preventDefault(); const i = chip.pins.findIndex(p => p.n === state.pin); const n = chip.pins.length;
+    selectPin(chip.pins[i < 0 ? 0 : (i + (e.key === 'ArrowRight' ? 1 : n - 1)) % n].n); return;
+  }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset) {
+    if (e.target.dataset.pin) { e.preventDefault(); selectPin(Number(e.target.dataset.pin)); }
+    else if (e.target.dataset.go && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') { e.preventDefault(); go(e.target.dataset.go); }
+  }
+});
+$('#knob-mini').addEventListener('click', () => go('#/'));
+window.addEventListener('hashchange', render);
+render();
+})();
+</script>
+</body>
+</html>
