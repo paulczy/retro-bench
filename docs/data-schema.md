@@ -69,7 +69,7 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
 
 ### connectors
 ```js
-[{ id: 'c64-power', name: 'Power in', kind: 'DIN-7 (Commodore power)', geo: 'din7',
+[{ id: 'c64-power', name: 'Power in', kind: 'DIN-7 (Commodore power)', geo: 'din7', gender: 'female',
    verify: false, verifiedAgainst: 'C64 Programmer\'s Reference Guide, App. I',
    summary: 'What plugs in here, what to expect, what goes wrong.',
    pins: [{ n: 1, name: '9 VAC', type: 'power', desc: 'One leg of the 9 V AC winding.', expect: '9–11 V AC' }, ...],
@@ -80,19 +80,41 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
   contacts (`'A'`, `'B12'`). Never `'?'`: a pin whose position you cannot source is left out and the gap is
   noted in `summary` with `verify: true`.
 - `type` is optional and uses the chip pin types (power, ground, video, audio, serial, ctrl, data, addr, io, nc).
-- `expect` is optional: what a meter or scope should show at that pin on a working machine, with units.
+- `expect` is optional: what a meter or scope should show at that pin on a working machine, with units. The power
+  page writes it beside each pad of the supply connector, so keep it short (`'+4.95 to +5.10 V DC'`).
+- `verify` and `conflict` work on connector pins as on chip pins (CHECK stamp; amber "Sources disagree" note).
 - Pins are described **looking into the socket on the machine**. The app mirrors the drawing for the PLUG view
   itself; never enter plug-view numbering.
-- `geo` picks the drawing. One of:
-  - round DIN: `din3`, `din4`, `din5-180`, `din5-240`, `din6`, `din7`, `din8-262`, `din8-270`, `mdin7`, `mdin8`
-  - D-sub: `de9`, `da15`, `db25`
-  - card edge: `edge-<top>x<bottom>-<scheme>`, scheme one of `seq` (1..N top, N+1..2N bottom), `cbm` (1..N top,
-    letters A B C D E F H J K L M N P R S T U V W X Y Z bottom), `ab` (A1..An top, B1..Bn bottom),
-    `odd-even` (odd numbers top, even bottom). Example: C64 user port `edge-12x12-cbm`, IBM I/O channel `edge-31x31-ab`,
-    Apple II slot `edge-25x25-seq`.
-  - single contact: `rca`, `f` (RF F-connector), `barrel` (pins `1` = centre, `2` = sleeve), `trs` (pins `T`, `R`, `S`), `ts`
+- `geo` picks the drawing (`src/connectors.js`; its comments name the source of every layout). One of:
+  - round DIN: `din3`, `din4`, `din5-180`, `din5-240`, `din6`, `din7`, `din8-262`, `din8-270`, `mdin7`, `mdin8`.
+    The app places each pin by the **standard** number (DIN 41524, 45322, 45326, 45329; mini-DIN as Wikipedia),
+    drawn as the female socket from the front, key at the bottom. So enter the standard number, not a position.
+    Before you trust a manual's figure, check that it uses the standard numbering. 5 pin 180°: 1 4 2 5 3 left to
+    right over the top. 240° (5 and 6 pin): 1 to 5 clockwise from the left of the key, 6 in the centre. 7 pin 270°:
+    1 4 2 5 3 over the top, 6 and 7 either side of the key. 8 pin 270°: as 7, plus 8 in the centre. 8 pin 262°
+    (C64 A/V): 1 4 2 5 3 over the top, 7 and 8 the horseshoe ends either side of the key, 6 near the centre.
+    A connector whose maker numbers it differently (for example straight round the circle) is `custom`.
+  - D-sub: `de9`, `da15`, `db25`. Standard numbering: on the male face, 1 is at upper left, the wide row runs left
+    to right, then the narrow row. Set `gender: 'male' | 'female'` for the socket **on the machine**, because it
+    moves every pin (female puts 1 at upper right). The default is `male` and the app says so under the drawing.
+    Joystick ports are usually male on the machine; video, printer and game ports are often female.
+  - card edge: `edge-<top>x<bottom>-<scheme>`, scheme one of `seq` (1..N along the top, then N+1.. back along the
+    bottom, so N+1 is under N, as on the Apple II slot where 1 is opposite 50), `cbm` (1..N top, letters
+    A B C D E F H J K L M N P R S T U V W X Y Z bottom with A under 1, then AA BB CC past Z), `ab` (A1..An top,
+    B1..Bn bottom), `odd-even` (odd numbers top, even bottom, 2 under 1). Example: C64 user port `edge-12x12-cbm`,
+    IBM I/O channel `edge-31x31-ab`, Apple II slot `edge-25x25-seq`, 264-series expansion `edge-25x25-cbm`.
+    Optional `pin1: 'right'` when pin 1 is at the right end looking into the socket (default `'left'`).
+    Optional `keys: [k, ...]`: key slots cut between contact k and k+1. `edge-12x12-cbm` defaults to `[1, 10]`
+    (the Commodore user port); give `keys: []` if a 12+12 edge has none.
+  - single contact: `rca`, `f` (RF F-connector), `barrel` (all three: pin `1` = centre, `2` = shell or sleeve),
+    `trs` (pins `T`, `R`, `S`), `ts` (pins `T`, `S`)
   - anything else: `custom`, with `pads: [{ n, x, y }]` in a 0–100 box as seen looking into the socket, plus an
-    optional `outline: '<svg path d>'` in the same box (Atari SIO, TI power plug, Coleco power, headers).
+    optional `outline: '<svg path d>'` in the same box (Atari SIO, TI power plug, Coleco power, headers). The app
+    scales the box so the two closest pads are 50 px apart and crops to the pads and outline. Keep the outline to
+    absolute commands (M L H V C Q A Z) or the crop falls back to the whole box. `gender: 'male'` draws the pads
+    as pins (a header on the board); the default draws holes.
+- `gender` (any geo, optional): `'male'` (pins) or `'female'` (holes) for the socket on the machine. Round DIN
+  defaults to female, D-sub to male. The PLUG view always shows the other gender.
 - `sources` are the documents a human can open to check the table. Use the manual, schematic or standard, with
   a page number in the label and, when the host supports it, a page anchor in the URL
   (`archive.org/details/<id>/page/n<page>`, `...pdf#page=<n>`). Forum posts are allowed only as a second source.

@@ -72,6 +72,9 @@ for (const [cid, c] of Object.entries(R.chips)) for (const mid of c.machines || 
   if (m && !(m.chips || []).includes(cid)) err(`chip ${cid}`, `lists ${mid} in machines but ${mid}.chips does not list it`);
 }
 for (const [mid, list] of Object.entries(R.symptoms)) for (const s of list) for (const cid of s.suspects) if (!R.chips[cid]) err(`symptoms ${mid}`, `unknown chip ${cid}`);
+const win = { document: { createElement: () => ({}) }, addEventListener() {} };
+try { new Function('window', 'document', fs.readFileSync(path.join(root, 'src', 'connectors.js'), 'utf8'))(win, win.document); } catch (e) { console.error('FAIL src/connectors.js does not load: ' + e.message); process.exit(1); }
+const padsOf = c => { try { const L = win.RBConn.layout(c, {}); return L ? new Set(L.pads.map(q => String(q.n))) : null; } catch (e) { return null; } };
 const GEO = /^(din3|din4|din5-180|din5-240|din6|din7|din8-262|din8-270|mdin7|mdin8|de9|da15|db25|edge-\d+x\d+-(seq|cbm|ab|odd-even)|rca|f|barrel|trs|ts|custom)$/;
 const checkSources = (f, list) => { for (const s of list || []) if (!s.label || !/^https?:\/\//.test(s.url || '')) err(f, `source needs label and http url: ${JSON.stringify(s)}`); };
 for (const [mid, list] of Object.entries(R.connectors)) {
@@ -82,12 +85,15 @@ for (const [mid, list] of Object.entries(R.connectors)) {
     if (ids.has(c.id)) err(f, `duplicate connector id ${c.id}`); ids.add(c.id);
     if (!c.geo) warn(f, `${c.id} has no geo (no drawing)`); else if (!GEO.test(c.geo)) err(f, `${c.id} unknown geo ${c.geo}`);
     if (c.geo === 'custom' && !(c.pads || []).length) err(f, `${c.id} custom geo needs pads`);
-    const seen = new Set();
+    const seen = new Set(), pads = c.geo ? padsOf(c) : null;
+    if (c.geo && c.geo !== 'custom' && !pads) err(f, `${c.id} geo ${c.geo} produced no layout`);
+    if (/^(de9|da15|db25)$/.test(c.geo) && !c.gender) warn(f, `${c.id} D-sub without gender (male assumed)`);
     for (const p of c.pins || []) {
       if (p.n === '?' || p.n === '-' || p.n == null) warn(f, `${c.id} has an unplaced pin ${p.name}`);
       if (!['?', '-'].includes(p.n) && seen.has(String(p.n))) err(f, `${c.id} repeats pin ${p.n}`); seen.add(String(p.n));
       if (p.type && !R.pinTypes[p.type]) err(f, `${c.id} pin ${p.n} type ${p.type}`);
       if (c.geo === 'custom' && !(c.pads || []).some(q => String(q.n) === String(p.n))) err(f, `${c.id} pin ${p.n} has no pad`);
+      if (pads && p.n !== '?' && p.n !== '-' && !pads.has(String(p.n))) err(f, `${c.id} pin ${p.n} is outside the ${c.geo} layout`);
     }
     if (c.verify !== true && !(c.sources || []).length) warn(f, `${c.id} is marked verified but has no sources`);
     checkSources(f, c.sources);

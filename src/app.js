@@ -18,6 +18,8 @@ const STATUS_LONG = { ready: 'fitted: full pinouts and quick reference', sheet: 
 const HEAT = { cool: 'Runs cool', warm: 'Runs warm', hot: 'Runs hot' };
 const MASKS = ['green', 'black', 'light'];
 const MASK_BG = { green: '#1c3829', black: '#17191a', light: '#ebe3cc' };
+const CVIEWS = ['socket', 'plug'];   /* connector drawings: looking into the socket on the machine, or at the cable plug */
+const CVIEW_CAP = { socket: 'Looking into the socket on the machine', plug: 'Looking at the plug on the cable' };
 /* Short board designators for machines. Machines not listed fall back to their own short name. */
 const DES = { c16: 'C16', plus4: '+4', c64: 'C64', c128: 'C128', vic20: 'VIC', pet: 'PET', apple2e: 'IIe', apple2: 'II', apple2plus: 'II+', apple2c: 'IIc', atari800: '800', adam: 'ADAM', colecovision: 'CV', zx81: 'ZX81', spectrum: 'ZX48', ti994a: '99/4A', coco12: 'COCO', coco3: 'COCO3', mc10: 'MC10' };
 const PANEL_MQ = matchMedia('(max-width: 767.98px)');   /* below this the pin detail is a bottom panel */
@@ -28,6 +30,8 @@ const state = {
   maskPick: MASKS.includes(LS.get('rb-mask', null)) ? LS.get('rb-mask', null) : null,
   recents: arr(LS.get('rb-recent', [])),
   flip: false, filter: null, pin: null, chipId: null, compact: null,
+  cview: CVIEWS.includes(LS.get('rb-cview', null)) ? LS.get('rb-cview', null) : 'socket',
+  conn: null,   /* { id, pin } the selected connector pad on the ports or power page */
   ctx: { route: { segs: [], q: {} } }, hits: [], hitIdx: -1, palItems: [], palIdx: 0,
 };
 
@@ -160,9 +164,13 @@ function termify(text, ids) {
   for (const h of hits) { out += esc(raw.slice(at, h.s)) + `<button type="button" class="term" data-term="${h.id}">${esc(raw.slice(h.s, h.e))}</button>`; at = h.e; }
   return out + esc(raw.slice(at));
 }
-const datasheets = chip => (arr(chip.datasheets).length
-  ? `<div class="h4">Datasheets</div><ul class="ds">${chip.datasheets.map(d => `<li><a class="lnk" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a>${d.verify ? chk() : ''}</li>`).join('')}</ul>${chip.verifiedAgainst ? `<p class="note">Checked against: ${esc(chip.verifiedAgainst)}</p>` : ''}`
+/* documents a human can open to check a table: `sources` on connectors, power, quick reference; `datasheets` on chips */
+const safeUrl = u => (/^https?:\/\//i.test(String(u || '')) ? u : '#');
+const sourceList = (list, title = 'Sources', checked = '') => (arr(list).length || checked
+  ? `${title ? `<div class="h4">${title}</div>` : ''}${arr(list).length ? `<ul class="ds">${list.map(d => `<li><a class="lnk" href="${esc(safeUrl(d.url))}" target="_blank" rel="noopener">${esc(d.label)}</a>${d.verify ? chk() : ''}</li>`).join('')}</ul>` : ''}${checked ? `<p class="note">Checked against: ${esc(checked)}</p>` : ''}`
   : '');
+const datasheets = chip => sourceList(chip.datasheets, 'Datasheets');
+const conflictNote = p => (p.conflict ? `<div class="conflict"><b>Sources disagree</b>${esc(p.conflict)}</div>` : '');
 /* "TED pin 14", "TED pins 10, 11", "CPU pin 37", "cpu8088 pin 40" (short name or chip id) become links to that pin */
 function linkPins(text, m) {
   const chips = chipsOf(m).filter(c => c.pins);
@@ -203,7 +211,11 @@ function buildIndex() {
   for (const [id, t] of Object.entries(D.terms)) ix.push({ group: 'Glossary', title: t.term, sub: t.short, keys: id + ' ' + t.long, href: `#/glossary?term=${id}` });
   for (const [mid, list] of Object.entries(D.connectors)) {
     const m = D.machines[mid]; if (!m) continue;
-    arr(list).forEach((c, i) => ix.push({ group: 'Connectors', title: c.name, sub: `${m.name}: ${c.kind || ''}`, keys: arr(c.pins).map(p => p.name).join(' '), href: `${mPath(m)}/ports?c=${encodeURIComponent(c.id)}`, des: `J${i + 1}` }));
+    arr(list).forEach((c, i) => {
+      const href = `${mPath(m)}/ports?c=${encodeURIComponent(c.id)}`;
+      ix.push({ group: 'Connectors', title: c.name, sub: `${m.name}: ${c.kind || ''}`, keys: arr(c.pins).map(p => p.name).join(' '), href, des: `J${i + 1}` });
+      for (const p of realPins(c)) ix.push({ group: 'Connectors', title: `${c.name} pin ${p.n}  ${p.name || ''}`, sub: `${m.name}: ${p.desc || c.kind || ''}`, keys: `pin ${p.n} ${p.name || ''} ${String(p.name || '').replace('/', '')}`, href: `${href}&pin=${encodeURIComponent(p.n)}`, des: `J${i + 1}.${p.n}`, mono: true });
+    });
   }
   ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' });
   INDEX = ix;
@@ -365,8 +377,15 @@ function render() {
       if (!c) { ctx.crumbs[1] = [m.name]; html = viewMachine(m); }
       else if (c === 'pinouts' || (chip && !chip.pins)) { ctx.crumbs.push(['Pinouts']); html = viewPinouts(m); }
       else if (c === 'quickref') { ctx.crumbs.push(['Quick reference']); html = viewQuickref(m, r.q.tab); }
-      else if (c === 'ports') { ctx.crumbs.push(['Ports']); html = viewPorts(m); }
-      else if (c === 'power') { ctx.crumbs.push(['Power']); html = viewPower(m); }
+      else if (c === 'ports' || c === 'power') {
+        ctx.crumbs.push([c === 'ports' ? 'Ports' : 'Power']);
+        ctx.conns = arr(dataFor(D.connectors, m).data);
+        const cc = r.q.c && ctx.conns.find(x => x.id === r.q.c);
+        const cp = cc && r.q.pin != null && realPins(cc).find(p => String(p.n) === r.q.pin);
+        state.conn = cp ? { id: cc.id, pin: String(cp.n) } : null;
+        state.ctx = ctx;   /* the views read the selection through state.ctx.conns */
+        html = c === 'ports' ? viewPorts(m) : viewPower(m);
+      }
       else if (chip) {
         ctx.chip = chip;
         if (state.chipId !== chip.id) { state.chipId = chip.id; state.pin = null; state.filter = null; state.flip = false; }
@@ -379,14 +398,19 @@ function render() {
     }
   }
   if (!ctx.chip) { state.chipId = null; state.pin = null; }
+  if (!ctx.conns) state.conn = null;
+  state.phone = PHONE_MQ.matches;
   state.ctx = ctx;
   $('#main').innerHTML = html;
   renderStrip(); renderTrace(); renderEdgebar();
   closePop(); closePalette();
   window.scrollTo(0, 0);
-  if (ctx.chip) { renderPanel(); if (PANEL_MQ.matches) padIntoView(); drawWire(); watchDip(); } else { closePanel(); watchDip(); }
+  if (ctx.chip || state.conn) { renderPanel(); drawWire(); } else closePanel();
+  watchDip();
   if (a === 'glossary' && r.q.term) { const el = document.getElementById('term-' + r.q.term); if (el) el.scrollIntoView({ block: 'center' }); }
   if (c === 'ports' && r.q.c) { const el = document.getElementById('conn-' + r.q.c); if (el) el.scrollIntoView({ block: 'start' }); }
+  if (c === 'power' && r.q.c) { const el = $('#supply'); if (el) el.scrollIntoView({ block: 'start' }); }
+  if ((ctx.chip || state.conn) && PANEL_MQ.matches) { padIntoView(); drawWire(); }
   document.title = ctx.chip ? `${ctx.chip.short} pinout, Retro Bench` : ctx.machine ? `${ctx.machine.name}, Retro Bench` : ctx.brand ? `${ctx.brand.name}, Retro Bench` : 'Retro Bench';
 }
 
@@ -419,7 +443,7 @@ function renderEdgebar() {
 }
 
 /* ---------- views ---------- */
-const head = (des, title, sub) => `<div class="hd">${des ? `<span class="des">${esc(des)}</span>` : ''}<h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`;
+const head = (des, title, sub, checked) => `<div class="hd">${des ? `<span class="des">${esc(des)}</span>` : ''}<h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}${checked ? `<div class="chkd">${checked}</div>` : ''}</div>`;
 const emptyBlk = (label, text) => `<div class="empty"><b>${esc(label)}</b>${text}</div>`;
 
 function viewHome() {
@@ -479,7 +503,7 @@ function viewMachine(m) {
       ${door(`${mPath(m)}/pinouts`, 'J1', 'Pinouts', chips.length ? `${captured} of ${chips.length} chips drawn` : 'No chips captured yet', !chips.length, true)}
       ${door(`${mPath(m)}/quickref`, 'J2', 'Quick reference', qr.data ? 'Keys, BASIC, memory map' : 'Not captured yet', !qr.data)}
       ${door(`${mPath(m)}/ports`, 'J3', 'Ports', cn.data ? `${arr(cn.data).length} connectors` : 'Not captured yet', !cn.data)}
-      ${door(`${mPath(m)}/power`, 'J4', 'Power', pw.data ? `${arr(pw.data.rails).length} rails, ${arr(pw.data.testPoints).length} test points` : 'Not captured yet', !pw.data)}
+      ${door(`${mPath(m)}/power`, 'J4', 'Power', pw.data ? `${pw.data.supply && pw.data.supply.name ? esc(pw.data.supply.name) + ', ' : ''}${arr(pw.data.rails).length} rails, ${arr(pw.data.testPoints).length} test points` : 'Not captured yet', !pw.data)}
     </div>
     ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips)}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.</p></section>`
       : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} is ${m.status === 'planned' ? 'planned' : 'on paper'}: its chips have not been entered yet.`)}
@@ -513,7 +537,7 @@ function viewChip(m, chip) {
   const present = [...new Set(chip.pins.map(p => p.type))].sort((a, b) => rank(a) - rank(b));
   const count = t => chip.pins.filter(p => p.type === t).length;
   const loc = locOf(chip, m);
-  return head(boardDes(chip, m), esc(chip.name), `${esc(chip.role || '')}. ${esc(chip.pkg || '')}${loc ? `, ${esc(loc)} on the ${esc(m.name)}` : ''}. ${HEAT[chip.heat] || ''}.${hotMark(chip.heat)}${chip.verify ? chk() : ''}`) + `
+  return head(boardDes(chip, m), esc(chip.name), `${esc(chip.role || '')}. ${esc(chip.pkg || '')}${loc ? `, ${esc(loc)} on the ${esc(m.name)}` : ''}. ${HEAT[chip.heat] || ''}.${hotMark(chip.heat)}${chip.verify ? chk() : ''}`, chip.verifiedAgainst ? `Checked against: ${esc(chip.verifiedAgainst)}` : '') + `
     <div class="flex flex-wrap gap-2.5 items-center mt-4">
       <button type="button" class="btn${state.flip ? ' on' : ''}" data-act="flip" aria-pressed="${state.flip}">View: ${state.flip ? 'Bottom' : 'Top'}</button>
       ${state.filter ? `<button type="button" class="btn" data-act="filter" data-t="">Show all pins</button>` : ''}
@@ -556,6 +580,7 @@ function pinDetail(chip, p, m) {
     </dl>
     <p class="desc">${termify(p.desc, p.terms)}${p.verify ? chk() : ''}</p>
     ${p.probe ? `<div class="probe"><b>Probe</b>${esc(p.probe)}</div>` : ''}
+    ${conflictNote(p)}
     ${termLinks(p.terms)}
     ${datasheets(chip)}
     <div class="pinnav"><button type="button" class="btn" data-pin="${prev.n}" data-nav="prev" aria-label="Previous pin, ${prev.n} ${esc(prev.name)}">&lsaquo; ${prev.n} ${esc(prev.name)}</button><button type="button" class="btn" data-pin="${next.n}" data-nav="next" aria-label="Next pin, ${next.n} ${esc(next.name)}">${next.n} ${esc(next.name)} &rsaquo;</button></div>`;
@@ -578,7 +603,8 @@ function viewQuickref(m, tabQ) {
       ${arr(basic.groups).length ? `<section class="blk"><span class="lbl">Everything else</span>${basic.groups.map(g => `<details class="grp"><summary>${esc(g.group)}<span class="cnt">${arr(g.items).length}</span></summary><div class="items">${arr(g.items).map(it => `<span>${esc(it)}</span>`).join('')}</div></details>`).join('')}</section>` : ''}
       ${arr(basic.quirks).length ? `<section class="blk"><span class="lbl">Quirks</span><ul class="bul">${basic.quirks.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}`;
   } else body = `<section class="blk"><span class="lbl">Memory map</span>${arr(q.memory).length ? `<div class="memmap">${q.memory.map((r, i) => `<div class="k${i === q.memory.length - 1 ? ' last' : ''}">${esc(r.range)}</div><div>${esc(r.what)}</div>`).join('')}</div>` : '<p class="note mt-0">No memory map captured.</p>'}</section>`;
-  return top + jumpers + body + sharedNote(shared);
+  const src = arr(q.sources).length ? `<section class="blk"><span class="lbl">Sources</span>${sourceList(q.sources, '')}</section>` : '';
+  return top + jumpers + body + src + sharedNote(shared);
 }
 function keycaps(s) {
   /* "CTRL + 1-8" becomes keycaps; prose-like entries stay one cap */
@@ -588,31 +614,102 @@ function keycaps(s) {
   return parts.map((k, i) => (i ? '<span class="key plus">+</span>' : '') + `<span class="key">${esc(k)}</span>`).join('');
 }
 
+/* ---------- connectors: a drawing from src/connectors.js, the pin table beside it, PIN DETAIL under the drawing ---------- */
+const realPins = c => arr(c.pins).filter(p => p && p.n != null && p.n !== '?' && p.n !== '-');
+const connDes = (list, c) => `J${arr(list).indexOf(c) + 1}`;
+/* the selected pad, when it is on this page */
+function selConn() {
+  const list = state.ctx.conns, s = state.conn;
+  if (!s || !list) return null;
+  const c = list.find(x => x.id === s.id), p = c && realPins(c).find(x => String(x.n) === s.pin);
+  return p ? { c, p, des: connDes(list, c) } : null;
+}
+function connDetail(c, p, des) {
+  const pins = realPins(c), i = pins.indexOf(p), t = p.type ? ptype(p.type) : null;
+  const prev = pins[(i - 1 + pins.length) % pins.length], next = pins[(i + 1) % pins.length];
+  const nav = (q, dir, label) => `<button type="button" class="btn" data-cpin="${esc(q.n)}" data-conn="${esc(c.id)}" data-nav="${dir}" aria-label="${dir === 'prev' ? 'Previous' : 'Next'} pin, ${esc(q.n)} ${esc(q.name || '')}">${label}</button>`;
+  return `<div class="pinhead"><span class="n">${esc(p.n)}</span><span class="nm">${esc(p.name || '')}</span><span class="ch">${esc(des)} ${esc(c.name)}</span></div>
+    <dl class="kv">${t ? `<dt>Type</dt><dd>${esc(t.label)} <span class="tin">${esc(t.hint)}</span></dd>` : ''}<dt>Connector</dt><dd>${esc(c.kind || '')}</dd></dl>
+    ${p.desc || p.verify ? `<p class="desc">${termify(p.desc || '', p.terms)}${p.verify ? chk() : ''}</p>` : ''}
+    ${p.expect ? `<div class="probe"><b>Expect</b>${esc(p.expect)}</div>` : ''}
+    ${conflictNote(p)}
+    ${termLinks(p.terms)}
+    ${pins.length > 1 ? `<div class="pinnav">${pins.length > 2 ? nav(prev, 'prev', `&lsaquo; ${esc(prev.n)} ${esc(prev.name || '')}`) : ''}${nav(next, 'next', `${esc(next.n)} ${esc(next.name || '')} &rsaquo;`)}</div>` : ''}`;
+}
+const connDetailBox = c => {
+  const s = selConn();
+  return s && s.c === c ? `<section class="blk"><span class="lbl">Pin detail</span>${connDetail(s.c, s.p, s.des)}</section>` : '';
+};
+/* labels: a pin field written beside each pad (the power page shows `expect`). Round, single and custom
+   drawings grow sideways with labels, so on a phone they are left to the table. */
+function connBody(c, o = {}) {
+  const sel = state.conn && state.conn.id === c.id ? state.conn.pin : null;
+  const narrowOK = /^(de9|da15|db25|edge-)/.test(c.geo || '');
+  const dr = window.RBConn ? RBConn.draw(c, { view: state.cview, sel, labels: o.labels && (narrowOK || !PHONE_MQ.matches) ? o.labels : null }) : null;
+  const next = state.cview === 'socket' ? 'plug' : 'socket';
+  const tools = dr && !dr.fixed ? `<div class="ctools"><button type="button" class="tog" data-act="cview" data-conn="${esc(c.id)}" aria-label="Connector view: ${state.cview}. Switch to ${next}.">View: <b>${state.cview}</b></button><span class="cap">${CVIEW_CAP[state.cview]}</span></div>` : '';
+  const off = dr && dr.unplaced.length ? ` Not on this drawing: ${dr.unplaced.map(esc).join(', ')}.` : '';
+  /* what is drawn goes above the drawing: below it is the copper trace's lane to PIN DETAIL */
+  const drawing = dr ? `${tools}<p class="note cview">${esc(dr.label)}.${off}</p><div class="cwrap">${dr.svg}</div>`
+    : `<p class="note mt-0">No drawing yet${c.geo ? ` (no layout for "${esc(c.geo)}")` : ''}. The table is the whole record.</p>`;
+  const row = p => {
+    const on = sel != null && String(p.n) === sel ? ' sel' : '', live = p.n != null && p.n !== '?' && p.n !== '-';
+    const at = live ? ` data-cpin="${esc(p.n)}" data-conn="${esc(c.id)}"` : '';
+    const exp = p.expect ? `<span class="x">${esc(p.expect)}</span>` : '';
+    const parts = o.labels === 'expect' ? [exp, esc(p.desc || '')] : [esc(p.desc || ''), exp && `Expect ${exp}`];
+    const text = parts.filter(Boolean).map(t => (/[.!?]$/.test(t) ? t : t + '.')).join(' ');
+    return `<div class="k${on}"${at}>${esc(p.n)}</div><div class="v mono${on}"${at}>${esc(p.name || '')}</div><div class="v3 tin"${at}>${text}${p.verify ? chk() : ''}</div>`;
+  };
+  return { wide: !!dr && dr.W > 520, html: `<div class="cgrid${dr ? '' : ' bare'}">
+      <div class="cstage" data-conn="${esc(c.id)}"><svg class="wire" aria-hidden="true"></svg>${drawing}<div class="cdetail" data-conn="${esc(c.id)}">${connDetailBox(c)}</div></div>
+      <div class="legend tri ctable">${arr(c.pins).map(row).join('')}</div>
+    </div>` };
+}
 function viewPorts(m) {
   const { data: list, shared } = dataFor(D.connectors, m);
-  const top = head(mDes(m), 'Ports and connectors', `${esc(m.name)}. Pin numbers follow the connector's own convention; "?" means the sheet did not record it.`);
+  const unknown = arr(list).some(c => arr(c.pins).some(p => p.n === '?'));
+  const top = head(mDes(m), 'Ports and connectors', `${esc(m.name)}. Drawn looking into the socket on the machine; tap a pad or a row for its detail.${unknown ? ' "?" means no source gives that contact&#39;s position yet.' : ''}`);
   if (!list || !arr(list).length) return top + emptyBlk('NOT CAPTURED', `No connector pinouts for the ${esc(m.name)} in the app yet.`);
-  return top + `<div class="grid gap-x-[18px] md:grid-cols-2 items-start">${list.map((c, i) => `<section class="blk scroll-mt-4" id="conn-${esc(c.id)}"><span class="lbl"><span class="d">J${i + 1}</span>${esc(c.name)}</span>
+  return top + list.map((c, i) => {
+    const b = connBody(c);
+    return `<section class="blk cblk${b.wide ? ' wide' : ''} scroll-mt-4" id="conn-${esc(c.id)}"><span class="lbl"><span class="d">J${i + 1}</span>${esc(c.name)}</span>
       <div class="tin sm mono">${esc(c.kind || '')}${c.verify ? chk() : ''}</div>
       ${c.summary ? `<p class="desc mt-2 text-base">${esc(c.summary)}</p>` : ''}
-      <div class="legend mt-3">${arr(c.pins).map(p => `<div class="k">${esc(p.n)} <span class="text-silk">${esc(p.name)}</span></div><div class="v tin">${esc(p.desc || '')}</div>`).join('')}</div>
+      ${b.html}
       ${termLinks(c.terms)}
-    </section>`).join('')}</div>` + sharedNote(shared);
+      ${sourceList(c.sources, 'Sources', c.verifiedAgainst)}
+    </section>`;
+  }).join('') + sharedNote(shared);
 }
 
+/* the supply: what feeds the board, its known faults, and its connector drawn with what each pad should read */
+function supplyBlock(m, sup) {
+  const list = arr(dataFor(D.connectors, m).data), c = sup.connector && list.find(x => x.id === sup.connector);
+  const b = c && connBody(c, { labels: 'expect' });
+  return `<section class="blk psu cblk${b && b.wide ? ' wide' : ''} scroll-mt-4" id="supply"><span class="lbl"><span class="d">PSU</span>Supply</span>
+    <div class="nm">${esc(sup.name || 'Power supply')}<span class="tag">${sup.external ? 'External' : 'Internal'}</span></div>
+    ${sup.output ? `<div class="out">${esc(sup.output)}</div>` : ''}
+    ${sup.external ? '' : `<p class="note">Internal supply, inside the case.${c ? ' Drawn below: its connector to the board.' : ''}</p>`}
+    ${arr(sup.notes).length ? `<div class="h4">Known problems</div><ul class="bul">${sup.notes.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+    ${c ? `<div class="h4">${esc(connDes(list, c))} ${esc(c.name)} <span class="tin">${esc(c.kind || '')}</span>${c.verify ? chk() : ''}</div>${b.html}${sourceList(c.sources, 'Connector sources', c.verifiedAgainst)}`
+      : `<p class="note">No pinout for the ${sup.external ? 'supply plug' : 'supply connector'} yet.</p>`}
+    ${sourceList(sup.sources)}
+  </section>`;
+}
 function viewPower(m) {
   const { data: pw, shared } = dataFor(D.power, m);
-  const top = head(mDes(m), 'Power and test points', `${esc(m.name)}. Check the rails before suspecting any chip. Underlined pins open the drawing.`);
+  const top = head(mDes(m), 'Power and test points', `${esc(m.name)}. Check the supply and the rails before suspecting any chip. Underlined pins open the drawing.`);
   if (!pw) return top + emptyBlk('NOT CAPTURED', `No rail or test point data for the ${esc(m.name)} in the app yet.`);
   let i = 1;
   const probes = chipsOf(m).filter(c => c.pins).flatMap(c => c.pins.filter(p => p.probe).map(p => ({ c, p })));
-  return top + `
+  return top + (pw.supply ? supplyBlock(m, pw.supply) : '') + `
     <section class="blk"><span class="lbl">Rails</span>
       <div class="legend tri">${arr(pw.rails).map(r => `<div class="k">TP${i++}</div><div class="v"><b class="mono">${esc(r.rail)}</b><br><span class="tin sm">${linkPins(r.where || '', m)}</span>${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}</div><div class="v3 mono">${esc(r.expect || '')}</div>`).join('')}</div>
     </section>
     ${arr(pw.testPoints).length ? `<section class="blk"><span class="lbl">Test points</span>
       <div class="legend tri">${pw.testPoints.map(t => `<div class="k">TP${i++}</div><div class="v"><b>${esc(t.tp)}</b><br><span class="tin sm mono">${linkPins(t.where || '', m)}</span></div><div class="v3 mono">${esc(t.expect || '')}</div>`).join('')}</div>
     </section>` : ''}
+    ${arr(pw.sources).length ? `<section class="blk"><span class="lbl">Sources</span>${sourceList(pw.sources, '')}</section>` : ''}
     <div class="grid gap-x-[18px] md:grid-cols-2 items-start">
       <section class="blk"><span class="lbl">Order of checks</span><ul class="bul"><li>Rails at the supply pins, with the board loaded.</li><li>Reset goes high after power-on.</li><li>Master clock, then the CPU clock.</li><li>Only then pull the hottest chip.</li></ul></section>
       ${probes.length ? `<section class="blk"><span class="lbl">Probe hints</span><div class="legend">${probes.slice(0, 8).map(({ c, p }) => `<div class="k"><a class="lnk" href="${chipPath(m, c)}?pin=${p.n}">${esc(c.short)}.${p.n} ${esc(p.name)}</a></div><div class="v sm">${esc(p.probe)}</div>`).join('')}</div></section>` : ''}
@@ -654,12 +751,17 @@ function viewMore() {
 const viewNotFound = () => emptyBlk('NO SUCH TRACE', 'That page does not exist. <a href="#/">Back to the board</a>.');
 
 /* ---------- pin selection, panel, copper trace ---------- */
-function renderPanel() {
+function panelBody() {
   const { chip, machine: m } = state.ctx;
-  const p = chip && state.pin != null && chip.pins.find(x => x.n === state.pin);
-  if (!p || !PANEL_MQ.matches) { closePanel(); return; }
+  if (chip) { const p = state.pin != null && chip.pins.find(x => x.n === state.pin); return p ? pinDetail(chip, p, m) : ''; }
+  const s = selConn();
+  return s ? connDetail(s.c, s.p, s.des) : '';
+}
+function renderPanel() {
+  const body = panelBody();
+  if (!body || !PANEL_MQ.matches) { closePanel(); return; }
   const panel = $('#panel');
-  panel.innerHTML = `<button type="button" class="x" data-act="close-panel" aria-label="Close pin detail">&times;</button>${pinDetail(chip, p, m)}`;
+  panel.innerHTML = `<button type="button" class="x" data-act="close-panel" aria-label="Close pin detail">&times;</button>${body}`;
   panel.classList.add('open'); document.body.classList.add('panel-open'); panel.scrollTop = 0;
 }
 function closePanel() {
@@ -680,11 +782,47 @@ function selectPin(n) {
   if (PANEL_MQ.matches) padIntoView();
   drawWire();
 }
+function selectConnPin(id, n) {
+  const list = state.ctx.conns, c = list && list.find(x => x.id === id);
+  if (!c || !realPins(c).some(p => String(p.n) === n)) return;
+  const nav = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.nav : null;
+  state.conn = { id, pin: n };
+  history.replaceState(null, '', `#${parseHash().path}?c=${encodeURIComponent(id)}&pin=${encodeURIComponent(n)}`);
+  for (const el of $$('svg.conn .cpin[data-cpin], .ctable [data-cpin]')) {
+    const on = el.dataset.conn === id && el.dataset.cpin === n && !el.classList.contains('v3');
+    el.classList.toggle('sel', on); if (el.matches('g')) el.setAttribute('aria-pressed', on);
+  }
+  for (const d of $$('.cdetail')) { const cc = list.find(x => x.id === d.dataset.conn); d.innerHTML = cc ? connDetailBox(cc) : ''; }
+  renderPanel();
+  if (nav) { const b = $(`${PANEL_MQ.matches ? '#panel' : '.cdetail'} [data-nav="${nav}"]`); if (b) b.focus({ preventScroll: true }); }
+  if (PANEL_MQ.matches) padIntoView();
+  drawWire();
+}
+/* SOCKET / PLUG: redraw the page where it stands, keep focus on the toggle that was pressed */
+function refreshConns(focusId) {
+  const y = scrollY, m = state.ctx.machine;
+  $('#main').innerHTML = state.ctx.route.segs[2] === 'power' ? viewPower(m) : viewPorts(m);
+  window.scrollTo(0, y);
+  state.phone = PHONE_MQ.matches;
+  const t = focusId && $$('[data-act="cview"]').find(b => b.dataset.conn === focusId); if (t) t.focus({ preventScroll: true });
+  renderPanel(); drawWire(); watchDip();
+}
 /* phone: keep the selected pad, or the pad keyboard focus lands on, visible above the panel */
 const panelTop = () => { const p = $('#panel'); return innerHeight - parseFloat(getComputedStyle(p).bottom) - p.offsetHeight; };
-function padIntoView(pin = $('svg.dip .pin.sel')) {
+function padIntoView(pin = $('svg.dip .pin.sel') || $('svg.conn .cpin.sel')) {
   const pad = pin && pin.querySelector('.pad'); if (!pad || !$('#panel').classList.contains('open')) return;
-  const r = pad.getBoundingClientRect(), top = panelTop();
+  const top = panelTop();
+  if (pin.matches('.cpin')) {
+    /* a connector: bring the pad into a sideways-scrolling drawing, then sit the drawing's bottom edge on the
+       panel so the trace's last leg is short and crosses no table row (unless that would hide the pad) */
+    const wrap = pin.closest('.cwrap'), w = wrap.getBoundingClientRect(), pr = pad.getBoundingClientRect();
+    if (pr.left < w.left + 8 || pr.right > w.right - 8) wrap.scrollLeft += pr.left - (w.left + w.width / 2 - pr.width / 2);
+    let dy = pin.ownerSVGElement.getBoundingClientRect().bottom - (top - 12);
+    const r = pad.getBoundingClientRect(); if (r.top - dy < 24) dy = r.top - 24;
+    if (Math.abs(dy) > 2) window.scrollBy(0, dy);
+    return;
+  }
+  const r = pad.getBoundingClientRect();
   if (r.bottom > top - 24 || r.top < 24) window.scrollBy(0, r.top - Math.max(24, (top - r.height) * 0.45));
 }
 function refreshChip() {
@@ -693,7 +831,31 @@ function refreshChip() {
   $('#main').innerHTML = viewChip(machine, chip);
   renderPanel(); drawWire(); watchDip();
 }
-function drawWire() { drawStageWire(); drawPhoneWire(); }
+function drawWire() { drawStageWire(); drawPhoneWire(); drawConnWire(); }
+/* connectors: the drawing gives each pad its route out to the drawing's bottom edge (data-route, data-rx);
+   here it is placed on the page and finished straight down to the PIN DETAIL box, or on a phone to the
+   panel's copper edge. Clipped to the drawing's visible width, so a pad scrolled out of a wide card edge
+   draws nothing. */
+function connRoute(sel, svgEl, wrap, ox, oy, endY, r, id, label) {
+  const sv = svgEl.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+  const x = sv.left - ox, y = sv.top - oy, ex = x + Number(sel.dataset.rx), ey = sv.bottom - oy;
+  /* the clip sits on an untransformed group: on the path itself it would move with the translate */
+  /* land beside the box's PIN DETAIL label, never on it */
+  const lb = label && label.getBoundingClientRect(), lx = lb ? lb.right - ox + 16 : 0;
+  const pts = lb && ex > lb.left - ox - 10 && ex < lx ? [[ex, ey], [ex, endY - 14], [lx, endY - 14], [lx, endY]] : [[ex, ey], [ex, endY]];
+  const end = pts[pts.length - 1];
+  return `<defs><clipPath id="${id}"><rect x="${w.left - ox}" y="${-oy - 9999}" width="${w.width}" height="${19998 + innerHeight}"/></clipPath></defs>
+    <g clip-path="url(#${id})"><path transform="translate(${x} ${y})" d="${sel.dataset.route}"/></g>${endY > ey && ex >= w.left - ox && ex <= w.right - ox ? `<path d="${chamfer(pts, 9)}"/><circle cx="${end[0]}" cy="${end[1]}" r="${r}"/>` : ''}`;
+}
+function drawConnWire() {
+  for (const w of $$('.cstage .wire')) w.innerHTML = '';
+  const sel = state.conn && $('svg.conn .cpin.sel');
+  if (!sel || PANEL_MQ.matches) return;
+  const stage = sel.closest('.cstage'), box = stage && stage.querySelector('.cdetail .blk'); if (!box) return;
+  const S = stage.getBoundingClientRect(), wire = stage.querySelector('.wire');
+  wire.setAttribute('viewBox', `0 0 ${S.width} ${S.height}`);
+  wire.innerHTML = connRoute(sel, sel.ownerSVGElement, sel.closest('.cwrap'), S.left, S.top, box.getBoundingClientRect().top - S.top, 4, 'cw-clip', box.querySelector('.lbl'));
+}
 /* desktop and tablet: a chamfered copper trace from the selected pad to the PIN DETAIL box,
    around the top or bottom of the chip (whichever is nearer) when the pad is on the far side */
 function drawStageWire() {
@@ -729,7 +891,13 @@ function drawStageWire() {
 function drawPhoneWire() {
   const svg = $('#wire-phone'); if (!svg) return;
   svg.innerHTML = '';
-  if (!PANEL_MQ.matches || !state.ctx.chip || !$('#panel').classList.contains('open')) return;
+  if (!PANEL_MQ.matches || !$('#panel').classList.contains('open')) return;
+  if (!state.ctx.chip) {
+    const sel = state.conn && $('svg.conn .cpin.sel'); if (!sel) return;
+    svg.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
+    svg.innerHTML = connRoute(sel, sel.ownerSVGElement, sel.closest('.cwrap'), 0, 0, panelTop() + 1, 4.5, 'cwp-clip');
+    return;
+  }
   const sel = $('svg.dip .pin.sel'); if (!sel) return;
   const dip = $('svg.dip').getBoundingClientRect(), wrap = $('#dipwrap').getBoundingClientRect(), pad = sel.querySelector('.pad').getBoundingClientRect();
   const sx = pad.left + pad.width / 2, sy = pad.top + pad.height / 2, top = panelTop() + 1;
@@ -790,6 +958,8 @@ document.addEventListener('click', e => {
   if (pop.dataset.open && !pop.contains(e.target) && !e.target.closest('[data-term]')) closePop();
   const term = e.target.closest('[data-term]');
   if (term) { e.preventDefault(); openPop(term.dataset.term, term); return; }
+  const cp = e.target.closest('[data-cpin]');
+  if (cp && cp.dataset.conn) { selectConnPin(cp.dataset.conn, cp.dataset.cpin); return; }
   const pinEl = e.target.closest('[data-pin]');
   if (pinEl) { selectPin(Number(pinEl.dataset.pin)); return; }
   if (e.target === $('#palette')) { closePalette(); return; }
@@ -801,6 +971,7 @@ document.addEventListener('click', e => {
   if (a === 'mask') setMask(MASKS[(MASKS.indexOf(mask()) + 1) % MASKS.length]);
   else if (a === 'set-mask') { e.preventDefault(); setMask(act.dataset.mask); }
   else if (a === 'flip') { state.flip = !state.flip; refreshChip(); $('[data-act="flip"]').focus(); }
+  else if (a === 'cview') { state.cview = state.cview === 'socket' ? 'plug' : 'socket'; LS.set('rb-cview', state.cview); refreshConns(act.dataset.conn); }
   else if (a === 'filter') { const t = act.dataset.t; state.filter = (!t || state.filter === t) ? null : t; refreshChip(); const f = $(`[data-act="filter"][data-t="${CSS.escape(t)}"]`) || $('[data-act="flip"]'); if (f) f.focus(); }
   else if (a === 'close-panel') closePanel();
   else if (a === 'close-pop') closePop();
@@ -850,24 +1021,29 @@ document.addEventListener('keydown', e => {
   }
   /* pads are SVG groups: Enter or Space selects (buttons already click on their own) */
   if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('svg.dip') && e.target.dataset.pin) { e.preventDefault(); selectPin(Number(e.target.dataset.pin)); }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('svg.conn') && e.target.dataset.cpin) { e.preventDefault(); selectConnPin(e.target.dataset.conn, e.target.dataset.cpin); }
 });
 window.addEventListener('hashchange', render);
 let raf = 0;
-const queueWire = () => { if (!state.ctx.chip || raf) return; raf = requestAnimationFrame(() => { raf = 0; drawWire(); }); };
+const queueWire = () => { if (!(state.ctx.chip || state.conn) || raf) return; raf = requestAnimationFrame(() => { raf = 0; drawWire(); }); };
 /* scroll does not bubble: capture catches the window and the footprint's own sideways scroll in #dipwrap */
 document.addEventListener('scroll', queueWire, { capture: true, passive: true });
 /* the drawing is rebuilt on every render; follow its size too (fonts, the stage column, a flip) */
 const dipRO = window.ResizeObserver ? new ResizeObserver(queueWire) : null;
-function watchDip() { if (!dipRO) return; dipRO.disconnect(); for (const el of [$('#dipwrap'), $('svg.dip')]) if (el) dipRO.observe(el); }
-document.addEventListener('focusin', e => { const g = e.target.closest && e.target.closest('svg.dip .pin'); if (g && PANEL_MQ.matches) padIntoView(g); });
+function watchDip() { if (!dipRO) return; dipRO.disconnect(); for (const el of [$('#dipwrap'), $('svg.dip'), ...$$('.cstage')]) if (el) dipRO.observe(el); }
+document.addEventListener('focusin', e => { const g = e.target.closest && e.target.closest('svg.dip .pin, svg.conn .cpin'); if (g && PANEL_MQ.matches) padIntoView(g); });
 $('#panel').addEventListener('transitionend', () => drawPhoneWire());
 let rt;
 window.addEventListener('resize', () => {
   clearTimeout(rt);
   rt = setTimeout(() => {
-    const { chip } = state.ctx;
+    const { chip, conns } = state.ctx;
     if (chip) {
       if (wantCompact(chip) !== state.compact) refreshChip();
+      else { renderPanel(); drawWire(); }
+    } else if (conns) {
+      /* the power page drops pad labels on a phone: redraw when the width crosses that line */
+      if (PHONE_MQ.matches !== state.phone) refreshConns();
       else { renderPanel(); drawWire(); }
     }
   }, 120);
@@ -875,6 +1051,6 @@ window.addEventListener('resize', () => {
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 render();
 /* after fonts and layout settle: bring a deep-linked pad above the phone panel, then route the trace */
-window.addEventListener('load', () => { if (state.ctx.chip && PANEL_MQ.matches) padIntoView(); drawWire(); });
+window.addEventListener('load', () => { if ((state.ctx.chip || state.conn) && PANEL_MQ.matches) padIntoView(); drawWire(); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => drawWire());
 })();

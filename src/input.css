@@ -2,6 +2,7 @@
 @import "../fonts/fonts.css";
 @source "../index.html";
 @source "./app.js";
+@source "./connectors.js";
 
 /* Retro Bench, design "Silkscreen": the printed circuit board is the interface.
    Three materials only: silkscreen (outlines, type), copper (the live thing: active trace, selected pad,
@@ -32,6 +33,7 @@
   --color-pwr: var(--pwr);
   --color-clk: var(--clk);
   --color-hole: var(--hole);
+  --color-warn: var(--warn);
 }
 
 :root, :root[data-mask="green"] {
@@ -40,6 +42,7 @@
   --copper: #c8803a; --copper-hi: #dfa061; --copper-dk: #8f5a26; --copper-ink: #1b1a17;
   --tin: #9ca69d; --tin-dim: rgba(156,166,157,.5);
   --pwr: #d8683c; --clk: #6f9ec9; --hole: #0e1a13;
+  --warn: #d9a93c;   /* amber: two sources disagree */
   --w: 1.5px;
   color-scheme: dark;
 }
@@ -53,6 +56,7 @@
   --copper: #9a4f17; --copper-hi: #7a3a0c; --copper-dk: #6a350c; --copper-ink: #fff7ea;
   --tin: #5a6058; --tin-dim: rgba(90,96,88,.62);
   --pwr: #c2410c; --clk: #2f67a0; --hole: #fbf8f0;
+  --warn: #8a5a00;
   color-scheme: light;
 }
 
@@ -161,6 +165,7 @@
   .hd .des { font: 400 42px/1 var(--font-mono); color: var(--copper); letter-spacing: .02em; }
   .hd h1 { font: 500 34px/1.05 var(--font-sans); text-transform: uppercase; letter-spacing: .03em; }
   .hd .sub { font: 400 18px var(--font-sans); color: var(--silk-70); flex-basis: 100%; }
+  .hd .chkd { flex-basis: 100%; font: 15px var(--font-mono); color: var(--tin); }
   .note { font-size: 16px; color: var(--tin); margin-top: 10px; }
   .empty { border: var(--w) dashed var(--silk-45); border-radius: var(--radius-silk); padding: 22px; color: var(--silk-70); margin-top: 26px; }
   .empty b { display: block; color: var(--silk); font: 400 15px var(--font-mono); letter-spacing: .08em; margin-bottom: 6px; }
@@ -319,11 +324,54 @@
   .desc { margin-top: 14px; font-size: 17px; }
   .probe { margin-top: 14px; border-left: 3px solid var(--copper); padding: 4px 0 4px 12px; font-size: 16px; }
   .probe b { display: block; font: 400 13px var(--font-mono); letter-spacing: .1em; color: var(--copper); margin-bottom: 2px; text-transform: uppercase; }
+  .conflict { margin-top: 14px; border-left: 3px solid var(--warn); padding: 4px 0 4px 12px; font-size: 15px; color: var(--silk-70); }
+  .conflict b { display: block; font: 400 13px var(--font-mono); letter-spacing: .1em; color: var(--warn); margin-bottom: 2px; text-transform: uppercase; }
   .pinnav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
   .pinnav .btn { flex: 1; justify-content: center; text-transform: none; }
   .ds li { font-size: 16px; }
   .pinlegend .legend > * { cursor: pointer; }
   .pinlegend .legend > .sel { color: var(--copper-hi); }
+
+  /* ---------- connectors: drawings from src/connectors.js, a pin table beside them ---------- */
+  .tag { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; border: 1px solid var(--silk-45); color: var(--silk-70); border-radius: 2px; padding: 1px 5px 0; vertical-align: 3px; margin-left: 8px; text-transform: uppercase; }
+  .psu .nm { font: 500 22px/1.15 var(--font-sans); text-transform: uppercase; letter-spacing: .03em; }
+  .psu .out { font: 17px var(--font-mono); color: var(--silk); margin-top: 4px; }
+  .cgrid { display: grid; grid-template-columns: minmax(0, max-content) minmax(260px, 1fr); gap: 18px 32px; align-items: start; margin-top: 14px; }
+  .cblk.wide .cgrid, .cgrid.bare { grid-template-columns: minmax(0, 1fr); }
+  .cstage { position: relative; min-width: 0; }
+  .cstage .wire { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 1; }
+  .ctools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+  .ctools .cap { font-size: 16px; color: var(--tin); }
+  .cwrap { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; margin-top: 12px; }
+  .cstage > .cview { margin-top: 6px; font-size: 15px; }
+  .cdetail > .blk { margin-top: 22px; max-width: 480px; }
+  svg.conn { display: block; max-width: none; overflow: visible; }
+  svg.conn .shell { fill: var(--mask-deep); stroke: var(--silk); stroke-width: 1.5; }
+  svg.conn .pc { fill: none; stroke: var(--silk-12); stroke-width: 1; stroke-dasharray: 4 4; }
+  svg.conn .key, svg.conn .bite { fill: var(--mask); stroke: var(--silk); stroke-width: 1.5; }
+  svg.conn .insert { fill: none; stroke: var(--silk-45); stroke-width: 1.5; }
+  svg.conn .pcb { fill: var(--mask-deep); stroke: var(--silk); stroke-width: 1.5; }
+  svg.conn .screw { fill: var(--hole); stroke: var(--silk-45); stroke-width: 1.5; }
+  svg.conn .cpin { cursor: pointer; outline: none; }
+  svg.conn .hit { fill: transparent; }
+  svg.conn .pad { fill: var(--hole); stroke: var(--silk-70); stroke-width: 1.5; }
+  svg.conn .male .pad { fill: var(--mask-deep); stroke: var(--silk); stroke-width: 3; }
+  svg.conn .pad.ring { fill: none; stroke: var(--silk-25); }
+  svg.conn .t-power .pad { stroke: var(--pwr); }
+  svg.conn .t-clock .pad { stroke: var(--clk); }
+  svg.conn .t-ground .pad { stroke: var(--tin); }
+  svg.conn .num { font-size: 12px; fill: var(--silk); pointer-events: none; }
+  svg.conn .clab { font-size: 13px; fill: var(--silk-70); }
+  svg.conn .cpin:hover .pad { stroke: var(--copper); }
+  svg.conn .cpin:focus-visible .hit { stroke: var(--copper); stroke-width: 2; stroke-dasharray: 5 3; }
+  svg.conn .cpin.sel .pad { fill: var(--copper); stroke: var(--copper-hi); }
+  svg.conn .cpin.sel .pad.ring { fill: none; stroke: var(--copper); }
+  svg.conn .cpin.sel .num { fill: var(--copper-ink); }
+  svg.conn .vac .pad { fill: none; stroke: var(--silk-25); stroke-dasharray: 3 3; }
+  svg.conn .vac .num { fill: var(--silk-45); }
+  .ctable > [data-cpin] { cursor: pointer; }
+  .ctable > .sel { color: var(--copper-hi); }
+  .ctable .v3 .x { font: 15px var(--font-mono); color: var(--silk); }
 
   /* phone: pin detail as a fixed bottom panel, copper rule along its top edge */
   .panel { display: none; }
@@ -418,6 +466,8 @@
   @media (width < 768px) {
     .stage { grid-template-columns: 1fr; }
     .stage .wire, .stage .detail { display: none; }
+    .cgrid { grid-template-columns: minmax(0, 1fr); }
+    .cstage .wire, .cdetail { display: none; }
     .wire-fixed { display: block; position: fixed; inset: 0; width: 100vw; height: 100dvh; pointer-events: none; z-index: 29; overflow: visible; }
     .panel { display: block; position: fixed; left: 6px; right: 6px; bottom: 6px; z-index: 30; max-height: 50dvh; overflow: auto; overscroll-behavior: contain; background: var(--mask); border: var(--w) solid var(--silk-45); border-top: 3px solid var(--copper); border-radius: var(--radius-silk); padding: 14px; transform: translateY(calc(100% + 80px)); visibility: hidden; transition: transform .22s ease, visibility 0s .22s; }
     .panel.open { transform: none; visibility: visible; transition: transform .22s ease; }

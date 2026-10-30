@@ -1,4 +1,4 @@
-/* Retro Bench data: Apple (II, II+, IIe, IIc, III). Sources: the Apple II and //e pinout sheets and the Apple II Pocket Reference; unsourced items carry verify. */
+/* Retro Bench data: Apple (II, II+, IIe, IIc, III). Pins and ports checked against the Apple II Reference Manual (1979), the Apple IIe and IIc Technical Reference Manuals and the chip data sheets; see docs/verification/apple.md. Unsourced items carry verify. */
 (() => {
 Object.assign(RCS.terms, {
   'language-card': { term: 'Language card', short: 'RAM card that replaces the ROM window at $D000-$FFFF.', long: 'A card that adds 16 KB of RAM switched over the ROM at $D000-$FFFF, so a language or Applesoft can run from RAM. A bad card shows as BASIC not found, or random crashes once it is fitted.' },
@@ -6,89 +6,239 @@ Object.assign(RCS.terms, {
   crystal: { term: 'Crystal oscillator', short: 'Quartz crystal that sets the master clock.', long: 'A quartz crystal sets the master oscillator. The Apple II uses 14.318 MHz; dividing by 14 gives the 1.023 MHz system clock. A dead crystal means no clock and a completely dead machine.' },
 });
 
+const IIRM = n => `https://archive.org/details/Apple_II_Reference_Manual_1979_Apple/page/n${n}`;
+const IIE = n => `https://archive.org/details/Apple_IIe_Technical_Reference_Manual/page/n${n}`;
+const IIE87 = n => `https://archive.org/details/apple-iie-technical-reference-manual-1987-edition/page/n${n}`;
+const IIC = n => `https://archive.org/details/Apple_IIc_Technical_Reference_Manual/page/n${n}`;
+const REDBOOK = 'https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/hardware/machines/Apple%20II%20Reference%20Manual%20-%20The%20Red%20Book%20v2.pdf';
+
+/* Pad layouts for 'custom' connector drawings, in a 0-100 box looking into the socket. */
+const dipPads = n => Array.from({ length: n }, (_, i) => {
+  const h = n / 2, left = i < h, row = left ? i : n - 1 - i;
+  return { n: i + 1, x: left ? 32 : 68, y: Math.round(10 + row * (80 / (h - 1))) };
+});
+const DIP_OUTLINE = 'M20 2 H44 A6 6 0 0 0 56 2 H80 V98 H20 Z';
+const rowPads = ns => ns.map((n, i) => ({ n, x: Math.round(14 + i * (72 / Math.max(1, ns.length - 1))), y: 50 }));
+const ROW_OUTLINE = n => `M6 36 H94 V64 H6 Z`;
+const PSU6_PADS = [{ n: 5, x: 35, y: 22 }, { n: 6, x: 65, y: 22 }, { n: 3, x: 35, y: 50 }, { n: 4, x: 65, y: 50 }, { n: 1, x: 35, y: 78 }, { n: 2, x: 65, y: 78 }];
+const PSU6_OUTLINE = 'M20 8 H80 V92 H62 V98 H38 V92 H20 Z';
+const header2x = n => Array.from({ length: n }, (_, i) => ({ n: i + 1, x: i % 2 ? 62 : 38, y: Math.round(5 + Math.floor(i / 2) * (90 / (n / 2 - 1))) }));
+const HEADER_OUTLINE = 'M28 1 H72 V99 H28 Z';
+const db19Pads = [
+  ...Array.from({ length: 10 }, (_, i) => ({ n: i + 1, x: 86 - i * 8, y: 38 })),
+  ...Array.from({ length: 9 }, (_, i) => ({ n: i + 11, x: 82 - i * 8, y: 62 })),
+];
+const DB19_OUTLINE = 'M4 26 H96 L88 76 H12 Z';
+
 const iiRails = [
-  { rail: '+5 V', expect: '4.9-5.2 V', where: '6502 pin 8; 4116 pin 9; 2716 pin 24', note: 'Logic supply. Probe this first.' },
-  { rail: '+12 V', expect: '11.5-12.5 V', where: '4116 pin 8', note: 'RAM Vdd. Slots take it too.' },
-  { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '4116 pin 1', note: 'RAM Vbb. The 4116 needs +5, +12 and -5 V together.' },
-  { rail: '-12 V', expect: '-11.5 to -12.5 V', where: 'PSU connector pin 5; slot pin 33', note: 'Slots and serial cards only.', verify: true },
+  { rail: '+5 V', expect: '4.85-5.15 V', where: '6502 pin 8; 9316B pin 24; PSU connector pin 3; slot pin 25', note: 'Logic supply, regulated directly. Probe this first.' },
+  { rail: '+12 V', expect: '11.3-12.3 V', where: '4116 pin 8; PSU connector pin 4; slot pin 50', note: 'RAM VDD. Nominal 11.8 V. Cards may draw 250 mA in total.' },
+  { rail: '-5 V', expect: '-4.7 to -5.7 V', where: '4116 pin 1; PSU connector pin 6; slot pin 34', note: 'RAM VBB. Nominal -5.2 V. The 4116 needs +5, +12 and -5 V together.' },
+  { rail: '-12 V', expect: '-11 to -13 V', where: 'PSU connector pin 5; slot pin 33; MM5740 pin 18', note: 'Keyboard encoder and serial cards.' },
 ];
 
 const iiTests = [
   { tp: 'Master crystal', where: 'Timing crystal (no chip entry yet)', expect: '14.318 MHz', verify: true },
-  { tp: 'Phi0 (clock in)', where: '6502 pin 37', expect: '1.023 MHz square wave', verify: true },
+  { tp: 'Phi0 (clock in)', where: '6502 pin 37', expect: '1.023 MHz square wave' },
   { tp: 'Phi2 (system clock)', where: '6502 pin 39', expect: '1.023 MHz' },
-  { tp: 'Reset', where: '6502 pin 40', expect: 'LOW briefly at power-on and on Control-Reset; HIGH when running' },
+  { tp: 'Reset', where: '6502 pin 40', expect: 'LOW briefly at power-on and on Reset; HIGH when running' },
   { tp: 'RDY', where: '6502 pin 2', expect: 'HIGH when the CPU may run' },
   { tp: 'RAM /RAS', where: '4116 pin 4', expect: 'Pulses on each memory cycle' },
-  { tp: 'Power supply', where: 'Power supply', expect: 'A ticking PSU with no load is normal; with the board attached it means a short' },
+  { tp: 'Slot clocks', where: 'Slot pins 36, 37, 38, 40', expect: '7M 7.16 MHz; Q3 2.04 MHz; Φ1 and Φ0 1.023 MHz' },
+  { tp: 'Power supply', where: 'Power supply', expect: 'Clicking with no board attached is normal (no-load shutdown); clicking with the board attached means a short or overload' },
 ];
 
 const iiSymptoms = [
-  { symptom: 'No beep / dead machine', suspects: ['cpu6502', 'rom2316'], note: 'Check Phi0 at 6502 pin 37 and RESET at pin 40 first, then the ROM chip-select.' },
+  { symptom: 'No beep / dead machine', suspects: ['cpu6502', 'rom2316'], note: 'Check Phi0 at 6502 pin 37 and RESET at pin 40 first, then the ROM chip-selects (9316B pins 20 and 21).' },
   { symptom: 'Garbage or no boot', suspects: ['dram4116', 'rom2316'], note: 'The sheet says swap the 4116 RAM banks. Check the -5 V and +12 V rails before you swap.' },
   { symptom: 'No video', suspects: [], note: 'Video is discrete TTL and a 2513 character ROM, not one chip. Check the composite output with a scope.' },
-  { symptom: 'Dead keys', suspects: ['kbd5740'], note: 'MM5740 encoder. Check the strobe and key-code lines against the matrix.' },
+  { symptom: 'Dead keys', suspects: ['kbd5740'], note: 'MM5740 encoder. Check +5 V on pin 32, -12 V on pin 18, then the strobe on keyboard connector pin 2.' },
+  { symptom: 'Power supply clicks or squeals', suspects: [], note: 'The supply is shutting down and retrying. Pull all cards; if it still clicks with the bare board, look for a shorted rail before blaming the supply.' },
 ];
 
 const iiConnectors = [
-  { id: 'ii-psu', name: 'Power supply to motherboard', kind: '6-pin power connector', verify: true,
-    summary: 'Four rails from the switching supply. Logic runs on +5 V; +12 V, -5 V and -12 V feed the RAM and slots. Confirm the pin order against your supply before you plug in.',
+  { id: 'ii-psu', name: 'Power supply to main board', kind: '6-pin AMP 9-35028-1 header (supply cable plugs in)', geo: 'custom', pads: PSU6_PADS, outline: PSU6_OUTLINE,
+    verifiedAgainst: 'Apple II Reference Manual (1979), Table 31 and Figure 19, p. 104',
+    summary: 'Cable from the switching supply. Pins 1-2 ground, 3 +5 V, 4 +12 V, 5 -12 V, 6 -5 V, laid out as in Figure 19 of the manual. A 48K board with no cards draws about 1.5 A on +5 V and 400 mA on +12 V. Measure here with the board connected: the supply shuts itself down with no load.',
     pins: [
-      { n: 1, name: 'GND', desc: '0 V.' },
-      { n: 2, name: 'GND', desc: '0 V.' },
-      { n: 3, name: '+5 V', desc: 'Logic supply.' },
-      { n: 4, name: '+12 V', desc: 'RAM Vdd and slots.' },
-      { n: 5, name: '-12 V', desc: 'Slots and serial cards.' },
-      { n: 6, name: '-5 V', desc: 'RAM Vbb and slots.' },
+      { n: 1, name: 'GND', type: 'ground', desc: 'Common ground for the board.', expect: '0 V' },
+      { n: 2, name: 'GND', type: 'ground', desc: 'Common ground for the board.', expect: '0 V' },
+      { n: 3, name: '+5 V', type: 'power', desc: 'Logic supply. About 1.5 A on a bare 48K board.', expect: '4.85-5.15 V' },
+      { n: 4, name: '+12 V', type: 'power', desc: 'RAM and cards. About 400 mA on a bare 48K board.', expect: '11.3-12.3 V (nominal 11.8 V)' },
+      { n: 5, name: '-12 V', type: 'power', desc: 'Keyboard and cards. About 12.5 mA on a bare board.', expect: '-11 to -13 V' },
+      { n: 6, name: '-5 V', type: 'power', desc: 'RAM VBB and cards. Near 0 mA on a bare board.', expect: '-4.7 to -5.7 V (nominal -5.2 V)' },
+    ],
+    sources: [
+      { label: 'Apple II Reference Manual (1979), Power Connector, Table 31 / Figure 19, p. 104', url: IIRM(114) },
+      { label: 'Apple II Red Book (1978), switching supply tolerances, p. 111', url: `${REDBOOK}#page=114` },
     ] },
-  { id: 'ii-game16', name: 'Game I/O (16-pin DIP socket)', kind: '16-pin DIP socket', verify: true,
-    summary: 'Paddles, joysticks and the Open-Apple / Closed-Apple keys read through PB0 and PB1. Annunciators AN0-AN3 drive lights or relays.',
+  { id: 'ii-game16', name: 'Game I/O (16-pin DIP socket, J14)', kind: '16-pin DIP socket', geo: 'custom', pads: dipPads(16), outline: DIP_OUTLINE,
+    verifiedAgainst: 'Apple II Reference Manual (1979), Figure 16 and Table 29, p. 100',
+    summary: 'Socket J14 on the main board, pin 1 at the notch. Paddles are 150 kΩ pots from +5 V into GC0-GC3; buttons pull PB0-PB2 HIGH. AN0-AN3 are LS-TTL outputs: buffer them before driving anything heavier. Pins 9 and 16 are unconnected.',
     pins: [
-      { n: 1, name: '+5 V', desc: 'Supply for paddles and switches.' },
-      { n: 2, name: 'PB0', desc: 'Push button 0 / Open-Apple.' },
-      { n: 3, name: 'PB1', desc: 'Push button 1 / Closed-Apple.' },
-      { n: 4, name: 'PB2', desc: 'Push button 2.' },
-      { n: 5, name: '/C040 STB', desc: 'Strobe on access to $C040.', activeLow: true },
-      { n: 6, name: 'PDL0', desc: 'Paddle 0 (150 kΩ pot).' },
-      { n: 7, name: 'PDL2', desc: 'Paddle 2.' },
-      { n: 8, name: 'GND', desc: '0 V.' },
-      { n: 9, name: 'NC', desc: 'No connection.' },
-      { n: 10, name: 'PDL1', desc: 'Paddle 1.' },
-      { n: 11, name: 'PDL3', desc: 'Paddle 3.' },
-      { n: 12, name: 'AN3', desc: 'Annunciator 3.' },
-      { n: 13, name: 'AN2', desc: 'Annunciator 2.' },
-      { n: 14, name: 'AN1', desc: 'Annunciator 1.' },
-      { n: 15, name: 'AN0', desc: 'Annunciator 0.' },
-      { n: 16, name: 'NC', desc: 'No connection.' },
-    ] },
-  { id: 'ii-slot', name: 'Peripheral slots 1-7 (50-pin edge)', kind: '50-pin edge', verify: true,
-    summary: 'The main bus signals are the same as the IIe slot. Probe the power pins with a card installed.',
-    pins: [
-      { n: 1, name: '/IOSEL', desc: '$Cn00 select for this slot.', activeLow: true },
-      { n: '2-17', name: 'A0-A15', desc: 'Address bus.' },
-      { n: 18, name: 'R/W', desc: 'Read HIGH, write LOW.' },
-      { n: 20, name: '/IOSTB', desc: '$C800 strobe.', activeLow: true },
-      { n: 25, name: '+5 V', desc: 'Logic supply.' },
-      { n: 26, name: 'GND', desc: '0 V.' },
-      { n: 33, name: '-12 V', desc: 'Slot supply.' },
-      { n: 34, name: '-5 V', desc: 'Slot supply.' },
-      { n: 41, name: '/DEVSEL', desc: '$C0n0 select.', activeLow: true },
-      { n: '42-49', name: 'D7-D0', desc: 'Data bus.' },
-      { n: 50, name: '+12 V', desc: 'Slot supply.' },
-    ] },
-  { id: 'ii-video', name: 'Video out (RCA)', kind: 'RCA', verify: true,
-    summary: 'Composite NTSC video, about 1 V p-p into 75 Ω.',
-    pins: [
-      { n: 'tip', name: 'Video', desc: 'Composite video out.' },
-      { n: 'shell', name: 'GND', desc: '0 V.' },
-    ] },
-  { id: 'ii-cass', name: 'Cassette in / out', kind: '2 × 3.5 mm mono', verify: true,
-    summary: 'Save and load programs on a tape recorder.',
-    pins: [
-      { n: 'in', name: 'From recorder earphone', desc: 'Audio into the Apple.' },
-      { n: 'out', name: 'To recorder mic', desc: 'Audio out of the Apple.' },
-    ] },
+      { n: 1, name: '+5 V', type: 'power', desc: 'Supply for paddles and buttons. 100 mA max.', expect: '+5 V' },
+      { n: 2, name: 'PB0', type: 'io', desc: 'Push-button input 0 (LS-TTL).' },
+      { n: 3, name: 'PB1', type: 'io', desc: 'Push-button input 1 (LS-TTL).' },
+      { n: 4, name: 'PB2', type: 'io', desc: 'Push-button input 2 (LS-TTL).' },
+      { n: 5, name: '/C040 STROBE', type: 'ctrl', desc: 'Utility strobe: LOW during Φ0 of any read or write to $C040-$C04F.', expect: 'HIGH, with a 1 µs LOW pulse per access' },
+      { n: 6, name: 'GC0', type: 'io', desc: 'Game control 0: 150 kΩ pot to +5 V.' },
+      { n: 7, name: 'GC2', type: 'io', desc: 'Game control 2.' },
+      { n: 8, name: 'GND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+      { n: 9, name: 'NC', type: 'nc', desc: 'No internal connection.' },
+      { n: 10, name: 'GC1', type: 'io', desc: 'Game control 1.' },
+      { n: 11, name: 'GC3', type: 'io', desc: 'Game control 3.' },
+      { n: 12, name: 'AN3', type: 'io', desc: 'Annunciator 3 output (LS-TTL).', expect: '0 V or +5 V as set by software' },
+      { n: 13, name: 'AN2', type: 'io', desc: 'Annunciator 2 output (LS-TTL).', expect: '0 V or +5 V as set by software' },
+      { n: 14, name: 'AN1', type: 'io', desc: 'Annunciator 1 output (LS-TTL).', expect: '0 V or +5 V as set by software' },
+      { n: 15, name: 'AN0', type: 'io', desc: 'Annunciator 0 output (LS-TTL).', expect: '0 V or +5 V as set by software' },
+      { n: 16, name: 'NC', type: 'nc', desc: 'No internal connection.' },
+    ],
+    sources: [{ label: 'Apple II Reference Manual (1979), Game I/O Connector, Figure 16 / Table 29, p. 100', url: IIRM(110) }],
+    terms: ['strobe'] },
 ];
+
+const slotPins = (variant) => {
+  const iie = variant === 'iie';
+  const p = [
+    { n: 1, name: '/I/O SELECT', type: 'ctrl', desc: iie ? 'LOW during Φ0 when the CPU addresses $Cn00-$CnFF (n = slot).' : 'LOW during Φ0 when the CPU addresses $Cn00-$CnFF (n = slot). Not present on slot 0.' },
+  ];
+  for (let i = 0; i < 16; i++) p.push({ n: 2 + i, name: `A${i}`, type: 'addr', desc: `Buffered address bit ${i}. Valid in Φ1, held through Φ0.` });
+  p.push(
+    { n: 18, name: 'R/W', type: 'ctrl', desc: 'Buffered read/write: HIGH read, LOW write.' },
+    { n: 19, name: iie ? '/SYNC' : 'SYNC', type: 'video', desc: 'Slot 7 only: composite video sync. Unconnected on the other slots.' },
+    { n: 20, name: '/I/O STROBE', type: 'ctrl', desc: 'LOW during Φ0 for $C800-$CFFF (expansion ROM space).' },
+    { n: 21, name: 'RDY', type: 'ctrl', desc: 'CPU RDY input. Pull LOW during Φ1 to halt the CPU.' },
+    { n: 22, name: '/DMA', type: 'ctrl', desc: `Pull LOW to float the CPU address bus. ${iie ? '3.3' : '3'} kΩ pull-up to +5 V.` },
+    { n: 23, name: 'INT OUT', type: 'ctrl', desc: `Interrupt daisy-chain out to the next slot (cards tie it to pin 28).${iie ? ' Slot 7 can carry GR instead.' : ''}` },
+    { n: 24, name: 'DMA OUT', type: 'ctrl', desc: 'DMA daisy-chain out (cards tie it to pin 27).' },
+    { n: 25, name: '+5 V', type: 'power', desc: '+5 V. 500 mA for all cards together.', expect: '+5 V' },
+    { n: 26, name: 'GND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+    { n: 27, name: 'DMA IN', type: 'ctrl', desc: 'DMA daisy-chain in from the previous slot.' },
+    { n: 28, name: 'INT IN', type: 'ctrl', desc: 'Interrupt daisy-chain in from the previous slot.' },
+    { n: 29, name: '/NMI', type: 'ctrl', desc: 'Non-maskable interrupt. Pull LOW.' },
+    { n: 30, name: '/IRQ', type: 'ctrl', desc: 'Interrupt request. Pull LOW.' },
+    { n: 31, name: '/RES', type: 'ctrl', desc: 'Pull LOW to reset the CPU.', expect: 'HIGH when running' },
+    { n: 32, name: '/INH', type: 'ctrl', desc: 'Pull LOW to switch off the motherboard ROMs. Pulled up to +5 V.' },
+    { n: 33, name: '-12 V', type: 'power', desc: '-12 V. 200 mA for all cards together.', expect: '-12 V' },
+    { n: 34, name: '-5 V', type: 'power', desc: '-5 V. 200 mA for all cards together.', expect: '-5 V' },
+    { n: 35, name: iie ? '3.58M' : 'COLOR REF', type: 'clock', desc: 'Slot 7 only: 3.58 MHz colour reference. Unconnected on the other slots.', expect: '3.58 MHz (slot 7)' },
+    { n: 36, name: '7M', type: 'clock', desc: '7 MHz system clock.', expect: '7.16 MHz' },
+    { n: 37, name: 'Q3', type: 'clock', desc: '2 MHz asymmetric clock.', expect: '2.04 MHz' },
+    { n: 38, name: 'Φ1', type: 'clock', desc: 'CPU phase 1 clock.', expect: '1.023 MHz' },
+    iie ? { n: 39, name: 'µPSYNC', type: 'ctrl', desc: 'HIGH during the opcode-fetch cycle (CPU SYNC).' }
+        : { n: 39, name: 'USER 1', type: 'ctrl', desc: 'Pulled LOW, disables all internal I/O address decoding (needs the board jumper; manual p. 99).' },
+    { n: 40, name: 'Φ0', type: 'clock', desc: 'CPU phase 0 clock.', expect: '1.023 MHz' },
+    { n: 41, name: '/DEVICE SELECT', type: 'ctrl', desc: 'LOW during Φ0 for $C0n0-$C0nF, n = slot + 8.' },
+  );
+  for (let i = 0; i < 8; i++) p.push({ n: 42 + i, name: `D${7 - i}`, type: 'data', desc: `Buffered data bit ${7 - i}.` });
+  p.push({ n: 50, name: '+12 V', type: 'power', desc: '+12 V. 250 mA for all cards together.', expect: '+12 V' });
+  return p;
+};
+
+iiConnectors.push(
+  { id: 'ii-slot', name: 'Peripheral slots 0-7 (50-pin edge)', kind: '50-pin card edge, 0.10 in pitch (Winchester 2HW25C0-111)', geo: 'edge-25x25-seq',
+    verifiedAgainst: 'Apple II Reference Manual (1979), Figure 21 and Table 33, pp. 105-109',
+    summary: 'Eight slots along the back of the board. Pins 1-25 are on the component side of a card, 26-50 on the solder side; 26 sits opposite 25 and 50 opposite 1. Slot 0 has no I/O SELECT and takes the language or ROM card. Slot 7 adds SYNC (19) and COLOR REF (35). Probe the rails with a card fitted.',
+    pins: slotPins('ii'),
+    sources: [
+      { label: 'Apple II Reference Manual (1979), Figure 21 peripheral connector pinout, p. 106', url: IIRM(116) },
+      { label: 'Apple II Reference Manual (1979), Table 33 signal descriptions, pp. 107-109', url: IIRM(117) },
+    ] },
+  { id: 'ii-video', name: 'Video out (RCA)', kind: 'RCA phono jack', geo: 'rca',
+    verifiedAgainst: 'Apple II Reference Manual (1979), Video Output Jacks, p. 97',
+    summary: 'NTSC composite, close to EIA positive video. The tip goes through a 200 Ω pot on the board that sets the level from 0 to 1 V peak.',
+    pins: [
+      { n: 1, name: 'Video', type: 'video', desc: 'Composite video out (centre pin).', expect: 'Up to 1 V peak, set by the video pot' },
+      { n: 2, name: 'GND', type: 'ground', desc: 'Sleeve, board ground.', expect: '0 V' },
+    ],
+    sources: [{ label: 'Apple II Reference Manual (1979), Video Output Jacks, p. 97', url: IIRM(107) }] },
+  { id: 'ii-video-aux', name: 'Auxiliary video connector (4-pin)', kind: 'Molex KK100, 4 square pins on 0.10 in', geo: 'custom', pads: rowPads([4, 3, 2, 1]), outline: ROW_OUTLINE(4),
+    verifiedAgainst: 'Apple II Reference Manual (1979), Table 28 and Figure 15, pp. 97-98',
+    summary: 'Right side of the board near the back; feeds an RF modulator. The manual disagrees with itself on pins 3 and 4 (table vs. drawing), and the IIe puts them the other way round, so measure before you plug anything in. Revision 0 boards lack the single wire-wrap video pin below it.',
+    pins: [
+      { n: 1, name: 'GROUND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+      { n: 2, name: 'VIDEO', type: 'video', desc: 'Composite video, not adjustable, not short-protected.', expect: 'Sync 0 V, black about 0.75 V, white about 2.0 V' },
+      { n: 3, name: '+12 V', type: 'power', desc: '+12 V supply (per Table 28).', expect: '+12 V', verify: true, conflict: 'Table 28 lists pin 3 as +12 V; Figure 15 labels the pin next to VIDEO as -5 V. IIe TRM Table 7-15 has pin 3 = -5 V.' },
+      { n: 4, name: '-5 V', type: 'power', desc: '-5 V supply (per Table 28).', expect: '-5 V', verify: true, conflict: 'Table 28 lists pin 4 as -5 V; Figure 15 labels the end pin +12 V. IIe TRM Table 7-15 has pin 4 = +12 V.' },
+    ],
+    sources: [
+      { label: 'Apple II Reference Manual (1979), Table 28, p. 97', url: IIRM(107) },
+      { label: 'Apple II Reference Manual (1979), Figure 15, p. 98', url: IIRM(108) },
+    ] },
+  { id: 'ii-cass', name: 'Cassette IN', kind: '3.5 mm mono jack', geo: 'ts',
+    verifiedAgainst: 'Apple II Reference Manual (1979), Cassette Interface Jacks, p. 103',
+    summary: 'Connect to the recorder EARPHONE or MONITOR output. Input about 1 V peak-to-peak into 12 kΩ.',
+    pins: [
+      { n: 'T', name: 'Cassette in', type: 'audio', desc: 'Audio from the recorder.', expect: 'About 1 V p-p while a tape plays' },
+      { n: 'S', name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    ],
+    sources: [{ label: 'Apple II Reference Manual (1979), Cassette Interface Jacks, p. 103', url: IIRM(113) }] },
+  { id: 'ii-cass-out', name: 'Cassette OUT', kind: '3.5 mm mono jack', geo: 'ts',
+    verifiedAgainst: 'Apple II Reference Manual (1979), Cassette Interface Jacks, p. 103',
+    summary: 'Connect to the recorder MICROPHONE input. Output about 25 mV into 100 Ω.',
+    pins: [
+      { n: 'T', name: 'Cassette out', type: 'audio', desc: 'Audio to the recorder.', expect: 'About 25 mV while saving' },
+      { n: 'S', name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+    ],
+    sources: [{ label: 'Apple II Reference Manual (1979), Cassette Interface Jacks, p. 103', url: IIRM(113) }] },
+  { id: 'ii-kbd', name: 'Keyboard connector (16-pin DIP socket)', kind: '16-pin DIP socket', geo: 'custom', pads: dipPads(16), outline: DIP_OUTLINE,
+    verifiedAgainst: 'Apple II Reference Manual (1979), Table 30 and Figure 18, pp. 102-103',
+    summary: 'The keyboard cable plugs in here. Seven-bit ASCII arrives on Data 0-6 with a STROBE pulse (at least 10 µs) per key; RESET goes LOW while the RESET key is held. The keyboard takes +5 V (120 mA max) and -12 V (50 mA max).',
+    pins: [
+      { n: 1, name: '+5 V', type: 'power', desc: 'Keyboard supply, 120 mA max.', expect: '+5 V' },
+      { n: 2, name: 'STROBE', type: 'kbd', desc: 'Strobe from the keyboard, one pulse of 10 µs or more per key.', expect: 'Pulse on each key press' },
+      { n: 3, name: '/RESET', type: 'ctrl', desc: 'CPU reset line; the RESET key pulls it LOW.', expect: 'HIGH; LOW while RESET is held' },
+      { n: 4, name: 'NC', type: 'nc', desc: 'No connection.' },
+      { n: 5, name: 'Data 5', type: 'kbd', desc: 'Key data bit 5.' },
+      { n: 6, name: 'Data 4', type: 'kbd', desc: 'Key data bit 4.' },
+      { n: 7, name: 'Data 6', type: 'kbd', desc: 'Key data bit 6.' },
+      { n: 8, name: 'GND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+      { n: 9, name: 'NC', type: 'nc', desc: 'No connection.' },
+      { n: 10, name: 'Data 2', type: 'kbd', desc: 'Key data bit 2.' },
+      { n: 11, name: 'Data 3', type: 'kbd', desc: 'Key data bit 3.' },
+      { n: 12, name: 'Data 0', type: 'kbd', desc: 'Key data bit 0.' },
+      { n: 13, name: 'Data 1', type: 'kbd', desc: 'Key data bit 1.' },
+      { n: 14, name: 'NC', type: 'nc', desc: 'No connection.' },
+      { n: 15, name: '-12 V', type: 'power', desc: 'Keyboard supply, 50 mA max.', expect: '-12 V' },
+      { n: 16, name: 'NC', type: 'nc', desc: 'No connection.' },
+    ],
+    sources: [
+      { label: 'Apple II Reference Manual (1979), Table 30 keyboard connector, p. 102', url: IIRM(112) },
+      { label: 'Apple II Reference Manual (1979), Figure 18 keyboard connector pinout, p. 103', url: IIRM(113) },
+    ],
+    terms: ['strobe'] },
+  { id: 'ii-speaker', name: 'Speaker connector (2-pin)', kind: 'Molex KK100, 2 square pins on 0.10 in', geo: 'custom', pads: rowPads([1, 2]), outline: ROW_OUTLINE(2),
+    verifiedAgainst: 'Apple II Reference Manual (1979), Table 32 and Figure 20, p. 105',
+    summary: 'Driven by half of a 74LS74 through a Darlington. The speaker sits between +5 V and the driver, not to ground.',
+    pins: [
+      { n: 1, name: 'SPKR', type: 'audio', desc: 'Speaker drive, about 0.5 W into 8 Ω.', expect: 'Toggles on each beep' },
+      { n: 2, name: '+5 V', type: 'power', desc: '+5 V.', expect: '+5 V' },
+    ],
+    sources: [{ label: 'Apple II Reference Manual (1979), Speaker, p. 105', url: IIRM(115) }] },
+);
+
+const iiPower = {
+  supply: { external: false, name: 'Apple II switching supply (Astec AA11040 family)', output: '+5 V 2.5 A; +12 V 1.5 A (2.5 A intermittent); -5 V 250 mA; -12 V 250 mA. 60 W continuous, 79 W intermittent', connector: 'ii-psu',
+    notes: [
+      'Flyback switching supply in a sealed case. Much of it sits at mains potential; Apple said no user repair.',
+      'Needs a load. With the board unplugged it shuts down. Any fault (shorted rail, rail out of range) stops the oscillator; it retries about every 0.5 s, so you hear click-click-click or a squeal: the "dead PSU chirp". Chirping with the board connected means a short or overload: pull the cards, then the board, before you blame the supply.',
+      'Minimum load about 9 W split roughly evenly between +5 V and +12 V. To bench-test it, load +5 V with about 5 Ω and +12 V with about 33 Ω (both 10 W or more).',
+      'Only +5 V is regulated directly; the other rails track it, so a heavy +5 V load lifts them a little.',
+      'Line input 107-132 V AC (some units switch to 214-264 V). Never apply more than 140 V AC.',
+      'The yellow translucent RIFA X2 line-filter capacitors (usually 0.1 µF) crack with age and fail with a bang and acrid smoke. Replace them with X2-rated film capacitors of the same value. Some units have red WIMA caps instead.',
+    ],
+    sources: [
+      { label: 'Apple II Reference Manual (1979), Power Supply, pp. 92-94', url: IIRM(102) },
+      { label: 'Apple II Reference Manual (1979), protection and restart cycle, p. 94', url: IIRM(104) },
+      { label: 'Apple II Red Book (1978), The Apple II Switching Power Supply, pp. 110-111', url: `${REDBOOK}#page=113` },
+      { label: 'Applefritter: Apple II and IIe power supply RIFA replacements (forum)', url: 'https://www.applefritter.com/node/33594', verify: true },
+    ] },
+  rails: iiRails, testPoints: iiTests,
+  sources: [
+    { label: 'Apple II Reference Manual (1979), Power Supply specs, p. 92', url: IIRM(102) },
+    { label: 'Apple II Reference Manual (1979), Power Connector, p. 104', url: IIRM(114) },
+  ],
+};
 
 RCS.add({
   brand: { id: 'apple', name: 'Apple', blurb: 'II, II+, IIe, IIc. 6502, slots, Applesoft.' },
@@ -134,8 +284,8 @@ RCS.add({
     apple2c: {
       id: 'apple2c', brand: 'apple', name: 'Apple IIc', aka: 'Apple //c', year: 1984, status: 'sheet',
       cpu: '65C02 @ 1.023 MHz', ram: '128 KB', os: 'Applesoft, ProDOS',
-      chips: ['cpu6502', 'iwm344', 'acia6551'],
-      tagline: 'Portable 65C02 machine with a built-in drive and two 6551 serial ports. Custom-chip set not sourced yet.',
+      chips: ['cpu6502', 'mmu2c', 'iou2c', 'tmg2c', 'glu2c', 'iwm344', 'acia6551'],
+      tagline: 'Portable 65C02 machine: MMU, IOU, TMG and GLU custom chips, an IWM for the built-in drive, two 6551 serial ports and an external 15 V brick.',
       verify: true,
     },
     apple3: {
@@ -147,1422 +297,274 @@ RCS.add({
     },
   },
   chips: {
-    "cpu6502": {
-      "id": "cpu6502",
-      "name": "6502 / 65C02 CPU",
-      "short": "6502",
-      "family": "MOS 6502",
-      "role": "CPU",
-      "pkg": "DIP-40",
-      "machines": [
-        "apple2",
-        "apple2plus",
-        "apple2e"
+    cpu6502: {
+      id: 'cpu6502',
+      name: '6502 / 65C02 CPU',
+      short: '6502',
+      family: 'MOS 6502',
+      role: 'CPU',
+      pkg: 'DIP-40',
+      machines: ['apple2', 'apple2plus', 'apple2e'],
+      location: { apple2e: 'B4' },
+      summary: 'NMOS 6502 or CMOS 65C02: 8-bit CPU, 16-bit address bus, two-phase clock out. MOS, Synertek, Rockwell, GTE and NCR parts share this pinout. The WDC W65C02S reassigns pins 1, 5 and 36 (VPB, MLB, BE), so check what the board does with those pins before fitting one. A dead CPU gives a dead machine with no boot beep.',
+      fails: ['Dead machine', 'No boot beep', 'Locks after beep'],
+      heat: 'warm',
+      datasheets: [
+        {
+          label: 'MOS 6500 Microprocessors data sheet (Nov 1985), p. 10: 6502 40-pin pinout',
+          url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=10',
+        },
+        { label: 'WDC W65C02S data sheet, p. 13: 40-pin PDIP pinout', url: 'https://www.westerndesigncenter.com/wdc/documentation/w65c02s.pdf#page=13' },
       ],
-      "location": {
-        "apple2e": "B4"
-      },
-      "summary": "Runs at 1.023 MHz. The original IIe has a 6502; the Enhanced IIe (1985) has a 65C02 (CMOS, same pinout, extra instructions). Fails: dead machine, no boot beep.",
-      "fails": [
-        "Dead machine",
-        "No boot beep",
-        "Locks after beep"
+      pins: [
+        { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: '0 V. (WDC W65C02S: VPB, vector-pull output.)', terms: ['gnd'] },
+        { n: 2, name: 'RDY', type: 'ctrl', dir: 'in', desc: 'Ready. HIGH to run.', terms: ['rdy'] },
+        { n: 3, name: 'Φ1 out', type: 'clock', dir: 'out', desc: 'Clock phase 1 output.', terms: ['clock'] },
+        { n: 4, name: '/IRQ', type: 'ctrl', dir: 'in', desc: 'Interrupt request.', terms: ['irq'], activeLow: true },
+        { n: 5, name: 'NC', type: 'nc', dir: '-', desc: 'No connection. (WDC W65C02S: MLB, memory-lock output.)' },
+        { n: 6, name: '/NMI', type: 'ctrl', dir: 'in', desc: 'Non-maskable interrupt.', terms: ['nmi'], activeLow: true },
+        { n: 7, name: 'SYNC', type: 'ctrl', dir: 'out', desc: 'HIGH during opcode fetch.' },
+        { n: 8, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+5 V' },
+        { n: 9, name: 'A0', type: 'addr', dir: 'out', desc: 'Address bus bit 0.' },
+        { n: 10, name: 'A1', type: 'addr', dir: 'out', desc: 'Address bus bit 1.' },
+        { n: 11, name: 'A2', type: 'addr', dir: 'out', desc: 'Address bus bit 2.' },
+        { n: 12, name: 'A3', type: 'addr', dir: 'out', desc: 'Address bus bit 3.' },
+        { n: 13, name: 'A4', type: 'addr', dir: 'out', desc: 'Address bus bit 4.' },
+        { n: 14, name: 'A5', type: 'addr', dir: 'out', desc: 'Address bus bit 5.' },
+        { n: 15, name: 'A6', type: 'addr', dir: 'out', desc: 'Address bus bit 6.' },
+        { n: 16, name: 'A7', type: 'addr', dir: 'out', desc: 'Address bus bit 7.' },
+        { n: 17, name: 'A8', type: 'addr', dir: 'out', desc: 'Address bus bit 8.' },
+        { n: 18, name: 'A9', type: 'addr', dir: 'out', desc: 'Address bus bit 9.' },
+        { n: 19, name: 'A10', type: 'addr', dir: 'out', desc: 'Address bus bit 10.' },
+        { n: 20, name: 'A11', type: 'addr', dir: 'out', desc: 'Address bus bit 11.' },
+        { n: 21, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 22, name: 'A12', type: 'addr', dir: 'out', desc: 'Address bus bit 12.' },
+        { n: 23, name: 'A13', type: 'addr', dir: 'out', desc: 'Address bus bit 13.' },
+        { n: 24, name: 'A14', type: 'addr', dir: 'out', desc: 'Address bus bit 14.' },
+        { n: 25, name: 'A15', type: 'addr', dir: 'out', desc: 'Address bus bit 15.' },
+        { n: 26, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 27, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 28, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 29, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 30, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 31, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 32, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 33, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 34, name: 'R/W', type: 'ctrl', dir: 'out', desc: 'Read HIGH / Write LOW.', terms: ['rw'] },
+        { n: 35, name: 'NC', type: 'nc', dir: '-', desc: 'No connection.' },
+        { n: 36, name: 'NC', type: 'nc', dir: '-', desc: 'No connection. (WDC W65C02S: BE, bus-enable input.)' },
+        { n: 37, name: 'Φ0 in', type: 'clock', dir: 'in', desc: 'Clock input from the board oscillator or timing chain.', terms: ['clock'], probe: 'Steady square wave at the CPU clock rate' },
+        { n: 38, name: 'SO', type: 'ctrl', dir: 'in', desc: 'Set Overflow flag (rarely used).' },
+        { n: 39, name: 'Φ2 out', type: 'clock', dir: 'out', desc: 'Clock phase 2 output: the system clock for the rest of the board.', terms: ['clock'], probe: 'Square wave at the CPU clock rate, inverse of pin 3' },
+        { n: 40, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset.', terms: ['reset'], activeLow: true, probe: 'LOW briefly at power-on and while reset is held, then HIGH' },
       ],
-      "heat": "warm",
-      "datasheets": [
-        {
-          "label": "MOS 6502 datasheet (6502.org)",
-          "url": "http://archive.6502.org/datasheets/mos_6500_mpu_preliminary_may_1976.pdf",
-          "verify": true
-        },
-        {
-          "label": "WDC W65C02S datasheet",
-          "url": "https://www.westerndesigncenter.com/wdc/documentation/w65c02s.pdf",
-          "verify": true
-        }
-      ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "Vss",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        },
-        {
-          "n": 2,
-          "name": "RDY",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Ready. HIGH to run.",
-          "terms": [
-            "rdy"
-          ]
-        },
-        {
-          "n": 3,
-          "name": "Φ1 out",
-          "type": "clock",
-          "dir": "out",
-          "desc": "Clock phase 1 output.",
-          "terms": [
-            "clock"
-          ]
-        },
-        {
-          "n": 4,
-          "name": "/IRQ",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Interrupt request.",
-          "terms": [
-            "irq"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 5,
-          "name": "NC",
-          "type": "nc",
-          "dir": "-",
-          "desc": "No connection."
-        },
-        {
-          "n": 6,
-          "name": "/NMI",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Non-maskable interrupt.",
-          "terms": [
-            "nmi"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 7,
-          "name": "SYNC",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "HIGH during opcode fetch."
-        },
-        {
-          "n": 8,
-          "name": "Vcc",
-          "type": "power",
-          "dir": "-",
-          "desc": "+5 V.",
-          "terms": [
-            "vcc"
-          ],
-          "probe": "+5 V"
-        },
-        {
-          "n": 9,
-          "name": "A0",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 0."
-        },
-        {
-          "n": 10,
-          "name": "A1",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 1."
-        },
-        {
-          "n": 11,
-          "name": "A2",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 2."
-        },
-        {
-          "n": 12,
-          "name": "A3",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 3."
-        },
-        {
-          "n": 13,
-          "name": "A4",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 4."
-        },
-        {
-          "n": 14,
-          "name": "A5",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 5."
-        },
-        {
-          "n": 15,
-          "name": "A6",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 6."
-        },
-        {
-          "n": 16,
-          "name": "A7",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 7."
-        },
-        {
-          "n": 17,
-          "name": "A8",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 8."
-        },
-        {
-          "n": 18,
-          "name": "A9",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 9."
-        },
-        {
-          "n": 19,
-          "name": "A10",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 10."
-        },
-        {
-          "n": 20,
-          "name": "A11",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 11."
-        },
-        {
-          "n": 21,
-          "name": "Vss",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        },
-        {
-          "n": 22,
-          "name": "A12",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 12."
-        },
-        {
-          "n": 23,
-          "name": "A13",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 13."
-        },
-        {
-          "n": 24,
-          "name": "A14",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 14."
-        },
-        {
-          "n": 25,
-          "name": "A15",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 15."
-        },
-        {
-          "n": 26,
-          "name": "D7",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 7."
-        },
-        {
-          "n": 27,
-          "name": "D6",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 6."
-        },
-        {
-          "n": 28,
-          "name": "D5",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 5."
-        },
-        {
-          "n": 29,
-          "name": "D4",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 4."
-        },
-        {
-          "n": 30,
-          "name": "D3",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 3."
-        },
-        {
-          "n": 31,
-          "name": "D2",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 2."
-        },
-        {
-          "n": 32,
-          "name": "D1",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 1."
-        },
-        {
-          "n": 33,
-          "name": "D0",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 0."
-        },
-        {
-          "n": 34,
-          "name": "R/W",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Read HIGH / Write LOW.",
-          "terms": [
-            "rw"
-          ]
-        },
-        {
-          "n": 35,
-          "name": "NC",
-          "type": "nc",
-          "dir": "-",
-          "desc": "No connection."
-        },
-        {
-          "n": 36,
-          "name": "NC",
-          "type": "nc",
-          "dir": "-",
-          "desc": "No connection."
-        },
-        {
-          "n": 37,
-          "name": "Φ0 in",
-          "type": "clock",
-          "dir": "in",
-          "desc": "Clock input, 1.023 MHz from the timing chain.",
-          "terms": [
-            "clock"
-          ],
-          "probe": "1.023 MHz square wave"
-        },
-        {
-          "n": 38,
-          "name": "SO",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Set Overflow flag (rarely used)."
-        },
-        {
-          "n": 39,
-          "name": "Φ2 out",
-          "type": "clock",
-          "dir": "out",
-          "desc": "Clock phase 2 output: the system clock.",
-          "terms": [
-            "clock"
-          ]
-        },
-        {
-          "n": 40,
-          "name": "/RES",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Reset.",
-          "terms": [
-            "reset"
-          ],
-          "activeLow": true,
-          "probe": "LOW briefly at power-on, then HIGH. Control-Reset pulls it LOW."
-        }
-      ]
+      verifiedAgainst: 'MOS 6500 Microprocessors data sheet (Nov 1985), 6502 pinout, p. 10',
     },
-    "mmu344": {
-      "id": "mmu344",
-      "name": "MMU 344-0010",
-      "short": "MMU",
-      "family": "Apple custom",
-      "role": "Memory Management Unit",
-      "pkg": "DIP-40",
-      "machines": [
-        "apple2e"
+    mmu344: {
+      id: 'mmu344',
+      name: 'MMU 344-0010',
+      short: 'MMU',
+      family: 'Apple custom',
+      role: 'Memory Management Unit',
+      pkg: 'DIP-40',
+      machines: ['apple2e'],
+      location: { apple2e: 'E6 (near the CPU)' },
+      summary: 'Memory Management Unit of the IIe: main/auxiliary bank switching, language-card RAM over the ROMs, /INH and /DMA handling, and the multiplexed RAM address RA0-RA7 for CPU cycles. With the IOU it replaces the discrete TTL of the II/II+. Shares RA0-RA7 and MD7 with the IOU. Pinout from the IIe Technical Reference Manual; the 344-0010 number is the chip marking, not from the manual.',
+      fails: ['Dead IIe', 'No auxiliary RAM / no 80 columns', 'Bad language card (BASIC not found)'],
+      heat: 'warm',
+      datasheets: [
+        {
+          label: 'Apple IIe Technical Reference Manual, Figure 7-2 / Table 7-6, p. 165',
+          url: 'https://archive.org/details/Apple_IIe_Technical_Reference_Manual/page/n198',
+        },
+        { label: 'Understanding the Apple IIe (Sather)', url: 'https://archive.org/details/Understanding_the_Apple_IIe', verify: true },
       ],
-      "location": {
-        "apple2e": "E6 (near the CPU)"
-      },
-      "summary": "Bank and auxiliary-memory switching, language card emulation, /INH and /DMA handling, address decode. Together with the IOU it replaces the discrete TTL glue of the II/II+. Shares ORA0-7 and MD7 with the IOU. Pinout from the frozen-signal reverse-engineering project.",
-      "fails": [
-        "Dead IIe",
-        "No auxiliary RAM / no 80 columns",
-        "Bad language card (BASIC not found)"
+      pins: [
+        { n: 1, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 2, name: 'A0', type: 'addr', dir: 'in', desc: '65C02 address bit 0.' },
+        { n: 3, name: 'PHI0', type: 'clock', dir: 'in', desc: 'System clock 1.023 MHz.', terms: ['clock'], probe: '1.023 MHz' },
+        { n: 4, name: 'Q3', type: 'clock', dir: 'in', desc: '2 MHz asymmetric timing clock.', terms: ['clock'] },
+        { n: 5, name: '/PRAS', type: 'ctrl', dir: 'in', desc: 'Pre-RAS timing for DRAM.', terms: ['ras-cas'], activeLow: true },
+        { n: 6, name: 'RA0', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 0 (row, then column), shared with the IOU.', terms: ['mux'] },
+        { n: 7, name: 'RA1', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 1 (row, then column), shared with the IOU.' },
+        { n: 8, name: 'RA2', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 2 (row, then column), shared with the IOU.' },
+        { n: 9, name: 'RA3', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 3 (row, then column), shared with the IOU.' },
+        { n: 10, name: 'RA4', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 4 (row, then column), shared with the IOU.' },
+        { n: 11, name: 'RA5', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 5 (row, then column), shared with the IOU.' },
+        { n: 12, name: 'RA6', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 6 (row, then column), shared with the IOU.' },
+        { n: 13, name: 'RA7', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 7 (row, then column), shared with the IOU.' },
+        { n: 14, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/Write from CPU.', terms: ['rw'] },
+        { n: 15, name: '/INH', type: 'ctrl', dir: 'in', desc: 'Inhibit: a card pulls LOW to switch off motherboard ROM/RAM. Pulled up to +5 V.', activeLow: true },
+        { n: 16, name: '/DMA', type: 'ctrl', dir: 'in', desc: 'A card takes the bus.', activeLow: true },
+        { n: 17, name: '/EN80', type: 'ctrl', dir: 'out', desc: 'Enable auxiliary (80-column) RAM.', activeLow: true, terms: ['bank-switch'] },
+        { n: 18, name: '/KBD', type: 'ctrl', dir: 'out', desc: 'Keyboard register select ($C000).', activeLow: true, terms: ['soft-switch'] },
+        { n: 19, name: '/ROMEN2', type: 'ctrl', dir: 'out', desc: 'ROM enable; tied to /ROMEN1 on the board.', activeLow: true, terms: ['cs'] },
+        { n: 20, name: '/ROMEN1', type: 'ctrl', dir: 'out', desc: 'ROM enable; tied to /ROMEN2 on the board.', activeLow: true, terms: ['cs'] },
+        { n: 21, name: 'MD7', type: 'data', dir: 'bidir', desc: 'Data bit 7: the MMU reports its soft-switch state here (shared with the IOU).', terms: ['soft-switch'] },
+        { n: 22, name: 'R/W245', type: 'ctrl', dir: 'out', desc: 'Direction control for the 74LS245 data-bus buffer.' },
+        { n: 23, name: '/RAMEN', type: 'ctrl', dir: 'out', desc: 'Enables main RAM.', activeLow: true, terms: ['ras-cas'] },
+        { n: 24, name: 'Cxxx', type: 'ctrl', dir: 'out', desc: 'Enables peripheral-card memory ($C100-$CFFF slot ROM space).' },
+        { n: 25, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+5 V' },
+        { n: 26, name: 'A15', type: 'addr', dir: 'in', desc: 'Address bus bit 15.' },
+        { n: 27, name: 'A14', type: 'addr', dir: 'in', desc: 'Address bus bit 14.' },
+        { n: 28, name: 'A13', type: 'addr', dir: 'in', desc: 'Address bus bit 13.' },
+        { n: 29, name: 'A12', type: 'addr', dir: 'in', desc: 'Address bus bit 12.' },
+        { n: 30, name: 'A11', type: 'addr', dir: 'in', desc: 'Address bus bit 11.' },
+        { n: 31, name: 'A10', type: 'addr', dir: 'in', desc: 'Address bus bit 10.' },
+        { n: 32, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bus bit 9.' },
+        { n: 33, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bus bit 8.' },
+        { n: 34, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bus bit 7.' },
+        { n: 35, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bus bit 6.' },
+        { n: 36, name: 'A5', type: 'addr', dir: 'in', desc: 'Address bus bit 5.' },
+        { n: 37, name: 'A4', type: 'addr', dir: 'in', desc: 'Address bus bit 4.' },
+        { n: 38, name: 'A3', type: 'addr', dir: 'in', desc: 'Address bus bit 3.' },
+        { n: 39, name: 'A2', type: 'addr', dir: 'in', desc: 'Address bus bit 2.' },
+        { n: 40, name: 'A1', type: 'addr', dir: 'in', desc: 'Address bus bit 1.' },
       ],
-      "heat": "warm",
-      "verify": true,
-      "datasheets": [
-        {
-          "label": "Apple IIe Technical Reference Manual (archive.org)",
-          "url": "https://archive.org/details/Apple_IIe_Technical_Reference_Manual",
-          "verify": true
-        },
-        {
-          "label": "Understanding the Apple IIe (Sather)",
-          "url": "https://archive.org/details/Understanding_the_Apple_IIe",
-          "verify": true
-        }
-      ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "GND",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        },
-        {
-          "n": 2,
-          "name": "A0",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 0."
-        },
-        {
-          "n": 3,
-          "name": "PHI0",
-          "type": "clock",
-          "dir": "in",
-          "desc": "System clock 1.023 MHz.",
-          "terms": [
-            "clock"
-          ],
-          "probe": "1.023 MHz"
-        },
-        {
-          "n": 4,
-          "name": "Q3",
-          "type": "clock",
-          "dir": "in",
-          "desc": "2 MHz asymmetric timing clock.",
-          "terms": [
-            "clock"
-          ]
-        },
-        {
-          "n": 5,
-          "name": "/PRAS",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Pre-RAS timing for DRAM.",
-          "terms": [
-            "ras-cas"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 6,
-          "name": "ORA0",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Multiplexed RAM address 0 (shared with IOU).",
-          "terms": [
-            "mux"
-          ]
-        },
-        {
-          "n": 7,
-          "name": "ORA1",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Multiplexed RAM address 1."
-        },
-        {
-          "n": 8,
-          "name": "ORA2",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Multiplexed RAM address 2."
-        },
-        {
-          "n": 9,
-          "name": "ORA3",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Multiplexed RAM address 3."
-        },
-        {
-          "n": 10,
-          "name": "ORA4",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Multiplexed RAM address 4."
-        },
-        {
-          "n": 11,
-          "name": "ORA5",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Multiplexed RAM address 5."
-        },
-        {
-          "n": 12,
-          "name": "ORA6",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Multiplexed RAM address 6."
-        },
-        {
-          "n": 13,
-          "name": "ORA7",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Multiplexed RAM address 7."
-        },
-        {
-          "n": 14,
-          "name": "R/W",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Read/Write from CPU.",
-          "terms": [
-            "rw"
-          ]
-        },
-        {
-          "n": 15,
-          "name": "/INH",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Inhibit: a card pulls LOW to replace motherboard ROM/RAM.",
-          "activeLow": true
-        },
-        {
-          "n": 16,
-          "name": "/DMA",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "A card takes the bus.",
-          "activeLow": true
-        },
-        {
-          "n": 17,
-          "name": "/EN80",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Enable auxiliary (80-column) RAM.",
-          "activeLow": true,
-          "terms": [
-            "bank-switch"
-          ]
-        },
-        {
-          "n": 18,
-          "name": "/KBD",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Keyboard register select ($C000).",
-          "activeLow": true,
-          "terms": [
-            "soft-switch"
-          ]
-        },
-        {
-          "n": 19,
-          "name": "/ROMEN2",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Enable EF ROM.",
-          "activeLow": true,
-          "terms": [
-            "cs"
-          ]
-        },
-        {
-          "n": 20,
-          "name": "/ROMEN1",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Enable CD ROM.",
-          "activeLow": true,
-          "terms": [
-            "cs"
-          ]
-        },
-        {
-          "n": 21,
-          "name": "MD7",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bit 7: reports soft-switch state (shared with IOU).",
-          "terms": [
-            "soft-switch"
-          ]
-        },
-        {
-          "n": 22,
-          "name": "R/W245",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Direction control for the 74LS245 data bus buffer."
-        },
-        {
-          "n": 23,
-          "name": "/CASEN",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Enable /CAS to main RAM.",
-          "activeLow": true,
-          "terms": [
-            "ras-cas"
-          ]
-        },
-        {
-          "n": 24,
-          "name": "CXXXOUT",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Address is in $C100-$CFFF (slot ROM space)."
-        },
-        {
-          "n": 25,
-          "name": "Vcc",
-          "type": "power",
-          "dir": "-",
-          "desc": "+5 V.",
-          "terms": [
-            "vcc"
-          ],
-          "probe": "+5 V"
-        },
-        {
-          "n": 26,
-          "name": "A15",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 15."
-        },
-        {
-          "n": 27,
-          "name": "A14",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 14."
-        },
-        {
-          "n": 28,
-          "name": "A13",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 13."
-        },
-        {
-          "n": 29,
-          "name": "A12",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 12."
-        },
-        {
-          "n": 30,
-          "name": "A11",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 11."
-        },
-        {
-          "n": 31,
-          "name": "A10",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 10."
-        },
-        {
-          "n": 32,
-          "name": "A9",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 9."
-        },
-        {
-          "n": 33,
-          "name": "A8",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 8."
-        },
-        {
-          "n": 34,
-          "name": "A7",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 7."
-        },
-        {
-          "n": 35,
-          "name": "A6",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 6."
-        },
-        {
-          "n": 36,
-          "name": "A5",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 5."
-        },
-        {
-          "n": 37,
-          "name": "A4",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 4."
-        },
-        {
-          "n": 38,
-          "name": "A3",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 3."
-        },
-        {
-          "n": 39,
-          "name": "A2",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 2."
-        },
-        {
-          "n": 40,
-          "name": "A1",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bus bit 1."
-        }
-      ]
+      verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Figure 7-2 and Table 7-6, p. 165',
     },
-    "iou344": {
-      "id": "iou344",
-      "name": "IOU 344-0020",
-      "short": "IOU",
-      "family": "Apple custom",
-      "role": "Input/Output Unit",
-      "pkg": "DIP-40",
-      "machines": [
-        "apple2e"
+    iou344: {
+      id: 'iou344',
+      name: 'IOU 344-0020',
+      short: 'IOU',
+      family: 'Apple custom',
+      role: 'Input/Output Unit',
+      pkg: 'DIP-40',
+      machines: ['apple2e'],
+      location: { apple2e: 'E5 (next to the MMU)' },
+      summary: 'Input/Output Unit of the IIe: video counters and timing (SYNC, WNDW, CLRGAT, H0, VC, SEGA, SEGB), the display soft switches, speaker, cassette out, annunciators, keyboard strobe and any-key-down, and the power-on /RESET. Pinout from the IIe Technical Reference Manual (pin 28 is +5 V); the 344-0020 number is the chip marking.',
+      fails: ['No or bad video', 'Dead keyboard', 'No speaker'],
+      heat: 'warm',
+      datasheets: [
+        {
+          label: 'Apple IIe Technical Reference Manual, Figure 7-3 / Table 7-7, p. 167',
+          url: 'https://archive.org/details/Apple_IIe_Technical_Reference_Manual/page/n200',
+        },
+        { label: 'Understanding the Apple IIe (Sather)', url: 'https://archive.org/details/Understanding_the_Apple_IIe', verify: true },
       ],
-      "location": {
-        "apple2e": "E5 (next to the MMU)"
-      },
-      "summary": "Video timing (/SYNC, /WNDW, segments), soft switches, speaker, annunciators, keyboard strobe and cassette. Holds /RESET (open drain). Note: pin 28 is Vcc; one published doc lists it as 27.",
-      "fails": [
-        "No or bad video",
-        "Dead keyboard",
-        "No speaker"
+      pins: [
+        { n: 1, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 2, name: 'GR', type: 'video', dir: 'out', desc: 'Graphics mode enable.' },
+        { n: 3, name: 'SEGA', type: 'video', dir: 'out', desc: 'Text: with SEGB and VC selects the dot row of the character.' },
+        { n: 4, name: 'SEGB', type: 'video', dir: 'out', desc: 'Text: with SEGA and VC selects the dot row. Graphics: LOW selects hi-res, HIGH lo-res.' },
+        { n: 5, name: 'VC', type: 'video', dir: 'out', desc: 'Vertical counter bit. Text: third row-select bit. Lo-res: picks the upper or lower block of a byte.' },
+        { n: 6, name: '/80VID', type: 'video', dir: 'out', desc: '80-column video enable.', activeLow: true },
+        { n: 7, name: 'CASSO', type: 'audio', dir: 'out', desc: 'Cassette output toggle.' },
+        { n: 8, name: 'SPKR', type: 'audio', dir: 'out', desc: 'Speaker toggle ($C030).', terms: ['soft-switch'], probe: 'Toggles on each beep.' },
+        { n: 9, name: 'MD7', type: 'data', dir: 'bidir', desc: 'Data bit 7: the IOU reports its soft-switch flags here (shared with the MMU).', terms: ['soft-switch'] },
+        { n: 10, name: 'AN0', type: 'io', dir: 'out', desc: 'Annunciator 0 (game I/O).' },
+        { n: 11, name: 'AN1', type: 'io', dir: 'out', desc: 'Annunciator 1.' },
+        { n: 12, name: 'AN2', type: 'io', dir: 'out', desc: 'Annunciator 2.' },
+        { n: 13, name: 'AN3', type: 'io', dir: 'out', desc: 'Annunciator 3.' },
+        { n: 14, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/Write from CPU.', terms: ['rw'] },
+        { n: 15, name: '/RESET', type: 'ctrl', dir: 'bidir', desc: 'Power-on and reset output (open drain). The IOU holds it LOW at power-up.', terms: ['reset', 'open-drain'], activeLow: true, probe: 'HIGH when running.' },
+        { n: 16, name: 'NC', type: 'nc', dir: '-', desc: 'No connection.' },
+        { n: 17, name: 'RA0', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 0. The IOU drives video and refresh addresses in phase 1.', terms: ['mux'] },
+        { n: 18, name: 'RA1', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 1. The IOU drives video and refresh addresses in phase 1.' },
+        { n: 19, name: 'RA2', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 2. The IOU drives video and refresh addresses in phase 1.' },
+        { n: 20, name: 'RA3', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 3. The IOU drives video and refresh addresses in phase 1.' },
+        { n: 21, name: 'RA4', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 4. The IOU drives video and refresh addresses in phase 1.' },
+        { n: 22, name: 'RA5', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 5. The IOU drives video and refresh addresses in phase 1.' },
+        { n: 23, name: 'RA6', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 6. The IOU drives video and refresh addresses in phase 1.' },
+        { n: 24, name: 'RA7', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 7. The IOU drives video and refresh addresses in phase 1.' },
+        { n: 25, name: '/PRAS', type: 'ctrl', dir: 'in', desc: 'Row-address strobe (phase 0).', terms: ['ras-cas'], activeLow: true },
+        { n: 26, name: 'PHI0', type: 'clock', dir: 'in', desc: 'Clock phase 0 (1.023 MHz).', terms: ['clock'] },
+        { n: 27, name: 'Q3', type: 'clock', dir: 'in', desc: 'Intermediate timing signal (2 MHz, asymmetric).', terms: ['clock'] },
+        { n: 28, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+5 V' },
+        { n: 29, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6 (soft-switch decode).' },
+        { n: 30, name: '/C0XX', type: 'ctrl', dir: 'in', desc: 'I/O address enable: address is in $C000-$C0FF.', activeLow: true, terms: ['soft-switch'] },
+        { n: 31, name: 'AKD', type: 'kbd', dir: 'in', desc: 'Any-key-down from the keyboard encoder.' },
+        { n: 32, name: 'KSTRB', type: 'kbd', dir: 'in', desc: 'Keyboard strobe from the keyboard encoder.', terms: ['strobe'] },
+        { n: 33, name: 'VID7', type: 'video', dir: 'in', desc: 'Video display data bit 7.' },
+        { n: 34, name: 'VID6', type: 'video', dir: 'in', desc: 'Video display data bit 6.' },
+        { n: 35, name: '/RA9', type: 'addr', dir: 'out', desc: 'Video display control bit (to the character generator).', activeLow: true },
+        { n: 36, name: '/RA10', type: 'addr', dir: 'out', desc: 'Video display control bit (to the character generator).', activeLow: true },
+        { n: 37, name: '/CLRGAT', type: 'video', dir: 'out', desc: 'Colour-burst gate (enable).', activeLow: true },
+        { n: 38, name: '/WNDW', type: 'video', dir: 'out', desc: 'Display blanking: LOW outside the active window.', activeLow: true },
+        { n: 39, name: '/SYNC', type: 'video', dir: 'out', desc: 'Display synchronisation (composite sync).', activeLow: true, probe: 'Pulses at 15.7 kHz / 60 Hz.' },
+        { n: 40, name: 'H0', type: 'video', dir: 'out', desc: 'Horizontal timing: low bit of the character counter.' },
       ],
-      "heat": "warm",
-      "verify": true,
-      "datasheets": [
-        {
-          "label": "Apple IIe Technical Reference Manual (archive.org)",
-          "url": "https://archive.org/details/Apple_IIe_Technical_Reference_Manual",
-          "verify": true
-        },
-        {
-          "label": "Understanding the Apple IIe (Sather)",
-          "url": "https://archive.org/details/Understanding_the_Apple_IIe",
-          "verify": true
-        }
-      ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "GND",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        },
-        {
-          "n": 2,
-          "name": "/LGRTXT",
-          "type": "video",
-          "dir": "out",
-          "desc": "Lo-res graphics / text mode select to the video generator.",
-          "activeLow": true
-        },
-        {
-          "n": 3,
-          "name": "SEGA",
-          "type": "video",
-          "dir": "out",
-          "desc": "Character row segment A."
-        },
-        {
-          "n": 4,
-          "name": "SEGB",
-          "type": "video",
-          "dir": "out",
-          "desc": "Character row segment B."
-        },
-        {
-          "n": 5,
-          "name": "SEGC",
-          "type": "video",
-          "dir": "out",
-          "desc": "Character row segment C."
-        },
-        {
-          "n": 6,
-          "name": "/80COL",
-          "type": "video",
-          "dir": "out",
-          "desc": "80-column mode active.",
-          "activeLow": true
-        },
-        {
-          "n": 7,
-          "name": "CASSO",
-          "type": "audio",
-          "dir": "out",
-          "desc": "Cassette output toggle."
-        },
-        {
-          "n": 8,
-          "name": "SPKR",
-          "type": "audio",
-          "dir": "out",
-          "desc": "Speaker toggle ($C030).",
-          "terms": [
-            "soft-switch"
-          ],
-          "probe": "Toggles on each beep."
-        },
-        {
-          "n": 9,
-          "name": "MD7",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bit 7: soft-switch status read (shared with MMU).",
-          "terms": [
-            "soft-switch"
-          ]
-        },
-        {
-          "n": 10,
-          "name": "AN0",
-          "type": "io",
-          "dir": "out",
-          "desc": "Annunciator 0 (game I/O)."
-        },
-        {
-          "n": 11,
-          "name": "AN1",
-          "type": "io",
-          "dir": "out",
-          "desc": "Annunciator 1."
-        },
-        {
-          "n": 12,
-          "name": "AN2",
-          "type": "io",
-          "dir": "out",
-          "desc": "Annunciator 2."
-        },
-        {
-          "n": 13,
-          "name": "AN3",
-          "type": "io",
-          "dir": "out",
-          "desc": "Annunciator 3."
-        },
-        {
-          "n": 14,
-          "name": "R/W",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Read/Write from CPU.",
-          "terms": [
-            "rw"
-          ]
-        },
-        {
-          "n": 15,
-          "name": "/RESET",
-          "type": "ctrl",
-          "dir": "bidir",
-          "desc": "System reset, open drain. IOU asserts it at power-up.",
-          "terms": [
-            "reset",
-            "open-drain"
-          ],
-          "activeLow": true,
-          "probe": "HIGH when running."
-        },
-        {
-          "n": 16,
-          "name": "NC",
-          "type": "nc",
-          "dir": "-",
-          "desc": "No connection."
-        },
-        {
-          "n": 17,
-          "name": "ORA0",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Multiplexed RAM address 0 (video refresh addresses).",
-          "terms": [
-            "mux"
-          ]
-        },
-        {
-          "n": 18,
-          "name": "ORA1",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Multiplexed RAM address 1."
-        },
-        {
-          "n": 19,
-          "name": "ORA2",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Multiplexed RAM address 2."
-        },
-        {
-          "n": 20,
-          "name": "ORA3",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Multiplexed RAM address 3."
-        },
-        {
-          "n": 21,
-          "name": "ORA4",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Multiplexed RAM address 4."
-        },
-        {
-          "n": 22,
-          "name": "ORA5",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Multiplexed RAM address 5."
-        },
-        {
-          "n": 23,
-          "name": "ORA6",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Multiplexed RAM address 6."
-        },
-        {
-          "n": 24,
-          "name": "ORA7",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Multiplexed RAM address 7."
-        },
-        {
-          "n": 25,
-          "name": "/PRAS",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Pre-RAS timing.",
-          "terms": [
-            "ras-cas"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 26,
-          "name": "PHI0",
-          "type": "clock",
-          "dir": "in",
-          "desc": "System clock 1.023 MHz.",
-          "terms": [
-            "clock"
-          ]
-        },
-        {
-          "n": 27,
-          "name": "Q3",
-          "type": "clock",
-          "dir": "in",
-          "desc": "2 MHz timing clock.",
-          "terms": [
-            "clock"
-          ]
-        },
-        {
-          "n": 28,
-          "name": "Vcc",
-          "type": "power",
-          "dir": "-",
-          "desc": "+5 V (doc typo listed this as pin 27).",
-          "terms": [
-            "vcc"
-          ],
-          "probe": "+5 V"
-        },
-        {
-          "n": 29,
-          "name": "A6",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Address bit 6 (soft-switch decode)."
-        },
-        {
-          "n": 30,
-          "name": "/C0XX",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Address is in $C000-$C0FF (I/O page).",
-          "activeLow": true,
-          "terms": [
-            "soft-switch"
-          ]
-        },
-        {
-          "n": 31,
-          "name": "IAKD",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard: Any Key Down from the encoder."
-        },
-        {
-          "n": 32,
-          "name": "IKSTRB",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard strobe from the encoder.",
-          "terms": [
-            "strobe"
-          ]
-        },
-        {
-          "n": 33,
-          "name": "VID7",
-          "type": "video",
-          "dir": "in",
-          "desc": "Video data bit 7 (hi-res colour shift)."
-        },
-        {
-          "n": 34,
-          "name": "VID6",
-          "type": "video",
-          "dir": "in",
-          "desc": "Video data bit 6."
-        },
-        {
-          "n": 35,
-          "name": "/RA9",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Video RAM address 9.",
-          "activeLow": true
-        },
-        {
-          "n": 36,
-          "name": "/RA10",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Video RAM address 10.",
-          "activeLow": true
-        },
-        {
-          "n": 37,
-          "name": "/CLRGAT",
-          "type": "video",
-          "dir": "out",
-          "desc": "Colour burst gate.",
-          "activeLow": true
-        },
-        {
-          "n": 38,
-          "name": "/WNDW",
-          "type": "video",
-          "dir": "out",
-          "desc": "Active display window (blanking).",
-          "activeLow": true
-        },
-        {
-          "n": 39,
-          "name": "/SYNC",
-          "type": "video",
-          "dir": "out",
-          "desc": "Composite sync.",
-          "activeLow": true,
-          "probe": "Pulses at 15.7 kHz / 60 Hz."
-        },
-        {
-          "n": 40,
-          "name": "H0",
-          "type": "video",
-          "dir": "out",
-          "desc": "Horizontal counter bit 0."
-        }
-      ]
+      verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Figure 7-3 and Table 7-7, p. 167',
     },
-    "kbd3600": {
-      "id": "kbd3600",
-      "name": "AY-5-3600 Keyboard Encoder",
-      "short": "AY-5-3600",
-      "family": "General Instrument PMOS",
-      "role": "Keyboard encoder",
-      "pkg": "DIP-40",
-      "machines": [
-        "apple2e"
+    kbd3600: {
+      id: 'kbd3600',
+      name: 'AY-5-3600 Keyboard Encoder',
+      short: 'AY-5-3600',
+      family: 'General Instrument PMOS',
+      role: 'Keyboard encoder',
+      pkg: 'DIP-40',
+      machines: ['apple2e'],
+      location: { apple2e: 'Main board; the keyboard reaches it over a 26-pin ribbon' },
+      summary: 'Scans the X0-X8 / Y0-Y9 key matrix and outputs a key code on B1-B9 with Data Ready. PMOS: VCC +5 V (pin 30), VGG -12 V (pin 27), VDD 0 V (pin 15). Pins 1-5 take mask-programmed options. In the IIe the code lines feed a 2316 keyboard ROM, and any-key-down and the strobe go to the IOU.',
+      fails: ['Dead keyboard', 'Stuck or repeating key'],
+      heat: 'cool',
+      datasheets: [
+        { label: 'GI AY-5-3600 Keyboard Encoder data sheet, pp. 3-23 to 3-24 (bitsavers)', url: 'http://www.bitsavers.org/components/gi/_dataSheets/AY-5-3600.pdf' },
+        { label: 'Apple IIe Technical Reference Manual, The Keyboard, p. 187', url: 'https://archive.org/details/Apple_IIe_Technical_Reference_Manual/page/n220' },
       ],
-      "location": {
-        "apple2e": "Keyboard PCB"
-      },
-      "summary": "Scans the X/Y key matrix into a 10-bit code (B1-B9 + DataRdy). PMOS: supplies on VDD(15), VCC(30), VGG(27). Pins 1-5 are option straps. Fails as a dead or stuck keyboard.",
-      "fails": [
-        "Dead keyboard",
-        "Stuck or repeating key"
+      pins: [
+        { n: 1, name: 'Option 1', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
+        { n: 2, name: 'Option 2', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
+        { n: 3, name: 'Option 3', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
+        { n: 4, name: 'Option 4', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
+        { n: 5, name: 'Option 5', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
+        { n: 6, name: 'B9', type: 'data', dir: 'out', desc: 'Key code bit 9.' },
+        { n: 7, name: 'B8', type: 'data', dir: 'out', desc: 'Key code bit 8.' },
+        { n: 8, name: 'B7', type: 'data', dir: 'out', desc: 'Key code bit 7.' },
+        { n: 9, name: 'B6', type: 'data', dir: 'out', desc: 'Key code bit 6.' },
+        { n: 10, name: 'B5', type: 'data', dir: 'out', desc: 'Key code bit 5.' },
+        { n: 11, name: 'B4', type: 'data', dir: 'out', desc: 'Key code bit 4.' },
+        { n: 12, name: 'B3', type: 'data', dir: 'out', desc: 'Key code bit 3.' },
+        { n: 13, name: 'B2', type: 'data', dir: 'out', desc: 'Key code bit 2.' },
+        { n: 14, name: 'B1', type: 'data', dir: 'out', desc: 'Key code bit 1.' },
+        { n: 15, name: 'VDD', type: 'ground', dir: '-', desc: 'VDD, tied to 0 V (data sheet standard conditions).', terms: ['pmos'], probe: '0 V' },
+        { n: 16, name: 'DataRdy', type: 'ctrl', dir: 'out', desc: 'Data ready strobe: a key code is valid.', terms: ['strobe'] },
+        { n: 17, name: 'Y0', type: 'kbd', dir: 'in', desc: 'Matrix column Y0.' },
+        { n: 18, name: 'Y1', type: 'kbd', dir: 'in', desc: 'Matrix column Y1.' },
+        { n: 19, name: 'Y2', type: 'kbd', dir: 'in', desc: 'Matrix column Y2.' },
+        { n: 20, name: 'Y3', type: 'kbd', dir: 'in', desc: 'Matrix column Y3.' },
+        { n: 21, name: 'Y4', type: 'kbd', dir: 'in', desc: 'Matrix column Y4.' },
+        { n: 22, name: 'Y5', type: 'kbd', dir: 'in', desc: 'Matrix column Y5.' },
+        { n: 23, name: 'Y6', type: 'kbd', dir: 'in', desc: 'Matrix column Y6.' },
+        { n: 24, name: 'Y7', type: 'kbd', dir: 'in', desc: 'Matrix column Y7.' },
+        { n: 25, name: 'Y8', type: 'kbd', dir: 'in', desc: 'Matrix column Y8.' },
+        { n: 26, name: 'Y9', type: 'kbd', dir: 'in', desc: 'Matrix column Y9.' },
+        { n: 27, name: 'VGG', type: 'power', dir: '-', desc: 'VGG, -12 V gate supply.', terms: ['pmos'], probe: '-12 V' },
+        { n: 28, name: 'CtrlIn', type: 'kbd', dir: 'in', desc: 'Control key input.' },
+        { n: 29, name: 'ShiftIn', type: 'kbd', dir: 'in', desc: 'Shift key input.' },
+        { n: 30, name: 'VCC', type: 'power', dir: '-', desc: 'VCC, +5 V (substrate).', terms: ['vcc'], probe: '+5 V' },
+        { n: 31, name: 'DlyNode', type: 'ctrl', dir: '-', desc: 'Delay node: external RC sets the strobe delay (debounce).' },
+        { n: 32, name: 'X8', type: 'kbd', dir: 'out', desc: 'Matrix row X8.' },
+        { n: 33, name: 'X7', type: 'kbd', dir: 'out', desc: 'Matrix row X7.' },
+        { n: 34, name: 'X6', type: 'kbd', dir: 'out', desc: 'Matrix row X6.' },
+        { n: 35, name: 'X5', type: 'kbd', dir: 'out', desc: 'Matrix row X5.' },
+        { n: 36, name: 'X4', type: 'kbd', dir: 'out', desc: 'Matrix row X4.' },
+        { n: 37, name: 'X3', type: 'kbd', dir: 'out', desc: 'Matrix row X3.' },
+        { n: 38, name: 'X2', type: 'kbd', dir: 'out', desc: 'Matrix row X2.' },
+        { n: 39, name: 'X1', type: 'kbd', dir: 'out', desc: 'Matrix row X1.' },
+        { n: 40, name: 'X0', type: 'kbd', dir: 'out', desc: 'Matrix row X0.' },
       ],
-      "heat": "cool",
-      "datasheets": [
-        {
-          "label": "GI AY-5-3600 datasheet (datasheetarchive)",
-          "url": "https://www.datasheetarchive.com/?q=AY-5-3600",
-          "verify": true
-        }
-      ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "Option 1",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Option strap."
-        },
-        {
-          "n": 2,
-          "name": "Option 2",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Option strap."
-        },
-        {
-          "n": 3,
-          "name": "Option 3",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Option strap."
-        },
-        {
-          "n": 4,
-          "name": "Option 4",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Option strap."
-        },
-        {
-          "n": 5,
-          "name": "Option 5",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Option strap."
-        },
-        {
-          "n": 6,
-          "name": "B9",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 9."
-        },
-        {
-          "n": 7,
-          "name": "B8",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 8."
-        },
-        {
-          "n": 8,
-          "name": "B7",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 7."
-        },
-        {
-          "n": 9,
-          "name": "B6",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 6."
-        },
-        {
-          "n": 10,
-          "name": "B5",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 5."
-        },
-        {
-          "n": 11,
-          "name": "B4",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 4."
-        },
-        {
-          "n": 12,
-          "name": "B3",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 3."
-        },
-        {
-          "n": 13,
-          "name": "B2",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 2."
-        },
-        {
-          "n": 14,
-          "name": "B1",
-          "type": "data",
-          "dir": "out",
-          "desc": "Key code bit 1."
-        },
-        {
-          "n": 15,
-          "name": "VDD",
-          "type": "power",
-          "dir": "-",
-          "desc": "PMOS supply.",
-          "terms": [
-            "pmos"
-          ]
-        },
-        {
-          "n": 16,
-          "name": "DataRdy",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Data ready strobe: a key code is valid.",
-          "terms": [
-            "strobe"
-          ]
-        },
-        {
-          "n": 17,
-          "name": "Y0",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y0."
-        },
-        {
-          "n": 18,
-          "name": "Y1",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y1."
-        },
-        {
-          "n": 19,
-          "name": "Y2",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y2."
-        },
-        {
-          "n": 20,
-          "name": "Y3",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y3."
-        },
-        {
-          "n": 21,
-          "name": "Y4",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y4."
-        },
-        {
-          "n": 22,
-          "name": "Y5",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y5."
-        },
-        {
-          "n": 23,
-          "name": "Y6",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y6."
-        },
-        {
-          "n": 24,
-          "name": "Y7",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y7."
-        },
-        {
-          "n": 25,
-          "name": "Y8",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y8."
-        },
-        {
-          "n": 26,
-          "name": "Y9",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Matrix column Y9."
-        },
-        {
-          "n": 27,
-          "name": "VGG",
-          "type": "power",
-          "dir": "-",
-          "desc": "PMOS gate supply (negative).",
-          "terms": [
-            "pmos"
-          ]
-        },
-        {
-          "n": 28,
-          "name": "CtrlIn",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Control key input."
-        },
-        {
-          "n": 29,
-          "name": "ShiftIn",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Shift key input."
-        },
-        {
-          "n": 30,
-          "name": "VCC",
-          "type": "power",
-          "dir": "-",
-          "desc": "Logic supply.",
-          "terms": [
-            "vcc"
-          ]
-        },
-        {
-          "n": 31,
-          "name": "DlyNode",
-          "type": "ctrl",
-          "dir": "-",
-          "desc": "Debounce delay RC node."
-        },
-        {
-          "n": 32,
-          "name": "X8",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X8."
-        },
-        {
-          "n": 33,
-          "name": "X7",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X7."
-        },
-        {
-          "n": 34,
-          "name": "X6",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X6."
-        },
-        {
-          "n": 35,
-          "name": "X5",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X5."
-        },
-        {
-          "n": 36,
-          "name": "X4",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X4."
-        },
-        {
-          "n": 37,
-          "name": "X3",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X3."
-        },
-        {
-          "n": 38,
-          "name": "X2",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X2."
-        },
-        {
-          "n": 39,
-          "name": "X1",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X1."
-        },
-        {
-          "n": 40,
-          "name": "X0",
-          "type": "kbd",
-          "dir": "out",
-          "desc": "Matrix row X0."
-        }
-      ]
+      verifiedAgainst: 'General Instrument AY-5-3600 data sheet, pin configuration (p. 3-23) and standard conditions (p. 3-24)',
     },
     rom2316: {
-      id: 'rom2316', name: '2316B / 2716 ROM 2K x 8', short: '2716', family: 'EPROM / mask ROM', role: 'Monitor and Applesoft ROM', pkg: 'DIP-24',
+      id: 'rom2316',
+      name: '9316B / 2316B ROM 2K x 8',
+      short: '9316B',
+      family: 'Mask ROM (2316B type)',
+      role: 'Monitor, Integer BASIC and Applesoft ROMs',
+      pkg: 'DIP-24',
       machines: ['apple2', 'apple2plus'],
-      summary: 'Monitor and BASIC ROMs in 2 KB parts, drawn with the 2716 pinout. The sheet puts six 2 KB parts across $D000-$F800; which part holds which block is not on the sheet. The 2316B chip-selects differ on pins 18, 20 and 21, so do not swap a 2716 for a 2316B without checking the board.',
+      summary: 'Six 24-pin sockets cover $D000-$FFFF with 2 KB mask ROMs, drawn in the manual as 9316B. /CS1 and /CS3 are active LOW and select the block; CS2 is active HIGH and follows /INH, so a card can disable every ROM. A 2716 EPROM has /CE, /OE and Vpp on pins 18, 20 and 21 with other polarities, so it needs an adapter or rewiring.',
       fails: ['No boot', 'Garbage'],
-      heat: 'cool', verifiedAgainst: 'Apple II / II+ Chip Pinouts sheet (2316/2716 block; 2316B chip-select caveat)',
-      datasheets: [],
+      heat: 'cool',
+      verifiedAgainst: 'Apple II Reference Manual (1979), ROM Memory and Figure 13 (9316B pinout), pp. 94-95',
+      datasheets: [
+        {
+          label: 'Apple II Reference Manual (1979), Figure 13, p. 95: 9316B ROM pinout',
+          url: 'https://archive.org/details/Apple_II_Reference_Manual_1979_Apple/page/n105',
+        },
+        { label: 'Apple II Reference Manual (1979), ROM Memory, p. 94', url: 'https://archive.org/details/Apple_II_Reference_Manual_1979_Apple/page/n104' },
+      ],
       pins: [
         { n: 1, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bus bit 7.' },
         { n: 2, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bus bit 6.' },
@@ -1572,33 +574,46 @@ RCS.add({
         { n: 6, name: 'A2', type: 'addr', dir: 'in', desc: 'Address bus bit 2.' },
         { n: 7, name: 'A1', type: 'addr', dir: 'in', desc: 'Address bus bit 1.' },
         { n: 8, name: 'A0', type: 'addr', dir: 'in', desc: 'Address bus bit 0.' },
-        { n: 9, name: 'O0', type: 'data', dir: 'out', desc: 'Data bit 0 out.' },
-        { n: 10, name: 'O1', type: 'data', dir: 'out', desc: 'Data bit 1 out.' },
-        { n: 11, name: 'O2', type: 'data', dir: 'out', desc: 'Data bit 2 out.' },
-        { n: 12, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V reference' },
-        { n: 13, name: 'O3', type: 'data', dir: 'out', desc: 'Data bit 3 out.' },
-        { n: 14, name: 'O4', type: 'data', dir: 'out', desc: 'Data bit 4 out.' },
-        { n: 15, name: 'O5', type: 'data', dir: 'out', desc: 'Data bit 5 out.' },
-        { n: 16, name: 'O6', type: 'data', dir: 'out', desc: 'Data bit 6 out.' },
-        { n: 17, name: 'O7', type: 'data', dir: 'out', desc: 'Data bit 7 out.' },
-        { n: 18, name: '/CE', type: 'ctrl', dir: 'in', desc: 'Chip enable, LOW to select this ROM. On a 2316B pin 18 is a chip-select with different polarity; check the board.', terms: ['cs'], activeLow: true, probe: 'LOW while the ROM range is on the bus', verify: true },
+        { n: 9, name: 'D0', type: 'data', dir: 'out', desc: 'Data bit 0 out.' },
+        { n: 10, name: 'D1', type: 'data', dir: 'out', desc: 'Data bit 1 out.' },
+        { n: 11, name: 'D2', type: 'data', dir: 'out', desc: 'Data bit 2 out.' },
+        { n: 12, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V' },
+        { n: 13, name: 'D3', type: 'data', dir: 'out', desc: 'Data bit 3 out.' },
+        { n: 14, name: 'D4', type: 'data', dir: 'out', desc: 'Data bit 4 out.' },
+        { n: 15, name: 'D5', type: 'data', dir: 'out', desc: 'Data bit 5 out.' },
+        { n: 16, name: 'D6', type: 'data', dir: 'out', desc: 'Data bit 6 out.' },
+        { n: 17, name: 'D7', type: 'data', dir: 'out', desc: 'Data bit 7 out.' },
+        { n: 18, name: 'CS2', type: 'ctrl', dir: 'in', desc: 'Chip select, active HIGH. Common to all six ROMs and tied to the slot /INH line, so a card pulling /INH LOW turns every ROM off. (2716: /CE.)', probe: 'HIGH unless a card asserts /INH' },
         { n: 19, name: 'A10', type: 'addr', dir: 'in', desc: 'Address bus bit 10.' },
-        { n: 20, name: '/OE', type: 'ctrl', dir: 'in', desc: 'Output enable, LOW to drive the data lines. On a 2316B this pin is a chip-select; verify before swapping.', terms: ['cs'], activeLow: true, verify: true },
-        { n: 21, name: 'Vpp', type: 'power', dir: '-', desc: 'Programming voltage on a 2716 (+5 V in read mode). On a 2316B this pin is a chip-select; verify before swapping.', terms: ['vpp'], probe: '+5 V on a 2716', verify: true },
+        { n: 20, name: '/CS1', type: 'ctrl', dir: 'in', desc: 'Chip select, active LOW. Tied to /CS3 and driven by the 74LS138 at F12, one output per 2 KB block. (2716: /OE.)', probe: 'Pulses LOW when the CPU reads this ROM block', activeLow: true },
+        { n: 21, name: '/CS3', type: 'ctrl', dir: 'in', desc: 'Chip select, active LOW, tied to /CS1. (2716: Vpp, +5 V in read mode.)', probe: 'Same pulses as pin 20', activeLow: true },
         { n: 22, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bus bit 9.' },
         { n: 23, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bus bit 8.' },
-        { n: 24, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+5 V' },
-      ] },
+        { n: 24, name: '+5V', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+5 V' },
+      ],
+    },
     kbd5740: {
-      id: 'kbd5740', name: 'MM5740 Keyboard Encoder', short: 'MM5740', family: 'PMOS', role: 'Keyboard encoder (early II and II+)', pkg: 'DIP-40',
+      id: 'kbd5740',
+      name: 'MM5740 Keyboard Encoder',
+      short: 'MM5740',
+      family: 'PMOS',
+      role: 'Keyboard encoder (early II and II+)',
+      pkg: 'DIP-40',
       machines: ['apple2', 'apple2plus'],
-      summary: 'PMOS encoder on the early Datanetics keyboards: it scans the X/Y matrix and puts a 9-bit key code on B1-B9. The IIe moved to the AY-5-3600. The sheet calls this pinout its best reconstruction, so check a datasheet before you trust a pin.',
+      summary: 'PMOS encoder on the II and II+ keyboard: it scans the X1-X9 / Y1-Y10 matrix and puts a 9-bit code on B1-B9 with a data strobe. Supplies: VSS +5 V (pin 32), VLL 0 V (pin 2), VGG -12 V (pin 18). Its outputs are buffered by a 7404 on the keyboard and reach the main board on the 16-pin keyboard connector. The IIe moved to the AY-5-3600.',
       fails: ['Dead keyboard', 'Stuck or repeating key'],
-      heat: 'cool', verify: true, verifiedAgainst: 'Apple II / II+ Chip Pinouts sheet (MM5740 block, flagged on the sheet as a reconstruction)',
-      datasheets: [],
+      heat: 'cool',
+      verifiedAgainst: 'National Semiconductor 1977 MOS/LSI Databook, MM5740 data sheet, pp. 10-2 to 10-4',
+      datasheets: [
+        {
+          label: 'National 1977 MOS/LSI Databook, MM5740 connection diagram, p. 10-2 (bitsavers)',
+          url: 'http://www.bitsavers.org/components/national/_dataBooks/1977_National_MOS_LSI_databook.pdf#page=575',
+        },
+        { label: 'Apple II Reference Manual (1979), The Keyboard, p. 100', url: 'https://archive.org/details/Apple_II_Reference_Manual_1979_Apple/page/n110' },
+      ],
       pins: [
         { n: 1, name: 'B3', type: 'data', dir: 'out', desc: 'Key code bit 3.' },
-        { n: 2, name: 'VLL', type: 'power', dir: '-', desc: 'PMOS supply (sheet name VLL). Check which rail the board wires here.', terms: ['pmos'] },
+        { n: 2, name: 'VLL', type: 'ground', dir: '-', desc: 'VLL, 0 V (ground).', terms: ['pmos'], probe: '0 V' },
         { n: 3, name: 'CLOCK', type: 'clock', dir: 'in', desc: 'Scan clock from the board.', terms: ['clock'], probe: 'Square-wave clock while the keyboard scans' },
         { n: 4, name: 'X9', type: 'kbd', dir: 'out', desc: 'Matrix row X9.' },
         { n: 5, name: 'X8', type: 'kbd', dir: 'out', desc: 'Matrix row X8.' },
@@ -1610,13 +625,13 @@ RCS.add({
         { n: 11, name: 'X2', type: 'kbd', dir: 'out', desc: 'Matrix row X2.' },
         { n: 12, name: 'X1', type: 'kbd', dir: 'out', desc: 'Matrix row X1.' },
         { n: 13, name: 'DStrbO', type: 'ctrl', dir: 'out', desc: 'Data strobe output: pulses when a key code is ready.', terms: ['strobe'] },
-        { n: 14, name: 'DStrbC', type: 'ctrl', dir: 'out', desc: 'Data strobe, second phase (sheet name DStrbC).', terms: ['strobe'] },
-        { n: 15, name: 'OutEn', type: 'ctrl', dir: 'in', desc: 'Output enable for the code lines.' },
+        { n: 14, name: 'DStrbC', type: 'ctrl', dir: 'in', desc: 'Data strobe control input: sets the strobe pulse width.', terms: ['strobe'] },
+        { n: 15, name: 'OutEn', type: 'ctrl', dir: 'in', desc: 'Output enable for the B1-B9 code lines (TRI-STATE).' },
         { n: 16, name: 'Repeat', type: 'ctrl', dir: 'in', desc: 'Repeat key input.' },
-        { n: 17, name: 'KeyBnce', type: 'ctrl', dir: '-', desc: 'Key-bounce timing node (RC).' },
-        { n: 18, name: 'VGG', type: 'power', dir: '-', desc: 'PMOS gate supply, negative rail.', terms: ['pmos'], probe: 'Negative; read against VSS (pin 32)' },
+        { n: 17, name: 'KeyBnce', type: 'ctrl', dir: '-', desc: 'Key-bounce mask: external capacitor sets the debounce time.' },
+        { n: 18, name: 'VGG', type: 'power', dir: '-', desc: 'VGG, -12 V gate supply.', terms: ['pmos'], probe: '-12 V' },
         { n: 19, name: 'Control', type: 'kbd', dir: 'in', desc: 'Control key input.' },
-        { n: 20, name: 'ShiftLk', type: 'kbd', dir: 'in', desc: 'Shift Lock input.' },
+        { n: 20, name: 'ShiftLk', type: 'kbd', dir: 'bidir', desc: 'Shift Lock I/O: input from the lock key; can also drive an indicator.' },
         { n: 21, name: 'SHIFT', type: 'kbd', dir: 'in', desc: 'Shift key input.' },
         { n: 22, name: 'Y10', type: 'kbd', dir: 'in', desc: 'Matrix column Y10.' },
         { n: 23, name: 'Y1', type: 'kbd', dir: 'in', desc: 'Matrix column Y1.' },
@@ -1628,7 +643,7 @@ RCS.add({
         { n: 29, name: 'Y7', type: 'kbd', dir: 'in', desc: 'Matrix column Y7.' },
         { n: 30, name: 'Y8', type: 'kbd', dir: 'in', desc: 'Matrix column Y8.' },
         { n: 31, name: 'Y9', type: 'kbd', dir: 'in', desc: 'Matrix column Y9.' },
-        { n: 32, name: 'VSS', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V reference' },
+        { n: 32, name: 'VSS', type: 'power', dir: '-', desc: 'VSS, +5 V supply (PMOS substrate).', terms: ['gnd'], probe: '+5 V' },
         { n: 33, name: 'B5', type: 'data', dir: 'out', desc: 'Key code bit 5.' },
         { n: 34, name: 'B6', type: 'data', dir: 'out', desc: 'Key code bit 6.' },
         { n: 35, name: 'B7', type: 'data', dir: 'out', desc: 'Key code bit 7.' },
@@ -1637,15 +652,250 @@ RCS.add({
         { n: 38, name: 'B2', type: 'data', dir: 'out', desc: 'Key code bit 2.' },
         { n: 39, name: 'B9', type: 'data', dir: 'out', desc: 'Key code bit 9.' },
         { n: 40, name: 'B4', type: 'data', dir: 'out', desc: 'Key code bit 4.' },
-      ] },
+      ],
+      location: { apple2: 'Keyboard PCB', apple2plus: 'Keyboard PCB' },
+    },
     iwm344: {
-      id: 'iwm344', name: 'IWM 344-0041 Integrated Woz Machine', short: 'IWM', family: 'Apple custom', role: 'Floppy disk controller', pkg: 'DIP-28',
+      id: 'iwm344',
+      name: 'IWM 344-0041 Integrated Woz Machine',
+      short: 'IWM',
+      family: 'Apple custom',
+      role: 'Floppy disk controller',
+      pkg: 'DIP-28',
       machines: ['apple2c'],
-      summary: 'One chip that does the floppy timing and read/write work the II did with its discrete Disk II card. The IIc builds it into the board for its built-in drive. The part number comes from forum posts, and the suffix varies, so check the board. Pinout not sourced yet.',
+      summary: 'Integrated Woz Machine: the whole Disk II controller in one chip. In the IIc it runs the built-in drive (drive 1) and the external drive port (drive 2). The stepper phases, WRDATA, /WRREQ, RDDATA, WRPROT and the drive selects go straight to the drives. The 344-0041 marking and suffix vary.',
       fails: ['Built-in drive will not boot', 'Disk read errors'],
-      verify: true, verifiedAgainst: 'Apple IIc (Wikipedia: IWM as the single floppy chip); part number from forum posts, not a sheet',
-      datasheets: [],
-      pins: null,
+      verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-9 and Table 11-11, pp. 247-248',
+      datasheets: [
+        { label: 'Apple IIc Technical Reference Manual, IWM pinouts, pp. 247-248', url: 'https://archive.org/details/Apple_IIc_Technical_Reference_Manual/page/n274' },
+      ],
+      pins: [
+        { n: 1, name: 'SEEKPH0', type: 'io', dir: 'out', desc: 'Stepper motor phase 0 to the drive.', probe: 'Pulses while the head steps' },
+        { n: 2, name: 'SEEKPH2', type: 'io', dir: 'out', desc: 'Stepper motor phase 2 to the drive.', probe: 'Pulses while the head steps' },
+        { n: 3, name: 'A0', type: 'addr', dir: 'in', desc: 'Data written into the state bit picked by A1-A3.' },
+        { n: 4, name: 'A1', type: 'addr', dir: 'in', desc: 'State-bit select bit 1.' },
+        { n: 5, name: 'A2', type: 'addr', dir: 'in', desc: 'State-bit select bit 2.' },
+        { n: 6, name: 'A3', type: 'addr', dir: 'in', desc: 'State-bit select bit 3.' },
+        { n: 7, name: '/DISK', type: 'ctrl', dir: 'in', desc: 'Device enable from the GLU. Falling edge latches A1-A3.', activeLow: true },
+        { n: 8, name: 'WRDATA', type: 'io', dir: 'out', desc: 'Serial write data: each 1 bit is a transition.' },
+        { n: 9, name: '/WRREQ', type: 'ctrl', dir: 'out', desc: 'Write request to the drive.', activeLow: true },
+        { n: 10, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 11, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 12, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 13, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 14, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', probe: '0 V' },
+        { n: 15, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 16, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 17, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 18, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 19, name: '/DR2', type: 'ctrl', dir: 'out', desc: 'Drive 2 select.', activeLow: true },
+        { n: 20, name: '/DR1', type: 'ctrl', dir: 'out', desc: 'Drive 1 select.', activeLow: true },
+        { n: 21, name: 'WRPROT', type: 'io', dir: 'in', desc: 'Write-protect input, read as status bit 7.' },
+        { n: 22, name: 'RDDATA', type: 'io', dir: 'in', desc: 'Serial read data from the drive.', probe: 'Pulse train while a disk turns under the head' },
+        { n: 23, name: '/RESET', type: 'ctrl', dir: 'in', desc: 'Reset: outputs inactive, state and mode registers cleared.', activeLow: true },
+        { n: 24, name: '7M', type: 'clock', dir: 'in', desc: '7.159 MHz clock input.', probe: '7.16 MHz' },
+        { n: 25, name: 'Q3', type: 'clock', dir: 'in', desc: '2 MHz clock that times serial data.', probe: '2.04 MHz, asymmetric' },
+        { n: 26, name: '+5V', type: 'power', dir: '-', desc: '+5 V.', probe: '+5 V' },
+        { n: 27, name: 'SEEKPH3', type: 'io', dir: 'out', desc: 'Stepper motor phase 3 to the drive.', probe: 'Pulses while the head steps' },
+        { n: 28, name: 'SEEKPH1', type: 'io', dir: 'out', desc: 'Stepper motor phase 1 to the drive.', probe: 'Pulses while the head steps' },
+      ],
+      heat: 'warm',
+    },
+    mmu2c: {
+      id: 'mmu2c',
+      name: 'IIc MMU (Memory Management Unit)',
+      short: 'MMU',
+      family: 'Apple custom',
+      role: 'Memory management and RAM address multiplex',
+      pkg: 'DIP-40',
+      machines: ['apple2c'],
+      summary: 'The IIc version of the IIe MMU: main/auxiliary banking, language-card RAM, the ROM enables and the RAM address multiplex for CPU cycles. It also decodes $C06x and $C07x for the hand-control and mouse circuits and the SELIO select for the GLU and IOU. Reports its soft switches on MD7.',
+      fails: ['Dead IIc', 'No auxiliary RAM / no 80 columns', 'BASIC not found or random crashes'],
+      heat: 'warm',
+      verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-5 and Table 11-7, p. 242',
+      datasheets: [
+        { label: 'Apple IIc Technical Reference Manual, MMU pinouts, p. 242', url: 'https://archive.org/details/Apple_IIc_Technical_Reference_Manual/page/n269' },
+      ],
+      pins: [
+        { n: 1, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', probe: '0 V' },
+        { n: 2, name: 'A0', type: 'addr', dir: 'in', desc: '65C02 address bit 0.' },
+        { n: 3, name: 'Φ0', type: 'clock', dir: 'in', desc: 'Clock phase 0 input.', probe: '1.023 MHz' },
+        { n: 4, name: 'Q3', type: 'clock', dir: 'in', desc: 'Timing signal input (2 MHz, asymmetric).' },
+        { n: 5, name: '/PRAS', type: 'ctrl', dir: 'in', desc: 'Memory row-address strobe.', activeLow: true },
+        { n: 6, name: 'RA0', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 0.' },
+        { n: 7, name: 'RA1', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 1.' },
+        { n: 8, name: 'RA2', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 2.' },
+        { n: 9, name: 'RA3', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 3.' },
+        { n: 10, name: 'RA4', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 4.' },
+        { n: 11, name: 'RA5', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 5.' },
+        { n: 12, name: 'RA6', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 6.' },
+        { n: 13, name: 'RA7', type: 'addr', dir: 'out', desc: 'Multiplexed RAM address 7.' },
+        { n: 14, name: 'R/W', type: 'ctrl', dir: 'in', desc: '65C02 read/write.' },
+        { n: 15, name: '/INH', type: 'ctrl', dir: 'in', desc: 'Inhibits main memory; tied to +5 V on the IIc.', probe: '+5 V', activeLow: true },
+        { n: 16, name: '/C06X', type: 'ctrl', dir: 'out', desc: 'Goes LOW during Φ0 for $C06x (hand-control and switch reads).', activeLow: true },
+        { n: 17, name: '/EN80', type: 'ctrl', dir: 'out', desc: 'Enables auxiliary RAM.', activeLow: true },
+        { n: 18, name: '/KBD', type: 'ctrl', dir: 'out', desc: 'Enables keyboard data bits 0-6 onto the bus.', activeLow: true },
+        { n: 19, name: '/ROMEN2', type: 'ctrl', dir: 'out', desc: 'ROM enable; tied to /ROMEN1.', activeLow: true },
+        { n: 20, name: '/ROMEN1', type: 'ctrl', dir: 'out', desc: 'ROM enable; tied to /ROMEN2.', activeLow: true },
+        { n: 21, name: 'MD7', type: 'data', dir: 'bidir', desc: 'MMU soft-switch status on data bit 7.' },
+        { n: 22, name: '/C07X', type: 'ctrl', dir: 'out', desc: 'Goes LOW during Φ0 for $C07x (paddle timer reset).', activeLow: true },
+        { n: 23, name: '/CASEN', type: 'ctrl', dir: 'out', desc: 'Enables main RAM.', activeLow: true },
+        { n: 24, name: '/SELIO', type: 'ctrl', dir: 'out', desc: 'LOW during Φ0 for any $C0xx access except $C08x, $C0Bx, $C0Cx and $C0Fx.', activeLow: true },
+        { n: 25, name: '+5V', type: 'power', dir: '-', desc: '+5 V.', probe: '+5 V' },
+        { n: 26, name: 'A15', type: 'addr', dir: 'in', desc: '65C02 address bit 15.' },
+        { n: 27, name: 'A14', type: 'addr', dir: 'in', desc: '65C02 address bit 14.' },
+        { n: 28, name: 'A13', type: 'addr', dir: 'in', desc: '65C02 address bit 13.' },
+        { n: 29, name: 'A12', type: 'addr', dir: 'in', desc: '65C02 address bit 12.' },
+        { n: 30, name: 'A11', type: 'addr', dir: 'in', desc: '65C02 address bit 11.' },
+        { n: 31, name: 'A10', type: 'addr', dir: 'in', desc: '65C02 address bit 10.' },
+        { n: 32, name: 'A9', type: 'addr', dir: 'in', desc: '65C02 address bit 9.' },
+        { n: 33, name: 'A8', type: 'addr', dir: 'in', desc: '65C02 address bit 8.' },
+        { n: 34, name: 'A7', type: 'addr', dir: 'in', desc: '65C02 address bit 7.' },
+        { n: 35, name: 'A6', type: 'addr', dir: 'in', desc: '65C02 address bit 6.' },
+        { n: 36, name: 'A5', type: 'addr', dir: 'in', desc: '65C02 address bit 5.' },
+        { n: 37, name: 'A4', type: 'addr', dir: 'in', desc: '65C02 address bit 4.' },
+        { n: 38, name: 'A3', type: 'addr', dir: 'in', desc: '65C02 address bit 3.' },
+        { n: 39, name: 'A2', type: 'addr', dir: 'in', desc: '65C02 address bit 2.' },
+        { n: 40, name: 'A1', type: 'addr', dir: 'in', desc: '65C02 address bit 1.' },
+      ],
+    },
+    iou2c: {
+      id: 'iou2c',
+      name: 'IIc IOU (Input/Output Unit)',
+      short: 'IOU',
+      family: 'Apple custom',
+      role: 'Video timing, soft switches, mouse and keyboard I/O',
+      pkg: 'DIP-40',
+      machines: ['apple2c'],
+      summary: 'The IIc version of the IIe IOU: video counters and sync, the display soft switches, speaker, keyboard strobe and any-key-down, plus mouse movement inputs and the VBL/mouse interrupt (/IRQ on pin 16). The cassette output pin is reserved on the IIc.',
+      fails: ['No or bad video', 'No speaker', 'Dead keyboard', 'Mouse or VBL interrupts dead'],
+      heat: 'warm',
+      verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-6 and Table 11-8, pp. 243-244',
+      datasheets: [
+        { label: 'Apple IIc Technical Reference Manual, IOU pinouts, pp. 243-244', url: 'https://archive.org/details/Apple_IIc_Technical_Reference_Manual/page/n270' },
+      ],
+      pins: [
+        { n: 1, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', probe: '0 V' },
+        { n: 2, name: 'GR', type: 'video', dir: 'out', desc: 'Graphics mode enable.' },
+        { n: 3, name: 'SEGA', type: 'video', dir: 'out', desc: 'Text: with SEGB and VC selects the dot row of the character.' },
+        { n: 4, name: 'SEGB', type: 'video', dir: 'out', desc: 'Text: row select with SEGA and VC. Graphics: LOW hi-res, HIGH lo-res.' },
+        { n: 5, name: 'VC', type: 'video', dir: 'out', desc: 'Vertical counter bit (row select; lo-res upper/lower block).' },
+        { n: 6, name: '/80COL', type: 'video', dir: 'out', desc: '80-column video enable.', activeLow: true },
+        { n: 7, name: 'CASSO', type: 'io', dir: 'out', desc: 'Reserved (cassette output on the IIe).' },
+        { n: 8, name: 'SPKR', type: 'audio', dir: 'out', desc: 'Speaker output signal.', probe: 'Toggles on each beep' },
+        { n: 9, name: 'MD7', type: 'data', dir: 'bidir', desc: 'IOU flags onto data bit 7.' },
+        { n: 10, name: 'YMOVE', type: 'io', dir: 'in', desc: 'Mouse movement along Y.' },
+        { n: 11, name: 'NC', type: 'nc', dir: '-', desc: 'Not used.' },
+        { n: 12, name: 'NC', type: 'nc', dir: '-', desc: 'Not used.' },
+        { n: 13, name: 'PDL0/XMOVE', type: 'io', dir: 'in', desc: 'Mouse movement along X (shared with paddle 0).' },
+        { n: 14, name: 'R/W', type: 'ctrl', dir: 'in', desc: '65C02 read/write.' },
+        { n: 15, name: '/RESET', type: 'ctrl', dir: 'out', desc: 'Power-on and reset output.', probe: 'HIGH when running', activeLow: true },
+        { n: 16, name: '/IRQ', type: 'ctrl', dir: 'out', desc: 'Maskable interrupt to the 65C02 (mouse, VBL).', activeLow: true },
+        { n: 17, name: 'RA0', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 0; video refresh address in phase 1.' },
+        { n: 18, name: 'RA1', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 1; video refresh address in phase 1.' },
+        { n: 19, name: 'RA2', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 2; video refresh address in phase 1.' },
+        { n: 20, name: 'RA3', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 3; video refresh address in phase 1.' },
+        { n: 21, name: 'RA4', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 4; video refresh address in phase 1.' },
+        { n: 22, name: 'RA5', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 5; video refresh address in phase 1.' },
+        { n: 23, name: 'RA6', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 6; video refresh address in phase 1.' },
+        { n: 24, name: 'RA7', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 7; video refresh address in phase 1.' },
+        { n: 25, name: '/PRAS', type: 'ctrl', dir: 'in', desc: 'Row-address strobe (phase 0).', activeLow: true },
+        { n: 26, name: 'Φ0', type: 'clock', dir: 'in', desc: 'Clock phase 0.', probe: '1.023 MHz' },
+        { n: 27, name: 'Q3', type: 'clock', dir: 'in', desc: 'Intermediate timing signal (2 MHz).' },
+        { n: 28, name: '+5V', type: 'power', dir: '-', desc: '+5 V.', probe: '+5 V' },
+        { n: 29, name: 'A6', type: 'addr', dir: 'in', desc: '65C02 address bit 6.' },
+        { n: 30, name: '/IOUSELIO', type: 'ctrl', dir: 'in', desc: 'IOU select, derived from the MMU /SELIO by the GLU.', activeLow: true },
+        { n: 31, name: 'AKD', type: 'kbd', dir: 'in', desc: 'Any-key-down.' },
+        { n: 32, name: 'KSTRB', type: 'kbd', dir: 'in', desc: 'Keyboard strobe.' },
+        { n: 33, name: 'VIDD7', type: 'video', dir: 'in', desc: 'Video display data bit 7.' },
+        { n: 34, name: 'VIDD6', type: 'video', dir: 'in', desc: 'Video display data bit 6.' },
+        { n: 35, name: '/RA9', type: 'video', dir: 'out', desc: 'Video display control bit.', activeLow: true },
+        { n: 36, name: '/RA10', type: 'video', dir: 'out', desc: 'Video display control bit.', activeLow: true },
+        { n: 37, name: '/CLRGAT', type: 'video', dir: 'out', desc: 'Colour-burst gate (enable).', activeLow: true },
+        { n: 38, name: '/WNDW', type: 'video', dir: 'out', desc: 'Display blanking.', activeLow: true },
+        { n: 39, name: '/SYNC', type: 'video', dir: 'out', desc: 'Display synchronisation.', probe: 'Line sync pulses at 15.7 kHz', activeLow: true },
+        { n: 40, name: 'H0', type: 'video', dir: 'out', desc: 'Horizontal timing: low bit of the character counter.' },
+      ],
+    },
+    tmg2c: {
+      id: 'tmg2c',
+      name: 'IIc TMG (Timing Generator)',
+      short: 'TMG',
+      family: 'Apple custom',
+      role: 'Master clock divider and RAM/video timing',
+      pkg: 'DIP-20',
+      machines: ['apple2c'],
+      summary: 'Takes the 14.318 MHz master clock and makes 7M, the 3.58 MHz colour reference, Φ0/Φ1, Q3, the RAM strobes /PRAS and /PCAS, and the video load and dot-clock signals. Dead TMG means no clocks: a completely dead IIc.',
+      fails: ['Dead IIc: no Φ0 at the CPU', 'No video or no colour'],
+      heat: 'warm',
+      verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-7 and Table 11-9, p. 245',
+      datasheets: [
+        { label: 'Apple IIc Technical Reference Manual, TMG pinouts, p. 245', url: 'https://archive.org/details/Apple_IIc_Technical_Reference_Manual/page/n272' },
+      ],
+      pins: [
+        { n: 1, name: '14M', type: 'clock', dir: 'in', desc: '14.318 MHz master timing input.', probe: '14.318 MHz' },
+        { n: 2, name: '7M', type: 'clock', dir: 'out', desc: '7.159 MHz timing signal.', probe: '7.16 MHz' },
+        { n: 3, name: 'CREF', type: 'clock', dir: 'out', desc: '3.5795 MHz colour reference.', probe: '3.58 MHz' },
+        { n: 4, name: 'H0', type: 'video', dir: 'in', desc: 'Horizontal video timing signal.' },
+        { n: 5, name: 'VIDD7', type: 'video', dir: 'in', desc: 'Video data bit 7.' },
+        { n: 6, name: 'SEGB', type: 'video', dir: 'in', desc: 'Video timing signal.' },
+        { n: 7, name: 'TEXT', type: 'video', dir: 'out', desc: 'Video display text-modes enable.', verify: true },
+        { n: 8, name: '/CASEN', type: 'ctrl', dir: 'in', desc: 'RAM enable (CAS enable).', activeLow: true },
+        { n: 9, name: '/80COL', type: 'video', dir: 'in', desc: 'Enables 80-column display mode.', activeLow: true },
+        { n: 10, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', probe: '0 V' },
+        { n: 11, name: '/TMGEN', type: 'ctrl', dir: 'in', desc: 'Enables master timing.', verify: true, activeLow: true },
+        { n: 12, name: '/LDPS', type: 'video', dir: 'out', desc: 'Video shift-register load enable.', activeLow: true },
+        { n: 13, name: 'VID7M', type: 'clock', dir: 'out', desc: 'Video dot-clock enable: 7 MHz or steady 0.' },
+        { n: 14, name: 'Φ1', type: 'clock', dir: 'out', desc: 'Phase 1 system clock.', probe: '1.023 MHz' },
+        { n: 15, name: 'Φ0', type: 'clock', dir: 'out', desc: 'Phase 0 system clock.', probe: '1.023 MHz' },
+        { n: 16, name: 'Q3', type: 'clock', dir: 'out', desc: 'Intermediate timing and strobe.', probe: '2.04 MHz, asymmetric' },
+        { n: 17, name: '/PCAS', type: 'ctrl', dir: 'out', desc: 'RAM column-address strobe.', activeLow: true },
+        { n: 18, name: 'NC', type: 'nc', dir: '-', desc: 'Reserved for testing.' },
+        { n: 19, name: '/PRAS', type: 'ctrl', dir: 'out', desc: 'RAM row-address strobe.', activeLow: true },
+        { n: 20, name: '+5V', type: 'power', dir: '-', desc: '+5 V.', probe: '+5 V' },
+      ],
+    },
+    glu2c: {
+      id: 'glu2c',
+      name: 'IIc GLU (General Logic Unit)',
+      short: 'GLU',
+      family: 'Apple custom',
+      role: 'I/O decode, RAM read/write timing, double hi-res',
+      pkg: 'DIP-24',
+      machines: ['apple2c'],
+      summary: 'Miscellaneous logic in one chip: RAM read/write timing, double hi-res enable and soft switches, soft-switch status and write registers, mouse-interrupt control for the IOU, and the device selects for the IWM (/DISK) and the 6551s (/SER). A bad GLU can kill disk and serial access together.',
+      fails: ['No disk and no serial access', 'Bad double hi-res', 'Mouse interrupts dead'],
+      heat: 'warm',
+      verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-8 and Table 11-10, p. 246',
+      datasheets: [
+        { label: 'Apple IIc Technical Reference Manual, GLU pinouts, p. 246', url: 'https://archive.org/details/Apple_IIc_Technical_Reference_Manual/page/n273' },
+      ],
+      pins: [
+        { n: 1, name: '14M', type: 'clock', dir: 'in', desc: 'Master clock (14.318 MHz).', probe: '14.318 MHz' },
+        { n: 2, name: 'A0', type: 'addr', dir: 'in', desc: 'Address bit 0 (low byte of $C0xx).' },
+        { n: 3, name: 'A3', type: 'addr', dir: 'in', desc: 'Address bit 3 (low byte of $C0xx).' },
+        { n: 4, name: 'A4', type: 'addr', dir: 'in', desc: 'Address bit 4 (low byte of $C0xx).' },
+        { n: 5, name: 'A5', type: 'addr', dir: 'in', desc: 'Address bit 5 (low byte of $C0xx).' },
+        { n: 6, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6 (low byte of $C0xx).' },
+        { n: 7, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bit 7 (low byte of $C0xx).' },
+        { n: 8, name: 'Φ0', type: 'clock', dir: 'in', desc: 'Phase 0 of the 1.0227 MHz processor clock.', probe: '1.023 MHz' },
+        { n: 9, name: '/SELIO', type: 'ctrl', dir: 'in', desc: 'I/O page select from the MMU.', activeLow: true },
+        { n: 10, name: 'GR', type: 'video', dir: 'in', desc: 'Graphics mode select line.' },
+        { n: 11, name: '/RESET', type: 'ctrl', dir: 'in', desc: 'Master reset; resets the GLU.', activeLow: true },
+        { n: 12, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', probe: '0 V' },
+        { n: 13, name: '/GLUEN', type: 'ctrl', dir: 'in', desc: 'Enables the GLU.', verify: true, activeLow: true },
+        { n: 14, name: 'MD7', type: 'data', dir: 'bidir', desc: 'Status of MMU flags on data bit 7.' },
+        { n: 15, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write qualifier from the processor.' },
+        { n: 16, name: 'TEXT', type: 'video', dir: 'out', desc: 'Video timing signal for double hi-res or non-graphics modes.', verify: true },
+        { n: 17, name: 'NC', type: 'nc', dir: '-', desc: 'Not used.' },
+        { n: 18, name: 'NC', type: 'nc', dir: '-', desc: 'Not used.' },
+        { n: 19, name: 'CREF', type: 'clock', dir: 'in', desc: 'Colour reference signal.', verify: true },
+        { n: 20, name: '7M', type: 'clock', dir: 'out', desc: '7 MHz clock output.' },
+        { n: 21, name: '/DISK', type: 'ctrl', dir: 'out', desc: 'Disk controller (IWM) device select.', activeLow: true },
+        { n: 22, name: 'IOUHOLE', type: 'ctrl', dir: 'out', desc: 'Controls /IOUSELIO to the IOU.' },
+        { n: 23, name: '/SER', type: 'ctrl', dir: 'out', desc: 'Serial controller (6551) device select.', activeLow: true },
+        { n: 24, name: '+5V', type: 'power', dir: '-', desc: '+5 V.', probe: '+5 V' },
+      ],
     },
   },
   symptoms: {
@@ -1680,7 +930,7 @@ RCS.add({
           "kbd3600",
           "iou344"
         ],
-        "note": "Check IKSTRB at IOU pin 32."
+        "note": "Check KSTRB at IOU pin 32 and AKD at pin 31, then the AY-5-3600 supplies (pin 30 +5 V, pin 27 -12 V)."
       },
       {
         "symptom": "No speaker",
@@ -1694,325 +944,415 @@ RCS.add({
   connectors: {
     apple2: iiConnectors,
     apple2plus: iiConnectors,
-    "apple2e": [
-      {
-        "id": "2e-psu",
-        "name": "Power supply to motherboard",
-        "kind": "6-pin Molex",
-        "verify": true,
-        "summary": "Four rails. Only +5 V is used by the motherboard logic; +12, -5 and -12 feed the slots (and 4116 RAM on older boards).",
-        "pins": [
-          {
-            "n": 1,
-            "name": "GND"
-          },
-          {
-            "n": 2,
-            "name": "GND"
-          },
-          {
-            "n": 3,
-            "name": "+5 V"
-          },
-          {
-            "n": 4,
-            "name": "+12 V"
-          },
-          {
-            "n": 5,
-            "name": "-12 V"
-          },
-          {
-            "n": 6,
-            "name": "-5 V"
-          }
-        ]
-      },
-      {
-        "id": "2e-game16",
-        "name": "Game I/O (internal)",
-        "kind": "16-pin DIP socket",
-        "verify": false,
-        "summary": "Paddles, joysticks, Open/Closed-Apple keys are PB0/PB1.",
-        "pins": [
-          {
-            "n": 1,
-            "name": "+5 V"
-          },
-          {
-            "n": 2,
-            "name": "PB0",
-            "desc": "Push button 0 / Open-Apple."
-          },
-          {
-            "n": 3,
-            "name": "PB1",
-            "desc": "Push button 1 / Closed-Apple."
-          },
-          {
-            "n": 4,
-            "name": "PB2"
-          },
-          {
-            "n": 5,
-            "name": "/C040 STB",
-            "desc": "Strobe on access to $C040."
-          },
-          {
-            "n": 6,
-            "name": "PDL0",
-            "desc": "Paddle 0 (150 kΩ pot)."
-          },
-          {
-            "n": 7,
-            "name": "PDL2"
-          },
-          {
-            "n": 8,
-            "name": "GND"
-          },
-          {
-            "n": 9,
-            "name": "NC"
-          },
-          {
-            "n": 10,
-            "name": "PDL1"
-          },
-          {
-            "n": 11,
-            "name": "PDL3"
-          },
-          {
-            "n": 12,
-            "name": "AN3"
-          },
-          {
-            "n": 13,
-            "name": "AN2"
-          },
-          {
-            "n": 14,
-            "name": "AN1"
-          },
-          {
-            "n": 15,
-            "name": "AN0"
-          },
-          {
-            "n": 16,
-            "name": "NC"
-          }
-        ]
-      },
-      {
-        "id": "2e-game9",
-        "name": "Game port (rear)",
-        "kind": "DE-9",
-        "verify": true,
-        "summary": "Rear-panel joystick connector added on the IIe.",
-        "pins": [
-          {
-            "n": 1,
-            "name": "PB1"
-          },
-          {
-            "n": 2,
-            "name": "+5 V"
-          },
-          {
-            "n": 3,
-            "name": "GND"
-          },
-          {
-            "n": 4,
-            "name": "PB2"
-          },
-          {
-            "n": 5,
-            "name": "PDL0"
-          },
-          {
-            "n": 6,
-            "name": "PB0"
-          },
-          {
-            "n": 7,
-            "name": "PDL2"
-          },
-          {
-            "n": 8,
-            "name": "PDL1"
-          },
-          {
-            "n": 9,
-            "name": "PDL3"
-          }
-        ]
-      },
-      {
-        "id": "2e-slot",
-        "name": "Peripheral slots 1-7",
-        "kind": "50-pin edge",
-        "verify": false,
-        "summary": "Key power pins to probe with a card installed.",
-        "pins": [
-          {
-            "n": 1,
-            "name": "/IOSEL",
-            "desc": "$Cn00 select for this slot."
-          },
-          {
-            "n": "2-17",
-            "name": "A0-A15"
-          },
-          {
-            "n": 18,
-            "name": "R/W"
-          },
-          {
-            "n": 20,
-            "name": "/IOSTB",
-            "desc": "$C800 strobe."
-          },
-          {
-            "n": 25,
-            "name": "+5 V"
-          },
-          {
-            "n": 26,
-            "name": "GND"
-          },
-          {
-            "n": 33,
-            "name": "-12 V"
-          },
-          {
-            "n": 34,
-            "name": "-5 V"
-          },
-          {
-            "n": 41,
-            "name": "/DEVSEL",
-            "desc": "$C0n0 select."
-          },
-          {
-            "n": "42-49",
-            "name": "D7-D0"
-          },
-          {
-            "n": 50,
-            "name": "+12 V"
-          }
-        ]
-      },
-      {
-        "id": "2e-video",
-        "name": "Video out",
-        "kind": "RCA",
-        "verify": false,
-        "summary": "NTSC composite, 1 V p-p into 75 Ω.",
-        "pins": [
-          {
-            "n": "tip",
-            "name": "Video"
-          },
-          {
-            "n": "shell",
-            "name": "GND"
-          }
-        ]
-      },
-      {
-        "id": "2e-cass",
-        "name": "Cassette in / out",
-        "kind": "2 × 3.5 mm mono",
-        "verify": false,
-        "summary": "Still present on the IIe. Useful for loading via audio from a phone.",
-        "pins": [
-          {
-            "n": "in",
-            "name": "From recorder earphone"
-          },
-          {
-            "n": "out",
-            "name": "To recorder mic"
-          }
-        ]
-      }
-    ]
+    apple2e: [
+      { id: '2e-psu', name: 'Power supply to main board', kind: '6-pin connector with strain-relief catch', geo: 'custom', pads: PSU6_PADS, outline: PSU6_OUTLINE,
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Table 7-3, p. 161',
+        summary: 'Same pin order as the II: 1-2 ground, 3 +5 V, 4 +12 V, 5 -12 V, 6 -5 V. The TRM gives numbers only; the drawing follows the II manual\'s Figure 19. The IIe logic runs on +5 V; the other rails feed the slots, the keyboard encoder and the video connector.',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Common ground.', expect: '0 V' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Common ground.', expect: '0 V' },
+          { n: 3, name: '+5 V', type: 'power', desc: '+5 V from the supply.', expect: '4.85-5.15 V' },
+          { n: 4, name: '+12 V', type: 'power', desc: '+12 V from the supply.', expect: '11.1-12.5 V (nominal 11.8 V)' },
+          { n: 5, name: '-12 V', type: 'power', desc: '-12 V from the supply.', expect: '-10.8 to -13.2 V' },
+          { n: 6, name: '-5 V', type: 'power', desc: '-5 V from the supply.', expect: '-4.7 to -5.7 V (nominal -5.2 V)' },
+        ],
+        sources: [
+          { label: 'Apple IIe Technical Reference Manual, Table 7-3 power connector, p. 161', url: IIE(194) },
+          { label: 'Apple II Reference Manual (1979), Figure 19 connector layout, p. 104', url: IIRM(114) },
+        ] },
+      { id: '2e-game16', name: 'Game I/O (internal 16-pin DIP socket)', kind: '16-pin DIP socket', geo: 'custom', pads: dipPads(16), outline: DIP_OUTLINE,
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Table 7-19, p. 191',
+        summary: 'Inside the case, labelled GAME I/O, pin 1 at the notch. The switches and paddles are also on the rear DE-9; the annunciators and the strobe are only here. PB0 and PB1 are also the Open-Apple and Solid-Apple keys.',
+        pins: [
+          { n: 1, name: '+5 V', type: 'power', desc: '+5 V. 100 mA max total.', expect: '+5 V' },
+          { n: 2, name: 'PB0', type: 'io', desc: 'Switch input 0 (Open-Apple). LS-TTL; use a 560 Ω pull-down.' },
+          { n: 3, name: 'PB1', type: 'io', desc: 'Switch input 1 (Solid-Apple).' },
+          { n: 4, name: 'PB2', type: 'io', desc: 'Switch input 2.' },
+          { n: 5, name: '/STROBE', type: 'ctrl', desc: 'LOW during Φ0 of a read or write to $C040.', expect: 'HIGH, short LOW pulse per access' },
+          { n: 6, name: 'PDL0', type: 'io', desc: 'Hand control 0: 150 kΩ variable resistor to +5 V.' },
+          { n: 7, name: 'PDL2', type: 'io', desc: 'Hand control 2.' },
+          { n: 8, name: 'GND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+          { n: 9, name: 'NC', type: 'nc', desc: 'Nothing connected.' },
+          { n: 10, name: 'PDL1', type: 'io', desc: 'Hand control 1.' },
+          { n: 11, name: 'PDL3', type: 'io', desc: 'Hand control 3.' },
+          { n: 12, name: 'AN3', type: 'io', desc: 'Annunciator 3 (LS-TTL out, buffer it).' },
+          { n: 13, name: 'AN2', type: 'io', desc: 'Annunciator 2.' },
+          { n: 14, name: 'AN1', type: 'io', desc: 'Annunciator 1.' },
+          { n: 15, name: 'AN0', type: 'io', desc: 'Annunciator 0.' },
+          { n: 16, name: 'NC', type: 'nc', desc: 'Nothing connected.' },
+        ],
+        sources: [{ label: 'Apple IIe Technical Reference Manual, Table 7-19 game I/O, p. 191', url: IIE(224) }],
+        terms: ['strobe'] },
+      { id: '2e-game9', name: 'Game port (rear DE-9)', kind: 'DE-9 socket', geo: 'de9', gender: 'female',
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Table 7-19, p. 191',
+        summary: 'Rear-panel joystick port: the three switches, four paddles, +5 V and ground. No annunciators or strobe here.',
+        pins: [
+          { n: 1, name: 'PB1', type: 'io', desc: 'Switch input 1 (Solid-Apple).' },
+          { n: 2, name: '+5 V', type: 'power', desc: '+5 V. 100 mA max total.', expect: '+5 V' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+          { n: 4, name: 'PDL2', type: 'io', desc: 'Hand control 2.' },
+          { n: 5, name: 'PDL0', type: 'io', desc: 'Hand control 0: 150 kΩ to +5 V.' },
+          { n: 6, name: 'PB2', type: 'io', desc: 'Switch input 2.' },
+          { n: 7, name: 'PB0', type: 'io', desc: 'Switch input 0 (Open-Apple).' },
+          { n: 8, name: 'PDL1', type: 'io', desc: 'Hand control 1.' },
+          { n: 9, name: 'PDL3', type: 'io', desc: 'Hand control 3.' },
+        ],
+        sources: [{ label: 'Apple IIe Technical Reference Manual, Table 7-19 back-panel pins, p. 191', url: IIE(224) }] },
+      { id: '2e-slot', name: 'Peripheral slots 1-7 (50-pin edge)', kind: '50-pin card edge, 0.10 in pitch', geo: 'edge-25x25-seq',
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Table 7-20, pp. 195-196',
+        summary: 'Pins 1-25 on the component side of a card, 26-50 on the solder side (26 opposite 25), as on the II. Slot 7 adds /SYNC (19) and 3.58M (35). Card budget: 500 mA on +5 V, 250 mA on +12 V, 200 mA each on -5 V and -12 V.',
+        pins: slotPins('iie'),
+        sources: [
+          { label: 'Apple IIe Technical Reference Manual, Table 7-20 expansion slot signals, pp. 195-196', url: IIE(228) },
+          { label: 'Apple II Reference Manual (1979), Figure 21 side layout, p. 106', url: IIRM(116) },
+        ] },
+      { id: '2e-aux', name: 'Auxiliary slot (60-pin edge)', kind: '60-pin card edge, 0.10 in pitch', geo: 'edge-30x30-seq',
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Table 7-21, pp. 198-199',
+        summary: 'Takes the 80-column / extended 80-column card. Carries most of the internal video and RAM-timing signals, so it is the best probe point on the board. The TRM gives pin numbers only; the drawing assumes 1-30 on one side and 31-60 on the other, like the slots.',
+        pins: [
+          { n: 1, name: '3.58M', type: 'clock', desc: '3.58 MHz colour reference.', expect: '3.58 MHz' },
+          { n: 2, name: 'VID7M', type: 'clock', desc: 'Clocks the video dots out of the 74166 shift register.' },
+          { n: 3, name: '/SYNC', type: 'video', desc: 'Composite sync.', expect: '15.7 kHz line pulses' },
+          { n: 4, name: '/PRAS', type: 'ctrl', desc: 'RAM row-address strobe.' },
+          { n: 5, name: 'VC', type: 'video', desc: 'Third low-order vertical-counter bit.' },
+          { n: 6, name: '/C07X', type: 'ctrl', desc: 'Hand-control (paddle timer) reset.' },
+          { n: 7, name: '/WNDW', type: 'video', desc: 'Video non-blank window.' },
+          { n: 8, name: 'SEGA', type: 'video', desc: 'First low-order vertical-counter bit.' },
+          { n: 9, name: 'RA7', type: 'addr', desc: 'Multiplexed RAM address 7.' },
+          { n: 10, name: 'RA1', type: 'addr', desc: 'Multiplexed RAM address 1.' },
+          { n: 11, name: '/ROMEN1', type: 'ctrl', desc: 'Main-board ROM enable.' },
+          { n: 12, name: '/ROMEN2', type: 'ctrl', desc: 'Main-board ROM enable.' },
+          { n: 13, name: 'RA4', type: 'addr', desc: 'Multiplexed RAM address 4.' },
+          { n: 14, name: 'RA5', type: 'addr', desc: 'Multiplexed RAM address 5.' },
+          { n: 15, name: 'VID7', type: 'video', desc: 'Video data bit 7 (to the character generator).' },
+          { n: 16, name: 'MD7', type: 'data', desc: 'Internal (unbuffered) data bit 7.' },
+          { n: 17, name: 'MD6', type: 'data', desc: 'Internal data bit 6.' },
+          { n: 18, name: 'VID6', type: 'video', desc: 'Video data bit 6.' },
+          { n: 19, name: 'VID5', type: 'video', desc: 'Video data bit 5.' },
+          { n: 20, name: 'MD5', type: 'data', desc: 'Internal data bit 5.' },
+          { n: 21, name: 'MD4', type: 'data', desc: 'Internal data bit 4.' },
+          { n: 22, name: 'VID4', type: 'video', desc: 'Video data bit 4.' },
+          { n: 23, name: 'Φ0', type: 'clock', desc: 'CPU phase 0 clock.', expect: '1.023 MHz' },
+          { n: 24, name: '/CLRGAT', type: 'video', desc: 'Colour-burst gate.' },
+          { n: 25, name: '/80VID', type: 'video', desc: 'Enables 80-column display timing.' },
+          { n: 26, name: '/EN80', type: 'ctrl', desc: 'Auxiliary RAM enable.' },
+          { n: 27, name: '/ALTVID', type: 'video', desc: 'Alternative video into the summing amplifier.' },
+          { n: 28, name: '/SEROUT', type: 'video', desc: 'Serial video from the 74166 shift register.' },
+          { n: 29, name: '/ENVID', type: 'video', desc: 'Normally LOW (1 kΩ pull-down); HIGH blanks the character generator so /ALTVID can drive the screen.' },
+          { n: 30, name: '+5 V', type: 'power', desc: '+5 V.', expect: '+5 V' },
+          { n: 31, name: 'GND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+          { n: 32, name: '14M', type: 'clock', desc: '14.3 MHz master clock.', expect: '14.318 MHz' },
+          { n: 33, name: '/PCAS', type: 'ctrl', desc: 'Multiplexed column-address strobe.' },
+          { n: 34, name: '/LDPS', type: 'video', desc: 'Load strobe for the video shift register.' },
+          { n: 35, name: 'R/W80', type: 'ctrl', desc: 'Read/write for the RAM on the card.' },
+          { n: 36, name: 'Φ1', type: 'clock', desc: 'CPU phase 1 clock.', expect: '1.023 MHz' },
+          { n: 37, name: '/CASEN', type: 'ctrl', desc: 'Column-address enable; held HIGH during accesses to RAM on the card.' },
+          { n: 38, name: 'VID3', type: 'video', desc: 'Video data bit 3.' },
+          { n: 39, name: 'MD3', type: 'data', desc: 'Internal data bit 3.' },
+          { n: 40, name: 'MD2', type: 'data', desc: 'Internal data bit 2.' },
+          { n: 41, name: 'VID2', type: 'video', desc: 'Video data bit 2.' },
+          { n: 42, name: 'VID1', type: 'video', desc: 'Video data bit 1.' },
+          { n: 43, name: 'MD1', type: 'data', desc: 'Internal data bit 1.' },
+          { n: 44, name: 'MD0', type: 'data', desc: 'Internal data bit 0.' },
+          { n: 45, name: 'VID0', type: 'video', desc: 'Video data bit 0.' },
+          { n: 46, name: 'RA6', type: 'addr', desc: 'Multiplexed RAM address 6.' },
+          { n: 47, name: 'H0', type: 'video', desc: 'Low-order horizontal byte counter.' },
+          { n: 48, name: 'RA3', type: 'addr', desc: 'Multiplexed RAM address 3.' },
+          { n: 49, name: 'RA2', type: 'addr', desc: 'Multiplexed RAM address 2.' },
+          { n: 50, name: 'AN3', type: 'io', desc: 'Annunciator 3 output.' },
+          { n: 51, name: 'RA0', type: 'addr', desc: 'Multiplexed RAM address 0.' },
+          { n: 52, name: 'R/W', type: 'ctrl', desc: 'CPU read/write.' },
+          { n: 53, name: 'Q3', type: 'clock', desc: '2 MHz asymmetric clock.', expect: '2.04 MHz' },
+          { n: 54, name: 'SEGB', type: 'video', desc: 'Second low-order vertical-counter bit.' },
+          { n: 55, name: '/FRCTXT', type: 'video', desc: 'Normally HIGH; pull LOW to force 14 MHz video even with GR active.' },
+          { n: 56, name: '/RA9', type: 'video', desc: 'Character-generator control from the IOU.' },
+          { n: 57, name: '/RA10', type: 'video', desc: 'Character-generator control from the IOU.' },
+          { n: 58, name: 'GR', type: 'video', desc: 'Graphics-mode enable.' },
+          { n: 59, name: '7M', type: 'clock', desc: '7 MHz timing signal.', expect: '7.16 MHz' },
+          { n: 60, name: '/ENTMG', type: 'ctrl', desc: 'Normally LOW (1 kΩ pull-down); HIGH stops the master timing from the PAL.' },
+        ],
+        sources: [{ label: 'Apple IIe Technical Reference Manual, Table 7-21 auxiliary slot signals, pp. 198-199', url: IIE(231) }] },
+      { id: '2e-video', name: 'Video out (RCA)', kind: 'RCA phono jack', geo: 'rca',
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Video Output Signals, p. 186',
+        summary: 'NTSC composite. A resistor network attenuates it to about 1 V and matches 75 Ω.',
+        pins: [
+          { n: 1, name: 'Video', type: 'video', desc: 'Composite video out (centre pin).', expect: 'About 1 V p-p into 75 Ω' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Sleeve, board ground.', expect: '0 V' },
+        ],
+        sources: [{ label: 'Apple IIe Technical Reference Manual, Video Output Signals, p. 186', url: IIE(219) }] },
+      { id: '2e-video-int', name: 'Internal video connector (J13, 4-pin)', kind: 'Molex-type, 4 pins on 0.10 in', geo: 'custom', pads: rowPads([1, 2, 3, 4]), outline: ROW_OUTLINE(4),
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Table 7-15, p. 186',
+        summary: 'Next to the RCA jack; feeds an RF modulator. Pin 1 is closest to the keyboard, pin 4 at the back. Note pins 3 and 4 are not in the same order the II manual gives for its auxiliary video connector.',
+        pins: [
+          { n: 1, name: 'GROUND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+          { n: 2, name: 'VIDEO', type: 'video', desc: 'Composite video, not short-protected.', expect: 'Sync 0 V, black about 0.75 V, white about 2.0 V' },
+          { n: 3, name: '-5 V', type: 'power', desc: '-5 V supply.', expect: '-5 V' },
+          { n: 4, name: '+12 V', type: 'power', desc: '+12 V supply.', expect: '+12 V' },
+        ],
+        sources: [{ label: 'Apple IIe Technical Reference Manual, Table 7-15 internal video connector, p. 186', url: IIE(219) }] },
+      { id: '2e-cass', name: 'Cassette IN', kind: '3.5 mm mono jack', geo: 'ts',
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Cassette I/O, p. 189',
+        summary: 'From the recorder earphone or monitor output. Input about 1 V nominal into 12 kΩ, through a 741 op-amp.',
+        pins: [
+          { n: 'T', name: 'Cassette in', type: 'audio', desc: 'Audio from the recorder.', expect: 'About 1 V p-p while a tape plays' },
+          { n: 'S', name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+        ],
+        sources: [{ label: 'Apple IIe Technical Reference Manual, Cassette I/O, p. 189', url: IIE(222) }] },
+      { id: '2e-cass-out', name: 'Cassette OUT', kind: '3.5 mm mono jack', geo: 'ts',
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Cassette I/O, p. 189',
+        summary: 'To the recorder microphone input. About 25 mV, 100 Ω source, from the IOU CASSO pin.',
+        pins: [
+          { n: 'T', name: 'Cassette out', type: 'audio', desc: 'Audio to the recorder.', expect: 'About 25 mV while saving' },
+          { n: 'S', name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+        ],
+        sources: [{ label: 'Apple IIe Technical Reference Manual, Cassette I/O, p. 189', url: IIE(222) }] },
+      { id: '2e-kbd', name: 'Keyboard connector (26-pin)', kind: '26-pin ribbon connector', geo: 'custom', pads: header2x(26), outline: HEADER_OUTLINE,
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1987 ed.), Table 7-16, pp. 187-188',
+        summary: 'Raw key matrix from the keyboard: the AY-5-3600 encoder is on the main board, so a dead key is either the switch, this cable, or the encoder. The 1985 TRM lists pin 1 twice and skips 11 and 18; the 1987 edition corrects it (LCNTL on 11, X1 on 18). The drawing assumes a 2 × 13 header with odd pins in one row; confirm pin 1 on the board.',
+        pins: [
+          { n: 1, name: 'Y0', type: 'kbd', desc: 'Key-matrix Y0.' },
+          { n: 2, name: 'Y1', type: 'kbd', desc: 'Key-matrix Y1.' },
+          { n: 3, name: '+5 V', type: 'power', desc: '+5 V supply.', expect: '+5 V' },
+          { n: 4, name: 'Y2', type: 'kbd', desc: 'Key-matrix Y2.' },
+          { n: 5, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 6, name: 'Y3', type: 'kbd', desc: 'Key-matrix Y3.' },
+          { n: 7, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 8, name: 'Y4', type: 'kbd', desc: 'Key-matrix Y4.' },
+          { n: 9, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 10, name: 'Y5', type: 'kbd', desc: 'Key-matrix Y5.' },
+          { n: 11, name: '/LCNTL', type: 'kbd', desc: 'Line from the CONTROL key.' },
+          { n: 12, name: 'Y8', type: 'kbd', desc: 'Key-matrix Y8.' },
+          { n: 13, name: 'GND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+          { n: 14, name: 'X0', type: 'kbd', desc: 'Key-matrix X0.' },
+          { n: 15, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 16, name: 'X2', type: 'kbd', desc: 'Key-matrix X2.' },
+          { n: 17, name: 'X7', type: 'kbd', desc: 'Key-matrix X7.' },
+          { n: 18, name: 'X1', type: 'kbd', desc: 'Key-matrix X1.' },
+          { n: 19, name: 'X5', type: 'kbd', desc: 'Key-matrix X5.' },
+          { n: 20, name: 'X3', type: 'kbd', desc: 'Key-matrix X3.' },
+          { n: 21, name: 'X4', type: 'kbd', desc: 'Key-matrix X4.' },
+          { n: 22, name: 'Y9', type: 'kbd', desc: 'Key-matrix Y9.' },
+          { n: 23, name: 'Y6', type: 'kbd', desc: 'Key-matrix Y6.' },
+          { n: 24, name: '/LSHFT', type: 'kbd', desc: 'Line from the SHIFT key.' },
+          { n: 25, name: 'Y7', type: 'kbd', desc: 'Key-matrix Y7.' },
+          { n: 26, name: 'X6', type: 'kbd', desc: 'Key-matrix X6.' },
+        ],
+        sources: [
+          { label: 'Apple IIe Technical Reference Manual (1987 ed.), Table 7-16 keyboard connector, pp. 187-188', url: IIE87(214) },
+          { label: 'Apple IIe Technical Reference Manual (1985), Table 7-16, p. 188 (pin 11/18 misprint)', url: IIE(221) },
+        ] },
+      { id: '2e-speaker', name: 'Speaker connector (J18, 2-pin)', kind: 'Molex KK100, 2 square pins on 0.10 in', geo: 'custom', pads: rowPads([1, 2]), outline: ROW_OUTLINE(2),
+        verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Table 7-18, p. 189',
+        summary: 'IOU SPKR, AC-coupled to an MPSA13 Darlington. The speaker is not grounded: it sits between +5 V and the driver. An LED across the pins glows on each click when the speaker is unplugged.',
+        pins: [
+          { n: 1, name: 'SPKR', type: 'audio', desc: 'Speaker drive, about 0.5 W into 8 Ω.', expect: 'Toggles on each beep' },
+          { n: 2, name: '+5 V', type: 'power', desc: '+5 V.', expect: '+5 V' },
+        ],
+        sources: [{ label: 'Apple IIe Technical Reference Manual, Table 7-18 speaker connector, p. 189', url: IIE(222) }] },
+    ],
+    apple2c: [
+      { id: '2c-power', name: 'Power in (DIN-7)', kind: '7-pin DIN socket, Apple numbering', geo: 'custom', gender: 'female',
+        pads: [{ n: 1, x: 31, y: 69 }, { n: 2, x: 23, y: 50 }, { n: 3, x: 31, y: 31 }, { n: 4, x: 50, y: 23 }, { n: 5, x: 69, y: 31 }, { n: 6, x: 77, y: 50 }, { n: 7, x: 69, y: 69 }],
+        outline: 'M50 6 A44 44 0 1 0 50.01 6 Z M45 94 H55 V88 H45 Z',
+        verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-1 and Table 11-3, p. 234',
+        summary: 'The external brick plugs in here and feeds the internal converter. +15 V on pins 5 and 6, ground on 2 and 3, shield on 4; pins 1 and 7 are unused. Apple numbers this socket 1 to 7 straight round the circle (Figure 11-1), not by the DIN standard, so the drawing follows Apple: with the key at the bottom, 1 is lower left and 7 lower right. Figure 11-1 is taken as the socket view; if it shows the plug, the drawing is mirrored.', verify: true,
+        pins: [
+          { n: 1, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Common ground.', expect: '0 V' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Common ground.', expect: '0 V' },
+          { n: 4, name: 'Chassis', type: 'ground', desc: 'Shield / chassis ground.', expect: '0 V' },
+          { n: 5, name: '+15 V', type: 'power', desc: '+15 V DC into the converter.', expect: '+15 V nominal (converter accepts 9-20 V)' },
+          { n: 6, name: '+15 V', type: 'power', desc: '+15 V DC into the converter.', expect: '+15 V nominal (converter accepts 9-20 V)' },
+          { n: 7, name: 'NC', type: 'nc', desc: 'Not connected.' },
+        ],
+        sources: [{ label: 'Apple IIc Technical Reference Manual, external power connector, p. 234', url: IIC(261) }] },
+      { id: '2c-serial1', name: 'Serial port 1, printer (DIN-5)', kind: '5-pin DIN socket (240°)', geo: 'din5-240',
+        verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-30 and Table 11-20, p. 278',
+        summary: 'RS-232 from 6551 ACIA SER1 through a 1488 driver and 1489 receiver. Figure 11-30 draws pin 1 at about 2 o\'clock with 2-5 following clockwise below the key.',
+        pins: [
+          { n: 1, name: 'DTR1B', type: 'serial', desc: 'Data Terminal Ready output.' },
+          { n: 2, name: 'TD1B', type: 'serial', desc: 'Transmit data output.' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Signal ground.', expect: '0 V' },
+          { n: 4, name: 'RD1B', type: 'serial', desc: 'Receive data input.' },
+          { n: 5, name: 'DSR1B', type: 'serial', desc: 'Data Set Ready input.' },
+        ],
+        sources: [{ label: 'Apple IIc Technical Reference Manual, serial port connectors, p. 278', url: IIC(305) }],
+        terms: ['acia'] },
+      { id: '2c-serial2', name: 'Serial port 2, modem (DIN-5)', kind: '5-pin DIN socket (240°)', geo: 'din5-240',
+        verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-30 and Table 11-20, p. 278',
+        summary: 'Same wiring as port 1, from 6551 SER2.',
+        pins: [
+          { n: 1, name: 'DTR2B', type: 'serial', desc: 'Data Terminal Ready output.' },
+          { n: 2, name: 'TD2B', type: 'serial', desc: 'Transmit data output.' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Signal ground.', expect: '0 V' },
+          { n: 4, name: 'RD2B', type: 'serial', desc: 'Receive data input.' },
+          { n: 5, name: 'DSR2B', type: 'serial', desc: 'Data Set Ready input.' },
+        ],
+        sources: [{ label: 'Apple IIc Technical Reference Manual, serial port connectors, p. 278', url: IIC(305) }],
+        terms: ['acia'] },
+      { id: '2c-disk', name: 'External disk drive (D-19)', kind: 'DB-19 socket', geo: 'custom', pads: db19Pads, outline: DB19_OUTLINE,
+        verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-26 and Table 11-18, p. 274',
+        summary: 'Second drive (Disk IIc, UniDisk 5.25). All signals come straight from the IWM. Power on this port is for a drive only. Drawn as Figure 11-26: pin 1 at the top right looking into the socket.',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 4, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 5, name: '-12 V', type: 'power', desc: '-12 V (in Figure 11-26; not in Table 11-18).', expect: '-12 V' },
+          { n: 6, name: '+5 V', type: 'power', desc: '+5 V supply.', expect: '+5 V' },
+          { n: 7, name: '+12 V', type: 'power', desc: '+12 V supply.', expect: '+12 V' },
+          { n: 8, name: '+12 V', type: 'power', desc: '+12 V supply.', expect: '+12 V' },
+          { n: 9, name: '/EXTINT', type: 'ctrl', desc: 'External interrupt (to the port-1 6551 DSR input).' },
+          { n: 10, name: 'WRPROT', type: 'io', desc: 'Write-protect input.' },
+          { n: 11, name: 'SEEKPH0', type: 'io', desc: 'Stepper phase 0 output.' },
+          { n: 12, name: 'SEEKPH1', type: 'io', desc: 'Stepper phase 1 output.' },
+          { n: 13, name: 'SEEKPH2', type: 'io', desc: 'Stepper phase 2 output.' },
+          { n: 14, name: 'SEEKPH3', type: 'io', desc: 'Stepper phase 3 output.' },
+          { n: 15, name: '/WRREQ', type: 'ctrl', desc: 'Write request.' },
+          { n: 16, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 17, name: '/DR2', type: 'ctrl', desc: 'Drive select for the external drive.', conflict: 'Figure 11-26 names pin 17 DR2*; Table 11-18 calls it DR1* (drive 1 select). The external port is drive 2.', verify: true },
+          { n: 18, name: 'RDDATA', type: 'io', desc: 'Read data input.' },
+          { n: 19, name: 'WRDATA', type: 'io', desc: 'Write data output.' },
+        ],
+        sources: [{ label: 'Apple IIc Technical Reference Manual, disk drive connector, p. 274', url: IIC(301) }] },
+      { id: '2c-video', name: 'Video out (RCA)', kind: 'RCA phono jack', geo: 'rca',
+        verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Monitor output, p. 270',
+        summary: 'NTSC composite from the VID hybrid, attenuated to about 1 V into 75 Ω.',
+        pins: [
+          { n: 1, name: 'VIDOUT', type: 'video', desc: 'Composite video (centre pin).', expect: 'About 1 V p-p into 75 Ω' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Sleeve, ground.', expect: '0 V' },
+        ],
+        sources: [{ label: 'Apple IIc Technical Reference Manual, video output signals, p. 270', url: IIC(297) }] },
+      { id: '2c-video-exp', name: 'Video expansion (DB-15)', kind: 'DA-15 socket', geo: 'da15', gender: 'female',
+        verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Figure 11-25 and Table 11-17, pp. 272-273',
+        summary: 'For the RF modulator, LCD and RGB adaptors. Not the same signals as the Apple III DB-15: never swap cables. +12 V here is good for 300 mA; more can damage the IIc or shut the supply down. Buffer 14M within about 10 cm of the connector.',
+        pins: [
+          { n: 1, name: 'TEXT', type: 'video', desc: 'Video text signal from the TMG (inverse of GR except in double hi-res).' },
+          { n: 2, name: '14M', type: 'clock', desc: '14 MHz master timing signal.', expect: '14.318 MHz' },
+          { n: 3, name: '/SYNC', type: 'video', desc: 'Horizontal and vertical sync from IOU pin 39.', expect: '15.7 kHz line pulses' },
+          { n: 4, name: 'SEGB', type: 'video', desc: 'Vertical counter bit from IOU pin 4.' },
+          { n: 5, name: '1VSOUND', type: 'audio', desc: 'One-volt sound signal from AUD hybrid pin 5.' },
+          { n: 6, name: '/LDPS', type: 'video', desc: 'Video shift-register load from TMG pin 12.' },
+          { n: 7, name: '/WNDW', type: 'video', desc: 'Active-area blanking (horizontal and vertical).' },
+          { n: 8, name: '+12 V', type: 'power', desc: 'Regulated +12 V, 300 mA max.', expect: '+12 V' },
+          { n: 9, name: '/PRAS', type: 'ctrl', desc: 'RAM row-address strobe from TMG pin 19.' },
+          { n: 10, name: 'GR', type: 'video', desc: 'Graphics mode enable from IOU pin 2.' },
+          { n: 11, name: '/SEROUT', type: 'video', desc: 'Serialized character-generator output (74LS166 pin 1).' },
+          { n: 12, name: 'NTSC', type: 'video', desc: 'Composite NTSC video from the VID hybrid.', expect: 'About 1 V p-p' },
+          { n: 13, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 14, name: 'VIDD7', type: 'video', desc: 'From the 74LS374 video latch; HIGH gives the half-dot shift.' },
+          { n: 15, name: 'CREF', type: 'clock', desc: 'Colour reference from TMG pin 3.', expect: '3.58 MHz' },
+        ],
+        sources: [{ label: 'Apple IIc Technical Reference Manual, video expansion connector, pp. 272-273', url: IIC(299) }] },
+      { id: '2c-mouse-game', name: 'Mouse / hand controller (DE-9)', kind: 'DE-9 socket', geo: 'de9', gender: 'female',
+        verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Tables 11-21 and 11-22, pp. 284 and 287',
+        summary: 'One port for a mouse or a joystick; the IIc reads the pins differently for each. Two switches and two paddles only (no PDL2/PDL3, no annunciators). 100 mA max from +5 V.',
+        pins: [
+          { n: 1, name: 'GAMESW1 / /MOUSEID', type: 'io', desc: 'Joystick: switch input 1. Mouse: identifier, active LOW, disables the NE556 paddle timer.' },
+          { n: 2, name: '+5 V', type: 'power', desc: '+5 V, 100 mA max.', expect: '+5 V' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'System ground.', expect: '0 V' },
+          { n: 4, name: 'XDIR', type: 'io', desc: 'Mouse X direction. Unused by a joystick.' },
+          { n: 5, name: 'PDL0 / XMOVE', type: 'io', desc: 'Joystick: hand control 0 (150 kΩ to +5 V). Mouse: X movement interrupt.' },
+          { n: 6, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 7, name: 'GAMESW0 / /MSW', type: 'io', desc: 'Joystick: switch input 0. Mouse: button.' },
+          { n: 8, name: 'PDL1 / YDIR', type: 'io', desc: 'Joystick: hand control 1. Mouse: Y direction.' },
+          { n: 9, name: 'YMOVE', type: 'io', desc: 'Mouse Y movement interrupt. Unused by a joystick.' },
+        ],
+        sources: [
+          { label: 'Apple IIc Technical Reference Manual, mouse connector, p. 284', url: IIC(311) },
+          { label: 'Apple IIc Technical Reference Manual, hand controller connector, p. 287', url: IIC(314) },
+        ] },
+      { id: '2c-audio', name: 'Headphone jack', kind: '3.5 mm stereo jack', geo: 'trs',
+        verifiedAgainst: 'Apple IIc Technical Reference Manual (2nd ed.), Output jack, p. 256',
+        summary: 'Left side, next to the volume control. Mono sound on both channels; plugging in cuts the internal speaker. The volume pot sets both.',
+        pins: [
+          { n: 'T', name: 'Audio', type: 'audio', desc: 'Speaker audio (left).' },
+          { n: 'R', name: 'Audio', type: 'audio', desc: 'Speaker audio (right, same signal).' },
+          { n: 'S', name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+        ],
+        sources: [{ label: 'Apple IIc Technical Reference Manual, output jack, p. 256', url: IIC(283) }] },
+    ],
   },
   power: {
-    apple2: { rails: iiRails, testPoints: iiTests },
-    apple2plus: { rails: iiRails, testPoints: iiTests },
-    "apple2e": {
-      "rails": [
-        {
-          "rail": "+5 V",
-          "expect": "4.9-5.2 V",
-          "where": "PSU connector pin 3; MMU pin 25; IOU pin 28; CPU pin 8; slot pin 25",
-          "note": "The only rail the motherboard logic uses."
-        },
-        {
-          "rail": "+12 V",
-          "expect": "11.5-12.5 V",
-          "where": "PSU pin 4; slot pin 50",
-          "note": "Disk II controller and cards."
-        },
-        {
-          "rail": "-5 V",
-          "expect": "-4.75 to -5.25 V",
-          "where": "PSU pin 6; slot pin 34",
-          "note": "Slots only on a IIe (4116 RAM on a II/II+)."
-        },
-        {
-          "rail": "-12 V",
-          "expect": "-11.5 to -12.5 V",
-          "where": "PSU pin 5; slot pin 33",
-          "note": "Serial cards."
-        }
+    apple2: iiPower,
+    apple2plus: iiPower,
+    apple2e: {
+      supply: { external: false, name: 'Apple IIe switching supply (Astec on early units, Dyna-Comp on later ones)', output: '+5 V 2.5 A; +11.8 V 1.5 A (2.5 A intermittent); -5.2 V 250 mA; -12 V 250 mA. 60 W continuous, 80 W intermittent', connector: '2e-psu',
+        notes: [
+          'Custom switching supply in a sealed case; parts of it are connected directly to the mains.',
+          'It shuts all four rails off when a rail is shorted, the cable to the board is unplugged, or a rail leaves its range, then restarts about every half second. That stop-start is the "dead PSU chirp". Chirping with the board connected means a short: pull the cards, then the board, before you condemn the supply.',
+          'Regulation follows the +5 V rail; the others track it.',
+          'Line input 107-132 V AC. More than 140 V damages it. Use a grounded three-wire outlet.',
+          'Astec units carry the yellow RIFA X2 line-filter capacitors that crack and burn with smoke and a smell; replace them with X2 film parts. Dyna-Comp units often have other filter caps.',
+          'Intermittent rating: up to 20 minutes at the high load, then at least 10 minutes at normal load.',
+        ],
+        sources: [
+          { label: 'Apple IIe Technical Reference Manual, Table 7-2 power supply specifications, p. 159', url: IIE(192) },
+          { label: 'Apple IIe Technical Reference Manual, The Power Supply (protection and restart), p. 160', url: IIE(193) },
+          { label: 'Applefritter: Apple II and IIe power supply RIFA replacements (forum)', url: 'https://www.applefritter.com/node/33594', verify: true },
+        ] },
+      rails: [
+        { rail: '+5 V', expect: '4.85-5.15 V', where: 'PSU connector pin 3; MMU pin 25; IOU pin 28; 6502 pin 8; slot pin 25', note: 'The only rail the motherboard logic uses. 2.5 A max.' },
+        { rail: '+12 V', expect: '11.1-12.5 V', where: 'PSU connector pin 4; slot pin 50', note: 'Nominal 11.8 V. Disk II controller and cards; 250 mA for all slots.' },
+        { rail: '-5 V', expect: '-4.7 to -5.7 V', where: 'PSU connector pin 6; slot pin 34', note: 'Nominal -5.2 V. Slots only on a IIe.' },
+        { rail: '-12 V', expect: '-10.8 to -13.2 V', where: 'PSU connector pin 5; slot pin 33; AY-5-3600 pin 27', note: 'Keyboard encoder VGG and serial cards.' },
       ],
-      "testPoints": [
-        {
-          "tp": "Master clock",
-          "where": "14.318 MHz crystal",
-          "expect": "14.318 MHz"
-        },
-        {
-          "tp": "PHI0",
-          "where": "MMU pin 3 / IOU pin 26 / CPU pin 37",
-          "expect": "1.023 MHz"
-        },
-        {
-          "tp": "Q3",
-          "where": "MMU pin 4 / IOU pin 27",
-          "expect": "2 MHz asymmetric"
-        },
-        {
-          "tp": "Reset",
-          "where": "IOU pin 15 / CPU pin 40",
-          "expect": "HIGH when running; LOW on Control-Reset"
-        },
-        {
-          "tp": "Composite sync",
-          "where": "IOU pin 39",
-          "expect": "15.7 kHz horizontal pulses"
-        },
-        {
-          "tp": "Speaker",
-          "where": "IOU pin 8",
-          "expect": "Toggles on beep"
-        },
-        {
-          "tp": "PSU tick",
-          "where": "Power supply",
-          "expect": "A ticking PSU with no load is normal; with the board attached it means a short"
-        }
-      ]
-    }
+      testPoints: [
+        { tp: 'Master clock', where: 'Aux slot pin 32 (14M)', expect: '14.318 MHz' },
+        { tp: 'PHI0', where: 'MMU pin 3 / IOU pin 26 / 6502 pin 37', expect: '1.023 MHz' },
+        { tp: 'Q3', where: 'MMU pin 4 / IOU pin 27', expect: '2 MHz asymmetric' },
+        { tp: 'Reset', where: 'IOU pin 15 / 6502 pin 40', expect: 'HIGH when running; LOW on Control-Reset' },
+        { tp: 'Composite sync', where: 'IOU pin 39', expect: '15.7 kHz horizontal pulses' },
+        { tp: 'Speaker', where: 'IOU pin 8', expect: 'Toggles on beep' },
+        { tp: 'Keyboard', where: 'IOU pin 32 (KSTRB) / IOU pin 31 (AKD)', expect: 'Pulse on each key / HIGH while a key is held' },
+        { tp: 'PSU chirp', where: 'Power supply', expect: 'Stop-start clicking with the cable unplugged is normal; with the board connected it means a short' },
+      ],
+      sources: [
+        { label: 'Apple IIe Technical Reference Manual, Table 7-2 power supply specifications, p. 159', url: IIE(192) },
+        { label: 'Apple IIe Technical Reference Manual, Table 7-3 power connector, p. 161', url: IIE(194) },
+        { label: 'Apple IIe Technical Reference Manual, MMU and IOU pinouts, pp. 165-167', url: IIE(198) },
+      ],
+    },
+    apple2c: {
+      supply: { external: true, name: 'Apple IIc external power supply (A2M4017)', output: '+15 V DC, 1.2 A nominal; 25 W max from 105-129 V AC', connector: '2c-power',
+        notes: [
+          'The brick only makes 15 V DC. An internal converter in the IIc makes +5 V 1.5 A, +12 V 0.6 A (0.9 A intermittent, 1.5 A surge under 100 ms), -12 V 100 mA, and -5 V 50 mA from the -12 V rail.',
+          'The converter runs on 9-20 V DC, so a regulated 15 V DC supply of 1.2 A or more wired to the same DIN-7 pins (5 and 6 +15 V, 2 and 3 ground) is a safe substitute.',
+          'Before plugging it in, check about +15 V DC from pins 5/6 to pins 2/3 at the plug.',
+          'Use a grounded three-wire outlet: the TRM warns a two-wire outlet can damage the supply and the IIc.',
+          'The case is sealed; there is no non-destructive way to open it, so a dead brick is usually replaced.',
+        ],
+        sources: [
+          { label: 'Apple IIc Technical Reference Manual, Table 11-2 power supply specifications, p. 233', url: IIC(260) },
+          { label: 'Apple IIc Technical Reference Manual, Table 11-3 / 11-4 power connector and internal converter, p. 234', url: IIC(261) },
+          { label: 'Computer History Museum catalog: Apple IIc power supply, model A2M4017', url: 'https://www.computerhistory.org/collections/catalog/102735572' },
+        ] },
+      rails: [
+        { rail: '+15 V in', expect: '+15 V nominal (9-20 V works)', where: 'Power connector pins 5 and 6', note: 'From the external brick.' },
+        { rail: '+5 V', expect: '4.75-5.25 V', where: 'MMU pin 25; IOU pin 28; IWM pin 26; 6502 pin 8; disk port pin 6', note: '±5%. 1.5 A max.' },
+        { rail: '+12 V', expect: '10.8-13.2 V', where: 'Disk port pins 7 and 8; video expansion pin 8', note: '±10%. 0.6 A continuous; 300 mA max on the DB-15.' },
+        { rail: '-12 V', expect: '-10.8 to -13.2 V', where: 'Disk port pin 5', note: '±10%. 100 mA max. Also feeds the -5 V rail.' },
+        { rail: '-5 V', expect: 'About -5 V', where: 'Derived from -12 V on the board', note: '50 mA max.', verify: true },
+      ],
+      testPoints: [
+        { tp: 'Master clock', where: 'TMG pin 1', expect: '14.318 MHz' },
+        { tp: '7M', where: 'TMG pin 2', expect: '7.16 MHz' },
+        { tp: 'Colour reference', where: 'TMG pin 3', expect: '3.58 MHz' },
+        { tp: 'PHI0', where: 'TMG pin 15 / MMU pin 3', expect: '1.023 MHz' },
+        { tp: 'Q3', where: 'TMG pin 16', expect: '2.04 MHz asymmetric' },
+        { tp: 'Reset', where: 'IOU pin 15 / 6502 pin 40', expect: 'HIGH when running' },
+        { tp: 'Composite sync', where: 'IOU pin 39', expect: '15.7 kHz line pulses' },
+        { tp: 'Speaker', where: 'IOU pin 8', expect: 'Toggles on beep' },
+      ],
+      sources: [
+        { label: 'Apple IIc Technical Reference Manual, Table 11-4 internal converter specifications, p. 234', url: IIC(261) },
+        { label: 'Apple IIc Technical Reference Manual, TMG pinouts, p. 245', url: IIC(272) },
+      ],
+    },
   },
   quickref: {
     apple2: {
+      sources: [{ label: 'Apple II Reference Manual (1979), Figure 5 system memory map, p. 68', url: IIRM(78) }, { label: 'Apple II Reference Manual (1979): keyboard, monitor and I/O chapters', url: 'https://archive.org/details/Apple_II_Reference_Manual_1979_Apple' }],
       firstLook: [
         'Integer BASIC at the > prompt. No decimals; FP switches to Applesoft only if it is loaded.',
         'No disk or ROM card? PR#6 boots slot 6, drive 1.',
@@ -2080,6 +1420,7 @@ RCS.add({
       ],
     },
     apple2plus: {
+      sources: [{ label: 'Apple II Reference Manual (1979), Figure 5 system memory map, p. 68', url: IIRM(78) }, { label: 'Applesoft BASIC Programming Reference Manual (Apple)', url: 'https://archive.org/details/Applesoft_BASIC_Programming_Reference_Manual_Apple_Computer' }],
       firstLook: [
         'Applesoft at the ] prompt. With no disk, BASIC comes up; PR#6 boots slot 6.',
         'Dead machine or no beep: the 6502, its 1.023 MHz clock, or the ROM. Garbage or no boot: swap the 4116 RAM banks.',
@@ -2148,6 +1489,7 @@ RCS.add({
       ],
     },
     "apple2e": {
+      sources: [{ label: 'Apple IIe Technical Reference Manual, Figure 4-1 system memory map, p. 73', url: IIE(106) }, { label: 'Apple IIe Technical Reference Manual, The Reset Routine, p. 91', url: IIE(124) }, { label: 'Applesoft BASIC Programming Reference Manual (Apple)', url: 'https://archive.org/details/Applesoft_BASIC_Programming_Reference_Manual_Apple_Computer' }],
       "firstLook": [
         "Four-rail switching supply: +5, +12, -5, -12. A ticking PSU with the board connected means a short.",
         "MMU and IOU custom chips replace the TTL jungle of the II+. Dead machine = MMU/ROM/CPU; bad video or keys = IOU.",
@@ -2488,6 +1830,10 @@ RCS.add({
     { name: 'comp.sys.apple2 / Apple II Enthusiasts', url: 'https://groups.google.com/g/comp.sys.apple2', what: 'Community help.' },
     { name: 'The Apple II Circuit Description (Gayler)', url: 'https://www.applefritter.com/files/2023/06/10/Apple-II-Circuit-Description-Processed-OPT.pdf', what: 'Board-level circuit description with 4116 and 6502 sections; appendix has schematics for each revision.', verify: true },
     { name: 'Apple II Plus / IIe Troubleshooting and Repair Guide (1984)', url: 'https://vintageapple.org/apple_ii/pdf/Apple_II_Plus_IIe_Troubleshooting_%26_Repair_Guide_1984.pdf', what: 'Chip location scheme and RAM map. Use it for board designators.', verify: true },
+    { name: 'Apple II Reference Manual (1979)', url: 'https://archive.org/details/Apple_II_Reference_Manual_1979_Apple', what: 'II/II+ hardware chapter: power supply, connectors, slots, ROM and game I/O pinouts.' },
+    { name: 'Apple IIe Technical Reference Manual (1985)', url: 'https://archive.org/details/Apple_IIe_Technical_Reference_Manual', what: 'Chapter 7: MMU/IOU pinouts, power supply, every internal and external connector.' },
+    { name: 'Apple IIe Technical Reference Manual (1987 edition)', url: 'https://archive.org/details/apple-iie-technical-reference-manual-1987-edition', what: 'Corrected keyboard connector table; enhanced and extended-keyboard IIe.' },
+    { name: 'Apple IIc Technical Reference Manual (2nd ed.)', url: 'https://archive.org/details/Apple_IIc_Technical_Reference_Manual', what: 'Chapter 11: MMU, IOU, TMG, GLU, IWM and 6551 pinouts; all rear ports; power.' },
     { name: 'Apple IIc (Wikipedia)', url: 'https://en.wikipedia.org/wiki/Apple_IIc', what: 'IIc specifications and rear ports. Custom chips not covered.', verify: true },
   ],
 });

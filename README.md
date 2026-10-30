@@ -23,6 +23,14 @@ ground. Nothing moves; transitions only, and none under `prefers-reduced-motion`
   chamfered trace runs to the `PIN DETAIL` box; below 768 px the detail is a bottom panel and the
   trace runs to its copper top edge. `VIEW: TOP / BOTTOM` flips it. Tab reaches every pad, Enter
   or Space selects. Reconstructed data carries a `CHECK` stamp.
+- **Ports and power**: every connector with a `geo` is drawn the same way: round DIN and mini-DIN with
+  the key at the bottom, D-sub, card edge with its key slots, RCA, F, barrel, TRS, or a custom pad map.
+  Pads are 44 px targets with the pin number inside; tapping a pad or a table row selects it, and a
+  copper trace runs round the outside of the connector to `PIN DETAIL` (on a phone, to the bottom
+  panel). `VIEW: SOCKET / PLUG` mirrors the drawing from looking into the machine's socket to looking
+  at the cable's plug, and the line over the drawing says which gender and which face you are seeing. The
+  power page opens with the supply and draws its connector with what each pad should read. A pin is
+  linkable as `ports?c=<id>&pin=<n>`. Layouts and their sources live in `src/connectors.js`.
 - **Masks**: `MASK: GREEN / BLACK / LIGHT`. Light is bare FR-4 (pale tan, dark silkscreen, deeper
   copper) for bright benches. The app follows `prefers-color-scheme` until you pick; the pick is
   kept in `localStorage`.
@@ -31,8 +39,8 @@ ground. Nothing moves; transitions only, and none under `prefers-reduced-motion`
 
 Faces are self-hosted in `fonts/`: Barlow Condensed for labels and prose, Share Tech Mono for
 signal names, pin numbers, designators and values (both SIL Open Font License). Tokens, the three
-masks and the silkscreen components live in `src/input.css`; footprints and trace routing are SVG
-drawn in `src/app.js`.
+masks and the silkscreen components live in `src/input.css`; chip footprints and trace routing are SVG
+drawn in `src/app.js`, connector drawings in `src/connectors.js`.
 
 ## Status
 
