@@ -86,7 +86,15 @@ for (const [mid, list] of Object.entries(R.connectors)) {
     if (!c.geo) warn(f, `${c.id} has no geo (no drawing)`); else if (!GEO.test(c.geo)) err(f, `${c.id} unknown geo ${c.geo}`);
     if (c.geo === 'custom' && !(c.pads || []).length) err(f, `${c.id} custom geo needs pads`);
     const seen = new Set(), pads = c.geo ? padsOf(c) : null;
-    if (c.geo && c.geo !== 'custom' && !pads) err(f, `${c.id} geo ${c.geo} produced no layout`);
+    if (c.geo && !pads) err(f, `${c.id} geo ${c.geo} produced no layout`);
+    if (c.geo === 'custom') {
+      const seenPad = new Set();
+      for (const q of c.pads || []) {
+        if (!Number.isFinite(+q.x) || !Number.isFinite(+q.y) || +q.x < -20 || +q.x > 120 || +q.y < -20 || +q.y > 120) err(f, `${c.id} pad ${q.n} has a bad position (${q.x}, ${q.y}); use the 0-100 box`);
+        if (seenPad.has(String(q.n))) err(f, `${c.id} repeats pad ${q.n}`); seenPad.add(String(q.n));
+      }
+      if (c.outline && !/^[MmLlHhVvZzAaCcQqSsTt0-9 ,.\-]+$/.test(c.outline)) err(f, `${c.id} outline is not a plain SVG path`);
+    }
     if (/^(de9|da15|db25)$/.test(c.geo) && !c.gender) warn(f, `${c.id} D-sub without gender (male assumed)`);
     for (const p of c.pins || []) {
       if (p.n === '?' || p.n === '-' || p.n == null) warn(f, `${c.id} has an unplaced pin ${p.name}`);

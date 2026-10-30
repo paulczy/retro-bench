@@ -5,7 +5,9 @@
 const VERSION = '9295f7550eb0';
 const PRECACHE = [ "./", "dist/app.css", "fonts/barlow-condensed-400.woff2", "fonts/barlow-condensed-500.woff2", "fonts/barlow-condensed-600.woff2", "fonts/share-tech-mono-400.woff2", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg", "icons/maskable-512.png", "index.html", "manifest.webmanifest", "src/app.js", "src/connectors.js", "src/data/acorn.js", "src/data/amstrad.js", "src/data/apple.js", "src/data/atari.js", "src/data/coleco.js", "src/data/commodore.js", "src/data/core.js", "src/data/heathkit.js", "src/data/ibm.js", "src/data/schematics.js", "src/data/sinclair.js", "src/data/tandy.js", "src/data/ti.js", "src/data/timex.js" ];
 /* precache:end */
-const CACHE = 'rb-' + VERSION;
+/* one cache family per install scope, so two copies of the app on one origin never delete each other's cache */
+const SCOPE = 'rb-' + new URL(self.registration.scope).pathname.replace(/[^\w]+/g, '_') + '-';
+const CACHE = SCOPE + VERSION;
 
 /* addAll is all or nothing: one missing file rejects the install, so a half copy is never served.
    A failed first install also drops its empty cache, so the next good install still counts as the first
@@ -19,7 +21,7 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
-    const old = (await caches.keys()).filter(k => k.startsWith('rb-') && k !== CACHE);
+    const old = (await caches.keys()).filter(k => k.startsWith(SCOPE) && k !== CACHE);
     await Promise.all(old.map(k => caches.delete(k)));
     await self.clients.claim();
     /* tell open pages: 'updated' when this replaced an older version, so they can offer a reload */

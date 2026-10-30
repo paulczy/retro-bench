@@ -79,7 +79,7 @@ const DSUB = { de9: ['DE-9', 5, 4], da15: ['DA-15', 8, 7], db25: ['DB-25', 13, 1
    between 1-2 and 10-11, from the C64-wiki "User Port" drawing. The C64-wiki "Expansion Port" drawing (22+22)
    shows no slot, so 22+22 has no default; give `keys` in the data if a board has one. */
 const CBM = 'ABCDEFHJKLMNPRSTUVWXYZ'.split('');
-const cbmLetter = i => (i < CBM.length ? CBM[i] : CBM[i - CBM.length].repeat(2));   /* past Z: AA, BB, ... */
+const cbmLetter = i => (i < CBM.length ? CBM[i] : CBM[i - CBM.length].repeat(2));   /* past Z: AA, BB, ... (44 letters at most) */
 const EDGE_KEYS = { '12x12-cbm': [1, 10] };
 
 /* ---------- helpers ---------- */
@@ -247,7 +247,7 @@ function layout(conn, o) {
   if (ROUND[geo]) return round(ROUND[geo], conn, o);
   if (DSUB[geo]) return dsub(DSUB[geo], conn, o);
   const m = /^edge-(\d+)x(\d+)-(seq|cbm|ab|odd-even)$/.exec(geo);
-  if (m) return +m[1] > 0 && +m[1] <= 64 && +m[2] <= 64 ? edge(m, conn, o) : null;
+  if (m) return +m[1] > 0 && +m[1] <= 64 && +m[2] <= (m[3] === 'cbm' ? 2 * CBM.length : 64) ? edge(m, conn, o) : null;
   if (['rca', 'f', 'barrel', 'trs', 'ts'].includes(geo)) return single(geo, conn, o);
   if (geo === 'custom') return custom(conn, o);
   return null;

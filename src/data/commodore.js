@@ -1808,7 +1808,7 @@ RCS.add({
           { n: 2, name: 'GND', type: 'ground', desc: 'Ground return from the brick.', expect: '0 V' },
           { n: 3, name: 'GND', type: 'ground', desc: 'Ground on the board; N/C on the brick plug.', expect: '0 V' },
           { n: 4, name: 'NC', type: 'nc', desc: 'No connection.' },
-          { n: 5, name: '+5 V DC', type: 'power', desc: 'Regulated +5 V from the brick, through switch S1 and fuse F1 to the logic.', expect: '+4.95 to +5.10 V DC; over 5.25 V is dangerous' },
+          { n: 5, name: '+5 V DC', type: 'power', desc: 'Regulated +5 V from the brick, through the power switch to the logic. F1 on the board is in the 9 V AC branch, not in this line.', expect: '+4.95 to +5.10 V DC; over 5.25 V is dangerous' },
           { n: 6, name: '9 V AC', type: 'power', desc: 'One leg of the 9 V AC winding.', expect: 'About 9 V AC between the two 9 V AC pins' },
           { n: 7, name: '9 V AC', type: 'power', desc: 'Other leg of the 9 V AC winding.', expect: 'About 9 V AC between the two 9 V AC pins' },
         ],
@@ -2407,11 +2407,10 @@ RCS.add({
       {
         id: 'c128-power',
         name: 'Power in',
-        kind: 'DIN-5 (CN11)',
-        geo: 'din5-180',
-        verify: false,
-        verifiedAgainst: 'C128 Service Manual schematic 310378 sheet 2 (CN11, CN12)',
-        summary: 'CN11 on the flat C128: +5 V DC on pin 1, 9 V AC on pins 3 and 5, signal ground on 4 and shield on 2. Not the Plus/4 plug and not the C64 DIN-7. The C128D has an internal supply on the 6-pin post header CN12 (1, 2 = 9 V AC, 3 = +5 V, 4 = signal ground, 5 = key, 6 = shield). The service manual does not say whether the DIN is the 180° or 240° form; check the socket.',
+        kind: 'Square 5-pin power socket (CN11)',
+        verify: true,
+        verifiedAgainst: 'C128 Service Manual schematic 310378 sheet 2 (CN11, CN12) for the signals; C128 System Guide App. C for the connector shape',
+        summary: 'CN11 on the flat C128 is a square five-pin socket, not a round DIN: +5 V DC on pin 1, 9 V AC on pins 3 and 5, signal ground on 4 and shield on 2. No drawing yet: the pin positions in the square shell are not in a source we have, so check the numbers moulded into the plug. Not the Plus/4 plug and not the C64 DIN-7. The C128D has an internal supply on the 6-pin post header CN12 (1, 2 = 9 V AC, 3 = +5 V, 4 = signal ground, 5 = key, 6 = shield). The service manual does not say whether the DIN is the 180° or 240° form; check the socket.',
         pins: [
           { n: 1, name: '+5 V DC', type: 'power', desc: '+5 V from the supply, through SW1 to the board.', expect: '+4.95 to +5.10 V DC' },
           { n: 2, name: 'SHIELD', type: 'ground', desc: 'Shield / chassis ground.', expect: '0 V' },
@@ -2421,6 +2420,7 @@ RCS.add({
         ],
         sources: [
           { label: 'C128 Service Manual, schematic 310378 sheet 2 (power CN11/CN12), p. 67', url: 'https://archive.org/download/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08.pdf#page=72' },
+          { label: 'Commodore 128 System Guide, Appendix C: "five pin square plug" power socket', url: 'https://commodore.ca/manuals/128_system_guide/app-c.htm' },
         ],
       },
       {
