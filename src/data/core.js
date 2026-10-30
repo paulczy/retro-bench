@@ -285,5 +285,8 @@ window.RCS = (() => {
   R.schematics = {}; R.credits = [];
   R.addSchematics = by => { for (const [mid, list] of Object.entries(by || {})) R.schematics[mid] = [...(R.schematics[mid] || []), ...list]; };
   R.addCredits = list => R.credits.push(...(list || []));
+  /* Board photos live in src/data/photos.js, keyed by machine id; images in photos/ (see docs/data-schema.md). */
+  R.photos = {};
+  R.addPhotos = by => { for (const [mid, list] of Object.entries(by || {})) R.photos[mid] = [...(R.photos[mid] || []), ...list]; };
   return R;
 })();

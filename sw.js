@@ -1,13 +1,18 @@
 /* Retro Bench service worker. Plain JS, no library.
    The block between the markers is written by scripts/build-sw-manifest.mjs (npm run build):
-   the precache list from index.html, the manifest and fonts/, and a content hash as the version. */
+   the precache list from index.html, the manifest and fonts/, and a content hash as the version.
+   Board photos (photos/) are not precached: each is kept in its own runtime cache the first time it is shown.
+   PHOTO_VERSION hashes photos/ and src/data/photos.js, so a changed photo set drops that cache on activate. */
 /* precache:start */
-const VERSION = '26f158e5e179';
-const PRECACHE = [ "./", "dist/app.css", "fonts/barlow-condensed-400.woff2", "fonts/barlow-condensed-500.woff2", "fonts/barlow-condensed-600.woff2", "fonts/share-tech-mono-400.woff2", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg", "icons/maskable-512.png", "index.html", "manifest.webmanifest", "src/app.js", "src/connectors.js", "src/data/acorn.js", "src/data/amstrad.js", "src/data/apple.js", "src/data/atari.js", "src/data/coleco.js", "src/data/commodore.js", "src/data/core.js", "src/data/dragon.js", "src/data/heathkit.js", "src/data/ibm.js", "src/data/msx.js", "src/data/oric.js", "src/data/schematics.js", "src/data/sinclair.js", "src/data/tandy.js", "src/data/ti.js", "src/data/timex.js", "src/data/video.js", "src/version.js" ];
+const VERSION = '3db8c1e53175';
+const PHOTO_VERSION = '059dda044ae4';
+const PRECACHE = [ "./", "dist/app.css", "fonts/barlow-condensed-400.woff2", "fonts/barlow-condensed-500.woff2", "fonts/barlow-condensed-600.woff2", "fonts/share-tech-mono-400.woff2", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg", "icons/maskable-512.png", "index.html", "manifest.webmanifest", "src/app.js", "src/connectors.js", "src/data/acorn.js", "src/data/amstrad.js", "src/data/apple.js", "src/data/atari.js", "src/data/coleco.js", "src/data/commodore.js", "src/data/core.js", "src/data/dragon.js", "src/data/heathkit.js", "src/data/ibm.js", "src/data/msx.js", "src/data/oric.js", "src/data/photos.js", "src/data/schematics.js", "src/data/sinclair.js", "src/data/tandy.js", "src/data/ti.js", "src/data/timex.js", "src/data/video.js", "src/version.js" ];
 /* precache:end */
 /* one cache family per install scope, so two copies of the app on one origin never delete each other's cache */
 const SCOPE = 'rb-' + encodeURIComponent(new URL(self.registration.scope).pathname) + '-';
 const CACHE = SCOPE + VERSION;
+const PHOTOS = SCOPE + 'photos-' + PHOTO_VERSION;
+const PHOTO_DIR = new URL('photos/', self.location).href;
 
 /* addAll is all or nothing: one missing file rejects the install, so a half copy is never served.
    A failed first install also drops its empty cache, so the next good install still counts as the first
@@ -21,12 +26,12 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
-    const old = (await caches.keys()).filter(k => k.startsWith(SCOPE) && k !== CACHE);
+    const old = (await caches.keys()).filter(k => k.startsWith(SCOPE) && k !== CACHE && k !== PHOTOS);
     await Promise.all(old.map(k => caches.delete(k)));
     await self.clients.claim();
     /* tell open pages: 'updated' when this replaced an older version, so they can offer a reload */
     for (const c of await self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
-      c.postMessage({ type: old.length ? 'updated' : 'ready', version: VERSION });
+      c.postMessage({ type: old.some(k => !k.startsWith(SCOPE + 'photos-')) ? 'updated' : 'ready', version: VERSION });
   })());
 });
 
@@ -40,6 +45,18 @@ self.addEventListener('fetch', e => {
   if (PRECACHED.has(url.href)) {
     /* cache-first for the app shell, data and fonts */
     e.respondWith(caches.match(url.href, { cacheName: CACHE }).then(r => r || fetch(req)));
+    return;
+  }
+  /* a board photo: cache first, else fetch and keep it; offline and never seen, the request fails and the
+     page shows its "not saved offline yet" placeholder */
+  if (url.href.startsWith(PHOTO_DIR) && /\.(webp|jpe?g|png|avif)$/i.test(url.pathname)) {
+    e.respondWith(caches.open(PHOTOS).then(async c => {
+      const hit = await c.match(url.href);
+      if (hit) return hit;
+      const r = await fetch(req);
+      if (r.ok && r.type === 'basic') await c.put(url.href, r.clone());
+      return r;
+    }));
     return;
   }
   /* anything else on this origin: network first, keep a copy, fall back to the cache;

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.join(root, 'src', 'data');
-const order = ['core', 'commodore', 'apple', 'atari', 'coleco', 'sinclair', 'timex', 'ti', 'tandy', 'heathkit', 'ibm', 'amstrad', 'acorn', 'dragon', 'msx', 'oric', 'schematics', 'video'];
+const order = ['core', 'commodore', 'apple', 'atari', 'coleco', 'sinclair', 'timex', 'ti', 'tandy', 'heathkit', 'ibm', 'amstrad', 'acorn', 'dragon', 'msx', 'oric', 'schematics', 'photos', 'video'];
 const only = process.argv.slice(2);
 
 const window = {};
@@ -271,6 +271,60 @@ for (const [mid, list] of Object.entries(R.schematics || {})) {
     if (!s.board || !s.kind || !s.label || !/^https?:\/\//.test(s.url || '')) err(`schematics ${mid}`, `entry needs board, kind, label and http url: ${JSON.stringify(s).slice(0, 90)}`);
     if (!SCH_KINDS.has(s.kind)) err(`schematics ${mid}`, `kind ${s.kind} (schematic, layout, manual, parts)`);
   }
+}
+/* photos.js: board photos. The app draws the outlines over the unaltered image, so every box must sit inside it
+   and name a chip of that machine; the licence must be one the user allowed (PD, CC0, CC BY, CC BY-SA, GFDL). */
+const LICENCE = /^(PD|Public domain|CC0(?: 1\.0)?|CC BY(?:-SA)? \d\.\d(?: [A-Z]{2})?|GFDL(?: \d\.\d)?(?: only| or later)?)$/;
+const isUrl = u => /^https?:\/\//.test(u || '');
+/* pixel size from a WebP header (VP8, VP8L, VP8X), to check w and h; null for other formats */
+function webpSize(buf) {
+  if (buf.toString('ascii', 0, 4) !== 'RIFF' || buf.toString('ascii', 8, 12) !== 'WEBP') return null;
+  const k = buf.toString('ascii', 12, 16);
+  if (k === 'VP8 ') return [buf.readUInt16LE(26) & 0x3fff, buf.readUInt16LE(28) & 0x3fff];
+  if (k === 'VP8L') { const b = buf.readUInt32LE(21); return [(b & 0x3fff) + 1, ((b >> 14) & 0x3fff) + 1]; }
+  if (k === 'VP8X') return [buf.readUIntLE(24, 3) + 1, buf.readUIntLE(27, 3) + 1];
+  return null;
+}
+const licText = fs.existsSync(path.join(root, 'photos', 'LICENSES.md')) ? fs.readFileSync(path.join(root, 'photos', 'LICENSES.md'), 'utf8') : null;
+for (const [mid, list] of Object.entries(R.photos || {})) {
+  const m = R.machines[mid], f = `photos ${mid}`;
+  if (!m) { err('photos', `unknown machine ${mid}`); continue; }
+  if (!Array.isArray(list)) { err(f, 'must be an array'); continue; }
+  list.forEach((p, i) => {
+    const at = `photo ${p && p.file ? p.file : i + 1}`;
+    if (!p || typeof p !== 'object') { err(f, `${at} is not an object`); return; }
+    for (const k of ['board', 'file', 'author', 'licence', 'licenceUrl', 'source', 'chips']) if (!p[k]) err(f, `${at} missing ${k}`);
+    if (!(Number.isInteger(p.w) && p.w > 0 && Number.isInteger(p.h) && p.h > 0)) err(f, `${at} needs w and h in pixels`);
+    if (p.rotate != null && ![0, 90, 180, 270].includes(p.rotate)) err(f, `${at} rotate ${p.rotate} (0, 90, 180, 270)`);
+    if (p.licenceUrl && !isUrl(p.licenceUrl)) err(f, `${at} licenceUrl is not an http(s) URL`);
+    if (p.source && (!p.source.label || !isUrl(p.source.url))) err(f, `${at} source needs label and http(s) url`);
+    if (p.licence && !LICENCE.test(p.licence)) err(f, `${at} licence "${p.licence}" is not allowed (PD, CC0, CC BY x.x, CC BY-SA x.x, GFDL)`);
+    const gv = /^GFDL(?: (\d\.\d))?/.exec(p.licence || '');
+    if (gv) {
+      const txt = gv[1] ? [`GFDL-${gv[1]}.txt`] : fs.existsSync(path.join(root, 'photos')) ? fs.readdirSync(path.join(root, 'photos')).filter(x => /^GFDL-[\d.]+\.txt$/.test(x)) : [];
+      if (!txt.length || !txt.every(x => fs.existsSync(path.join(root, 'photos', x)))) err(f, `${at} is ${p.licence}: ship the licence text as photos/${txt[0] || 'GFDL-<version>.txt'}`);
+    }
+    if (p.file) {
+      const fp = path.join(root, p.file);
+      if (!/^photos\/[^/]+$/.test(p.file)) err(f, `${at} file must sit in photos/`);
+      else if (!fs.existsSync(fp)) err(f, `${at} file not found`);
+      else {
+        const sz = webpSize(fs.readFileSync(fp));
+        if (sz && (sz[0] !== p.w || sz[1] !== p.h)) err(f, `${at} is ${sz[0]}x${sz[1]} but w/h say ${p.w}x${p.h}`);
+        if (licText && !licText.includes(p.file.replace(/^photos\//, ''))) warn(f, `${at} is not listed in photos/LICENSES.md (npm run build writes it)`);
+      }
+    }
+    if (p.board && R.schematics[mid] && !R.schematics[mid].some(s => s.board === p.board)) warn(f, `${at} board "${p.board}" matches no board in schematics.js`);
+    const chips = p.chips && typeof p.chips === 'object' ? p.chips : {};
+    for (const [cid, b] of Object.entries(chips)) {
+      if (!(m.chips || []).includes(cid)) err(f, `${at} box for ${cid}, which is not a chip of ${mid}`);
+      if (!Array.isArray(b) || b.length !== 4 || !b.every(Number.isFinite)) { err(f, `${at} ${cid} box must be [x, y, w, h]`); continue; }
+      const [x, y, w, h] = b;
+      if (x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > 1 + 1e-9 || y + h > 1 + 1e-9) err(f, `${at} ${cid} box [${b.join(', ')}] is not inside 0-1`);
+    }
+    if (p.verify != null && !Array.isArray(p.verify)) err(f, `${at} verify must be an array`);
+    for (const cid of p.verify || []) if (!(cid in chips)) err(f, `${at} verify lists ${cid}, which has no box`);
+  });
 }
 /* video.js: the #/video reference. Every signal row needs a source that resolves to a sources entry. */
 if (R.video) {

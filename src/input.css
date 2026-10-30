@@ -255,6 +255,56 @@
   a.chipfp:hover .nm { fill: var(--copper-hi); }
   a.chipfp:focus-visible { outline: none; }
   a.chipfp:focus-visible .hit { stroke: var(--copper); stroke-width: 2; }
+  /* a footprint that is outlined on the board photo: a crosshair in its corner (44 px target) */
+  .bslot { position: relative; min-width: 0; }
+  .bslot .bcell .bl { padding-right: 26px; }
+  .ploc { position: absolute; top: -12px; right: -12px; width: 44px; height: 44px; display: grid; place-items: center; color: var(--tin); }
+  .ploc svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+  .ploc:hover, .bslot:hover .ploc { color: var(--copper-hi); }
+
+  /* ---------- board photo: the image unaltered, chip outlines placed over it in image fractions.
+     The outline colours are fixed (not the mask's) because the photo looks the same on every mask. ---------- */
+  .pview { margin-top: 4px; }
+  .pview.big { overflow: auto; max-height: 85vh; overscroll-behavior: contain; border: var(--w) solid var(--silk-25); border-radius: var(--radius-silk); }
+  .pwrap { position: relative; width: min(100%, calc(75vh * var(--pr))); background: var(--mask-deep); --po: #f0a660; --pd: rgba(0,0,0,.6); }
+  .pview.big .pwrap { width: var(--pw); max-width: none; }
+  .pimg { display: block; width: 100%; height: 100%; max-width: none; }
+  .pmiss { display: none; }
+  .pwrap.miss .pimg { visibility: hidden; }
+  .pwrap.miss .pmiss { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; position: absolute; inset: 0; padding: 16px; text-align: center; border: var(--w) dashed var(--silk-45); border-radius: var(--radius-silk); color: var(--silk-70); font-size: 16px; }
+  .pmiss b { font: 400 15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk); }
+  .pwrap.miss .pbox { display: none; }
+  .pbox { position: absolute; display: block; border: 2px solid var(--po); border-radius: 2px; box-shadow: 0 0 0 1px var(--pd), inset 0 0 0 1px var(--pd); color: var(--silk); }
+  /* the tap area grows to 44 px around a small outline without moving it */
+  .pbox::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100% + 8px, 44px); height: max(100% + 8px, 44px); transform: translate(-50%, -50%); }
+  .pbox.vfy { border-style: dashed; }
+  .pbox .pck { position: absolute; left: -2px; bottom: 100%; margin-bottom: 2px; padding: 0 3px; font: 9px/12px var(--font-mono); letter-spacing: .1em; color: #111; background: var(--po); border-radius: 1px; pointer-events: none; }
+  .pbox.tb .pck { bottom: auto; top: 100%; margin: 2px 0 0; }
+  .pwrap.hl .pbox:not(.on) { opacity: .4; }
+  .pbox.on { border-width: 3px; border-color: #ffd29a; background: rgba(240,166,96,.22); box-shadow: 0 0 0 2px var(--pd), 0 0 0 9999px rgba(0,0,0,.28); z-index: 2; }
+  .pthumb .pwrap { overflow: hidden; }
+  .pview .pwrap.hl { overflow: hidden; }
+  .pbox:hover, .pbox:focus-visible { border-color: #ffd29a; opacity: 1 !important; z-index: 3; }
+  .pbox:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  /* name and designator on hover or focus; it opens away from the nearest edges */
+  .ptip { display: none; position: absolute; left: -2px; bottom: calc(100% + 6px); max-width: 60vw; padding: 3px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--hole); color: var(--silk); border: 1px solid var(--po); border-radius: 2px; font: 14px/20px var(--font-mono); pointer-events: none; }
+  .ptip b { font-weight: 400; color: #ffd29a; }
+  .ptip .chk { margin-left: 4px; vertical-align: 1px; }
+  .pbox.tr .ptip { left: auto; right: -2px; }
+  .pbox.tb .ptip { bottom: auto; top: calc(100% + 6px); }
+  .pbox.vfy .ptip { bottom: calc(100% + 20px); }
+  .pbox.vfy.tb .ptip { top: calc(100% + 20px); bottom: auto; }
+  .pbox:hover .ptip, .pbox:focus-visible .ptip, .pbox.on .ptip { display: block; }
+  .pcap { font-size: 17px; margin-top: 8px; }
+  .pcap b { font-weight: 500; }
+  .pcred { font-size: 15px; color: var(--tin); margin-top: 4px; }
+  .pcred a { text-decoration: underline; text-underline-offset: 3px; padding: 12px 0; margin: -12px 0; }
+  .pthumb { display: block; width: min(100%, 340px); margin-top: 4px; }
+  .pthumb:hover .pbox { border-color: #ffd29a; }
+  .ptabs { margin: 0 0 12px; }
+  .jumpers button { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 18px; border: var(--w) solid var(--silk-45); border-radius: var(--radius-silk); font: 15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk); }
+  .jumpers button:hover { border-color: var(--silk); }
+  .jumpers button.on { background: var(--copper); color: var(--copper-ink); border-color: var(--copper-dk); box-shadow: inset 0 0 0 3px var(--copper-dk); }
   .symrow { display: grid; grid-template-columns: 1fr max-content; gap: 14px; padding: 10px 0; border-top: 1px solid var(--silk-12); align-items: start; }
   .symrow:first-of-type { border-top: 0; }
   .symrow .s { font-size: 18px; }

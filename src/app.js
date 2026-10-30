@@ -27,6 +27,7 @@ const DES = { c16: 'C16', plus4: '+4', c64: 'C64', c128: 'C128', vic20: 'VIC', p
 const PANEL_MQ = matchMedia('(max-width: 767.98px)');   /* below this the pin detail is a bottom panel */
 const PHONE_MQ = matchMedia('(max-width: 639.98px)');
 const LIGHT_MQ = matchMedia('(prefers-color-scheme: light)');
+const REDUCE_MQ = matchMedia('(prefers-reduced-motion: reduce)');
 
 const state = {
   maskPick: MASKS.includes(LS.get('rb-mask', null)) ? LS.get('rb-mask', null) : null,
@@ -34,6 +35,7 @@ const state = {
   flip: false, filter: null, pin: null, chipId: null, compact: null, stack: false,
   cview: CVIEWS.includes(LS.get('rb-cview', null)) ? LS.get('rb-cview', null) : 'socket',
   conn: null,   /* { id, pin } the selected connector pad on the ports or power page */
+  ph: { m: null, i: 0, sel: null, big: false },   /* board photo on the machine page: which photo, the lit chip, full size */
   ctx: { route: { segs: [], q: {} } }, hits: [], hitIdx: -1, palItems: [], palIdx: 0,
 };
 
@@ -534,13 +536,15 @@ function dipFootprint(chip, m, x, y, w, link = true) {
    a vertical copper bus down the left, and a stub across every gap so each row is fed from the bus.
    Labels are HTML so they truncate with an ellipsis instead of running into the next footprint. */
 const BOARD_FW = 196;
-function boardGrid(m, chips) {
+function boardGrid(m, chips, onPhoto) {
   return `<div class="board-grid" role="group" aria-label="Chips on the ${esc(m.name)} board">${chips.map(c => {
     const des = desOf(c, m), nc = !c.pins, role = String(c.role || '').split(/[,(]/)[0].trim();
-    return `<a class="bcell${nc ? ' nc' : ''}" href="${nc ? mPath(m) + '/pinouts' : chipPath(m, c)}" aria-label="${esc(des)} ${esc(c.name)}${nc ? ', pinout not captured' : ''}">
+    const cell = `<a class="bcell${nc ? ' nc' : ''}" href="${nc ? mPath(m) + '/pinouts' : chipPath(m, c)}" aria-label="${esc(des)} ${esc(c.name)}${nc ? ', pinout not captured' : ''}">
       <span class="bl"><span class="des">${esc(des)}</span>${c.heat === 'hot' ? '<span class="flag pwr">HOT</span>' : ''}${nc ? '<span class="flag">NOT CAPTURED</span>' : ''}<span class="pn">${esc(c.pkg || '')}</span></span>
       <span class="bfp"><svg viewBox="0 0 ${BOARD_FW} 46" aria-hidden="true">${dipFootprint(c, m, 0, 0, BOARD_FW, false)}</svg></span>
       <span class="role">${esc(role)}</span></a>`;
+    /* a chip outlined on the board photo gets a locate button; hovering or focusing the cell lights its outline */
+    return onPhoto && onPhoto.has(c.id) ? `<div class="bslot" data-pchip-src="${esc(c.id)}">${cell}<button type="button" class="ploc" data-act="photo-loc" data-chip="${esc(c.id)}" aria-label="Show ${esc(des)} ${esc(c.short)} on the board photo"><svg viewBox="-10 -10 20 20" aria-hidden="true"><circle r="5.5"/><path d="M0 -9.5V-3M0 3V9.5M-9.5 0H-3M3 0H9.5"/></svg></button></div>` : cell;
   }).join('')}</div>`;
 }
 
@@ -698,7 +702,12 @@ function render() {
       ctx.brand = brand; ctx.machine = m; touchRecent(m.id);
       ctx.crumbs = [[brand.name, '#/' + brand.id], [m.name, mPath(m)]];
       const chip = c === 'chip' && fits(m, d) && D.chips[d];
-      if (!c) { ctx.crumbs[1] = [m.name]; html = viewMachine(m); }
+      if (!c) {
+        if (state.ph.m !== m.id) state.ph = { m: m.id, i: 0, sel: null, big: false };
+        if (/^\d+$/.test(r.q.ph || '')) state.ph.i = Number(r.q.ph);
+        if (r.q.hl && fits(m, r.q.hl)) state.ph.sel = r.q.hl;
+        ctx.crumbs[1] = [m.name]; html = viewMachine(m);
+      }
       else if (c === 'pinouts' || (chip && !chip.pins)) { ctx.crumbs.push(['Pinouts']); html = viewPinouts(m); }
       else if (c === 'quickref') { ctx.crumbs.push(['Quick reference']); html = viewQuickref(m, r.q.tab); }
       else if (c === 'ports' || c === 'power') {
@@ -817,6 +826,7 @@ function viewBrand(br) {
 
 function viewMachine(m) {
   const chips = chipsOf(m), captured = chips.filter(c => c.pins).length;
+  const onPhoto = new Set(photosOf(m).flatMap(p => Object.keys(p.chips || {})));
   const qr = dataFor(D.quickref, m), sy = dataFor(D.symptoms, m), cn = dataFor(D.connectors, m), pw = dataFor(D.power, m);
   const facts = [['CPU', m.cpu], ['RAM', m.ram], ['ROM', m.rom], ['VIDEO', m.video], ['SOUND', m.sound], ['OS', m.os]].filter(f => f[1]);
   const door = (href, j, t, meta, off, pour) => `<a class="door${off ? ' off' : ''}${pour && !off ? ' pour' : ''}" href="${href}"${off ? ' aria-disabled="true" tabindex="-1"' : ''}><div class="j">${j}</div><div class="t">${t}</div><div class="m">${meta}</div></a>`;
@@ -839,8 +849,9 @@ function viewMachine(m) {
       ${pw.data && arr(pw.data.firstTen).length ? `<a class="lnk col-start-2 lg:col-start-4 -mt-2 mono sm uppercase" href="${mPath(m)}/power?at=first-ten">First ten minutes &rsaquo;</a>` : ''}
     </div>
     <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-3.5"><button type="button" class="btn" data-act="print">Print card</button><span class="tin sm">One page where it fits, two at most, black on white: chips, supply and rail warnings, rails, first checks, clocks, connector pins.</span></div>
-    ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips)}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.</p></section>`
+    ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips, onPhoto)}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.${onPhoto.size ? ' The crosshair shows a chip on the board photo below.' : ''}</p></section>`
       : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} is ${m.status === 'planned' ? 'planned' : 'on paper'}: its chips have not been entered yet.`)}
+    ${photoBlock(m)}
     ${qr.data || tp ? `<div class="grid gap-x-[18px] md:grid-cols-2 items-start">
       ${qr.data && arr(qr.data.firstLook).length ? `<section class="blk"><span class="lbl">First look</span><ul class="bul">${qr.data.firstLook.map(x => `<li>${esc(x)}</li>`).join('')}</ul>${sharedNote(qr.shared)}</section>` : ''}
       ${tp}
@@ -865,6 +876,77 @@ function boardsBlock(m) {
       return `<div class="k">${esc(b)}</div><div class="v">${first.rev || first.years ? `<b>${esc([first.rev, first.years].filter(Boolean).join(', '))}</b>` : ''}${first.note ? `<br><span class="sm">${esc(first.note)}</span>` : ''}</div>
         <div class="v3"><ul class="ds">${rows.map((s, i) => `<li><a class="lnk" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(SCH_KIND[s.kind] || s.kind)}${s.label ? `: ${esc(s.label)}` : ''}</a>${s.verify ? chk() : ''} <span class="tin sm mono">${esc(s.host || hostOf(s.url))}</span>${i && s.note ? `<br><span class="tin sm">${esc(s.note)}</span>` : ''}</li>`).join('')}</ul></div>`; }).join('')}</div>
     <p class="note">Links open the archive that holds the drawing; nothing is copied into the app. Check the assembly number printed on your board against the list.</p></section>`;
+}
+
+/* ---------- board photos (src/data/photos.js). The photo is shown unaltered; the chip outlines are HTML boxes
+   placed in image fractions over it, so they scale with the image and each one can be a link. ---------- */
+const photosOf = m => arr(D.photos[m.id]).filter(p => p && p.file && p.w > 0 && p.h > 0);
+const rotOf = p => (((Number(p.rotate) || 0) % 360) + 360) % 360;
+/* a box [x, y, w, h] in fractions of the stored image, turned with the photo by `rotate` degrees clockwise */
+function rotBox([x, y, w, h], r) {
+  return r === 90 ? [1 - y - h, x, h, w] : r === 180 ? [1 - x - w, 1 - y - h, w, h] : r === 270 ? [y, 1 - x - w, h, w] : [x, y, w, h];
+}
+const frac = v => `${(v * 100).toFixed(3)}%`;
+const photoBoard = p => [p.board, p.rev].filter(Boolean).join(', ');
+const photoCredit = p => `Photo: ${esc(p.author)}, <a href="${esc(safeUrl(p.licenceUrl))}" target="_blank" rel="noopener license">${esc(p.licence)}</a>, via <a href="${esc(safeUrl(p.source && p.source.url))}" target="_blank" rel="noopener">${esc((p.source && p.source.label) || 'source')}</a>`;
+/* the image and its outlines. o.only: draw just that chip's box (the chip page thumbnail, no links inside) */
+function photoFrame(m, p, o = {}) {
+  const r = rotOf(p), turned = r % 180, W = turned ? p.h : p.w, H = turned ? p.w : p.h;
+  const img = turned ? `position:absolute;left:50%;top:50%;width:${frac(p.w / p.h)};height:${frac(p.h / p.w)};transform:translate(-50%,-50%) rotate(${r}deg)` : r ? 'transform:rotate(180deg)' : '';
+  const vfy = new Set(arr(p.verify));
+  /* biggest first, so a small chip's enlarged hit area sits on top of a big neighbour */
+  const boxes = Object.entries(p.chips || {}).filter(([cid]) => D.chips[cid] && (!o.only || cid === o.only))
+    .map(([cid, b]) => [cid, rotBox(b, r)]).sort((a, b) => b[1][2] * b[1][3] - a[1][2] * a[1][3]);
+  const sel = o.only || state.ph.sel;
+  const box = ([cid, [x, y, w, h]]) => {
+    const c = D.chips[cid], des = desOf(c, m), v = vfy.has(cid), nc = !c.pins;
+    const cls = `pbox${v ? ' vfy' : ''}${cid === sel ? ' on' : ''}${y < 0.14 ? ' tb' : ''}${x + w / 2 > 0.5 ? ' tr' : ''}`;
+    const style = `left:${frac(x)};top:${frac(y)};width:${frac(w)};height:${frac(h)}`;
+    const tip = `<span class="ptip">${esc(des)} <b>${esc(c.short)}</b>${v ? ' <span class="chk">Check</span>' : ''}</span>${v ? '<span class="pck" aria-hidden="true">CHECK</span>' : ''}`;
+    if (o.only) return `<span class="${cls}" style="${style}">${v ? '<span class="pck" aria-hidden="true">CHECK</span>' : ''}</span>`;
+    return `<a class="${cls}" data-pchip="${esc(cid)}" style="${style}" href="${nc ? mPath(m) + '/pinouts' : chipPath(m, c)}" aria-label="${esc(des)} ${esc(c.name)}${v ? ', position not confirmed by a printed designator' : ''}${nc ? ', pinout not captured' : ''}">${tip}</a>`;
+  };
+  return `<div class="pwrap${sel && boxes.some(b => b[0] === sel) ? ' hl' : ''}" style="aspect-ratio:${W} / ${H};--pw:${W}px;--pr:${(W / H).toFixed(4)}">
+    <img class="pimg" src="${esc(p.file)}" width="${p.w}" height="${p.h}" alt="${esc(m.name)} board, ${esc(photoBoard(p))}${p.side ? `, ${esc(p.side)} side` : ''}" loading="lazy" decoding="async"${img ? ` style="${img}"` : ''}>
+    <div class="pmiss" role="status"><b>Photo not saved offline yet</b><span>Open this page once with a connection and the photo is kept on this device.</span></div>
+    ${boxes.map(box).join('')}</div>`;
+}
+function photoBody(m) {
+  const list = photosOf(m), i = Math.min(state.ph.i, list.length - 1), p = list[i];
+  const nBox = Object.keys(p.chips || {}).length, nV = arr(p.verify).length;
+  return `${list.length > 1 ? `<div class="jumpers ptabs" role="group" aria-label="Board photos">${list.map((q, k) => `<button type="button" data-act="photo-tab" data-i="${k}" aria-pressed="${k === i}" class="${k === i ? 'on' : ''}">${esc(q.board || `Photo ${k + 1}`)}${q.rev ? ` ${esc(q.rev)}` : ''}</button>`).join('')}</div>` : ''}
+    <div class="pview${state.ph.big ? ' big' : ''}" id="pview">${photoFrame(m, p)}</div>
+    <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-2.5"><button type="button" class="btn${state.ph.big ? ' on' : ''}" data-act="photo-big" aria-pressed="${state.ph.big}">${state.ph.big ? 'Fit to width' : 'Full size'}</button>
+      <span class="tin sm">${nBox ? `${nBox} chip${nBox === 1 ? '' : 's'} outlined. Tap an outline for its pinout${nV ? `; dashed outlines marked CHECK were placed from the layout, not a printed designator` : ''}.` : 'No chips outlined on this photo yet.'}</span></div>
+    <p class="pcap"><b>${esc(photoBoard(p))}</b>${p.side ? `, ${esc(p.side)} side` : ''}${p.note ? `. <span class="tin">${esc(p.note)}</span>` : ''}</p>
+    <p class="pcred">${photoCredit(p)}. Resized only; the outlines are drawn by Retro Bench.</p>`;
+}
+const photoBlock = m => (photosOf(m).length ? `<section class="blk photoblk scroll-mt-4" id="photo"><span class="lbl"><span class="d">IMG</span>Board photo</span><div id="photo-body">${photoBody(m)}</div></section>` : '');
+/* chip page: a small copy of the first photo that outlines this chip, linking to the machine page photo */
+function chipPhoto(m, chip) {
+  const list = photosOf(m), i = list.findIndex(p => p.chips && p.chips[chip.id]);
+  if (i < 0) return '';
+  const p = list[i];
+  return `<section class="blk"><span class="lbl">On the board</span>
+    <a class="pthumb" href="${mPath(m)}?at=photo&ph=${i}&hl=${encodeURIComponent(chip.id)}" aria-label="Show ${esc(desOf(chip, m))} on the ${esc(m.name)} board photo">${photoFrame(m, p, { only: chip.id })}</a>
+    <p class="pcap mt-1.5"><b>${esc(photoBoard(p))}</b>. <a class="lnk" href="${mPath(m)}?at=photo&ph=${i}&hl=${encodeURIComponent(chip.id)}">Open the board photo</a></p>
+    <p class="pcred">${photoCredit(p)}. Resized only.</p></section>`;
+}
+/* light one chip's outline: the selection, or a footprint the pointer or focus is on */
+function photoShow(cid) {
+  const w = $('#photo .pwrap'); if (!w) return;
+  let hit = false;
+  for (const b of $$('.pbox', w)) { const on = b.dataset.pchip === cid; b.classList.toggle('on', on); hit = hit || on; }
+  w.classList.toggle('hl', hit);
+}
+function photoLocate(cid) {
+  const list = photosOf(state.ctx.machine), cur = list[state.ph.i];
+  state.ph.sel = cid;
+  if (!(cur && cur.chips && cur.chips[cid])) { const k = list.findIndex(p => p.chips && p.chips[cid]); if (k >= 0) { state.ph.i = k; $('#photo-body').innerHTML = photoBody(state.ctx.machine); } }
+  photoShow(cid);
+  const b = $(`#photo .pbox[data-pchip="${CSS.escape(cid)}"]`); if (!b) return;
+  const r = b.getBoundingClientRect();
+  if (PHONE_MQ.matches || r.top < 0 || r.bottom > innerHeight) b.scrollIntoView({ block: 'center', inline: 'center', behavior: REDUCE_MQ.matches ? 'auto' : 'smooth' });
 }
 
 const HEAT_ORDER = { hot: 0, warm: 1, cool: 2 };
@@ -915,6 +997,7 @@ function viewChip(m, chip) {
       </div>
       ${datasheets(chip)}
     </section>
+    ${chipPhoto(m, chip)}
     ${replacementsBlock(chip)}
     ${noteBlock('c', chip.id, chip.name)}`;
 }
@@ -1171,6 +1254,14 @@ function viewAbout() {
         <dt>Credits</dt><dd><a class="lnk" href="#/credits">Every archive and document the data comes from</a></dd></dl>
     </section>`;
 }
+/* every board photo with its author, licence and source, as the licences ask */
+function photoCredits() {
+  const rows = Object.entries(D.photos).flatMap(([mid, list]) => (D.machines[mid] ? photosOf(D.machines[mid]).map(p => [D.machines[mid], p]) : []));
+  if (!rows.length) return '';
+  return `<section class="blk" id="photo-credits"><span class="lbl">Board photos</span>
+    <div class="legend">${rows.map(([m, p]) => `<div class="k"><a class="lnk" href="${mPath(m)}?at=photo">${esc(mDes(m))}</a></div><div class="v"><b>${esc(m.name)}</b>, ${esc(photoBoard(p))}<br><span class="sm">${photoCredit(p)}</span></div>`).join('')}</div>
+    <p class="note">The photos are shown unaltered apart from resizing; the chip outlines are drawn over them by the app. Each keeps its own licence, listed file by file in <a class="plink" href="photos/LICENSES.md" target="_blank" rel="noopener">photos/LICENSES.md</a>${[...new Set(rows.map(([, p]) => (/^GFDL\s*([\d.]+)/i.exec(p.licence) || [])[1]).filter(Boolean))].map(v => `, with the full <a class="plink" href="photos/GFDL-${v}.txt" target="_blank" rel="noopener">GNU Free Documentation License ${v}</a>`).join('')}.</p></section>`;
+}
 function viewCredits() {
   const all = allSources(), byHost = new Map();
   for (const s of all) { const h = hostOf(s.url); if (!h) continue; if (!byHost.has(h)) byHost.set(h, new Map()); const m = byHost.get(h); if (!m.has(s.url)) m.set(s.url, s); }
@@ -1179,6 +1270,7 @@ function viewCredits() {
   return head('', 'Sources and credits', `Retro Bench is a reading of other people's work: the chip makers' datasheets, the manufacturers' manuals and the archives that keep them online. Every table links to the document it was checked against. ${docs} documents are cited across ${hosts.length} sites. Data is CC BY 4.0, code MIT.`) + `
     <section class="blk res"><span class="lbl">With thanks to</span>${D.credits.map(resRow).join('')}</section>
     <section class="blk gl"><span class="lbl">Every document cited</span>${hosts.map(([h, m]) => `<details><summary><span class="t">${esc(h)}</span><span class="s tin">${m.size} document${m.size === 1 ? '' : 's'}</span></summary><ul class="ds">${[...m.values()].map(s => `<li><a class="lnk" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(s.label)}</a> <span class="tin sm">${esc(s.from)}</span></li>`).join('')}</ul></details>`).join('')}</section>
+    ${photoCredits()}
     <section class="blk"><span class="lbl">Corrections</span><p class="desc">If you hold the rights to something linked here and want it credited differently or removed, or you find an error, open an issue at <a class="lnk" href="https://github.com/paulczy/retro-bench/issues" target="_blank" rel="noopener">github.com/paulczy/retro-bench</a>.</p></section>`;
 }
 const viewGlossary = focus => head('', 'Glossary', `${Object.keys(D.terms).length} terms used across the pinouts. Anywhere else in the app a dotted word opens the same definition in place.`) +
@@ -1716,6 +1808,9 @@ document.addEventListener('click', e => {
   else if (a === 'install' && net.prompt) { const p = net.prompt; p.prompt(); p.userChoice.finally(() => { net.prompt = null; paintNet(); }); }
   else if (a === 'reload') location.reload();
   else if (a === 'print') { noteFlush(); window.print(); }
+  else if (a === 'photo-loc') photoLocate(act.dataset.chip);
+  else if (a === 'photo-tab') { state.ph.i = Number(act.dataset.i); $('#photo-body').innerHTML = photoBody(state.ctx.machine); const t = $(`[data-act="photo-tab"][data-i="${act.dataset.i}"]`); if (t) t.focus(); }
+  else if (a === 'photo-big') { state.ph.big = !state.ph.big; $('#photo-body').innerHTML = photoBody(state.ctx.machine); $('[data-act="photo-big"]').focus(); if (state.ph.sel) photoLocate(state.ph.sel); }
   else if (a === 'notes-export') notesExport();
   else if (a === 'note-del') {
     /* two taps: the first arms the button, the second deletes */
@@ -1783,6 +1878,19 @@ document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('svg.conn') && e.target.dataset.cpin) { e.preventDefault(); selectConnPin(e.target.dataset.conn, e.target.dataset.cpin); }
 });
 window.addEventListener('hashchange', render);
+/* board photo: a footprint under the pointer or focus lights its outline; leaving it shows the selection again */
+let photoLit = null;
+const photoHover = el => { const s = el && el.closest && el.closest('[data-pchip-src]'), cid = s ? s.dataset.pchipSrc : state.ph.sel; if (cid !== photoLit) { photoLit = cid; photoShow(cid); } };
+document.addEventListener('mouseover', e => photoHover(e.target));
+document.addEventListener('focusin', e => photoHover(e.target));
+/* a photo that is neither online nor in the cache: the placeholder says so; back online, try again */
+document.addEventListener('error', e => {
+  const im = e.target;
+  if (!(im instanceof HTMLImageElement) || !im.classList.contains('pimg')) return;
+  const w = im.closest('.pwrap'); w.classList.add('miss');
+  if (navigator.onLine !== false) w.querySelector('.pmiss').innerHTML = '<b>Photo did not load</b><span>Check the connection and reload the page.</span>';
+}, true);
+addEventListener('online', () => { for (const im of $$('.pwrap.miss .pimg')) { im.closest('.pwrap').classList.remove('miss'); im.src = im.getAttribute('src'); } });
 let raf = 0;
 const queueWire = () => { if (!(state.ctx.chip || state.conn) || raf) return; raf = requestAnimationFrame(() => { raf = 0; drawWire(); }); };
 /* scroll does not bubble: capture catches the window and the footprint's own sideways scroll in #dipwrap */

@@ -2,6 +2,8 @@
 // The list: ./ and every local href/src in index.html, the icons in manifest.webmanifest, and the
 // fonts in fonts/. The version is a hash of those files plus sw.js itself, so any deploy that
 // changes a byte installs a new cache and the old one is dropped on activate.
+// Board photos (photos/) are never precached: sw.js keeps each in a runtime cache on first view.
+// PHOTO_VERSION hashes photos/ and src/data/photos.js; when it changes, that cache is dropped on activate.
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
@@ -30,6 +32,12 @@ h.update(sw.slice(0, a) + sw.slice(b));
 for (const f of list) h.update(f + '\0').update(read(f));
 const version = h.digest('hex').slice(0, 12);
 
-const block = `${START}\nconst VERSION = '${version}';\nconst PRECACHE = ${JSON.stringify(['./', ...list], null, 1).replace(/\n\s*/g, ' ')};\n`;
+const ph = createHash('sha256');
+if (existsSync(new URL('src/data/photos.js', root))) ph.update(read('src/data/photos.js'));
+if (existsSync(new URL('photos/', root)))
+  for (const f of readdirSync(new URL('photos/', root), { withFileTypes: true }).filter(d => d.isFile()).map(d => d.name).sort()) ph.update(f + '\0').update(read('photos/' + f));
+const photoVersion = ph.digest('hex').slice(0, 12);
+
+const block = `${START}\nconst VERSION = '${version}';\nconst PHOTO_VERSION = '${photoVersion}';\nconst PRECACHE = ${JSON.stringify(['./', ...list], null, 1).replace(/\n\s*/g, ' ')};\n`;
 writeFileSync(new URL('sw.js', root), sw.slice(0, a) + block + sw.slice(b));
-console.log(`sw.js: ${list.length + 1} files, version ${version}`);
+console.log(`sw.js: ${list.length + 1} files, version ${version}, photos ${photoVersion}`);

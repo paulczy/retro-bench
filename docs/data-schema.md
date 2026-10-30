@@ -349,3 +349,8 @@ RCS.addPhotos({ c64: [{
   `verify`.
 - `author`, `licence`, `licenceUrl` and `source` are required; the app prints them under the photo and on the credits
   page.
+- `rotate` is clockwise. `w` and `h` are the stored file's pixel size (the validator reads WebP headers and compares).
+- `licence` is written as one of `PD`, `Public domain`, `CC0`, `CC BY 4.0`, `CC BY-SA 3.0` (any version), or
+  `GFDL 1.2` (with `only` / `or later` if the source says so). A GFDL photo needs the matching licence text in
+  `photos/GFDL-<version>.txt`. `photos/LICENSES.md` is written by `npm run build` from this file; do not edit it.
+- Photos are not precached. The service worker keeps each one in a runtime cache the first time it is shown.
