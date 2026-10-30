@@ -274,7 +274,7 @@ for (const [mid, list] of Object.entries(R.schematics || {})) {
 }
 /* photos.js: board photos. The app draws the outlines over the unaltered image, so every box must sit inside it
    and name a chip of that machine; the licence must be one the user allowed (PD, CC0, CC BY, CC BY-SA, GFDL). */
-const LICENCE = /^(PD|Public domain|CC0(?: 1\.0)?|CC BY(?:-SA)? \d\.\d(?: [A-Z]{2})?|GFDL(?: \d\.\d)?(?: only| or later)?)$/;
+const LICENCE = /^(PD|Public domain(?: \(PD-[\w-]+\))?|Public Domain Mark 1\.0(?: \(Flickr\))?|CC0(?: 1\.0)?|CC BY(?:-SA)? \d\.\d(?: [A-Z]{2})?|GFDL(?: \d\.\d)?(?: only| or later)?)$/;
 const isUrl = u => /^https?:\/\//.test(u || '');
 /* pixel size from a WebP header (VP8, VP8L, VP8X), to check w and h; null for other formats */
 function webpSize(buf) {

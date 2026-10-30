@@ -4,8 +4,8 @@
    Board photos (photos/) are not precached: each is kept in its own runtime cache the first time it is shown.
    PHOTO_VERSION hashes photos/ and src/data/photos.js, so a changed photo set drops that cache on activate. */
 /* precache:start */
-const VERSION = '3db8c1e53175';
-const PHOTO_VERSION = '059dda044ae4';
+const VERSION = '96b8fbdc1e06';
+const PHOTO_VERSION = 'f63ca779d51c';
 const PRECACHE = [ "./", "dist/app.css", "fonts/barlow-condensed-400.woff2", "fonts/barlow-condensed-500.woff2", "fonts/barlow-condensed-600.woff2", "fonts/share-tech-mono-400.woff2", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon.svg", "icons/maskable-512.png", "index.html", "manifest.webmanifest", "src/app.js", "src/connectors.js", "src/data/acorn.js", "src/data/amstrad.js", "src/data/apple.js", "src/data/atari.js", "src/data/coleco.js", "src/data/commodore.js", "src/data/core.js", "src/data/dragon.js", "src/data/heathkit.js", "src/data/ibm.js", "src/data/msx.js", "src/data/oric.js", "src/data/photos.js", "src/data/schematics.js", "src/data/sinclair.js", "src/data/tandy.js", "src/data/ti.js", "src/data/timex.js", "src/data/video.js", "src/version.js" ];
 /* precache:end */
 /* one cache family per install scope, so two copies of the app on one origin never delete each other's cache */
