@@ -1,4 +1,5 @@
 /* Retro Bench data: Atari 8-bit (400, 800, 600XL, 800XL, 130XE). Edit by hand. */
+(() => {
 Object.assign(RCS.terms, {
   sio: {
     term: 'SIO (Serial I/O)',
@@ -328,14 +329,38 @@ const chipsAtari = {
     pins: null,
   },
   dram4464: {
-    id: 'dram4464', name: '4464 DRAM (64K x 4, later 130XE boards)', short: '4464', family: 'DRAM',
-    role: 'Main RAM on later 130XE boards (reported).', pkg: 'DRAM (pinout not captured)',
+    id: 'dram4464', name: '4464 / 41464 DRAM 64K x 4', short: '4464', family: 'JEDEC DRAM (TMS4416 pinout)',
+    role: 'Dynamic RAM, 64K x 4. Main RAM on the BBC Master; reported on later 130XE boards.', pkg: 'DIP-18',
     machines: ['atari130xe'], location: {},
-    summary: 'Some later 130XE boards are reported to use 64K x 4 DRAMs. The 1986 Sams data for the 130XE shows sixteen 4164-type 64K x 1 chips (U9-U16, U26-U33) instead, so look at your board before you order parts. Pinout not captured.',
+    summary: 'Four bits wide, 64K deep, +5 V only, with an output enable (/G) on pin 1. Same pinout as the 16K x 4 4416, plus A7 on pin 10. Eight address bits are multiplexed on A0-A7; refresh is all 256 rows every 4 ms. It is not a 4164 substitute (18 pins, 4 bits wide). Pin table from the TI TMS4464 data sheet. Atari: some later 130XE boards are reported to use 64K x 4 DRAMs, but the 1986 Sams data shows sixteen 4164s (U9-U16, U26-U33), so look at the board before ordering parts (verify).',
     fails: ['Red or garbled screen', 'Random crashes or lost RAM'],
+    heat: 'warm',
     verify: true,
-    verifiedAgainst: 'Not in any service document read; see ' + VA_SAMS + ' for the 4164 build',
-    pins: null,
+    verifiedAgainst: 'TI TMS4464 data sheet, pin diagram and functional description (1984 TI MOS Memory Data Book, pp. 4-107 to 4-108). Pins 5, 9, 16 and 18 agree with the BBC Master service manual. The 130XE fit is not in any service document read; see ' + VA_SAMS + ' for the 4164 build',
+    datasheets: [
+      { label: 'TI TMS4464 data sheet, pin diagram and nomenclature, 1984 MOS Memory Data Book p. 4-107', url: 'http://www.bitsavers.org/components/ti/_dataBooks/1984_TI_MOS_Memory_Data_Book.pdf#page=147' },
+      { label: 'TI TMS4464 data sheet, addressing, /W, /G and refresh (256 rows, 4 ms), p. 4-108', url: 'http://www.bitsavers.org/components/ti/_dataBooks/1984_TI_MOS_Memory_Data_Book.pdf#page=148' },
+    ],
+    pins: [
+      { n: 1, name: '/G', type: 'ctrl', dir: 'in', activeLow: true, terms: ['active-low', 'tristate'], desc: 'Output enable. HIGH holds the data outputs in high impedance.' },
+      { n: 2, name: 'DQ1', type: 'data', dir: 'bidir', desc: 'Data in/out bit 1.' },
+      { n: 3, name: 'DQ2', type: 'data', dir: 'bidir', desc: 'Data in/out bit 2.' },
+      { n: 4, name: '/W', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Write enable. LOW writes; HIGH reads.', probe: 'Pulses LOW on writes.' },
+      { n: 5, name: '/RAS', type: 'ctrl', dir: 'in', activeLow: true, terms: ['ras-cas'], desc: 'Row address strobe. Latches the row address; a RAS-only cycle refreshes the row.', probe: 'Pulses LOW on every access and refresh.' },
+      { n: 6, name: 'A6', type: 'addr', dir: 'in', terms: ['mux'], desc: 'Multiplexed address bit 6.' },
+      { n: 7, name: 'A5', type: 'addr', dir: 'in', terms: ['mux'], desc: 'Multiplexed address bit 5.' },
+      { n: 8, name: 'A4', type: 'addr', dir: 'in', terms: ['mux'], desc: 'Multiplexed address bit 4.' },
+      { n: 9, name: 'VDD', type: 'power', dir: '-', terms: ['vcc'], desc: '+5 V, the only supply.', probe: '+4.5 to +5.5 V' },
+      { n: 10, name: 'A7', type: 'addr', dir: 'in', terms: ['mux'], desc: 'Multiplexed address bit 7.' },
+      { n: 11, name: 'A3', type: 'addr', dir: 'in', terms: ['mux'], desc: 'Multiplexed address bit 3.' },
+      { n: 12, name: 'A2', type: 'addr', dir: 'in', terms: ['mux'], desc: 'Multiplexed address bit 2.' },
+      { n: 13, name: 'A1', type: 'addr', dir: 'in', terms: ['mux'], desc: 'Multiplexed address bit 1.' },
+      { n: 14, name: 'A0', type: 'addr', dir: 'in', terms: ['mux'], desc: 'Multiplexed address bit 0.' },
+      { n: 15, name: 'DQ3', type: 'data', dir: 'bidir', desc: 'Data in/out bit 3.' },
+      { n: 16, name: '/CAS', type: 'ctrl', dir: 'in', activeLow: true, terms: ['ras-cas'], desc: 'Column address strobe. Latches the column address.', probe: 'Pulses LOW on every read or write.' },
+      { n: 17, name: 'DQ4', type: 'data', dir: 'bidir', desc: 'Data in/out bit 4.' },
+      { n: 18, name: 'VSS', type: 'ground', dir: '-', terms: ['gnd'], desc: '0 V.', probe: '0 V' },
+    ],
   },
 };
 
@@ -1102,3 +1127,4 @@ RCS.add({
     { name: 'Atari 400-800 Pocket Reference (sheet)', url: 'P:\\retro-computer-cheetsheets\\basic-cheatsheets\\Atari_400-800_Cheatsheet.pdf', what: 'Atari BASIC, graphics modes, SETCOLOR, POKEY sound, PEEK/POKE, CIO devices, DOS 2.x menu.' },
   ],
 });
+})();

@@ -1,4 +1,5 @@
 /* Retro Bench data: Commodore. Edit by hand. */
+(() => {
 Object.assign(RCS.terms, {
   pla: {
     term: 'PLA (Programmable Logic Array)',
@@ -664,15 +665,19 @@ RCS.add({
       pkg: 'DIP-16',
       machines: ['plus4', 'c64', 'c128', 'apple2e'],
       location: { plus4: 'U11-U18', c64: 'U9-U12, U21-U24', c128: 'U38-U53', apple2e: 'RAM row' },
-      summary: 'One bit wide, 64K deep. Eight of them make 64 KB. The video chip (TED, VIC-II) generates /RAS, /CAS and MUX and supplies refresh. A 41256 substitutes if pins 1 and 16 are linked. Single +5 V supply (unlike the 4116).',
+      summary: 'One bit wide, 64K deep. Eight of them make 64 KB. On the C64 and Plus/4 the video chip (TED, VIC-II) generates /RAS, /CAS and MUX and supplies refresh. Single +5 V supply (unlike the 4116). Makes differ in refresh (128 or 256 rows), so read the data sheet before mixing. The 4464 (64K x 4, 18 pins) is a different chip and does not fit a 4164 socket.',
       fails: ['Garbled or checkerboard screen', 'Will not boot', 'Random crashes', 'One stuck bit in every byte'],
       replacements: [
         { part: 'HM4864, MT4264, TMS4164 and other 4164s', kind: 'pin-compatible', note: 'All fitted side by side in the same C64 (Sams draws HM4864-3, MT4264-20 and TMS4164-15 in one bank). To find a dead one, piggyback a known-good chip on each in turn (Carlsen).', source: SAMS_CC17('schematic RAM bank U9-U12, U21-U24', 9) },
+        { part: '4164 with the right refresh', kind: 'pin-compatible', note: 'Check the refresh count. HM4864 refreshes 128 rows (A0-A6) every 2 ms; TMS4164 needs all 256 rows (A0-A7) every 4 ms. A board whose refresh counter has only 7 bits (a Z80 refreshing from its R register) needs a 128-row part; a 256-row board takes either.', source: { label: 'TI TMS4164 data sheet, refresh (256 rows A0-A7, 4 ms), 1984 MOS Memory Data Book p. 4-41', url: 'http://www.bitsavers.org/components/ti/_dataBooks/1984_TI_MOS_Memory_Data_Book.pdf#page=81' } },
+        { part: '41256 (256K x 1)', kind: 'pin-compatible', note: 'Same pins except pin 1, which is A8 on the 41256 and NC on a 4164. Hold pin 1 at a fixed level (a link to pin 16, 0 V, is the usual way) so the chip uses one 64K quarter. It needs 256-row refresh, so it will not hold data on a 128-row (7-bit) board.', source: { label: 'TI TMS4256 data sheet (A8 on pin 1, upward pin compatible with TMS4164, 256 rows A0-A7 every 4 ms), 1984 MOS Memory Data Book p. 4-63', url: 'http://www.bitsavers.org/components/ti/_dataBooks/1984_TI_MOS_Memory_Data_Book.pdf#page=103' } },
       ],
       heat: 'warm',
       datasheets: [
         { label: 'C128 Service Manual, 4164 64K x 1 dynamic RAM pinout, p. 18', url: 'https://archive.org/download/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08.pdf#page=20' },
         { label: 'TED System Hardware Manual, 6.2.1 4164 package pinout, p. 18', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/Plus_4_Technical_Docs.pdf#page=18' },
+        { label: 'Hitachi HM4864 data sheet (128 refresh cycles, 2 ms), 1984 IC Memory Data Book p. 199', url: 'https://bitsavers.org/components/hitachi/_dataBooks/1984_Hitachi_IC_Memory_Data_Book_Mar84.pdf#page=201' },
+        { label: 'TI TMS4464 data sheet (64K x 4, 18 pins: not a 4164 substitute), 1984 MOS Memory Data Book p. 4-107', url: 'http://www.bitsavers.org/components/ti/_dataBooks/1984_TI_MOS_Memory_Data_Book.pdf#page=147' },
       ],
       verifiedAgainst: 'Commodore 128/128D Service Manual PN 314001-08 (Nov 1987) p. 18 (4164 pinout); TED System Hardware Manual (Plus/4 Technical Docs, zimmers.net) 6.2.1',
       pins: [
@@ -741,7 +746,7 @@ RCS.add({
       pkg: 'DIP-28',
       machines: ['c16', 'plus4'],
       location: { c16: 'U3 (BASIC 318006), U4 (KERNAL 318005)', plus4: 'U23 (BASIC), U24 (KERNAL), U25, U26 (3-plus-1)' },
-      summary: '28-pin 16K x 8 mask ROMs: U3 BASIC ($8000-$BFFF, TED /CS0) and U4 KERNAL ($C000-$FFFF, TED /CS1) on the C16. Three chip selects: pin 20 /CS, pin 22 /CE and pin 27 CS (active HIGH). A 27128 EPROM fits with pins 1 and 27 tied HIGH.',
+      summary: '28-pin 16K x 8 mask ROM with three chip selects: pin 20, pin 22 and pin 27. The sense of each select is set by the mask, so it differs by maker: the C16 parts use 20 /CS, 22 /CE and 27 CS (active HIGH), while on the Spectrum Hitachi and NEC swap the jobs of pins 20 and 27 and links H and N above IC5 must match the ROM fitted. C16: U3 BASIC ($8000-$BFFF, TED /CS0) and U4 KERNAL ($C000-$FFFF, TED /CS1). A 27128 EPROM has /CE on 20, /OE on 22 and /PGM on 27, and reads only with pins 1 and 27 HIGH.',
       fails: ['Garbage on boot', 'Boots to black screen', 'Missing characters'],
       heat: 'cool',
       verifiedAgainst: 'Commodore C16 Service Manual PN 314001-03 p. 11; TED System Hardware Manual 11.4',
@@ -765,20 +770,28 @@ RCS.add({
         { n: 17, name: 'D5', type: 'data', dir: 'out', desc: 'Data out bit 5 (D6).' },
         { n: 18, name: 'D6', type: 'data', dir: 'out', desc: 'Data out bit 6 (D7).' },
         { n: 19, name: 'D7', type: 'data', dir: 'out', desc: 'Data out bit 7 (D8).' },
-        { n: 20, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select, active LOW (C16 SM /CS2). Driven from the TED ROM selects.', terms: ['cs'], activeLow: true },
+        { n: 20, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select; polarity set by the mask, so it depends on the maker. C16: active LOW (C16 SM /CS2), driven from the TED ROM selects. Spectrum: CE on NEC, CS on Hitachi (Issue 3 diagram); links H/N swap pins 20 and 27.', terms: ['cs'], activeLow: true },
         { n: 21, name: 'A10', type: 'addr', dir: 'in', desc: 'Address bit 10.' },
         { n: 22, name: '/CE', type: 'ctrl', dir: 'in', desc: 'Chip enable, active LOW (C16 SM /CS1).', terms: ['cs'], activeLow: true },
         { n: 23, name: 'A11', type: 'addr', dir: 'in', desc: 'Address bit 11.' },
         { n: 24, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9.' },
         { n: 25, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bit 8.' },
         { n: 26, name: 'A13', type: 'addr', dir: 'in', desc: 'Address bit 13.' },
-        { n: 27, name: 'CS', type: 'ctrl', dir: 'in', desc: 'Chip select, active HIGH (C16 SM CS3). /PGM on a 27128: tie HIGH when fitting an EPROM.', terms: ['cs'] },
+        { n: 27, name: 'CS', type: 'ctrl', dir: 'in', desc: 'Chip select; polarity set by the mask, so it depends on the maker. C16: active HIGH (C16 SM CS3). Spectrum: CS on NEC, CE on Hitachi (links H/N). Oric-1: from /ROMDIS with a 3K3 pull-up (RP1). /PGM on a 27128: it must sit HIGH for an EPROM to read.', terms: ['cs'] },
         { n: 28, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.9 to +5.2 V' },
       ],
       datasheets: [
         { label: 'C16 Service Manual, 23128 pin configuration (U3, U4), p. 11', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/C16_Service_Manual_314001-03_(1984_Oct).pdf#page=11' },
         { label: 'TED System Hardware Manual, 11.4 23128 ROM pinout, p. 25', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/Plus_4_Technical_Docs.pdf#page=25' },
         { label: 'Zimmers C16 & Plus/4 parts list (ROM part numbers and locations)', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/parts.txt' },
+        { label: 'ZX Spectrum Service Manual 1.5.1 (links H and N: Hitachi and NEC use pins 20 and 27 differently), p. 10', url: 'https://k1.spdns.de/Vintage/Sinclair/82/Sinclair%20ZX%20Spectrum/Repair/ZX-Spectrum-Service-Manual.pdf#page=10' },
+        { label: 'ZX Spectrum Service Manual 4.6 Hitachi vs NEC ROM (change the links with the ROM), p. 24', url: 'https://k1.spdns.de/Vintage/Sinclair/82/Sinclair%20ZX%20Spectrum/Repair/ZX-Spectrum-Service-Manual.pdf#page=24' },
+        { label: 'ZX Spectrum Issue 3 circuit diagram, IC5 table (pin 20: NEC CE, Hitachi CS; pin 27: NEC CS, Hitachi CE)', url: 'https://k1.spdns.de/Vintage/Sinclair/82/Sinclair%20ZX%20Spectrum/Circuit%20Diagrams/ZX%20Spectrum%20Issue%203%20-%20Schaltbild.gif' },
+      ],
+      replacements: [
+        { part: 'Switchable ROM Replacement Board (Retroleum)', kind: 'modern', note: 'ZX Spectrum 16K/48K only. Holds two 16K ROM images on a switch reachable from the expansion port. Plugs into the IC5 socket with no board changes, which a plain EPROM would need. A diagnostic version carries two test ROMs.', source: { label: 'Retroleum, Spectrum chips: Switchable ROM Replacement Board and Diagnostic Test ROM', url: 'https://retroleum.co.uk/zx-spectrum-chips' } },
+        { part: '27128 / 27C128 EPROM', kind: 'pin-compatible', note: 'Same 28-pin footprint, not a drop-in: the EPROM reads only with pin 1 (VPP) and pin 27 (/PGM) HIGH and pin 20 (/CE) LOW-active. On the C16 tie pins 1 and 27 HIGH. On the Spectrum and the Oric-1, pin 27 is a board select (Spectrum links H/N; Oric /ROMDIS), so the board needs changing first.', source: { label: 'Intel 27128 data sheet, pin names and read mode, 1983 Memory Component Handbook p. 4-29', url: 'https://bitsavers.org/components/intel/_dataBooks/1983_Memory_Component_Handbook.pdf#page=411' } },
+        { part: 'Two 2764 EPROMs (Oric-1)', kind: 'adapter', note: 'Oric-1 only: the board is laid out for one 23128 in IC9 or two 2764s in IC9 and IC10 with IC11 (74LS00) decoding. The schematic says ICs 10 and 11 are not needed when IC9 is a 23128.', source: { label: 'Oric-1 48K circuit diagram, issue 7, sheet 2: IC9 "23128 or 2764", IC10 2764 (Defence Force wiki, archived)', url: 'https://web.archive.org/web/2025/https://wiki.defence-force.org/lib/exe/fetch.php?media=oric:hardware:oric1-2s.gif' } },
       ],
     },
     cpu6510: {
@@ -4804,3 +4817,4 @@ RCS.add({
     },
   ],
 });
+})();
