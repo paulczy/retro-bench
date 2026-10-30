@@ -1034,7 +1034,8 @@ RCS.add({
       summary: 'MOS 906114-01 on the C64, 251641-02 (7700) on the C16 and Plus/4. A Signetics 82S100 field-programmed logic array: 16 inputs decoded to 8 outputs F0-F7. On the C64 it makes /BASIC, /KERNAL, /CHAROM, /I/O, /ROML, /ROMH, GR/W and CASRAM from the address, bank and VIC lines. The number one C64 failure, and it runs hot. Socket it.',
       fails: ['Black screen', 'Will not boot', 'Garbage screen or dead keys'],
       replacements: [
-        { part: 'PLAnkton, SuperPLA, realPLA, PLAtinum, neatPLA, PLA20V8 (GAL) or EPROM-based PLA', kind: 'modern', note: 'Third-party drop-ins for the 906114-01. Timing is the trap: a part that switches faster than the original can upset some cartridges, and the board may need adjusting.', source: CBMF.wiki('PLA_(C64_chip)', 'PLA (C64 chip), replacement parts') },
+        { part: 'C64 only: PLAnkton, SuperPLA, realPLA, PLAtinum, neatPLA, PLA20V8 (GAL) or EPROM-based PLA', kind: 'modern', note: 'C64 only. These replace the C64 906114-01 and are programmed with C64 decoding: never fit one in a C16 or Plus/4, whose 251641-02 decodes differently. Timing is the trap: a part that switches faster than the original can upset some cartridges, and the board may need adjusting.', source: CBMF.wiki('PLA_(C64_chip)', 'PLA (C64 chip), replacement parts') },
+        { part: 'C16 / Plus/4 only: PLA264 (programmed for the 251641-02)', kind: 'modern', note: 'C16 and Plus/4 only. Open-source replacement for the 251641-02 PLA of the TED machines; a C64 PLA replacement will not work here.', source: { label: 'PLA264 project (hackup), GitHub', url: 'https://github.com/hackup/PLA264' } },
       ],
       heat: 'hot',
       datasheets: [
@@ -3320,7 +3321,7 @@ RCS.add({
         ],
         sources: [
           CBMD_SRC.sch310420,
-          { label: 'Ray Carlsen 1571 folder: power supply wiring to main board (CN1/CN1A colours, Sams-style drawing)', url: `${CBMD_RC}/1571/PS%20wiring%20to%20main%20board.jpg` },
+          { label: 'Ray Carlsen 1571 folder: power supply wiring to main board (CN1/CN1A colours, Sams-style drawing)', url: `${CBMD_RC}/1571/PS%20wiring%20to%20main%20board.jpg` , sams: false },
           { label: '1571 Service Manual 314002-04, parts list (CN1 4-pin header), p. 17', url: CBMD_SM71(20) },
         ],
       },
@@ -3775,10 +3776,10 @@ RCS.add({
           'The 312551-01 brick drawing is titled 1541-II/1571-II/1581: the later 1571-II takes the external brick instead of this board.',
         ],
         sources: [
-          { label: 'Ray Carlsen 1571 folder: USA power supply diagram (Sams-style schematic)', url: `${CBMD_RC}/1571/USA%20PS%20DIAGRAM.jpg` },
+          { label: 'Ray Carlsen 1571 folder: USA power supply diagram (Sams-style schematic)', url: `${CBMD_RC}/1571/USA%20PS%20DIAGRAM.jpg` , sams: false },
           { label: 'Ray Carlsen 1571 folder: power supply wiring to main board', url: `${CBMD_RC}/1571/PS%20wiring%20to%20main%20board.jpg` },
           { label: '1571 Service Manual 314002-04, specifications (117 V AC, less than 25 W), p. 1', url: CBMD_SM71(4) },
-          { label: 'SAMS Computerfacts CD12, Commodore 1571 (archive.org; Sams redraw)', url: 'https://archive.org/details/SAMS_Computerfacts_CD12_1571' },
+          { label: 'SAMS Computerfacts CD12, Commodore 1571 (archive.org; Sams redraw)', url: 'https://archive.org/details/SAMS_Computerfacts_CD12_1571', sams: true },
           CBMD_SRC.ps312551,
         ],
       },

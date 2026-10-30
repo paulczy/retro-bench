@@ -352,7 +352,7 @@ RCS.add({
       datasheets: [
         { label: 'TI-99/4A Servicing Manual, Fig. 4 TMS 9900 pin assignments, printed p. 21', url: TI_SM(29) },
         { label: 'MP001 TMS9900 Microprocessor Data Manual (1978)', url: 'https://electrickery.hosting.philpem.me.uk/comp/tms7k/doc/MP001_TMS9900MicroDataMan_August1978.pdf' },
-        { label: 'Sams ComputerFacts TI-99/4A, service checks (9900 rail readings), p. 4', url: TI_SAMS(4) },
+        { label: 'Sams ComputerFacts TI-99/4A, service checks (9900 rail readings), p. 4', url: TI_SAMS(4), sams: true },
       ],
       pins: ti9900Pins,
     },
@@ -513,7 +513,7 @@ RCS.add({
           { label: 'TI-99/4A Technical Data, Fig. E Connector Pin Identification Diagram, p. 18', url: TI_TD(20) },
           { label: 'TI-99/4A Technical Data, Fig. G TI-99/4A Console Power Supply, p. 20', url: TI_TD(22) },
           { label: 'TI-99/4A Servicing Manual, Fig. 49 power supply (transformer P/N 1015985-2)', url: TI_SM(139) },
-          { label: 'Sams ComputerFacts TI-99/4A, parts list: T1 26.40 V AC tapped at 17.85 V AC', url: TI_SAMS(33) },
+          { label: 'Sams ComputerFacts TI-99/4A, parts list: T1 26.40 V AC tapped at 17.85 V AC', url: TI_SAMS(33), sams: true },
         ],
       },
       {
@@ -573,7 +573,7 @@ RCS.add({
         sources: [
           { label: 'TI-99/4A Servicing Manual, Cassette I/O Port, printed p. 106', url: TI_SM(115) },
           { label: 'TI-99/4A Technical Data, schematic sheet 61 (J400 tape cassette)', url: TI_TD(63) },
-          { label: 'Sams ComputerFacts TI-99/4A, service checks (Q401, Q403), p. 4', url: TI_SAMS(4) },
+          { label: 'Sams ComputerFacts TI-99/4A, service checks (Q401, Q403), p. 4', url: TI_SAMS(4), sams: true },
         ],
       },
       {
@@ -696,7 +696,7 @@ RCS.add({
         ],
         sources: [
           { label: 'TI-99/4A Technical Data, schematic sheet 59 (MOLEX pinout, power supply block)', url: TI_TD(61) },
-          { label: 'Sams ComputerFacts TI-99/4A, power supply check, p. 4', url: TI_SAMS(4) },
+          { label: 'Sams ComputerFacts TI-99/4A, power supply check, p. 4', url: TI_SAMS(4), sams: true },
         ],
       },
     ],
@@ -721,8 +721,8 @@ RCS.add({
           { label: 'TI-99/4A Servicing Manual, Power Supply Board, printed pp. 34-35', url: TI_SM(93) },
           { label: 'TI-99/4A Technical Data, Fig. G TI-99/4A Console Power Supply, p. 20', url: TI_TD(22) },
           { label: 'TI-99/4A Servicing Manual, Fig. 49 power supply schematic', url: TI_SM(139) },
-          { label: 'Sams ComputerFacts TI-99/4A, power supply check and AC adaptor AC9500, p. 4', url: TI_SAMS(4) },
-          { label: 'Sams ComputerFacts TI-99/4A, parts list: transformer ratings, p. 33', url: TI_SAMS(33) },
+          { label: 'Sams ComputerFacts TI-99/4A, power supply check and AC adaptor AC9500, p. 4', url: TI_SAMS(4), sams: true },
+          { label: 'Sams ComputerFacts TI-99/4A, parts list: transformer ratings, p. 33', url: TI_SAMS(33), sams: true },
           { label: 'TI Important Safety Notice: AC9500 and AC95000 transformers (1983)', url: `${TI_WHT}Official%20TI%20addenda%20and%20data%20sheets/Power%20supply%20safety%20notice.pdf` },
           { label: 'TI Addendum: Power Transformer for the TI-99/4A (1982)', url: `${TI_WHT}Official%20TI%20addenda%20and%20data%20sheets/Power%20supply%20addendum.pdf` },
           { label: 'Mostek MK4116 data sheet, supply sequencing (Vbb first and last), PDF p. 107', url: 'http://www.bitsavers.org/components/mostek/_dataBooks/1980_Mostek_Memory_Data_Book_and_Designers_Guide.pdf#page=107' },
@@ -774,7 +774,7 @@ RCS.add({
         { label: 'TI-99/4A Servicing Manual, Items to Check During Debug, printed p. 8', url: TI_SM(16) },
         { label: 'TI-99/4A Servicing Manual, Troubleshooting Guide start chart, printed p. 87', url: TI_SM(96) },
         { label: 'TI-99/4A Servicing Manual, Power Supply Board, printed pp. 34-35', url: TI_SM(93) },
-        { label: 'Sams ComputerFacts TI-99/4A, service checks with rail readings, p. 4', url: TI_SAMS(4) },
+        { label: 'Sams ComputerFacts TI-99/4A, service checks with rail readings, p. 4', url: TI_SAMS(4), sams: true },
         { label: 'TI-99/4A Technical Data, schematic sheet 59 (rails to the logic board)', url: TI_TD(61) },
       ],
       firstTen: [

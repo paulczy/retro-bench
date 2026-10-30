@@ -11,7 +11,8 @@ const arr = x => (Array.isArray(x) ? x : []);
 const r1 = v => Math.round(v * 10) / 10;
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  /* true when stored; false when storage is full, blocked or missing */
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } },
 };
 const DIR = { in: 'Input', out: 'Output', bidir: 'Bidirectional', '-': 'Supply or passive' };
 const STATUS = { ready: 'FITTED', sheet: 'ON PAPER', planned: 'NOT FITTED' };
@@ -221,23 +222,35 @@ function pinRefs(text, m) {
 }
 
 /* ---------- scope: an idealised trace and the settings derived from two sourced numbers ----------
-   A test point's `scope` gives a frequency (or period) and a swing (low, high) from a capture or a datasheet.
-   Everything a tech sets on the scope follows from those, so nothing is entered by hand:
-   TIME/DIV = the smallest 1-2-5 step >= period / 5 (10 divisions hold 2 to 5 cycles); when that shows more than
-     4, the step below it if its count (just under 2) is nearer the 2-to-4 band, so the result is 1.8 to 4.5 cycles;
+   A test point's `scope` gives a frequency (or period) and a swing (low and high, or `pp` alone) from a capture or
+   a datasheet. Everything a tech sets on the scope follows from those, so nothing is entered by hand:
+   TIME/DIV = the 1-2-5 step whose cycle count across 10 divisions is closest to 3, within 1.5 to 5 cycles
+     (neighbouring 1-2-5 steps are at most 2.5x apart, so one always fits);
    VOLTS/DIV = the smallest 1-2-5 step >= (high - low) / 5, so the swing fills 2.5 to 5 of the 8 divisions;
-   DC coupling, probe 10x, rising-edge trigger at 1.4 V (TTL threshold) for logic shapes whose swing crosses it,
-   else mid-swing. The trace is drawn from `shape`, never from a capture, and says so. */
+   DC coupling (AC when only `pp` is given: no DC level), probe 10x, trigger at 1.4 V (TTL threshold) for logic
+   shapes whose swing crosses it, else mid-swing; falling edge for `polarity: 'low'`. The trace is drawn from
+   `shape`, never from a capture, and says so. */
 const SHAPES = ['square', 'pulse', 'sine', 'burst', 'video-line', 'dc'];
 const LOGIC = new Set(['square', 'pulse', 'burst']);
 const SI = { '': 1, k: 1e3, K: 1e3, M: 1e6, G: 1e9, m: 1e-3, 'µ': 1e-6, 'μ': 1e-6, u: 1e-6, n: 1e-9 };
-/* '1.0227 MHz' -> 1022700, '64 µs' -> 6.4e-5, '-0.3 V' -> -0.3; null when it does not parse */
-function qty(s, unit) {
-  const mm = new RegExp(`^\\s*([-+]?\\d*\\.?\\d+)\\s*([kKMGmµμun]?)${unit}(?![A-Za-z])`).exec(String(s ?? '').replace(/[−–]/g, '-'));
-  return mm ? Number(mm[1]) * SI[mm[2]] : null;
+/* '1.0227 MHz' -> 1022700, '64 µs' -> 6.4e-5, '-0.3 V' -> -0.3; null when it does not parse or is not finite.
+   strict: nothing may follow the unit (scope fields); else trailing text is allowed ('4.7 ± 0.2 µs') */
+function qty(s, unit, strict) {
+  const mm = new RegExp(`^\\s*([-+]?\\d*\\.?\\d+)\\s*([kKMGmµμun]?)${unit}${strict ? '\\s*$' : '(?![A-Za-z])'}`).exec(String(s ?? '').replace(/[−–]/g, '-'));
+  const v = mm ? Number(mm[1]) * SI[mm[2]] : null;
+  return Number.isFinite(v) ? v : null;
 }
 const pct = s => { const mm = /^\s*(\d*\.?\d+)\s*%\s*$/.exec(String(s ?? '')); return mm && +mm[1] > 0 && +mm[1] < 100 ? mm[1] / 100 : null; };
 const step125 = x => { const e = Math.floor(Math.log10(x)), k = [1, 2, 5, 10].find(v => v >= x / 10 ** e - 1e-9); return k * 10 ** e; };
+/* [time/div, cycles]: the 1-2-5 step showing closest to 3 cycles in 10 divisions, within 1.5 to 5 */
+function tdivFor(T) {
+  let best = null;
+  for (let e = Math.floor(Math.log10(T / 10)) - 1, top = e + 3; e <= top; e++) for (const k of [1, 2, 5]) {
+    const t = +(k * 10 ** e).toPrecision(6), c = 10 * t / T;
+    if (c >= 1.5 - 1e-9 && c <= 5 + 1e-9 && (!best || Math.abs(c - 3) < Math.abs(best[1] - 3))) best = [t, c];
+  }
+  return best;
+}
 const PFX = [[1e-9, 'n'], [1e-6, 'µ'], [1e-3, 'm'], [1, ''], [1e3, 'k'], [1e6, 'M']];
 function fmtU(v, unit) {
   if (!v) return `0 ${unit}`;
@@ -245,20 +258,17 @@ function fmtU(v, unit) {
   return `${+(v / u[0]).toPrecision(3)} ${u[1]}${unit}`.replace('-', '−');
 }
 function scopeSet(sc) {
-  const shape = SHAPES.includes(sc.shape) ? sc.shape : 'square';
-  const T = sc.period != null ? qty(sc.period, 's') : (f => (f > 0 ? 1 / f : null))(qty(sc.f, 'Hz'));
-  const lo = qty(sc.low, 'V'), hi = qty(sc.high, 'V');
-  const s = { shape, T, lo, hi, duty: shape === 'pulse' || shape === 'square' ? pct(sc.duty) : null };
-  if (T > 0 && shape !== 'dc') {
-    /* the smallest step showing 2 cycles shows up to 5; past 4, the step below (just under 2) may sit nearer the band */
-    let t = step125(T / 5), c = 10 * t / T;
-    const lower = t / (Math.round(t / 10 ** Math.floor(Math.log10(t) + 1e-9)) === 5 ? 2.5 : 2), cl = 10 * lower / T;
-    if (c > 4 && 2 / cl < c / 4) { t = lower; c = cl; }
-    s.tdiv = t; s.cycles = c;
-  }
+  const shape = SHAPES.includes(sc.shape) ? sc.shape : 'square', V = k => qty(sc[k], 'V', true), pos = x => (x > 0 ? x : null);
+  const T = sc.period != null ? pos(qty(sc.period, 's', true)) : (f => (f > 0 ? 1 / f : null))(qty(sc.f, 'Hz', true));
+  const sq = shape === 'pulse' || shape === 'square';
+  const lo = V('low') ?? (shape === 'video-line' ? V('sync') : null), hi = V('high');
+  /* inv: polarity 'low', a line idling HIGH that pulses LOW; unk: square or pulse with no duty in the source */
+  const s = { shape, T, lo, hi, duty: sq ? pct(sc.duty) : null, inv: sq && sc.polarity === 'low' };
+  s.unk = sq && s.duty == null;
+  if (T > 0 && shape !== 'dc') { const b = tdivFor(T); if (b) [s.tdiv, s.cycles] = b; }
   if (shape === 'dc') {
     const lvl = hi ?? lo;
-    if (lvl) { s.vdiv = step125(Math.abs(lvl) / 5); s.gnd = lvl > 0 ? 1 : 7; s.yLo = s.yHi = s.gnd + lvl / s.vdiv; }
+    if (lvl != null) { s.vdiv = lvl ? step125(Math.abs(lvl) / 5) : 1; s.gnd = lvl >= 0 ? 1 : 7; s.yLo = s.yHi = s.gnd + lvl / s.vdiv; }
     else { s.yLo = s.yHi = 4; }
     return s;
   }
@@ -269,6 +279,13 @@ function scopeSet(sc) {
     s.yLo = s.gnd + lo / s.vdiv; s.yHi = s.gnd + hi / s.vdiv;
     s.trig = LOGIC.has(shape) && lo < 1.4 && hi > 1.4 ? 1.4 : (lo + hi) / 2;
     s.yTrig = s.gnd + s.trig / s.vdiv;
+    /* video line: blanking (black) as a fraction of sync tip to white, when the source gives it */
+    const bl = shape === 'video-line' ? V('black') : null;
+    if (bl != null && bl > lo && bl < hi) s.black = (bl - lo) / (hi - lo);
+  } else if (lo == null && hi == null && pos(V('pp')) != null) {
+    /* swing only, no DC level: AC coupling, centred, no 0 V marker, trigger mid-swing */
+    s.pp = V('pp'); s.ac = true; s.vdiv = step125(s.pp / 5);
+    s.yLo = 4 - s.pp / 2 / s.vdiv; s.yHi = 4 + s.pp / 2 / s.vdiv; s.yTrig = 4;
   } else {
     s.yLo = 2; s.yHi = 6; s.yTrig = 4;
     if (LOGIC.has(shape)) s.trig = 1.4;
@@ -277,24 +294,29 @@ function scopeSet(sc) {
 }
 /* one period from the trigger point: [fraction of the period, level 0 (low) to 1 (high)] */
 function shapeSegs(s) {
-  if (s.shape === 'square' || s.shape === 'pulse') { const d = s.duty ?? (s.shape === 'square' ? 0.5 : 0.25); return [[d, 1], [1 - d, 0]]; }
+  if (s.shape === 'square' || s.shape === 'pulse') { const d = s.duty; return s.inv ? [[d, 0], [1 - d, 1]] : [[d, 1], [1 - d, 0]]; }
   /* a group of four pulses, then a gap as long as the group; f or period is the group's repetition rate */
   if (s.shape === 'burst') return [...Array.from({ length: 4 }, () => [[1 / 16, 1], [1 / 16, 0]]).flat(), [0.5, 0]];
-  /* video line from the start of the active picture: active (flat grey), front porch, sync tip, back porch;
-     PAL proportions 52, 1.65, 4.7, 5.65 of 64 µs; blanking at 0.3 of the swing above the sync tip */
-  if (s.shape === 'video-line') return [[0.8125, 0.65], [0.0258, 0.3], [0.0734, 0], [0.0883, 0.3]];
+  /* video line from the start of the active picture: active (flat grey midway black to white), front porch, sync
+     tip, back porch; PAL proportions 52, 1.65, 4.7, 5.65 of 64 µs; blanking at the sourced `black` level, else at
+     the standard 0.3 of the swing above the sync tip (and the caption says it is not to scale) */
+  if (s.shape === 'video-line') { const k = s.black ?? 0.3; return [[0.8125, (1 + k) / 2], [0.0258, k], [0.0734, 0], [0.0883, k]]; }
   return [[1, 0]];
 }
 const DV = 24;   /* px per division: the screen is 240 x 192 */
 function scopeSVG(s, label) {
   const X = x => r1(x * DV), Y = y => r1((8 - y) * DV);
   const P = s.T > 0 && s.tdiv ? s.T / s.tdiv : 10 / 3, xt = 5;   /* divisions per period; trigger at the centre */
-  let d = '';
+  let d = '', u = '';
   if (s.shape === 'sine') {
     const mid = (s.yLo + s.yHi) / 2, amp = (s.yHi - s.yLo) / 2, n = Math.ceil(10 / P * 48);
     for (let i = 0; i <= n; i++) { const x = 10 * i / n; d += `${i ? 'L' : 'M'} ${X(x)} ${Y(mid + amp * Math.sin(2 * Math.PI * (x - xt) / P))} `; }
   } else if (s.shape === 'dc') d = `M 0 ${Y(s.yLo)} H ${X(10)}`;
-  else {
+  else if (s.unk) {
+    /* duty not in the source: only the trigger edge is solid; both levels are dashed up to the next one */
+    const [a, b] = s.inv ? [s.yLo, s.yHi] : [s.yHi, s.yLo];
+    for (let x = xt - P * Math.ceil(xt / P); x < 10; x += P) { d += `M ${X(x)} ${Y(b)} V ${Y(a)} `; u += `M ${X(x)} ${Y(a)} H ${X(x + P)} M ${X(x)} ${Y(b)} H ${X(x + P)} `; }
+  } else {
     const segs = shapeSegs(s), lv = f => s.yLo + f * (s.yHi - s.yLo);
     let x = xt - P * Math.ceil(xt / P), first = true;
     while (x < 10) for (const [f, l] of segs) { const y = Y(lv(l)); d += `${first ? 'M' : 'L'} ${X(x)} ${y} L ${X(x + f * P)} ${y} `; first = false; x += f * P; }
@@ -311,7 +333,7 @@ function scopeSVG(s, label) {
     <rect class="fr" x="0" y="0" width="${10 * DV}" height="${8 * DV}"/>
     <path class="gr" d="${grid}"/><path class="ax" d="M ${5 * DV} 0 V ${8 * DV} M 0 ${4 * DV} H ${10 * DV} ${ticks}"/>
     <text class="wm" x="6" y="15">IDEALISED</text>
-    <svg x="0" y="0" width="${10 * DV}" height="${8 * DV}"><path class="tr" d="${d}"/></svg>
+    <svg x="0" y="0" width="${10 * DV}" height="${8 * DV}"><path class="tr" d="${d}"/>${u ? `<path class="tr unk" d="${u}"/>` : ''}</svg>
     ${gnd}${trig}
   </svg>`;
 }
@@ -319,22 +341,25 @@ const SHAPE_WORD = { square: 'square wave', pulse: 'pulse train', sine: 'sine wa
 /* the trace, the derived settings, the note and the source. Open by default except on a phone. */
 function scopeBlock(sc, title) {
   const s = scopeSet(sc), basis = sc.basis === 'capture' ? 'capture' : 'datasheet';
-  const swing = s.lo != null && s.hi != null ? `${fmtU(s.lo, 'V')} to ${fmtU(s.hi, 'V')}` : '';
+  const swing = s.lo != null && s.hi != null ? `${fmtU(s.lo, 'V')} to ${fmtU(s.hi, 'V')}` : s.pp ? `${fmtU(s.pp, 'V')} p-p` : '';
   const lvl = s.hi ?? s.lo, rows = [];
   if (s.shape === 'dc') rows.push(['Time/div', 'Any', 'a level, not a wave']);
   else rows.push(['Time/div', s.tdiv ? fmtU(s.tdiv, 's') : '—', s.tdiv ? `${+s.cycles.toFixed(1)} cycles of ${fmtU(s.T, 's')} across 10 div` : 'no frequency in the source']);
   rows.push(['Volts/div', s.vdiv ? fmtU(s.vdiv, 'V') : '—', !s.vdiv ? 'no levels in the source'
-    : s.shape === 'dc' ? `${fmtU(lvl, 'V')} = ${+(Math.abs(lvl) / s.vdiv).toFixed(1)} div` : `${swing} = ${+((s.hi - s.lo) / s.vdiv).toFixed(1)} div`]);
-  rows.push(['Coupling', 'DC', s.gnd == null ? '' : s.gnd >= 0 && s.gnd <= 8
+    : s.shape === 'dc' ? `${fmtU(lvl, 'V')} = ${+(Math.abs(lvl) / s.vdiv).toFixed(1)} div` : `${swing} = ${+((s.pp ?? s.hi - s.lo) / s.vdiv).toFixed(1)} div`]);
+  rows.push(s.ac ? ['Coupling', 'AC', 'no DC level in source'] : ['Coupling', 'DC', s.gnd == null ? '' : s.gnd >= 0 && s.gnd <= 8
     ? `0 V ${s.gnd === 1 ? 'one division up' : s.gnd === 7 ? 'one division down' : `at ${+s.gnd.toFixed(1)} div`}` : `0 V off screen: offset ${fmtU(-(s.lo + s.hi) / 2, 'V')}`]);
-  rows.push(['Trigger', s.shape === 'dc' ? 'Auto' : `Rising, ${s.trig != null ? fmtU(s.trig, 'V') : 'mid-swing'}`, s.shape === 'dc' ? 'no edges' : s.trig === 1.4 ? 'TTL threshold' : 'mid-swing']);
+  rows.push(['Trigger', s.shape === 'dc' ? 'Auto' : `${s.inv ? 'Falling' : 'Rising'}, ${s.trig != null ? fmtU(s.trig, 'V') : 'mid-swing'}`, s.shape === 'dc' ? 'no edges' : s.trig === 1.4 ? 'TTL threshold' : s.trig != null ? 'mid-swing' : '']);
+  if (s.shape === 'square' || s.shape === 'pulse') rows.push(['Duty', s.unk ? '—' : `${+(s.duty * 100).toFixed(1)}%`, s.unk ? 'duty not in source' : `of the period ${s.inv ? 'LOW' : 'HIGH'}`]);
   rows.push(['Probe', '10×', 'channel set to 10×']);
   const f = s.T > 0 ? fmtU(1 / s.T, 'Hz') : '';
-  const label = `Idealised ${SHAPE_WORD[s.shape]}${f && s.shape !== 'dc' ? ', ' + f : ''}${swing ? ', ' + swing : ''}, from ${basis}`;
+  const label = `Idealised ${SHAPE_WORD[s.shape]}${f && s.shape !== 'dc' ? ', ' + f : ''}${swing ? ', ' + swing : ''}${s.unk ? ', duty not in source' : ''}, from ${basis}`;
+  const cap = [`Idealised from ${basis}`, s.shape === 'video-line' && 'picture drawn as a flat grey',
+    s.shape === 'video-line' && s.black == null && 'levels to standard ratio, not to scale', s.unk && 'duty not in source', s.ac && 'no DC level in source'].filter(Boolean).join('; ');
   const sum = s.shape === 'dc' ? (s.vdiv ? `${fmtU(s.vdiv, 'V')}/div, DC` : 'DC') : [s.tdiv && fmtU(s.tdiv, 's') + '/div', s.vdiv && fmtU(s.vdiv, 'V') + '/div'].filter(Boolean).join(' · ');
   return `<details class="scope"${PHONE_MQ.matches ? '' : ' open'}><summary>Scope${title ? ` <span class="t">${esc(title)}</span>` : ''}<span class="s">${esc(sum)}</span></summary>
     <div class="scope-body">
-      <figure class="scr">${scopeSVG(s, label)}<figcaption>Idealised from ${basis}${s.shape === 'video-line' ? '; picture drawn as a flat grey' : ''}</figcaption></figure>
+      <figure class="scr">${scopeSVG(s, label)}<figcaption>${esc(cap)}</figcaption></figure>
       <div><dl class="kv">${rows.map(([k, v, h]) => `<dt>${k}</dt><dd><b>${esc(v)}</b>${h ? ` <span class="tin">${esc(h)}</span>` : ''}</dd>`).join('')}</dl>
         ${sc.note ? `<p class="sm mt-2.5">${esc(sc.note)}</p>` : ''}
         ${sc.source ? sourceList([sc.source], '') : ''}</div>
@@ -777,7 +802,7 @@ function viewMachine(m) {
       ${door(`${mPath(m)}/power`, 'J4', 'Power', pw.data ? `${pw.data.supply && pw.data.supply.name ? esc(pw.data.supply.name) + ', ' : ''}${arr(pw.data.rails).length} rails, ${arr(pw.data.testPoints).length} test points` : 'Not captured yet', !pw.data)}
       ${pw.data && arr(pw.data.firstTen).length ? `<a class="lnk col-start-2 lg:col-start-4 -mt-2 mono sm uppercase" href="${mPath(m)}/power?at=first-ten">First ten minutes &rsaquo;</a>` : ''}
     </div>
-    <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-3.5"><button type="button" class="btn" data-act="print">Print card</button><span class="tin sm">One page, black on white: chips, rails, first checks, clocks, connector pins.</span></div>
+    <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-3.5"><button type="button" class="btn" data-act="print">Print card</button><span class="tin sm">One page where it fits, two at most, black on white: chips, supply and rail warnings, rails, first checks, clocks, connector pins.</span></div>
     ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips)}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.</p></section>`
       : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} is ${m.status === 'planned' ? 'planned' : 'on paper'}: its chips have not been entered yet.`)}
     ${qr.data || tp ? `<div class="grid gap-x-[18px] md:grid-cols-2 items-start">
@@ -1184,61 +1209,80 @@ function viewVideo() {
       <p class="note">EIA RS-170 and RS-170A are not linked: no copy of the text was found online. SMPTE 170M, which replaced RS-170A, is the NTSC reference here.</p></section>`;
 }
 
-/* ---------- print card: one page per machine, black on white (src/input.css, @media print) ---------- */
+/* ---------- print card: one page per machine where it fits (two at most; safety text is never dropped), black on white (src/input.css, @media print) ---------- */
 function printCard(m) {
   const chips = chipsOf(m), pw = dataFor(D.power, m).data, conns = arr(dataFor(D.connectors, m).data);
   const rails = pw ? arr(pw.rails) : [], ften = pw ? arr(pw.firstTen) : [], clocks = pw ? arr(pw.clocks).filter(c => c && c.name) : [];
   const tv = clocks.some(c => c.pal || c.ntsc);
   const sec = (title, body, cls = '') => `<section class="pc-b${cls}"><h2>${title}</h2>${body}</section>`;
-  const sup = pw && pw.supply ? `<p class="pc-n">${esc(pw.supply.name || 'Supply')}${pw.supply.output ? `: ${esc(pw.supply.output)}` : ''}</p>` : '';
+  /* safety text (supply notes, rail notes, every ifNot) always prints: the card may run to a second page instead */
+  const supNotes = pw && pw.supply ? arr(pw.supply.notes).filter(Boolean) : [];
+  const sup = pw && pw.supply ? `<p class="pc-n">${esc(pw.supply.name || 'Supply')}${pw.supply.output ? `: ${esc(pw.supply.output)}` : ''}</p>${supNotes.length ? `<ul class="pc-ul">${supNotes.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}` : '';
   const checks = ften.length
-    ? `<ol class="pc-ol">${ften.map((s, k) => `<li><b>${esc(s.step ?? k + 1)}</b> ${esc(s.check || '')}${s.where ? ` <span class="pc-w">${esc(s.where)}</span>` : ''}${s.expect ? ` <span class="pc-x">${esc(s.expect)}</span>` : ''}</li>`).join('')}</ol>`
+    ? `<ol class="pc-ol">${ften.map((s, k) => `<li><b>${esc(s.step ?? k + 1)}</b> ${esc(s.check || '')}${s.where ? ` <span class="pc-w">${esc(s.where)}</span>` : ''}${s.expect ? ` <span class="pc-x">${esc(s.expect)}</span>` : ''}${s.ifNot ? `<div class="pc-if"><b>If not:</b> ${esc(s.ifNot)}</div>` : ''}</li>`).join('')}</ol>`
     : '<ol class="pc-ol"><li><b>1</b> Rails at the supply pins, with the board loaded.</li><li><b>2</b> Reset goes high after power-on.</li><li><b>3</b> Master clock, then the CPU clock.</li><li><b>4</b> Only then pull the hottest chip.</li></ol>';
   const clk = c => (tv ? (c.pal || c.ntsc ? `<td class="m">${esc(c.pal || '')}</td><td class="m">${esc(c.ntsc || '')}</td>` : `<td class="m" colspan="2">${esc(c.f || '')}</td>`) : `<td class="m">${esc(c.f || '')}</td>`);
   return `<section class="printcard" aria-hidden="true">
     <header class="pc-h"><span class="pc-d">${esc(mDes(m))}</span><h1>${esc(m.name)}</h1><span class="pc-s">Retro Bench card, ${new Date().toISOString().slice(0, 10)}. Check readings against the sources in the app.</span></header>
     ${chips.length ? sec('Chips', boardGrid(m, chips)) : ''}
     <div class="pc-cols">
-      ${rails.length ? sec('Rails', `${sup}<table class="pc-t"><thead><tr><th>Rail</th><th>Where</th><th>Expect</th></tr></thead><tbody>${rails.map(r => `<tr><td class="m">${esc(r.rail)}</td><td>${esc(r.where || '')}</td><td class="m">${esc(r.expect || '')}</td></tr>`).join('')}</tbody></table>`) : ''}
-      ${sec(ften.length ? 'First ten minutes' : 'Order of checks', checks)}
+      ${rails.length ? sec('Rails', `${sup}<table class="pc-t"><thead><tr><th>Rail</th><th>Where</th><th>Expect</th></tr></thead><tbody>${rails.map(r => `<tr><td class="m">${esc(r.rail)}</td><td>${esc(r.where || '')}${r.note ? `<div class="pc-if">${esc(r.note)}</div>` : ''}</td><td class="m">${esc(r.expect || '')}</td></tr>`).join('')}</tbody></table>`, ' pc-flow') : ''}
+      ${sec(ften.length ? 'First ten minutes' : 'Order of checks', checks, ' pc-flow')}
       ${clocks.length ? sec('Clocks', `<table class="pc-t"><thead><tr><th>Clock</th><th>Where</th>${tv ? '<th>PAL</th><th>NTSC</th>' : '<th>Frequency</th>'}</tr></thead><tbody>${clocks.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.where || '')}</td>${clk(c)}</tr>`).join('')}</tbody></table>`) : ''}
       ${conns.length ? sec('Connectors', conns.map((c, i) => `<div class="pc-c"><b>J${i + 1} ${esc(c.name)}</b> <span class="pc-w">${esc(c.kind || '')}</span><div class="pc-p">${realPins(c).map(p => `<span><b>${esc(p.n)}</b> ${esc(p.name || '')}</span>`).join(' ')}</div></div>`).join(''), ' pc-flow') : ''}
     </div>
   </section>`;
 }
 
-/* ---------- bench notes: localStorage only, one key per machine (rb-note:m:<id>) or chip (rb-note:c:<id>) ---------- */
-const NOTE_PFX = 'rb-note:';
+/* ---------- bench notes: localStorage only, one key per machine (rb-note:<base>:m:<id>) or chip (rb-note:<base>:c:<id>).
+   <base> is this install's path, URI-encoded as sw.js does, so two copies on one origin keep separate notes. ---------- */
+const NOTE_PFX = `rb-note:${encodeURIComponent(location.pathname.replace(/[^/]*$/, '') || '/')}:`;
 const noteKey = (kind, id) => `${NOTE_PFX}${kind}:${id}`;
+const noteKnown = (kind, id) => Object.hasOwn(kind === 'm' ? D.machines : D.chips, id);
 const noteGet = k => { const v = LS.get(k, null); return v && typeof v.text === 'string' && v.text.trim() ? v : null; };
+/* true when the browser kept it */
 function noteSave(k, text) {
-  if (String(text).trim()) LS.set(k, { text, at: new Date().toISOString() });
-  else try { localStorage.removeItem(k); } catch {}
+  if (String(text).trim()) return LS.set(k, { text, at: new Date().toISOString() });
+  try { localStorage.removeItem(k); return true; } catch { return false; }
 }
+/* first load after the install path joined the key: move old rb-note:<m|c>:<id> notes into this install's keys */
+(() => {
+  const old = [];
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^rb-note:[mc]:/.test(k || '')) old.push(k); } } catch { return; }
+  for (const k of old) {
+    const v = noteGet(k), nk = NOTE_PFX + k.slice(8), have = noteGet(nk);
+    if (v && !(have && have.text.includes(v.text)) && !LS.set(nk, have ? { text: `${have.text}\n\n${v.text}`, at: new Date().toISOString() } : v)) continue;
+    try { localStorage.removeItem(k); } catch {}
+  }
+})();
 function noteKeys() {
   const out = [];
   try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(NOTE_PFX)) out.push(k); } } catch {}
   return out;
 }
-/* what a key belongs to: its name and the page it came from */
+/* what a key belongs to: its name and the page it came from. Own properties only: a stored or imported id such as
+   __proto__ names nothing, and an unknown id is listed by its id so it can still be exported or deleted. */
 function noteTarget(k) {
-  const mm = /^rb-note:([mc]):(.+)$/.exec(k) || [], kind = mm[1], id = mm[2];
-  if (kind === 'm') { const m = D.machines[id]; return { kind, id, name: m ? m.name : id, href: m ? mPath(m) : '' }; }
-  const c = D.chips[id], home = c && (fittedIn(c).find(x => x.status === 'ready') || fittedIn(c)[0]);
-  return { kind, id, name: c ? c.name : id, href: home ? (c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`) : '' };
+  const mm = /^([mc]):(.+)$/.exec(k.startsWith(NOTE_PFX) ? k.slice(NOTE_PFX.length) : '') || [], kind = mm[1], id = mm[2];
+  if (!kind) return {};
+  const it = noteKnown(kind, id) ? (kind === 'm' ? D.machines : D.chips)[id] : null, name = String((it && it.name) || id);
+  if (kind === 'm') return { kind, id, name, href: it ? mPath(it) : '' };
+  const home = it && (fittedIn(it).find(x => x.status === 'ready') || fittedIn(it)[0]);
+  return { kind, id, name, href: home ? (it.pins ? chipPath(home, it) : `${mPath(home)}/pinouts`) : '' };
 }
 const noteWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); };
-const noteStatus = (n, pending) => `${pending ? 'Not saved yet' : 'Saved on this device only'}${!pending && n ? `, ${esc(noteWhen(n.at))}` : ''}. <a class="lnk" href="#/notes">All notes</a>`;
+/* pending: true = typed, not saved yet; 'fail' = the browser refused the write (the text stays in the box and is retried) */
+const noteStatus = (n, pending) => `${pending === 'fail' ? 'Not saved: storage full or blocked' : pending ? 'Not saved yet' : 'Saved on this device only'}${!pending && n ? `, ${esc(noteWhen(n.at))}` : ''}. <a class="lnk" href="#/notes">All notes</a>`;
 /* typing saves 600 ms after the last key; leaving the field, the page or the route saves at once */
 const notePending = new Map();
 let noteTimer = 0;
 function noteFlush() {
   clearTimeout(noteTimer); noteTimer = 0;
   for (const [k, t] of notePending) {
-    noteSave(k, t);
-    for (const el of $$('[data-note-status]')) if (el.dataset.noteStatus === k) el.innerHTML = noteStatus(noteGet(k));
+    const ok = noteSave(k, t);
+    if (ok) notePending.delete(k);
+    for (const el of $$('[data-note-status]')) if (el.dataset.noteStatus === k) el.innerHTML = ok ? noteStatus(noteGet(k)) : noteStatus(null, 'fail');
   }
-  notePending.clear();
 }
 function noteInput(el) {
   const k = el.dataset.note;
@@ -1247,10 +1291,10 @@ function noteInput(el) {
   clearTimeout(noteTimer); noteTimer = setTimeout(noteFlush, 600);
 }
 function noteBlock(kind, id, what) {
-  const k = noteKey(kind, id), n = noteGet(k);
+  const k = noteKey(kind, id), n = noteGet(k), unsaved = notePending.get(k);
   return `<section class="blk notes scroll-mt-4" id="notes"><span class="lbl">Bench notes</span>
-    <textarea class="notearea" data-note="${esc(k)}" rows="4" aria-label="Bench notes for ${esc(what)}" placeholder="Readings, swaps, what you tried on this ${kind === 'm' ? 'machine' : 'chip'}.">${esc(n ? n.text : '')}</textarea>
-    <p class="note mt-1.5" data-note-status="${esc(k)}" aria-live="polite">${noteStatus(n)}</p></section>`;
+    <textarea class="notearea" data-note="${esc(k)}" rows="4" aria-label="Bench notes for ${esc(what)}" placeholder="Readings, swaps, what you tried on this ${kind === 'm' ? 'machine' : 'chip'}.">${esc(unsaved ?? (n ? n.text : ''))}</textarea>
+    <p class="note mt-1.5" data-note-status="${esc(k)}" aria-live="polite">${unsaved != null ? noteStatus(null, 'fail') : noteStatus(n)}</p></section>`;
 }
 /* machines first, then chips, each by name */
 function noteList() {
@@ -1269,21 +1313,23 @@ function notesParse(txt) {
   const out = []; let cur = null;
   for (const line of String(txt).replace(/\r\n?/g, '\n').split('\n')) {
     const h = /^=== (machine|chip) ([^\s:]+)(?::.*)? ===$/.exec(line);
-    if (h) { cur = { k: noteKey(h[1] === 'machine' ? 'm' : 'c', h[2]), lines: [] }; out.push(cur); continue; }
+    if (h) { cur = { kind: h[1] === 'machine' ? 'm' : 'c', id: h[2], lines: [] }; out.push(cur); continue; }
     if (cur) cur.lines.push(line.startsWith('\\') ? line.slice(1) : line);
   }
-  return out.map(x => ({ k: x.k, text: x.lines.join('\n').replace(/\s+$/, '') })).filter(x => x.text.trim());
+  return out.map(x => ({ kind: x.kind, id: x.id, text: x.lines.join('\n').replace(/\s+$/, '') })).filter(x => x.text.trim());
 }
-/* merge: a new key is added; a note already holding the text is left alone; a different one gets it appended */
+/* merge: a new key is added; a note already holding the text is left alone; a different one gets it appended.
+   A section naming no machine or chip in the app is skipped; a write the browser refuses is counted as failed. */
 function notesImport(txt) {
-  let added = 0, merged = 0, same = 0;
-  for (const { k, text } of notesParse(txt)) {
-    const have = noteGet(k);
-    if (!have) { noteSave(k, text); added++; }
-    else if (have.text.includes(text)) same++;
-    else { noteSave(k, `${have.text}\n\n${text}`); merged++; }
+  let added = 0, merged = 0, same = 0, unknown = 0, failed = 0;
+  for (const { kind, id, text } of notesParse(txt)) {
+    if (!noteKnown(kind, id)) { unknown++; continue; }
+    const k = noteKey(kind, id), have = noteGet(k);
+    if (have && have.text.includes(text)) { same++; continue; }
+    if (!noteSave(k, have ? `${have.text}\n\n${text}` : text)) failed++;
+    else if (have) merged++; else added++;
   }
-  return { added, merged, same };
+  return { added, merged, same, unknown, failed };
 }
 function notesExport() {
   const url = URL.createObjectURL(new Blob([notesText()], { type: 'text/plain' }));
@@ -1619,7 +1665,8 @@ document.addEventListener('change', e => {
   if (e.target.dataset.act !== 'notes-import' || !e.target.files || !e.target.files[0]) return;
   e.target.files[0].text().then(txt => {
     const r = notesImport(txt), n = r.added + r.merged + r.same;
-    $('#main').innerHTML = viewNotes(n ? `Imported: ${r.added} new, ${r.merged} merged, ${r.same} already here.` : 'No notes found in that file.');
+    const extra = [r.failed && `${r.failed} not saved: storage full or blocked`, r.unknown && `${r.unknown} skipped: no such machine or chip`].filter(Boolean).join('; ');
+    $('#main').innerHTML = viewNotes(n || extra ? `Imported: ${r.added} new, ${r.merged} merged, ${r.same} already here${extra ? `; ${extra}` : ''}.` : 'No notes found in that file.');
   }, () => { const m = $('#notes-msg'); if (m) m.textContent = 'Could not read that file.'; });
 });
 /* bench notes save on a pause in typing, and at once when the field loses focus or the page is hidden */

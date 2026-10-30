@@ -79,10 +79,14 @@ const GEO = /^(din3|din4|din5-180|din5-240|din6|din7|din8-262|din8-270|mdin7|mdi
 const checkSources = (f, list) => { for (const s of list || []) {
   if (!s || !s.label || !/^https?:\/\//.test(s.url || '')) err(f, `source needs label and http url: ${JSON.stringify(s)}`);
   if (s && 'sams' in s && typeof s.sams !== 'boolean') err(f, `source sams must be true or false: ${JSON.stringify(s).slice(0, 90)}`);
+  /* a Sams Computerfacts citation must carry the flag; sams: false says a label naming Sams is not one */
+  if (s && /\bSams\b/i.test(String(s.label || '')) && !('sams' in s)) warn(f, `source "${String(s.label).slice(0, 70)}" names Sams but has no sams: true (sams: false if it is not a Sams folder)`);
 } };
 /* the same readings and pin references the app uses (src/app.js qty, pinScan) */
 const SI = { '': 1, k: 1e3, K: 1e3, M: 1e6, G: 1e9, m: 1e-3, 'µ': 1e-6, 'μ': 1e-6, u: 1e-6, n: 1e-9 };
-const qty = (s, unit) => { const mm = new RegExp(`^\\s*([-+]?\\d*\\.?\\d+)\\s*([kKMGmµμun]?)${unit}(?![A-Za-z])`).exec(String(s ?? '').replace(/[−–]/g, '-')); return mm ? Number(mm[1]) * SI[mm[2]] : null; };
+/* strict (scope fields): nothing may follow the unit, and the value must be finite; else trailing text is allowed */
+const qty = (s, unit, strict) => { const mm = new RegExp(`^\\s*([-+]?\\d*\\.?\\d+)\\s*([kKMGmµμun]?)${unit}${strict ? '\\s*$' : '(?![A-Za-z])'}`).exec(String(s ?? '').replace(/[−–]/g, '-')); return mm ? Number(mm[1]) * SI[mm[2]] : null; };
+const qs = (s, unit) => { const v = qty(s, unit, true); return Number.isFinite(v) ? v : null; };
 const SHAPES = new Set(['square', 'pulse', 'sine', 'burst', 'video-line', 'dc']);
 const BASES = new Set(['capture', 'datasheet']);
 const REPL_KINDS = new Set(['pin-compatible', 'modern', 'adapter']);
@@ -117,15 +121,32 @@ function checkScope(f, mid, x) {
   if (!SHAPES.has(s.shape)) err(f, `${at} shape ${s.shape} (square, pulse, sine, burst, video-line, dc)`);
   if (!BASES.has(s.basis)) err(f, `${at} basis ${s.basis} (capture, datasheet)`);
   if (s.shape !== 'dc' && s.f == null && s.period == null) err(f, `${at} needs f or period`);
-  if (s.f != null && !(qty(s.f, 'Hz') > 0)) err(f, `${at} f "${s.f}" does not read as a frequency (e.g. '1.0227 MHz')`);
-  if (s.period != null && !(qty(s.period, 's') > 0)) err(f, `${at} period "${s.period}" does not read as a time (e.g. '64 µs')`);
-  for (const k of ['low', 'high']) if (s[k] != null && qty(s[k], 'V') == null) err(f, `${at} ${k} "${s[k]}" does not read as volts (e.g. '0.4 V')`);
-  if (s.low != null && s.high != null && !(qty(s.high, 'V') > qty(s.low, 'V'))) err(f, `${at} high must be above low`);
-  if (s.shape !== 'dc' && (s.low == null || s.high == null)) warn(f, `${at} has no low/high: VOLTS/DIV cannot be derived`);
-  if (s.duty != null && !/^\s*\d*\.?\d+\s*%\s*$/.test(String(s.duty))) err(f, `${at} duty "${s.duty}" must be a percentage`);
+  const F = s.f != null ? qs(s.f, 'Hz') : null, T = s.period != null ? qs(s.period, 's') : null;
+  if (s.f != null && !(F > 0)) err(f, `${at} f "${s.f}" must be a finite frequency above 0 with nothing after the unit (e.g. '1.0227 MHz')`);
+  if (s.period != null && !(T > 0)) err(f, `${at} period "${s.period}" must be a finite time above 0 with nothing after the unit (e.g. '64 µs')`);
+  if (F > 0 && T > 0 && Math.abs(F * T - 1) > 0.02) err(f, `${at} f "${s.f}" and period "${s.period}" disagree by ${Math.round(Math.abs(F * T - 1) * 1000) / 10}% (2% allowed)`);
+  const V = {};
+  for (const k of ['low', 'high', 'pp', 'black', 'sync']) if (s[k] != null) {
+    const v = qs(s[k], 'V');
+    if (v == null || Math.abs(v) > 50) err(f, `${at} ${k} "${String(s[k]).slice(0, 40)}" must read as volts within ±50 V, nothing after the unit (e.g. '0.4 V')`); else V[k] = v;
+  }
+  if (V.low != null && V.high != null && !(V.high > V.low)) err(f, `${at} high must be above low`);
+  if (s.pp != null) {
+    if (s.shape === 'dc') err(f, `${at} pp is a swing; a dc level is given as high`);
+    if (s.low != null || s.high != null) err(f, `${at} pp replaces low/high (swing with no DC level); give one or the other`);
+    if (V.pp != null && !(V.pp > 0)) err(f, `${at} pp must be above 0 V`);
+  }
+  if (s.shape === 'dc' && s.high == null) err(f, `${at} dc needs high (the level, '0 V' allowed)`);
+  if (s.shape !== 'dc' && s.pp == null && (s.low == null || s.high == null)) warn(f, `${at} has no low/high or pp: VOLTS/DIV cannot be derived`);
+  for (const k of ['black', 'sync']) if (s[k] != null && s.shape !== 'video-line') err(f, `${at} ${k} is a video-line level`);
+  if (V.sync != null && V.low != null && Math.abs(V.sync - V.low) > 1e-6) err(f, `${at} sync "${s.sync}" is the sync tip, so it must equal low "${s.low}" (or give only one)`);
+  const tip = V.low ?? V.sync;
+  if (V.black != null && !(tip != null && V.high != null && V.black > tip && V.black < V.high)) err(f, `${at} black "${s.black}" must lie between the sync tip and high`);
+  if (s.duty != null) { const mm = /^\s*(\d*\.?\d+)\s*%\s*$/.exec(String(s.duty)); if (!mm || !(+mm[1] > 0 && +mm[1] < 100)) err(f, `${at} duty "${s.duty}" must be a percentage above 0% and below 100%`); }
   if (s.duty != null && !['pulse', 'square'].includes(s.shape)) warn(f, `${at} duty is only drawn for pulse and square`);
+  if (s.polarity != null && !['low', 'high'].includes(s.polarity)) err(f, `${at} polarity "${s.polarity}" (low = idles HIGH, pulses LOW; high is the default)`);
+  if (s.polarity != null && !['pulse', 'square'].includes(s.shape)) warn(f, `${at} polarity is only drawn for pulse and square`);
   if (!s.source) err(f, `${at} needs a source`); else checkSources(`${f} ${at}`, [s.source]);
-  if (x.where) checkWhere(f, mid, `${at} where`, x.where);
 }
 for (const [mid, list] of Object.entries(R.connectors)) {
   const ids = new Set();
@@ -172,7 +193,10 @@ for (const [mid, pw] of Object.entries(R.power)) {
   }
   checkSources(f, pw.sources);
   /* features 1, 3, 4 (docs/data-schema.md, last section): scope blocks, firstTen, clocks */
-  for (const x of [...(pw.rails || []), ...(pw.testPoints || [])]) if (x && x.scope != null) checkScope(f, mid, x);
+  for (const x of [...(pw.rails || []), ...(pw.testPoints || [])]) {
+    if (x && x.where) checkWhere(f, mid, `${x.tp || x.rail} where`, x.where);
+    if (x && x.scope != null) checkScope(f, mid, x);
+  }
   if (pw.firstTen != null) {
     if (!Array.isArray(pw.firstTen)) err(f, 'firstTen must be an array');
     else pw.firstTen.forEach((s, i) => {
@@ -190,7 +214,11 @@ for (const [mid, pw] of Object.entries(R.power)) {
       const at = `clock ${c && c.name ? c.name : i + 1}`;
       if (!c || !c.name) err(f, `${at} needs name`);
       if (!c || !(c.f || c.pal || c.ntsc)) err(f, `${at} needs f, or pal and/or ntsc`);
-      for (const k of ['f', 'pal', 'ntsc']) if (c && c[k] != null && qty(c[k], 'Hz') == null) warn(f, `${at} ${k} "${c[k]}" does not read as a frequency (e.g. '17.734475 MHz')`);
+      for (const k of ['f', 'pal', 'ntsc']) if (c && c[k] != null) {
+        const v = qty(c[k], 'Hz');
+        if (v == null) warn(f, `${at} ${k} "${c[k]}" does not read as a frequency (e.g. '17.734475 MHz')`);
+        else if (!(Number.isFinite(v) && v > 0)) err(f, `${at} ${k} "${c[k]}" must be a finite frequency above 0 Hz`);
+      }
       if (c && c.source) checkSources(`${f} ${at}`, [c.source]);
       if (c && c.where) checkWhere(f, mid, `${at} where`, c.where);
     });

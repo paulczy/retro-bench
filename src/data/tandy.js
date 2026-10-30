@@ -1421,7 +1421,7 @@ RCS.add({
         sources: [
           { label: 'Model III Service Manual, Power Supply Functional Specifications (SK1-SK4 pinout), p. 67', url: M3SVC(74) },
           { label: 'Model III Service Manual, Table 1 Load Board Values and Table 2 Voltage and Ripple, pp. 68-69', url: M3SVC(75) },
-          { label: 'Sams Computerfacts TRS-80 Model III, Preliminary Service Checks (SK2 voltages)', url: SAMS3(3) },
+          { label: 'Sams Computerfacts TRS-80 Model III, Preliminary Service Checks (SK2 voltages)', url: SAMS3(3), sams: true },
         ],
       },
       {
@@ -1442,7 +1442,7 @@ RCS.add({
         sources: [
           { label: 'Model III Technical Reference Manual, Video Monitor Functional Specifications, p. 75', url: M3TRM(86) },
           { label: 'Model III Technical Reference Manual, Figure 3 Video Monitor Assembly schematic (edge connector), p. 79', url: M3TRM(90) },
-          { label: 'Sams Computerfacts TRS-80 Model III, Service Checks, Video Display (J5, J101, F101)', url: SAMS3(3) },
+          { label: 'Sams Computerfacts TRS-80 Model III, Service Checks, Video Display (J5, J101, F101)', url: SAMS3(3), sams: true },
         ],
       },
     ],

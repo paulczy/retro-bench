@@ -141,7 +141,11 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
   `name`, `output` and `notes`, and point `connector` at the internal PSU-to-board connector if you add one to
   `connectors` (IBM P8/P9, Apple II 6-pin). The app says "Internal supply" and draws that connector.
 - `notes` holds the known problems of that supply and what to check before plugging it into a board.
-- Write `where` as `<chip short> pin <n>` so the app can link it to the drawing.
+- Write `where` as `<chip short> pin <n>` so the app can link it to the drawing. A connector pin uses the
+  connector's exact `name` or `id` (see firstTen below). The validator checks the `where` of every rail and test
+  point, with or without a `scope`, and warns on a reference it cannot link.
+- The print card prints every supply `note`, every rail `note` and every firstTen `ifNot`: they carry the safety
+  precautions. Keep them short; the card runs to a second page rather than drop them.
 
 ### quickref
 ```js
@@ -206,22 +210,43 @@ Approved features 1 to 6 on docs/roadmap.md add these optional fields. Nothing h
 testPoints: [{ tp: 'CPU clock', where: 'CPU pin 37', expect: '1.02 MHz square',
   scope: { f: '1.0227 MHz',            // or period: '64 µs' for video lines; one of them is required
            low: '0.2 V', high: '4.6 V', // the swing the source gives (datasheet VOL/VOH or a measured capture)
+           // or pp: '1.2 V'            // peak-to-peak only, when the source gives no DC level (never with low/high)
            shape: 'square',             // square | pulse | sine | burst | video-line | dc
            duty: '50%',                 // pulse/square only; omit when unknown
+           polarity: 'low',             // pulse/square only: the line idles HIGH and pulses LOW (duty is the LOW part)
+           black: '2.9 V', sync: '2.6 V', // video-line only: blanking level and sync tip (sync equals low)
            basis: 'capture' | 'datasheet',   // capture = a Sams or service-manual photo; datasheet = timing diagram + schematic frequency
            source: { label: 'Sams CC17 C64, waveform 3, p. 12', url: '...', sams: true },
            note: 'Rounded edges are normal; a flat line means no clock.' } }]
 ```
-The app derives the scope settings (time/div in the 1-2-5 series for 2 to 4 cycles, volts/div to fit the swing in
-about five divisions, DC coupling, rising-edge trigger at 1.4 V for logic) and draws an idealised trace labelled
-"idealised from <basis>". Never enter settings by hand; never enter a `scope` block without `source`.
-How the app reads the fields (clarifications, no new fields):
-- Values are a number, an optional SI prefix and the unit: `'1.0227 MHz'`, `'64 µs'`, `'-0.3 V'`, `'500 mV'`,
-  `duty: '30%'`. Anything else ("about 1 MHz") fails the validator.
+The app derives the scope settings and draws an idealised trace labelled "idealised from <basis>":
+- TIME/DIV is the 1-2-5 step whose cycle count across the 10 divisions is closest to 3, within 1.5 to 5 cycles.
+  Neighbouring 1-2-5 steps are at most 2.5 times apart, so a step in that band always exists; 2 to 4 cycles cannot
+  be promised for every period (a 1.118 µs CoCo E clock shows 1.8 cycles at 0.2 µs/div, or 4.5 at 0.5 µs/div).
+- VOLTS/DIV is the smallest 1-2-5 step of at least swing / 5, so the swing fills 2.5 to 5 divisions.
+- DC coupling with the 0 V marker; trigger on the rising edge (falling for `polarity: 'low'`) at 1.4 V for logic
+  swings that cross it, else mid-swing.
+
+Never enter settings by hand; never enter a `scope` block without `source`.
+How the app reads the fields:
+- Values are a number, an optional SI prefix and the unit, and nothing after it: `'1.0227 MHz'`, `'64 µs'`,
+  `'-0.3 V'`, `'500 mV'`, `duty: '30%'`. Anything else ("about 1 MHz", "1 MHz PAL") fails the validator.
+- Frequencies and periods must be finite and above 0. When both `f` and `period` are given they must agree within
+  2% (the app uses `period`). Volts must be finite and within ±50 V. `duty` is above 0% and below 100%.
 - `burst`: `f`/`period` is the repetition rate of the group, not of the pulses inside it; the app draws four
-  pulses and a gap. `video-line`: `low` is the sync tip, `high` peak white; the picture is drawn as a flat grey.
-- `dc` (a rail): `high` is the level (`low` may be left out); `f`/`period` are not needed.
-- Leave `low`/`high` out when the source gives none: the trace is drawn without a volts/div setting.
+  pulses and a gap.
+- `video-line`: `low` is the sync tip, `high` peak white; the picture is drawn as a flat grey midway between black
+  and white. `black` (the blanking level) places the porches; `sync` may stand in for `low` and must equal it when
+  both are given. Without `black` the porches sit at the standard 0.3 of the swing above the sync tip and the
+  caption says "levels to standard ratio, not to scale".
+- `square`/`pulse` without `duty`: only the trigger edge is drawn solid, both levels dashed, labelled "duty not in
+  source". The app never draws an assumed 50% or 25%. `polarity: 'low'` is a line that idles HIGH and pulses LOW;
+  `duty` is then the LOW part of the period.
+- `pp` (swing only): use it when the source gives a peak-to-peak value and no DC level. Do not invent `low: '0 V'`.
+  The trace is centred, with no 0 V marker, AC coupling, trigger mid-swing, labelled "no DC level in source".
+- `dc` (a rail): `high` is the level and is required (`'0 V'` is a valid level); `low` may be left out;
+  `f`/`period` are not needed; `pp` is not allowed.
+- Leave `low`/`high` (and `pp`) out when the source gives none: the trace is drawn without a volts/div setting.
 - `where` on the test point or rail decides where the trace also shows: in PIN DETAIL of every chip pin it names.
 
 ### firstTen on power
@@ -259,7 +284,9 @@ replacements: [
 `kind` is `pin-compatible`, `modern` or `adapter`. Only parts a tech can buy or has in a parts drawer.
 
 ### Sams Computerfacts citations
-Any `source`/`sources` entry taken from a Sams Computerfacts folder sets `sams: true`. The app appends the fixed
+Any `source`/`sources` entry taken from a Sams Computerfacts folder sets `sams: true`. The validator warns on any
+source whose label contains the word "Sams" without a `sams` flag; set `sams: false` on a label that names Sams but
+is not a Sams folder (a community page about a Sams error). The app appends the fixed
 note "Sams redraw: part numbers are Sams's own and may not match the board" and shows a `conflict` when a Sams
 value disagrees with the maker's document, which wins. Where a community page documents a specific Sams error,
 add it as a second source with `note`.

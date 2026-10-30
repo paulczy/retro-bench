@@ -493,8 +493,8 @@ RCS.add({
       firstTen: msxFirst('msx1'), clocks: msxClocks('msx1'),
       rails: [
         { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; TMS9918A pin 33; AY-3-8910 pin 40; 8255A pin 26; cartridge pins 45 and 47', note: 'The logic supply; the standard allows 300 mA per cartridge slot.' },
-        { rail: '+12 V', expect: '11.4-12.6 V', where: 'Cartridge pin 48', note: '50 mA for cartridges; also the 4116 VRAM Vdd (pin 8) on boards that use them.' },
-        { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'Cartridge pin 50', note: '50 mA for cartridges.' },
+        { rail: '+12 V', expect: '11.4-12.6 V', where: 'Cartridge slot pin 48', note: '50 mA for cartridges; also the 4116 VRAM Vdd (pin 8) on boards that use them.' },
+        { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'Cartridge slot pin 50', note: '50 mA for cartridges.' },
         { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '4116 pin 1', note: 'Only on boards with 4116 VRAM; made from -12 V on the board.', verify: true },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; TMS9918A pin 12; AY-3-8910 pin 1; 8255A pin 7; cartridge pins 41 and 43', note: 'Common return.' }
       ],
@@ -504,7 +504,7 @@ RCS.add({
           scope: { f: '3.579545 MHz', low: '0.45 V', high: '4.4 V', shape: 'square', basis: 'datasheet', source: Z80PS,
             note: 'Idealised from the Z80 clock-input limits (LOW below 0.45 V, HIGH above VCC - 0.6 V), not a capture. The rate is the standard\'s (Technical Data Book 1.3.1); some PAL boards differ (Sony HB-101P: 3.5625 MHz). A Z80 clock that only reaches TTL levels can still run some Z80s, but it is out of spec.' } },
         { tp: 'CPU clock from the VDP (TMS9918A boards)', where: 'TMS9918A pin 38', expect: '3.579545 MHz (crystal / 3); the 9928A and 9929A have R-Y here, so PAL boards make the CPU clock elsewhere', verify: true },
-        { tp: 'Cartridge clock', where: 'Cartridge pin 42', expect: '3.579545 MHz' },
+        { tp: 'Cartridge clock', where: 'Cartridge slot pin 42', expect: '3.579545 MHz' },
         { tp: 'PSG clock', where: 'AY-3-8910 pin 22', expect: '1.7897725 MHz',
           scope: { f: '1.7897725 MHz', low: '0.6 V', high: '2.4 V', shape: 'square', basis: 'datasheet', source: AY_DC,
             note: 'Idealised from the PSG input limits, not a capture. The data manual allows 1-2 MHz and a 25-75% duty, so the exact shape depends on the board\'s divider. Rate: half the CPU clock (Technical Data Book 1.3.6).' } },
@@ -518,8 +518,8 @@ RCS.add({
       firstTen: msxFirst('msx2'), clocks: msxClocks('msx2'),
       rails: [
         { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; V9938 pin 58; cartridge pins 45 and 47', note: 'The logic supply.' },
-        { rail: '+12 V', expect: '11.4-12.6 V', where: 'Cartridge pin 48', note: '50 mA for cartridges.' },
-        { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'Cartridge pin 50', note: '50 mA for cartridges.' },
+        { rail: '+12 V', expect: '11.4-12.6 V', where: 'Cartridge slot pin 48', note: '50 mA for cartridges.' },
+        { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'Cartridge slot pin 50', note: '50 mA for cartridges.' },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; V9938 pin 1; V9938 pin 20; cartridge pins 41 and 43', note: 'V9938 pin 20 is the DAC ground.' }
       ],
       testPoints: [
@@ -527,11 +527,11 @@ RCS.add({
           scope: { f: '21.4697 MHz', low: '0.3 V', high: '3.7 V', shape: 'sine', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 63 (XTAL1): 3.4 V p-p, 21.4697 MHz; 2.0 V DC marked at the pin, p. 16'),
             note: 'Sony prints 3.4 V p-p and 21.4697 MHz on its PAL HB-F9P, with 2.0 V DC at the pin; the levels here centre the swing on that 2.0 V. The V9938 data book gives 21.47727 MHz. A 10:1 probe on the crystal pulls it slightly.' } },
         { tp: 'CPU clock', where: 'V9938 pin 8; Z80A pin 6', expect: '3.579545 MHz (crystal / 6)',
-          scope: { period: '280 ns', low: '0 V', high: '4.7 V', shape: 'square', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 8 (CPUCLK): 4.7 V p-p, 280 ns, p. 16'),
+          scope: { period: '280 ns', pp: '4.7 V', shape: 'square', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 8 (CPUCLK): 4.7 V p-p, 280 ns, p. 16'),
             note: 'Sony prints 4.7 V p-p and a 280 ns period; the trace assumes the swing starts at 0 V. Sony draws it with rounded tops. No CPUCLK with the crystal running: the V9938.' } },
         { tp: 'Dot clocks', where: 'V9938 pin 2; V9938 pin 3', expect: '10.74 MHz / 5.37 MHz (open drain)' },
         { tp: 'Frame interrupt', where: 'V9938 pin 25', expect: 'LOW pulse every frame: 60 Hz (NTSC) or 50 Hz (PAL)',
-          scope: { period: '20 ms', low: '0 V', high: '4.8 V', shape: 'pulse', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 25 (/INT): 4.8 V p-p, 20 ms, p. 16'),
+          scope: { period: '20 ms', pp: '4.8 V', shape: 'pulse', polarity: 'low', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 25 (/INT): 4.8 V p-p, 20 ms, p. 16'),
             note: 'Sony prints 4.8 V p-p, 20 ms (a PAL machine; 16.7 ms on NTSC). The pulses go LOW from a HIGH line; the trace assumes 0 V at the bottom. Philips flags a period outside 20 ± 2 ms as ERR 990 and a line stuck LOW as ERR 999.' } },
         { tp: 'Reset', where: 'V9938 pin 9; Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
       ],

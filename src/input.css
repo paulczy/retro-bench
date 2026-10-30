@@ -394,6 +394,7 @@
   .scr .gr { fill: none; stroke: var(--silk-12); stroke-width: 1; shape-rendering: crispEdges; }
   .scr .ax { fill: none; stroke: var(--silk-25); stroke-width: 1; shape-rendering: crispEdges; }
   .scr .tr { fill: none; stroke: var(--copper); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .scr .tr.unk { stroke-width: 2; stroke-dasharray: 5 4; stroke-linecap: butt; }   /* duty not in the source */
   .scr .mkr { fill: var(--tin); }
   .scr .mt { font-size: 12px; fill: var(--tin); }
   .scr .wm { font-size: 10px; letter-spacing: .16em; fill: var(--silk-45); }
@@ -619,7 +620,7 @@
   }
 }
 
-/* ---------- print: black on white, no chrome. A machine page prints its card (.printcard), one page.
+/* ---------- print: black on white, no chrome. A machine page prints its card (.printcard): one page where it fits, else two.
    Unlayered so it beats the mask tokens and the components. Copper prints black, silkscreen dark grey hairlines. ---------- */
 @media print {
   @page { margin: 9mm; }
@@ -660,6 +661,10 @@
   .pc-n { font-size: 7.5pt; margin: 0 0 2pt; }
   .pc-ol li { padding: 1pt 0; font-size: 7.5pt; }
   .pc-ol li > b { font: 8pt var(--font-mono); margin-right: 3pt; }
+  .pc-ul { margin: 0 0 3pt; padding-left: 9pt; list-style: disc; }
+  .pc-ul li { font-size: 6.8pt; line-height: 1.2; padding: .5pt 0; }
+  .pc-if { font-size: 6.8pt; line-height: 1.2; color: #000; margin-top: .5pt; }
+  .pc-if b { font: 600 6.8pt var(--font-sans); }
   .pc-w { color: #444; font-size: 7pt; }
   .pc-x { font-size: 7pt; }
   .pc-c { margin: 0 0 2.5pt; font-size: 6.8pt; }

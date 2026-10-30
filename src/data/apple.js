@@ -521,7 +521,7 @@ const driveChips = {
     datasheets: [
       { label: 'RCA 1978 Linear Integrated Circuits, CA3146 terminal diagram, PDF p. 211 (bitsavers)', url: RCA78(211) },
       { label: 'Apple schematic 050-0007-H, Disk II Analog Board (A3)', url: D2ANALOG },
-      { label: 'Sams COMPUTERFACTS CD6 Disk II, parts list (Write Amp CA3146E), p. 5', url: SAMSD2(5) },
+      { label: 'Sams COMPUTERFACTS CD6 Disk II, parts list (Write Amp CA3146E), p. 5', url: SAMSD2(5), sams: true },
     ],
     pins: [
       { n: 1, name: 'Q1 C', type: 'io', dir: 'out', desc: 'Q1 collector: one half of the head winding through CR1.' },
@@ -769,7 +769,7 @@ const d2Mech = {
   ],
   sources: [
     d2Sources.analog,
-    { label: 'Sams COMPUTERFACTS CD6 Disk II, stepper check (11.6 V at J2 pins 11, 12, M, N, P, R), p. 6', url: SAMSD2(6) },
+    { label: 'Sams COMPUTERFACTS CD6 Disk II, stepper check (11.6 V at J2 pins 11, 12, M, N, P, R), p. 6', url: SAMSD2(6), sams: true },
     { label: 'Disk II analog card photo (edge fingers, A marked) (A2DP)', url: D2PHOTO },
     { label: 'Understanding the Apple II (Sather), Figure 9.3 drive functional diagram, p. 9-6', url: UTA2(235) },
   ],
@@ -1003,7 +1003,7 @@ const d2Power = {
     sources: [
       d2Sources.analog, d2Sources.card,
       { label: 'Understanding the Apple II (Sather), Power Supply (drive), p. 9-5', url: UTA2(234) },
-      { label: 'Sams COMPUTERFACTS CD6 Disk II, power supply service checks, p. 6', url: SAMSD2(6) },
+      { label: 'Sams COMPUTERFACTS CD6 Disk II, power supply service checks, p. 6', url: SAMSD2(6), sams: true },
       { label: 'Disk ][ Technical Procedures, visual inspection (C4 and the 74LS125), p. 5.5', url: D2TP(57) },
       { label: 'Apple Floppy Drives list (Disk II re-cabling, model numbers) (community)', url: FLOPPYLIST, verify: true },
     ],
@@ -1036,7 +1036,7 @@ const d2Power = {
     { label: 'Disk ][ Technical Procedures, D-Speed test, pp. 2.8-2.9', url: D2TP(20) },
     { label: 'Disk ][ Technical Procedures, Amplitude test (TP8/TP9), pp. 3.4-3.6', url: D2TP(29) },
     { label: 'Disk ][ Technical Procedures, Comparator offset adjustment (TP5, TP7, R21/R33, R28), pp. 3.20-3.23', url: D2TP(46) },
-    { label: 'Sams COMPUTERFACTS CD6 Disk II, motor speed adjustment and service checks, p. 6', url: SAMSD2(6) },
+    { label: 'Sams COMPUTERFACTS CD6 Disk II, motor speed adjustment and service checks, p. 6', url: SAMSD2(6), sams: true },
     { label: 'Understanding the Apple II (Sather), Disk II overview (300 rpm), p. 9-3', url: UTA2(232) },
     d2Sources.analog,
     S_CD6_SCH, SATHER_READ,
@@ -1237,7 +1237,7 @@ RCS.add({
     cpu6502: {
       id: 'cpu6502',
       replacements: [
-        { part: '65C02 (Rockwell, NCR or GTE, as in the Enhanced IIe)', kind: 'pin-compatible', note: 'On a IIe fit it only with the enhanced ROM set (342-0303 EF, 342-0304 CD, 342-0265 video); Apple calls any other mix of CPU and ROMs not acceptable.', source: { label: 'Apple IIe logic board identification, enhanced and unenhanced ROM sets, p. 1.2.2 (Apple page bound into the Sams CC10 scan)', url: SAMS2E(4) } },
+        { part: '65C02 (Rockwell, NCR or GTE, as in the Enhanced IIe)', kind: 'pin-compatible', note: 'On a IIe fit it only with the enhanced ROM set (342-0303 EF, 342-0304 CD, 342-0265 video); Apple calls any other mix of CPU and ROMs not acceptable.', source: { label: 'Apple IIe logic board identification, enhanced and unenhanced ROM sets, p. 1.2.2 (Apple page bound into the Sams CC10 scan)', url: SAMS2E(4), sams: true } },
         { part: 'WDC W65C02S', kind: 'modern', note: 'Still made, but pin 1 is VPB, an output, where the NMOS 6502 has ground (Vss); pins 5 (MLB) and 36 (BE) replace no-connects, and BE must be HIGH or the address, data and R/W buffers float.', source: { label: 'WDC W65C02S data sheet, Bus Enable (BE) and pinout, pp. 9-13', url: 'https://www.westerndesigncenter.com/wdc/documentation/w65c02s.pdf#page=9' } },
       ],
       name: '6502 / 65C02 CPU',
