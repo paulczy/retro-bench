@@ -18,6 +18,14 @@ const SUM = { label: 'SUM v4 n1 (Jan 1986) p. 5, 2068 power supply: make it cool
 const p = (n, name, type, dir, desc, x = {}) => Object.assign({ n, name, type, dir, desc }, name.startsWith('/') ? { activeLow: true } : {}, x);
 const c = (n, name, type, desc, x = {}) => Object.assign({ n, name, type, desc }, x);
 const GND = 'Ground.';
+/* features 1-6 sources (fetched 2026-10-30). Sams CC19 page n = PDF page - 1 on archive.org. */
+const CC19 = (label, n) => ({ label: `Sams Computerfacts CC19, Sinclair/Timex Model 2068 (1988), ${label}`, url: `https://archive.org/details/TimexSinclairEphemera/CC-19_Timex%20_Sinclair%202068/page/n${n}`, sams: true });
+const Z80PS = { label: 'Zilog Z80 CPU Product Specification 03-0027-02 (Mar 1978), D.C. characteristics: clock input LOW max 0.45 V, HIGH min VCC - 0.6 V, p. 8', url: 'http://www.bitsavers.org/components/zilog/z80/03-0027-02_Z80_CPU_Product_Specification_Mar78.pdf#page=8' };
+const ZX81SCH = { label: 'ZX81 circuit diagram SRC 049 (the TS1000 board follows it; 60 Hz strap on ULA pin 22)', url: 'https://k1.spdns.de/Vintage/Sinclair/80/Sinclair%20ZX81/Service%20and%20Assembly%20Manual/ZX81%20Circuit%20Diagram.gif' };
+const ZX81SM6 = { label: 'Sinclair ZX81 Service and Assembly Manual (transcribed), 6 Fault finding, p. 4', url: 'https://k1.spdns.de/Vintage/Sinclair/80/Sinclair%20ZX81/Service%20and%20Assembly%20Manual/ZX81%20Service%20and%20Assembly%20Manual%20(transcribed).pdf#page=5' };
+const REA = { label: 'Andy Rea, ZX81 ULA notes (oldcomputer.info): osc pin 35, /clkout pin 14 via TR2, /NMI pin 15, /ROMCS pin 13', url: 'https://oldcomputer.info/8bit/zx81/ULA/ula.htm' };
+const z80clk = (f, from) => ({ f, low: '0.45 V', high: '4.4 V', shape: 'square', basis: 'datasheet', source: Z80PS,
+  note: `Levels are the Z80A clock-input limits (LOW below 0.45 V, HIGH above VCC - 0.6 V = 4.4 V); the rate is ${from}. A clock that does not reach both limits makes the CPU flaky; a flat line means no clock.` });
 
 RCS.add({
   brand: { id: 'timex', name: 'Timex Sinclair', blurb: 'TS1000, TS1500 and TS2068. The American Sinclairs, with their own extras.' },
@@ -132,6 +140,9 @@ RCS.add({
       fails: ['No AY sound', 'Crackle or silence', 'Only the beeper works', 'Whatever hangs on port A is dead (TS2068: joysticks)'],
       heat: 'cool', verifiedAgainst: 'General Instrument AY-3-8910/8912 Data Manual sec. 2.2-2.3 (transcription); TS2068 Technical Manual Appendix D schematic U14',
       datasheets: [AYDM, tm('Appendix D schematic, U14 AY-3-8912', 178), tm('2.1.6 Sound generator, p. 19', 27)],
+      replacements: [
+        { part: 'YM2149 on a 28-pin adapter', kind: 'adapter', note: 'The Yamaha YM2149 comes only as a 40-pin DIP, pin-compatible with the AY-3-8910, not the 28-pin 8912, so it needs a 40-to-28 adapter. Leave its pin 26 (SEL) open or HIGH: LOW halves the clock and every note drops an octave.', source: { label: 'Yamaha YM2149 SSG data sheet (1992), features and SEL pin, pp. 1-2', url: 'https://bitsavers.org/components/yamaha/YM2149_199209.pdf#page=1' } }
+      ],
       pins: [
         p(1, 'ANALOG C', 'audio', 'out', 'Channel C D/A output, up to 1 V p-p.', { probe: 'Audio when channel C plays.' }),
         p(2, 'TEST 1', 'nc', '-', 'GI test pin. Leave open.'),
@@ -170,6 +181,9 @@ RCS.add({
       fails: ['Crash on bank switching', 'Some BASIC commands crash', 'Garbage when the Extension Bank is paged in'],
       heat: 'cool', verifiedAgainst: 'TS2068 Technical Manual (2nd ed., 1986): Appendix D schematic U20 and sec. 2.1.4',
       datasheets: [tm('Appendix D schematic, U20 2364 8K x 8 mask ROM 250 ns', 178), tm('2.1.4 ROM and Figure 2.1.4-1 EPROM rework, p. 18', 26)],
+      replacements: [
+        { part: '2764 EPROM (after board rework)', kind: 'adapter', note: 'Not a drop-in: pins 1 and 27 must be held HIGH. Cut the feed to pin 27 and wire +5 V to pins 1 and 27 (Figure 2.1.4-1). For a 27128 also replace the /RD feed on pin 26 with A13 from U16 pin 26.', source: tm('2.1.4 ROM, EPROM rework, p. 18', 26) }
+      ],
       pins: [
         p(1, 'NC', 'nc', '-', 'Not connected. Tie to +5 V when fitting a 2764 EPROM.'),
         p(2, 'A12', 'addr', 'in', 'Address bit 12.'),
@@ -400,8 +414,26 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'Crystal', where: 'ULA pin 35 (OSC)', expect: 'About 6.5 MHz.', verify: true },
-        { tp: 'CPU clock', where: 'Z80A pin 6 (CLK)', expect: '3.25 MHz.', verify: true },
+        { tp: 'CPU clock', where: 'Z80A pin 6 (CLK)', expect: '3.25 MHz.', verify: true, scope: z80clk('3.25 MHz', 'the 6.5 MHz resonator / 2, as on the ZX81 (circuit diagram SRC 049)') },
         { tp: 'Reset', where: 'Z80A pin 26 (/RESET)', expect: 'LOW at power-on, then HIGH.' }
+      ],
+      firstTen: [
+        { step: 1, check: 'Adapter on load', where: 'Power in (9V DC IN) pin T to pin S', expect: '+8 to +12 V DC on load, tip positive; about 14 V unloaded.',
+          ifNot: 'Replace or fix the adapter. Rolling bars on a working machine: a poorly smoothed or weak adapter.', source: ZX81SM },
+        { step: 2, check: 'Regulator warm after two minutes', where: 'Regulator body', expect: 'Warm, not too hot to hold.',
+          ifNot: 'Cold: no input (check the plug is in the power socket, not EAR or MIC). Very hot and cutting out: regulator not bolted to its heatsink properly.', source: ZX81SM6 },
+        { step: 3, check: '+5 V on the chips', where: 'Z80A pin 11; ULA pin 40; 6116 pin 24', expect: '+4.75 to +5.25 V.',
+          ifNot: 'Low with a hot regulator: a shorted chip or solder bridge; check the ULA and the Z80A first.', source: ZX81SCH },
+        { step: 4, check: '6.5 MHz resonator', where: 'ULA pin 35', expect: 'About 6.5 MHz.', ifNot: 'Resonator X1, then the ULA.', source: REA },
+        { step: 5, check: 'CPU clock', where: 'ULA pin 14 to Z80A pin 6', expect: '3.25 MHz square wave.', ifNot: 'At ULA pin 14 but not at Z80A pin 6: TR2 and its filter network. Missing at pin 14: ULA.', source: REA },
+        { step: 6, check: 'Reset', where: 'Z80A pin 26', expect: 'LOW at power-on, then HIGH.', ifNot: 'Stuck LOW holds the CPU in reset: check the /RESET parts, then the Z80A.', source: { label: 'Zilog Z80 CPU User Manual UM0080, /RESET pin function', url: 'https://www.zilog.com/docs/z80/um0080.pdf#page=19' } },
+        { step: 7, check: 'NMI from the ULA', where: 'ULA pin 15 to Z80A pin 17', expect: 'A steady train of LOW pulses while the picture is drawn (SLOW mode).', ifNot: 'CPU running but no NMI and no picture: ULA. A US ULA needs pin 22 tied to 0 V for 60 Hz.', source: REA },
+        { step: 8, check: 'ROM select', where: 'ULA pin 13 to ROM pin 20', expect: 'Pulses LOW on ROM access.', ifNot: 'Stuck HIGH: remove the RAM pack and any add-on, then check the 680 ohm series resistor and the ULA.', source: REA }
+      ],
+      clocks: [
+        { name: 'Resonator X1', where: 'ULA pin 35', ntsc: '6.5 MHz', source: ZX81SCH, verify: true },
+        { name: 'CPU clock', where: 'ULA pin 14 to Z80A pin 6', ntsc: '3.25 MHz', source: REA, verify: true },
+        { name: 'Field rate', where: 'ULA pin 22 (tied to 0 V on a US machine)', ntsc: '60 Hz', source: ZX81SCH }
       ],
       sources: [ZX81SM, K1_1000, { label: 'TS1000 PCB issue 3 photo (k1.spdns.de, scan by J. Boatwright)', url: 'https://k1.spdns.de/Vintage/Sinclair/80/Timex%20Sinclair%201000/PCB/PCB%20issue%203.jpg' }]
     },
@@ -444,14 +476,51 @@ RCS.add({
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; SCLD pin 26; AY-3-8912 pin 6', note: 'Common return.' }
       ],
       testPoints: [
-        { tp: 'Master crystal', where: 'SCLD pin 13 / SCLD pin 14', expect: '14.112 MHz.' },
-        { tp: 'CPU clock', where: 'Z80A pin 6 (CLK) / SCLD pin 42', expect: '3.528 MHz square wave, briefly held HIGH during display contention.' },
-        { tp: 'AY clock', where: 'AY-3-8912 pin 15 / SCLD pin 19', expect: '1.764 MHz.' },
+        { tp: 'Master crystal', where: 'SCLD pin 13 / SCLD pin 14', expect: '14.112 MHz.',
+          scope: { f: '14.112 MHz', low: '0 V', high: '5 V', shape: 'sine', basis: 'capture', source: CC19('schematic waveform at U3 pin 14 (5.0 V p-p, 0.1 µs/cm, 0 V base), PDF p. 3', 2),
+            note: 'Sams photo at SCLD pin 14 (OSC IN). Missing: crystal Y1, trimmer C5, then the SCLD (Sams troubleshooting p. 8).' } },
+        { tp: 'CPU clock', where: 'Z80A pin 6 (CLK) / SCLD pin 42', expect: '3.528 MHz square wave, briefly held HIGH during display contention.', scope: z80clk('3.528 MHz', '14.112 MHz / 4 (Technical Manual 2.1.8.2)') },
+        { tp: 'AY clock', where: 'AY-3-8912 pin 15 / SCLD pin 19', expect: '1.764 MHz.',
+          scope: { f: '1.764 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: CC19('schematic waveform on the U3 pin 19 to U14 pin 15 line (5.0 V p-p, 0.2 µs/cm, 0 V base), PDF p. 3', 2),
+            note: 'Sams photo. Missing with the CPU clock running: the SCLD. Present but no SOUND output: check R48 and the AY-3-8912 (Sams p. 9).' } },
+        { tp: 'Bus clock (/Φ)', where: 'SCLD pin 10', expect: '3.528 MHz square wave, about 5.4 V p-p (Sams).',
+          scope: { f: '3.528 MHz', low: '0 V', high: '5.4 V', shape: 'square', basis: 'capture', source: CC19('schematic waveform on the Φ line at U3 pin 10 (5.4 V p-p, 0.1 µs/cm, 0 V base), PDF p. 3', 2),
+            note: 'Sams photo; the arrow lands on the buffered bus clock line, not the CPU clock at SCLD pin 42. Both run at 3.528 MHz.' } },
+        { tp: 'Composite video out', where: 'MONITOR (composite video) pin 1', expect: 'About 1.9 V p-p composite, NTSC line every 63.5 µs.',
+          scope: { period: '63.5 µs', low: '-1 V', high: '0.9 V', shape: 'video-line', basis: 'capture', source: CC19('schematic waveform at composite video out J7 (1.9 V p-p, 20 µs/cm, -1 V base line), PDF p. 18', 17),
+            note: 'Sams gives 1.9 V p-p with the bottom graticule line at -1 V; the levels here are read from that. Line period from the Technical Manual: 14.112 MHz / 896 = 15.75 kHz. Sync pulses should be 0.5 V (set VR1, Sams adjustments p. 7). No video: check the waveform at Q5 base, then Q3 (Sams p. 8).' } },
+        { tp: 'Chroma oscillator', where: 'LM1889 U4 leg 17, crystal Y2', expect: '3.5795 MHz (set with trimmer C18 on a frequency counter).',
+          scope: { f: '3.579545 MHz', low: '7 V', high: '11 V', shape: 'square', basis: 'capture', source: CC19('schematic waveform at U4 pin 17 (4.0 V p-p, 0.1 µs/cm, 7.0 V base), PDF p. 18', 17),
+            note: 'Sams photo, rounded square wave on a 7 V base. Wrong frequency: adjust C18. Missing: Y2, C18, C11, C19, C20, R31-R34, then U4 (Sams p. 9).' } },
+        { tp: 'Colour difference into the modulator', where: 'LM1889 U4 legs 2 (R-Y) and 4 (B-Y)', expect: 'Line-rate waveforms of about 1.0 V p-p (R-Y) and 0.8 V p-p (B-Y) on a 5 V level (Sams photos, 10 µs/cm). Missing: R29, R30, then the SCLD.' },
+        { tp: 'Switching regulator drive', where: '78S40 U1 leg 16 (R4)', expect: 'About 22 V p-p switching waveform at 10 µs/cm (Sams photo; rate not legible).' },
+        { tp: 'Beeper', where: 'CR4 anode', expect: 'About 5 V p-p at about 500 Hz while 10 BEEP 10,10: GOTO 10 runs; 1.3 V p-p at U1 leg 6 and 11 V p-p at U1 leg 4 (Sams p. 9).' },
         { tp: 'Frame interrupt', where: 'SCLD pin 67 (/INT)', expect: 'LOW pulse about every 17 ms (60 Hz).' },
         { tp: 'Reset', where: 'Z80A pin 26 (/RESET)', expect: 'LOW at power-on, then HIGH.' },
         { tp: 'SCLD temperature', where: 'SCLD body', expect: 'Warm is normal; too hot to hold is a fault in the making. Add a heatsink.', verify: true }
       ],
-      sources: [tm('2.1.2 Voltage regulation, p. 8-9', 16), tm('2.1.8.2 Z-80 clock generation, p. 42', 50), tm('2.1.6.1 Tone generator (1.76475 MHz clock), p. 21', 29), tm('Appendix D schematic', 178), tm('Appendix D parts list, p. 292', 171)]
+      firstTen: [
+        { step: 1, check: 'AC adapter output', where: 'Power in (AC adapter) pin 2 to pin 1', expect: '20.4 V DC on the board (Sams); 14-25 V DC is in range (Technical Manual).',
+          ifNot: 'Check the adapter cord for breaks, then replace the adapter: DC, centre negative, at least 1 A.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
+        { step: 2, check: 'Input after the switch', where: 'C3 positive end; 78L12 U8 input', expect: '20.4 V DC.',
+          ifNot: 'Check the on-off switch SW2, connector J1 and coil L1.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
+        { step: 3, check: '+12 V regulator', where: '78L12 U8 output', expect: '12.0 V (11.5-12.5 V).', ifNot: 'Replace U8.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
+        { step: 4, check: '+5 V switching regulator', where: 'Q1 collector; Z80A pin 11; SCLD pin 43', expect: '5.2 V at Q1 collector (Sams); 4.75-5.25 V at the chips.',
+          ifNot: 'Check the voltages, waveforms and parts on 78S40 U1 legs 8 to 16, and transistor Q1.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
+        { step: 5, check: 'Reset', where: 'Z80A pin 26', expect: 'LOW at switch-on, then HIGH and stays HIGH.', ifNot: 'Check C21 and R43, then the Z80A (U19).', source: CC19('troubleshooting, microprocessor operation, p. 8', 8) },
+        { step: 6, check: 'Master crystal', where: 'SCLD pin 14', expect: '14.112 MHz, about 5 V p-p.', ifNot: 'Check crystal Y1 and trimmer C5, then the SCLD (U3).', source: CC19('troubleshooting, microprocessor operation, p. 8', 8) },
+        { step: 7, check: 'CPU clock', where: 'SCLD pin 42 to Z80A pin 6', expect: '3.528 MHz; trim C5 for 3.528 MHz on a frequency counter at Z80A pin 6.', ifNot: '14.112 MHz present but no 3.528 MHz: the SCLD.', source: CC19('troubleshooting p. 8 and 14 MHz adjustment p. 7', 8) }
+      ],
+      clocks: [
+        { name: 'Crystal Y1', where: 'SCLD pin 13 to SCLD pin 14', ntsc: '14.112 MHz', source: tm('2.1.8.2 Z-80 clock generation (14.112 MHz crystal), p. 42', 50) },
+        { name: 'Pixel clock', where: 'Inside the SCLD (no pin)', ntsc: '7.056 MHz', source: tm('2.1.8.3 display timing (1 bit each 142 ns, 7.056 MHz), p. 42', 50) },
+        { name: 'CPU clock', where: 'SCLD pin 42 to Z80A pin 6', ntsc: '3.528 MHz', source: tm('2.1.8.2 Z-80 clock generation (14.112 MHz / 4), p. 42', 50) },
+        { name: 'Bus clock /Φ', where: 'SCLD pin 10', ntsc: '3.528 MHz', source: CC19('schematic waveform at U3 pin 10, PDF p. 3', 2) },
+        { name: 'AY clock', where: 'SCLD pin 19 to AY-3-8912 pin 15', ntsc: '1.764 MHz', source: tm('2.1.6.1 Tone generator (printed 1.76475 MHz; 14.112 MHz / 8 = 1.764 MHz), p. 21', 29) },
+        { name: 'Line rate', where: 'SCLD video timing', ntsc: '15.75 kHz', source: tm('2.1.8.3 display timing (14.112 MHz / 896), p. 42', 50) },
+        { name: 'Chroma crystal Y2', where: 'LM1889 U4 leg 17', ntsc: '3.579545 MHz', source: CC19('3.58 MHz adjustment (3.5795 MHz at U4 pin 17), p. 7', 7) }
+      ],
+      sources: [tm('2.1.2 Voltage regulation, p. 8-9', 16), tm('2.1.8.2 Z-80 clock generation, p. 42', 50), tm('2.1.6.1 Tone generator (1.76475 MHz clock), p. 21', 29), tm('Appendix D schematic', 178), tm('Appendix D parts list, p. 292', 171), CC19('troubleshooting, pp. 8-9', 8), CC19('schematic with waveforms, PDF pp. 3 and 18', 2)]
     }
   },
   quickref: {
