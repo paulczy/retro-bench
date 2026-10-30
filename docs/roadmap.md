@@ -79,3 +79,6 @@ and 8 last. Cross-model review and a push to GitHub Pages after each group.
 - Clock pin callouts show the frequency expected on that machine, from the machine's clocks/testPoints (app agent, in progress).
 - Data pass after the app lands: about 154 of 444 clock pins on ready machines are not referenced by any clocks/testPoints `where` (e.g. C128 CIA pin 25). Extend the clocks rows with the receiving pins, sourced to the schematic; the validator will WARN on each uncovered pin.
 - Shared chip text that names one machine (6526 pin 25 "from the CPU (6510 pin 39)" shows on the C128) should move to the machine's clocks rows once covered.
+- ti.js `vdp9918`: pin 39 is named XTAL1 but the ColecoVision redraw labels pin 40 XTAL1; check against the TI 9918A data manual.
+- 57 clock pins have no fixed or sourced frequency (software baud clocks, PLL/data-separator clocks, RC oscillators, unreadable scans); listed in docs/verification/clock-pins.md.
+- Apple IIe: MMU part number prints as 344-0100 on Apple's schematic (data says 344-0010); IOU designator E5 unconfirmed. Atari 130XE 4464 fit unsourced.
