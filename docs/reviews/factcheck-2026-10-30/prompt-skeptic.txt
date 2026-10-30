@@ -1,0 +1,129 @@
+INTENT: Retro Bench (P:/retro-bench, an offline PWA for 8-bit computer bench repair) promises that every pin, connector, supply and replacement claim matches the document it cites, so a technician can probe and power a 40-year-old board without damaging it. This is a FACT-CHECK of the data against its cited sources, not a code review. The data is in src/data/*.js of the working directory (a read-only copy of the live site, commit 87c9b5a).
+
+You are an adversarial reviewer. Your job is to find real problems, not validate the work. Be specific: cite the record (machine, chip or connector id, pin) and the source page you checked. Rate each finding: high (blocks ship: could damage hardware or send a tech to the wrong pin), medium (should fix), low (worth noting).
+
+METHOD: your item list is a JSON file (path below). Group items by cited source document and open each document once (curl -L -A "Mozilla/5.0" into ./.factcheck-tmp/, pdftotext -layout for PDFs; render a page with pdftoppm -f N -l N -r 110 -png when the text layer is unusable and read the image; use web search when a cited URL is dead). For each item decide CONFIRMED, WRONG (give the correct value and the page), or UNVERIFIABLE (source dead, unreadable or silent; say which). Do not trust the data's own descriptions or verifiedAgainst text; trust only the source. If you run out of time, stop and report coverage honestly (how many items checked of how many) rather than guessing. Write your output as markdown: first a coverage table (checked / confirmed / wrong / unverifiable per item kind), then findings as a numbered list ordered by severity, then a short list of dead or wrong source links. Do not modify any file outside ./.factcheck-tmp/.
+
+YOUR LENS:
+## Skeptic
+
+Challenge correctness and completeness. Ask:
+
+- What inputs, states, or sequences will break this?
+- What error paths are unhandled or silently swallowed?
+- What race conditions or ordering dependencies exist?
+- What does the author believe is true that isn't proven?
+- Where is "it works on my machine" masquerading as verification?
+
+Map findings to: prove-it-works, fix-root-causes, serialize-shared-state-mutations.
+
+
+PRINCIPLES:
+# Prove It Works
+
+**Principle:** Every task output must be verified by checking the real thing directly — not by inferring from proxies, self-reports, or "it compiles."
+
+## Why
+
+Unverified work has unknown correctness. Indirect verification (file mtimes, output freshness, agent self-reports, cached screenshots) feels cheaper than direct observation, but acting on a wrong inference costs far more than checking the source.
+
+## Pattern
+
+After completing any task, ask: **"How do I prove this actually works?"**
+
+### Check the real thing, not a proxy
+- **Check process liveness directly** (PID, process table), not indirectly (tmux pane status, file mtime).
+- **Read the actual value**, not a cached or derived representation.
+- **When verification fails, suspect the observation method** before suspecting the system.
+
+### Code / Features
+1. Build it (necessary but not sufficient)
+2. Run it and exercise the actual feature path
+3. Check the full chain: does data flow from input to output?
+4. For integrations (IPC, sockets), test the full communication path end-to-end
+
+### Skills / Scripts / Tools
+1. Spawn a subagent to actually use the skill end-to-end
+2. Run scripts with real inputs and verify output
+3. Test error paths: bad input, missing files, timeouts
+
+### General
+- If you can run it, run it
+- Prefer automated verification over manual inspection
+
+### Delegation: trust artifacts, not self-reports
+
+When verifying delegated work, inspect the actual output artifact (`git diff --stat`, file contents, runtime behavior) — never the delegate's summary of what they claim to have done. Agents report what they intended, not always what happened. Scope violations and silent failures are invisible in self-reports but obvious in artifacts.
+
+## Relationship to Other Principles
+
+[[principles/fix-root-causes]] extends this to debugging — check the real cause, not the proxied symptom.
+
+See also [[principles/foundational-thinking]]
+
+# Fix Root Causes
+
+**Principle:** When debugging, never paper over symptoms. Trace every problem to its root cause and fix it there.
+
+## Why
+
+Symptom fixes accumulate: each workaround makes the system harder to reason about, and the real bug remains. Root-cause fixes are slower upfront but reduce total debugging time across the project's lifetime.
+
+## Pattern
+
+- **Reproduce first.** If you can't reproduce it, you can't verify your fix.
+- **Ask "why" until you hit bedrock.** The test fails → the mock is wrong → the interface changed → the type doesn't match the runtime shape. Fix the type, not the mock.
+- **Resist the urge to add guards.** Adding a nil check to silence a crash is a symptom fix. Why is it nil? Fix that.
+- **Check for the pattern, not just the instance.** If one file has a bug, grep for the same pattern. Fix all instances, or make it structurally impossible.
+- **When stuck, instrument — don't guess.** Add logging, read the actual error.
+
+## Restart Bugs: Suspect State Before Code
+
+Code doesn't change between runs. State does. When "fails after restart," suspect stale persistent state first — config files, caches, lock files, serialized state. If clearing a state file restores behavior, prioritize state validation as the fix.
+
+## Own Every File You Touch
+
+Never label an issue "pre-existing" to justify skipping it. If you touch a file, you own its quality. Fix lint errors, style violations, and bugs in the file regardless of who introduced them. The distinction between "my changes" and "existing code" doesn't exist — all codebase issues are shared ownership.
+
+## Relationship to Other Principles
+
+[[principles/prove-it-works]] says to check real state, not proxies. This extends that to debugging: check the real cause, not the proxied symptom.
+
+[[principles/encode-lessons-in-structure]] provides the encoding mechanism once a root cause is understood — make it structurally impossible to recur.
+
+See also [[principles/prove-it-works]], [[principles/encode-lessons-in-structure]]
+
+# Serialize Shared-State Mutations
+
+**Principle:** When concurrent actors share mutable state, enforce serialization structurally — lockfiles, sequential phases, exclusive ownership. Instructions and conventions are insufficient for concurrency safety.
+
+## Why
+
+Concurrent writes to shared state (files, branches, APIs) produce race conditions that are intermittent, hard to reproduce, and expensive to debug. Telling agents or goroutines to "take turns" does not work — they have no coordination mechanism beyond the instruction itself.
+
+## Pattern
+
+Before allowing any parallel execution (agents, goroutines, sessions):
+
+1. **Identify shared mutable state.** Files both read and write, branches both push to, APIs both define and consume.
+2. **If shared state exists, serialize access.** Lockfiles, sequential phases, or exclusive ownership.
+3. **If serialization is impractical, eliminate the sharing.** Give each actor its own copy (worktrees, separate files, isolated state directories).
+
+## Evidence
+
+- Concurrent worktree merges caused double-work → fixed with `.worktrees/.merge-lock` lockfile
+- Parallel managers sharing an API contract invented conflicting versions → fix is sequential phases (producer then consumer)
+- Non-blocking send to a full channel lost shutdown summary → shared channel without serialization
+- Worktree merge lockfile uses PID-based stale lock detection → structural enforcement of exclusion
+
+## Relationship to Other Principles
+
+[[principles/make-operations-idempotent]] makes reruns safe; this principle prevents concurrent runs. They are complementary, not redundant.
+
+[[principles/encode-lessons-in-structure]] is the meta-principle — this is what to encode when the lesson is about concurrency.
+
+See also [[codebase/worktree-gotchas]]
+
+FOCUS: items in skeptic.json: every supply block, every pin of every machine power connector (pin numbers, voltages, AC vs DC, polarity, centre-positive or centre-negative, which pin is +5 V vs +12 V), and every power and ground pin of every chip. These are the highest-stakes facts in the app.
+
+ITEM LIST: P:/retro-bench/.tmp/factcheck/skeptic.json
