@@ -492,11 +492,11 @@ RCS.add({
       supply: supply('msx1', ['Boards with 4116 VRAM also need -5 V, made on the board from -12 V; if it is lost the VRAM can fail.']),
       firstTen: msxFirst('msx1'), clocks: msxClocks('msx1'),
       rails: [
-        { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; TMS9918A pin 33; AY-3-8910 pin 40; 8255A pin 26; cartridge pins 45 and 47', note: 'The logic supply; the standard allows 300 mA per cartridge slot.' },
+        { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; TMS9918A pin 33; AY-3-8910 pin 40; 8255A pin 26; msx1-cart pins 45, 47 (cartridge)', note: 'The logic supply; the standard allows 300 mA per cartridge slot.' },
         { rail: '+12 V', expect: '11.4-12.6 V', where: 'Cartridge slot pin 48', note: '50 mA for cartridges; also the 4116 VRAM Vdd (pin 8) on boards that use them.' },
         { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'Cartridge slot pin 50', note: '50 mA for cartridges.' },
         { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '4116 pin 1', note: 'Only on boards with 4116 VRAM; made from -12 V on the board.', verify: true },
-        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; TMS9918A pin 12; AY-3-8910 pin 1; 8255A pin 7; cartridge pins 41 and 43', note: 'Common return.' }
+        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; TMS9918A pin 12; AY-3-8910 pin 1; 8255A pin 7; msx1-cart pins 41, 43 (cartridge)', note: 'Common return.' }
       ],
       testPoints: [
         { tp: 'VDP crystal', where: 'TMS9918A pin 39; TMS9918A pin 40', expect: '10.738635 MHz' },
@@ -517,10 +517,10 @@ RCS.add({
       supply: supply('msx2'),
       firstTen: msxFirst('msx2'), clocks: msxClocks('msx2'),
       rails: [
-        { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; V9938 pin 58; cartridge pins 45 and 47', note: 'The logic supply.' },
+        { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; V9938 pin 58; msx2-cart pins 45, 47 (cartridge)', note: 'The logic supply.' },
         { rail: '+12 V', expect: '11.4-12.6 V', where: 'Cartridge slot pin 48', note: '50 mA for cartridges.' },
         { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'Cartridge slot pin 50', note: '50 mA for cartridges.' },
-        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; V9938 pin 1; V9938 pin 20; cartridge pins 41 and 43', note: 'V9938 pin 20 is the DAC ground.' }
+        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; V9938 pin 1; V9938 pin 20; msx2-cart pins 41, 43 (cartridge)', note: 'V9938 pin 20 is the DAC ground.' }
       ],
       testPoints: [
         { tp: 'VDP crystal', where: 'V9938 pin 63; V9938 pin 64', expect: '21.47727 MHz',
@@ -528,11 +528,11 @@ RCS.add({
             note: 'Sony prints 3.4 V p-p and 21.4697 MHz on its PAL HB-F9P, with 2.0 V DC at the pin; the levels here centre the swing on that 2.0 V. The V9938 data book gives 21.47727 MHz. A 10:1 probe on the crystal pulls it slightly.' } },
         { tp: 'CPU clock', where: 'V9938 pin 8; Z80A pin 6', expect: '3.579545 MHz (crystal / 6)',
           scope: { period: '280 ns', pp: '4.7 V', shape: 'square', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 8 (CPUCLK): 4.7 V p-p, 280 ns, p. 16'),
-            note: 'Sony prints 4.7 V p-p and a 280 ns period; the trace assumes the swing starts at 0 V. Sony draws it with rounded tops. No CPUCLK with the crystal running: the V9938.' } },
+            note: 'Sony prints 4.7 V p-p and a 280 ns period. Only the peak-to-peak swing is given, so the trace is drawn AC-coupled with no 0 V reference. Sony draws it with rounded tops. No CPUCLK with the crystal running: the V9938.' } },
         { tp: 'Dot clocks', where: 'V9938 pin 2; V9938 pin 3', expect: '10.74 MHz / 5.37 MHz (open drain)' },
         { tp: 'Frame interrupt', where: 'V9938 pin 25', expect: 'LOW pulse every frame: 60 Hz (NTSC) or 50 Hz (PAL)',
           scope: { period: '20 ms', pp: '4.8 V', shape: 'pulse', polarity: 'low', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 25 (/INT): 4.8 V p-p, 20 ms, p. 16'),
-            note: 'Sony prints 4.8 V p-p, 20 ms (a PAL machine; 16.7 ms on NTSC). The pulses go LOW from a HIGH line; the trace assumes 0 V at the bottom. Philips flags a period outside 20 ± 2 ms as ERR 990 and a line stuck LOW as ERR 999.' } },
+            note: 'Sony prints 4.8 V p-p, 20 ms (a PAL machine; 16.7 ms on NTSC). The pulses go LOW from a HIGH line. Only the peak-to-peak swing is given, so the trace is drawn AC-coupled with no 0 V reference. Philips flags a period outside 20 ± 2 ms as ERR 990 and a line stuck LOW as ERR 999.' } },
         { tp: 'Reset', where: 'V9938 pin 9; Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
       ],
       sources: [v99('Part 2 pin functions, p. 115', 128), v99('MSX-Video circuit example, p. 113', 126), tdb('1.5.4 Cartridge Power Capacity, p. 34', 37)]

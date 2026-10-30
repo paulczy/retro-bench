@@ -641,7 +641,7 @@ RCS.add({
       clocks: clocks(false),
       rails: [
         { rail: '+5 V', expect: '4.75–5.25 V', where: '6809E pin 7; SAM pin 40; 4116 pin 9', note: 'LM309, 1.4 A maximum. The sheet gives the nominal only; the range is the usual ±5 %.' },
-        { rail: '+12 V', expect: '11.4–12.6 V', where: '4116 pin 8; cartridge pin 1', note: 'LM7812, 250 mA. RAM VDD, the relay and the cartridge.' },
+        { rail: '+12 V', expect: '11.4–12.6 V', where: '4116 pin 8; dragon-cart pin 1 (cartridge)', note: 'LM7812, 250 mA. RAM VDD, the relay and the cartridge.' },
         { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '4116 pin 1', note: 'LM7905, 50 mA. RAM VBB and the video output stage.' },
         { rail: 'Raw', expect: 'About +18 V and -18 V DC', where: 'LM7812 and LM7905 inputs on the PSU board', note: 'Unregulated, from the 28 V CT winding (sheet labels).' },
       ],
@@ -687,8 +687,8 @@ RCS.add({
       clocks: clocks(true),
       rails: [
         { rail: '+5 V', expect: '4.75–5.25 V', where: '6809E pin 7; SAM pin 40; 4164 pin 8; 6551 pin 15', note: 'LM309 on the PSU board.' },
-        { rail: '+12 V', expect: '11.4–12.6 V', where: 'cartridge pin 1; PL8 pin 3 (through 4.7 kΩ)', note: 'LM7812. RS-232 drivers, relay, cartridge.' },
-        { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'PL6 pin 3; PL8 pin 7 (through 4.7 kΩ)', note: 'LM7912. RS-232 drivers and the 79L05.' },
+        { rail: '+12 V', expect: '11.4–12.6 V', where: 'dragon-cart pin 1 (cartridge); dragon-serial pin 3 (PL8, through 4.7 kΩ)', note: 'LM7812. RS-232 drivers, relay, cartridge.' },
+        { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'dragon64-psu pin 3 (PL6); dragon-serial pin 7 (PL8, through 4.7 kΩ)', note: 'LM7912. RS-232 drivers and the 79L05.' },
         { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '79L05 output on the CPU board', note: 'Video output stage.', verify: true },
       ],
       testPoints: [
@@ -697,7 +697,7 @@ RCS.add({
         { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead', scope: qScope() },
         { tp: 'VDG clock', where: 'VDG pin 33', expect: 'Crystal ÷ 4 from SAM pin 7, about 3.55 MHz', scope: vclkScope() },
         { tp: 'ACIA crystal', where: '6551 pin 6', expect: '1.8432 MHz' },
-        { tp: 'ROM select', where: '6821 PIA pin 12', expect: 'HIGH in 32K mode, LOW in 64K mode (IC8, PB2)' },
+        { tp: 'ROM select', where: 'pia6821 pin 12 (6821 PIA)', expect: 'HIGH in 32K mode, LOW in 64K mode (IC8, PB2)' },
         { tp: 'CPU reset', where: '6809E pin 37', expect: 'HIGH once running' },
       ],
       sources: [

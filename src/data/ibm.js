@@ -1319,7 +1319,7 @@
         rails: [
           { rail: '+5 V', expect: 'Power Good sense window +4.5 to +6.5 V', where: 'P9 pins 4, 5, 6; 8088 pin 40', note: '2.3 to 11.2 A.' },
           { rail: '+12 V', expect: 'Power Good sense window +10.8 to +15.6 V', where: 'P8 pin 3', note: '0.04 to 2.9 A: diskette drive and the EIA drivers.' },
-          { rail: '+12 V display', expect: 'Power Good sense window +10.8 to +15.6 V', where: 'P12 pin 1', note: '0.5 to 1.5 A to the built-in display.' },
+          { rail: '+12 V display', expect: 'Power Good sense window +10.8 to +15.6 V', where: 'p-disp pin 1 (P12)', note: '0.5 to 1.5 A to the built-in display.' },
           { rail: '-12 V', expect: 'Power Good sense window -10.2 to -15.6 V', where: 'P8 pin 4' },
           { rail: '-5 V', expect: 'Power Good sense window -4.3 to -6.5 V', where: 'P9 pin 3' },
           { rail: 'Power Good', expect: 'LOW at switch-on, then HIGH', where: 'P8 pin 1' },
@@ -1364,8 +1364,8 @@
           ],
         },
         rails: [
-          { rail: '+5 V', expect: '4.75 to 5.25 V (5 percent)', where: 'Power board connector pins 4 to 7; 8088 pin 40', note: '1.5 to 3.6 A.' },
-          { rail: '+12 V', expect: '11.4 to 12.6 V (5 percent)', where: 'Power board connector pins 1 and 10', note: '0.04 to 1.2 A.' },
+          { rail: '+5 V', expect: '4.75 to 5.25 V (5 percent)', where: 'jr-psu pins 4, 5, 6, 7 (power board connector); 8088 pin 40', note: '1.5 to 3.6 A.' },
+          { rail: '+12 V', expect: '11.4 to 12.6 V (5 percent)', where: 'jr-psu pin 1 and pin 10 (power board connector)', note: '0.04 to 1.2 A.' },
           { rail: '-6 V', expect: '-5.04 to -6.96 V (16 percent)', where: 'Not on the power board connector table', note: 'Up to 25 mA. Present only with at least 1.5 A on +5 V.' },
           { rail: 'Transformer AC', expect: 'About 17 V AC, pin 1 or 3 to pin 2', where: 'Power in socket (P)', note: 'AC, not DC.' },
         ],

@@ -852,9 +852,9 @@ RCS.add({
         ],
         sources: [S('ZX80 Operating Manual, Getting Started, p. 6', ZX80OM), S('Sinclair ZX Archive, ZX80 Connectors (power)', ZX80CONN)] },
       rails: [
-        { rail: '+9 V DC in', expect: '9 V nominal, unregulated', where: 'Power jack tip; edge pin B2', note: 'Input to the 7805 (IC22).' },
+        { rail: '+9 V DC in', expect: '9 V nominal, unregulated', where: 'Power jack tip; zx80-edge pin B2', note: 'Input to the 7805 (IC22).' },
         { rail: '+5 V', expect: '+5 V', where: '7805 (IC22) output; Z80A pin 11; 2114 pin 18' },
-        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; 2114 pin 9; edge pins B4, B5' }
+        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; 2114 pin 9; zx80-edge pins B4, B5' }
       ],
       testPoints: [
         { tp: 'CPU clock', where: 'Z80A pin 6', expect: 'About 3.25 MHz (6.5 MHz crystal X1 / 2; the diagram says 3.2 MHz)', scope: z80clk('3.25 MHz', '6.5 MHz crystal X1 / 2 (ZX80 circuit diagram)') },
@@ -877,7 +877,7 @@ RCS.add({
         ],
         sources: [S('ZX81 Service and Assembly Manual, 9 Power supply, p. 7', ZX81SAM(8)), S('ZX81 Service and Assembly Manual, 6 Fault finding, p. 4', ZX81SAM(5)), S('Sinclair ZX Archive, ZX81 Connectors (power)', ZX81CONN), S('World of Spectrum FAQ, Pinouts: Power Supplies table', WOSPIN)] },
       rails: [
-        { rail: '+9 V DC in', expect: '+7 to +11 V DC on load', where: 'Power jack tip; C3 (22 uF) at the regulator input; edge pin B2', note: 'Below about 7 V the 7805 drops out.' },
+        { rail: '+9 V DC in', expect: '+7 to +11 V DC on load', where: 'Power jack tip; C3 (22 uF) at the regulator input; zx81-edge pin B2', note: 'Below about 7 V the 7805 drops out.' },
         { rail: '+5 V', expect: '+5 V (7805)', where: 'regulator output; Z80A pin 11; ULA pin 40; 2114 pin 18; ROM pin 24', note: 'A sagging +5 V with a hot 7805 means a shorted part. Check the ULA and the Z80 before swapping the regulator.' },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 34; 2114 pin 9; ROM pin 12', note: 'Common return.' }
       ],
@@ -927,12 +927,12 @@ RCS.add({
         ],
         sources: [S('ZX Spectrum Introduction manual, power supply 9 V DC 1.4 A, p. 7', SPINTRO), S('ZX Spectrum Service Manual 1.11 Power supplies, p. 15', SM48(15)), S('ZX Spectrum Service Manual 5.2 Power supply unit, p. 25', SM48(25)), S('ZX Spectrum Service Manual 6.1 TR4 faults, p. 30', SM48(30)), S('ZX Spectrum Service Manual 9.2 DC-DC converter modification, p. 48', SM48(48)), S('Mostek MK4116 data sheet, supply sequencing, PDF p. 107', MOSTEK80(107)), S('Sinclair ZX Archive, ZX Spectrum Connectors (polarity, no-load voltage)', SPCONN)] },
       rails: [
-        { rail: '+9 V DC in', expect: '+9 V ±2 V (7 to 11 V)', where: 'C50 positive side; edge pin A4', note: 'Below +7 V the 7805 does not regulate.' },
-        { rail: '+5 V', expect: '+4.75 to +5.25 V, no visible ripple', where: 'C34 positive side; 4116 pin 9 (IC6); ULA pin 14; Z80A pin 11; edge pin A3', note: 'The ULA and the Z80 both draw from +5 V. Switch-mode drop-ins for the 7805 (Traco, Murata) need no heatsink; on an Issue 2 board in a rubber-key case only a horizontal-mount version fits (Retroleum).' },
-        { rail: '+12 V', expect: '+10.8 to +13.2 V', where: 'DC-DC converter (D5/C44); 4116 pin 8 (IC6); edge pin B22', note: 'Made by TR4/TR5, not the 7805. A low +12 V kills the lower RAM.' },
+        { rail: '+9 V DC in', expect: '+9 V ±2 V (7 to 11 V)', where: 'C50 positive side; spectrum-edge pin A4', note: 'Below +7 V the 7805 does not regulate.' },
+        { rail: '+5 V', expect: '+4.75 to +5.25 V, no visible ripple', where: 'C34 positive side; 4116 pin 9 (IC6); ULA pin 14; Z80A pin 11; spectrum-edge pin A3', note: 'The ULA and the Z80 both draw from +5 V. Switch-mode drop-ins for the 7805 (Traco, Murata) need no heatsink; on an Issue 2 board in a rubber-key case only a horizontal-mount version fits (Retroleum).' },
+        { rail: '+12 V', expect: '+10.8 to +13.2 V', where: 'DC-DC converter (D5/C44); 4116 pin 8 (IC6); spectrum-edge pin B22', note: 'Made by TR4/TR5, not the 7805. A low +12 V kills the lower RAM.' },
         { rail: '+12 VA', expect: '+10.8 to +13.2 V', where: 'LT side of C52, to IC14 (LM1889) only', note: 'Filtered by R62/C45 for the colour circuits.' },
-        { rail: '-5 V', expect: '-4 V to -5.5 V', where: 'DC-DC converter; 4116 pin 1 (IC6); edge pin B20', note: 'A missing -5 V gives a dead lower 16K and endangers the 4116s.' },
-        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 40; 4116 pin 16; ROM IC5 pin 14', note: 'Common return.' }
+        { rail: '-5 V', expect: '-4 V to -5.5 V', where: 'DC-DC converter; 4116 pin 1 (IC6); spectrum-edge pin B20', note: 'A missing -5 V gives a dead lower 16K and endangers the 4116s.' },
+        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 40; 4116 pin 16; 23128 pin 14 (ROM IC5)', note: 'Common return.' }
       ],
       testPoints: [
         { tp: 'Crystal (14 MHz)', where: 'ULA pin 39 (OSC)', expect: 'About 14 MHz. No clock, no picture.' },
@@ -993,12 +993,12 @@ RCS.add({
         ],
         sources: [S('Spectrum 128 Service Manual 6 Power supplies, p. 1.22', SM128(25)), S('Spectrum 128 Service Manual, parts lists (PWR socket, power supply), pp. 5.4 and 6.0', SM128(39)), S('Spectrum 128 Service Manual, accessories list (power supply 9V), p. 6.0', SM128(44))] },
       rails: [
-        { rail: '+9 V DC in', expect: '9 V nominal, unregulated', where: 'PWR socket; edge pin A4' },
-        { rail: '+5 V', expect: '+5 V', where: '7805 output; Z80A pin 11; edge pin A3' },
+        { rail: '+9 V DC in', expect: '9 V nominal, unregulated', where: 'PWR socket; spectrum128-edge pin A4' },
+        { rail: '+5 V', expect: '+5 V', where: '7805 output; Z80A pin 11; spectrum128-edge pin A3' },
         { rail: '+12 V', expect: '+12 V', where: 'TR4/TR5 inverter (D15/C44); RS232 driver IC33; keypad' },
         { rail: '-12 V', expect: '-5 V to -12 V, unregulated', where: 'Charge pump C111/C112, D28/D29; RS232 driver IC33' },
-        { rail: '-5 V', expect: '-5 V', where: 'Zener D19 from -12 V; edge pin B20' },
-        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; edge pins A6, A7, A14' }
+        { rail: '-5 V', expect: '-5 V', where: 'Zener D19 from -12 V; spectrum128-edge pin B20' },
+        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; spectrum128-edge pins A6, A7, A14' }
       ],
       testPoints: [
         { tp: 'Master clock', where: 'Analogue section crystal', expect: '17.7 MHz (service manual 2.2)' },

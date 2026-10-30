@@ -3452,7 +3452,7 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+9 V DC in', expect: 'About +9 V DC (above 7.5 V)', where: 'CN8 pin 2; 7805 VR1 input', note: 'Below about 7.5 V the 7805 drops out.', conflict: 'Sams CC8 expects about 13 V DC at the power pack plug with the C16 disconnected; 9 V DC is the loaded rating on schematic 251788. Both can be right: the pack is unregulated.' },
+        { rail: '+9 V DC in', expect: 'About +9 V DC (above 7.5 V)', where: 'c16-power pin 2 (CN8); 7805 VR1 input', note: 'Below about 7.5 V the 7805 drops out.', conflict: 'Sams CC8 expects about 13 V DC at the power pack plug with the C16 disconnected; 9 V DC is the loaded rating on schematic 251788. Both can be right: the pack is unregulated.' },
         { rail: '+5 V', expect: '4.9-5.2 V', where: '7805 output; TED pin 4; 7501 pin 5; 4416 pin 9', note: 'Ripple under 50 mV. Sagging 5 V with a hot 7805 = shorted chip; pull TED first.' },
       ],
       testPoints: CBM264_TP({ f: '14.31818 MHz', low: '0 V', high: '3.6 V', shape: 'square', basis: 'capture', source: SAMS_CC8('schematic, waveform at Q2 collector into TED pin 14', 10), note: 'Sams photo: 3.6 V p-p over 0 V from the Q1/Q2 oscillator, edges rounded at this rate. A meter reads about 0.7 V DC here (Sams). NTSC board; PAL is 17.734475 MHz (TED System Hardware Manual). Flat line: oscillator Q1/Q2 or crystal Y1.' }),
@@ -3493,8 +3493,8 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+5 V', expect: '4.9-5.2 V', where: 'Power socket pin 1; TED pin 4; 7501 pin 5; 4164 pin 8', note: 'Comes straight from the external supply. A high reading here is the supply, not the board.' },
-        { rail: '9 V AC', expect: 'About 9 V AC between the two 9 V AC pins', where: 'Power socket pins 3-4; user port pins 10-11', note: 'Only brought out to the user port.' },
+        { rail: '+5 V', expect: '4.9-5.2 V', where: 'plus4-power pin 1 (power socket); TED pin 4; 7501 pin 5; 4164 pin 8', note: 'Comes straight from the external supply. A high reading here is the supply, not the board.' },
+        { rail: '9 V AC', expect: 'About 9 V AC between the two 9 V AC pins', where: 'plus4-power pins 3, 4 (power socket); plus4-user pins 10, 11 (user port)', note: 'Only brought out to the user port.' },
       ],
       testPoints: CBM264_TP({ f: '14.31818 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'capture', source: SAMS_CC9('schematic, waveform at Q2 into TED pin 14', 12), note: 'Sams photo: 4 V p-p over 0 V from the Q1/Q2 oscillator; a meter reads about 1.0 V DC here (Sams). NTSC board; PAL is 17.734475 MHz (TED System Hardware Manual). Flat line: oscillator Q1/Q2 or crystal Y1.' }),
       sources: [
@@ -3523,7 +3523,7 @@ RCS.add({
       ],
       rails: [
         { rail: '+5 V DC', expect: '4.95–5.10 V', where: '6510 pin 6', note: 'From the brick on power DIN pin 5. A sagging 5 V is usually a shorted chip: pull the PLA and VIC before blaming the supply.', conflict: 'Sams CC17 reads 4.9 V at the IC pins and 4.91 V at L5 on a working board, just under this range. Range kept; it is not from a Commodore document either, so treat 4.9 V as normal.' },
-        { rail: '9 V AC', expect: 'About 9 V AC between the two 9 V AC pins (DIN pins 6-7)', where: 'Power DIN pins 6 and 7', note: 'Rectified on the board: CR6/CR5 and VR1 7812 make +12 V; CR4 makes the 9 V unregulated rail (cassette motor); VR2 7805 makes the 5 V CAN supply for the clock and video circuits.' },
+        { rail: '9 V AC', expect: 'About 9 V AC between the two 9 V AC pins (DIN pins 6-7)', where: 'c64-power pins 6, 7 (power DIN)', note: 'Rectified on the board: CR6/CR5 and VR1 7812 make +12 V; CR4 makes the 9 V unregulated rail (cassette motor); VR2 7805 makes the 5 V CAN supply for the clock and video circuits.' },
         { rail: '+12 V (VIC-II and 6581 Vdd)', expect: 'About +12 V', where: 'VIC-II pin 13; SID pin 28', note: 'From VR1 (7812) on the board. An 8580 SID (C64C) wants +9 V on pin 28 instead. Missing or low = no picture or no sound.' },
       ],
       testPoints: [
@@ -3571,7 +3571,7 @@ RCS.add({
       ],
       rails: [
         { rail: '+5 V', expect: '4.95–5.10 V', where: '6502 pin 8; LM323 VR1 output', note: 'From the LM323 (VR1) on the board, fed by the 9 V AC transformer through bridge CR4. Only rail on the VIC-20: there is no +12 V. A sagging 5 V means a shorted chip; check the VIC and CPU first.' },
-        { rail: '9 V AC in', expect: 'About 9 V AC between the two 9 V AC pins', where: 'Power jack J1; user port pins 10-11', note: 'Straight from the external transformer.' },
+        { rail: '9 V AC in', expect: 'About 9 V AC between the two 9 V AC pins', where: 'Power jack J1; vic20-user pins 10, 11 (user port)', note: 'Straight from the external transformer.' },
       ],
       testPoints: [
         { tp: 'CPU clock Φ0', where: '6502 pin 37', expect: 'About 1 MHz (1.02 MHz NTSC / 1.11 MHz PAL)', verify: true },
@@ -3657,10 +3657,10 @@ RCS.add({
         { name: 'VDC dot clock', where: 'VDC pin 2', f: '16 MHz', source: SAMS_CC18('parts list (Y1 oscillator 16 MHz)', 33) },
       ],
       rails: [
-        { rail: '+5 V', expect: '4.95-5.10 V', where: '8502 pin 6; power DIN pin 1', note: 'Comes in on the 5-pin power DIN (CN11 pin 1) from the external supply, through SW1.' },
+        { rail: '+5 V', expect: '4.95-5.10 V', where: '8502 pin 6; c128-power pin 1 (power socket)', note: 'Comes in on the 5-pin power DIN (CN11 pin 1) from the external supply, through SW1.' },
         { rail: '+5 V (VDC)', expect: '+5 V', where: 'VDC pin 37', note: 'Supply to the 8563 VDC. A dead 80-column screen with this rail present points at the VDC.' },
         { rail: '+12 V', expect: 'About +12 V', where: 'SID pin 28 (6581); U59 7812 output', note: 'Made on the board by U59 (7812) from the 9 V AC. An 8580 SID (C128D) needs +9 V there instead.' },
-        { rail: '9 V AC', expect: 'About 9 V AC between the two 9 V AC pins', where: 'Power DIN pins 3 and 5; user port pins 10-11', note: 'Rectified on the board for +12 V and the 9 V unregulated rail.' },
+        { rail: '9 V AC', expect: 'About 9 V AC between the two 9 V AC pins', where: 'c128-power pins 3, 5 (power socket); c128-user pins 10, 11 (user port)', note: 'Rectified on the board for +12 V and the 9 V unregulated rail.' },
       ],
       testPoints: [
         { tp: 'CPU clock Φ0', where: '8502 pin 1', expect: 'Square wave, 1 MHz (2 MHz in FAST)' },
@@ -3727,7 +3727,7 @@ RCS.add({
       },
       rails: [
         { rail: '+5 V', expect: '4.75-5.25 V', where: '6502 pin 8; VIA pin 20; VR2 output', note: 'From VR2 (LM340-5; LM323 on the long board). On the 1541-II it comes straight from the brick through SW1.' },
-        { rail: '+12 V', expect: 'About +12 V', where: 'VR1 output; P7 pins 1-2 (stepper common); P5 pin 2', note: 'From VR1 (LM340-12). Runs both motors. A switched, delayed copy (+12VF) feeds the R/W circuits.' },
+        { rail: '+12 V', expect: 'About +12 V', where: 'VR1 output; 1541-stepper pins 1, 2 (P7, stepper common); 1541-spindle pin 2 (P5)', note: 'From VR1 (LM340-12). Runs both motors. A switched, delayed copy (+12VF) feeds the R/W circuits.' },
         { rail: '+12VF', expect: 'About +12 V once the 6502 is running', where: 'Q1 output (power up/down write protection)', note: 'Q1 and Q2 hold the R/W supply off until +5 V is good, so a power cycle does not write garbage (service manual PDF p. 17).' },
         { rail: 'Unregulated', expect: 'About 10 V (5 V side) and 20 V (12 V side)', where: 'CR4 and CR2 cathodes', note: 'Ray Carlsen\'s check point beside the bridge rectifiers.' },
       ],
@@ -3784,8 +3784,8 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+5 V', expect: 'About 5.0 V', where: '6502 pin 8; 1770 pin 15; CN1 pin 4', note: 'Set by VR201 on the supply board.' },
-        { rail: '+12 V', expect: 'About 12.0 V', where: 'CN1 pin 2; R/W hybrid', note: 'Motors and the R/W hybrid.' },
+        { rail: '+5 V', expect: 'About 5.0 V', where: '6502 pin 8; 1770 pin 15; 1571-psu pin 4 (CN1)', note: 'Set by VR201 on the supply board.' },
+        { rail: '+12 V', expect: 'About 12.0 V', where: '1571-psu pin 2 (CN1); R/W hybrid', note: 'Motors and the R/W hybrid.' },
       ],
       testPoints: [
         { tp: 'Oscillator', where: '251829 pin 1', expect: '16 MHz', scope: { f: '16 MHz', low: '0 V', high: '4.8 V', shape: 'sine', basis: 'capture', source: SAMS_CD12('schematic, waveform at U5 (251829) pin 1', 11), note: 'Sams photo: 4.8 V p-p over 0 V, close to a sine at 0.1 µs/cm. Missing: oscillator module Y1, C23, L1, R3 (Sams troubleshooting).' } },
@@ -3837,8 +3837,8 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+5 V', expect: 'About +5 V, steady under load', where: '6502 pin 8; 8520 pin 20; 1770 pin 15; CN6 pin 1', note: 'Straight from the brick through SW2. Sagging under load = the brick.' },
-        { rail: '+12 V', expect: 'About +12 V', where: 'CN6 pin 4; CN1 to the mechanism', note: 'Only the mechanism uses it.' },
+        { rail: '+5 V', expect: 'About +5 V, steady under load', where: '6502 pin 8; 8520 pin 20; 1770 pin 15; 1581-power pin 1 (CN6)', note: 'Straight from the brick through SW2. Sagging under load = the brick.' },
+        { rail: '+12 V', expect: 'About +12 V', where: '1581-power pin 4 (CN6); CN1 to the mechanism', note: 'Only the mechanism uses it.' },
       ],
       testPoints: [
         { tp: 'Oscillator', where: 'Y1 16 MHz module', expect: '16 MHz; U10 (74LS93) divides it', scope: { f: '16 MHz', low: '0.7 V', high: '3.7 V', shape: 'square', basis: 'capture', source: SAMS_CD22('schematic, waveform at R9 into U10 (74LS93) pin 1', 12), note: 'Sams photo: 3 V p-p riding on a 0.7 V bottom line at 0.1 µs/cm. Missing: the oscillator module (Sams service checks).' } },
@@ -3846,7 +3846,7 @@ RCS.add({
         { tp: 'CPU clock', where: '8520 pin 25', expect: '2 MHz φ2' },
         { tp: 'FDC clock', where: '1770 pin 18', expect: '8 MHz ±1%' },
         { tp: 'Reset', where: '6502 pin 40', expect: 'LOW at power-up, then HIGH' },
-        { tp: 'Serial idle', where: 'Serial DIN pins 4 and 5', expect: 'HIGH once initialisation finishes; LOW means the drive did not boot (Carlsen)' },
+        { tp: 'Serial idle', where: '1581-iec pins 4, 5 (serial DIN)', expect: 'HIGH once initialisation finishes; LOW means the drive did not boot (Carlsen)' },
       ],
       sources: [
         { label: '1581 Service Manual 314982-01, schematic 252380 sheet 2 (Y1, U10, WD1770 clock), p. 16', url: CBMD_SM81(19) },

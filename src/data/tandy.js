@@ -1576,8 +1576,8 @@ RCS.add({
       },
       rails: [
         { rail: '+5 V', expect: '4.75–5.25 V', where: '6809E pin 7; SAM pin 40; TP12', note: 'Logic supply, 1.35 A maximum. The TRM gives the nominal only; the range is the usual ±5 %.' },
-        { rail: '+12 V', expect: 'About +12 V', where: 'TP9; 4116 pin 8; cartridge pin 2', note: '78M12 U17, 400 mA. RAM VDD on 4116 boards, the 741 RS-232 driver and the 723.' },
-        { rail: '-12 V', expect: 'About -12 V', where: 'TP10; cartridge pin 1', note: '79M12 U18, 100 mA. RS-232 driver.' },
+        { rail: '+12 V', expect: 'About +12 V', where: 'TP9; 4116 pin 8; coco-cart pin 2 (cartridge)', note: '78M12 U17, 400 mA. RAM VDD on 4116 boards, the 741 RS-232 driver and the 723.' },
+        { rail: '-12 V', expect: 'About -12 V', where: 'TP10; coco-cart pin 1 (cartridge)', note: '79M12 U18, 100 mA. RS-232 driver.' },
         { rail: '-5 V', expect: 'About -5 V', where: 'TP11; 4116 pin 1', note: '79L05 U19, 100 µA. RAM VBB on 4116 boards. Lose -5 V and the RAM fails first; check C18.' },
       ],
       testPoints: [
@@ -1916,9 +1916,9 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+5 V', expect: '4.75-5.25 V, under 50 mV ripple', where: 'Z80A pin 11; SK2 pin 4', note: 'The regulated output.' },
-        { rail: '+12 V', expect: '11.40-12.60 V, under 150 mV ripple', where: '4116 pin 8; SK2 pin 2', note: 'Monitor, drives, RAM.' },
-        { rail: '-12 V', expect: '-11.0 to -15.0 V', where: 'SK2 pin 1', note: 'RS-232 and the MC7905C input.' },
+        { rail: '+5 V', expect: '4.75-5.25 V, under 50 mV ripple', where: 'Z80A pin 11; m3-psu pin 4 (SK2)', note: 'The regulated output.' },
+        { rail: '+12 V', expect: '11.40-12.60 V, under 150 mV ripple', where: '4116 pin 8; m3-psu pin 2 (SK2)', note: 'Monitor, drives, RAM.' },
+        { rail: '-12 V', expect: '-11.0 to -15.0 V', where: 'm3-psu pin 1 (SK2)', note: 'RS-232 and the MC7905C input.' },
         { rail: '-5 V', expect: 'About -5 V', where: '4116 pin 1; MC7905C output', note: 'RAM VBB. Lose it and the 4116s fail.' },
       ],
       testPoints: [
@@ -1989,10 +1989,10 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+5 V', expect: '5.00-5.25 V, under 50 mV ripple', where: 'Z80A pin 11; TB2 pins 8-10', note: 'V1, the main logic rail.' },
-        { rail: '+12 V (V2)', expect: '11.40-12.60 V', where: 'TB2 pin 2', note: 'Logic +12 V.' },
-        { rail: '+12 V (V3)', expect: '11.40-12.60 V', where: 'TB2 pins 5-7', note: 'Drives and monitor.' },
-        { rail: '-12 V', expect: '-11.40 to -12.60 V', where: 'TB2 pin 4', note: 'RS-232.' },
+        { rail: '+5 V', expect: '5.00-5.25 V, under 50 mV ripple', where: 'Z80A pin 11; m4-psu pins 8, 9, 10 (TB2)', note: 'V1, the main logic rail.' },
+        { rail: '+12 V (V2)', expect: '11.40-12.60 V', where: 'm4-psu pin 2 (TB2)', note: 'Logic +12 V.' },
+        { rail: '+12 V (V3)', expect: '11.40-12.60 V', where: 'm4-psu pins 5, 6, 7 (TB2)', note: 'Drives and monitor.' },
+        { rail: '-12 V', expect: '-11.40 to -12.60 V', where: 'm4-psu pin 4 (TB2)', note: 'RS-232.' },
       ],
       testPoints: [
         { tp: 'Master oscillator', where: 'Y1; U9-1 on the gate-array board', expect: '20.2752 MHz',

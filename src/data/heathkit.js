@@ -1458,13 +1458,13 @@ RCS.add({
           { label: 'HERO Robot FAQ 2.5 and 3.8, batteries and charger (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html' }
         ] },
       rails: [
-        { rail: 'Logic battery (+12 V system)', expect: '13.9 V float on charge; 10 V = LGLo warning', where: 'Charger socket pin 2; P201 pin 3', note: 'B3 + B4 in series, fuses F1 and F3.' },
-        { rail: 'Motor battery (+12 V system)', expect: '13.9 V float on charge; 10 V = drlo warning', where: 'Charger socket pin 6; P201 pin 10; P202 pin 20 (steering)', note: 'B1 + B2 in series, fuse F2. Motors run straight from it.' },
-        { rail: '+5 V logic (main)', expect: '4.9-5.1 V', where: 'P201 pins 4-5; CPU pin 8 (VCC)', note: 'From the switching regulator. Switched off for about 10 s by a sleep command ($C2E0 bit 6, U321/Q301).', verify: true },
-        { rail: '+5 V standby (VSB)', expect: 'About 5 V, also during sleep', where: 'P404 pin 52 (U326 output) to the 6116 RAMs', note: 'Keeps RAM during sleep; U322 blocks writes for about 100 ms after wake.', verify: true },
-        { rail: '+5 V display (switched)', expect: '4.9-5.1 V', where: 'P1201 pin 8 controls Q1202/Q1201', note: 'Off when $C2E0 bit 4 is low. Display blank with the CPU running points here.', verify: true },
-        { rail: '+5 V speech (switched)', expect: '4.9-5.1 V', where: 'SC-01A pin 1 (VP), via P501 pin 11 and Q502', note: 'Speech power is $C2E0 bit 3.', verify: true },
-        { rail: '+6 V', expect: 'About 6 V', where: 'P316 pin 151', note: 'Named +6-V power in the P316 table; source not traced.', verify: true },
+        { rail: 'Logic battery (+12 V system)', expect: '13.9 V float on charge; 10 V = LGLo warning', where: 'hero1-charger pin 2 (charger socket); hero1-p201 pin 3', note: 'B3 + B4 in series, fuses F1 and F3.' },
+        { rail: 'Motor battery (+12 V system)', expect: '13.9 V float on charge; 10 V = drlo warning', where: 'hero1-charger pin 6 (charger socket); hero1-p201 pin 10; hero1-p202 pin 20 (steering)', note: 'B1 + B2 in series, fuse F2. Motors run straight from it.' },
+        { rail: '+5 V logic (main)', expect: '4.9-5.1 V', where: 'hero1-p201 pins 4, 5; CPU pin 8 (VCC)', note: 'From the switching regulator. Switched off for about 10 s by a sleep command ($C2E0 bit 6, U321/Q301).', verify: true },
+        { rail: '+5 V standby (VSB)', expect: 'About 5 V, also during sleep', where: 'hero1-p404 pin 52 (U326 output) to the 6116 RAMs', note: 'Keeps RAM during sleep; U322 blocks writes for about 100 ms after wake.', verify: true },
+        { rail: '+5 V display (switched)', expect: '4.9-5.1 V', where: 'hero1-p1201 pin 8 controls Q1202/Q1201', note: 'Off when $C2E0 bit 4 is low. Display blank with the CPU running points here.', verify: true },
+        { rail: '+5 V speech (switched)', expect: '4.9-5.1 V', where: 'SC-01A pin 1 (VP), via hero1-p501 pin 11 and Q502', note: 'Speech power is $C2E0 bit 3.', verify: true },
+        { rail: '+6 V', expect: 'About 6 V', where: 'hero1-p316 pin 151', note: 'Named +6-V power in the P316 table; source not traced.', verify: true },
         { rail: '+8 V motion', expect: 'About 8 V', where: 'Motion board regulator U1401 (TM printed p. 78)', note: 'Regulated from +12 V.', verify: true }
       ],
       testPoints: [
@@ -1534,11 +1534,11 @@ RCS.add({
           { label: 'HERO Robot FAQ 2.5 and 3.9, batteries and charger (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html' }
         ] },
       rails: [
-        { rail: 'Battery', expect: 'About 12 V; low-battery warning below about 10 V', where: 'Low-voltage comparator U303; P310 pin 2 (switched)', note: 'Charge 12-14 h (owner guide).' },
-        { rail: '+5 V regulated (Vcc)', expect: '4.9-5.1 V awake; 0 V asleep', where: 'CPU pin 8 (VCC); P201 pins 10-11; switching regulator U302', note: 'Shut down in sleep by P201 pin 14 (+5V SHUTDOWN).', verify: true },
-        { rail: '+5 V switched (+5SW)', expect: '5 V with Sense Enable; off otherwise', where: 'Q314 output; ADC pin 8; TL851 pin 1; TL852 pin 5', note: 'Sonar, sense and the ADC sit on this rail. P201 pin 20 (SENSE ENABLE) turns it on.' },
+        { rail: 'Battery', expect: 'About 12 V; low-battery warning below about 10 V', where: 'Low-voltage comparator U303; herojr-p310 pin 2 (switched)', note: 'Charge 12-14 h (owner guide).' },
+        { rail: '+5 V regulated (Vcc)', expect: '4.9-5.1 V awake; 0 V asleep', where: 'CPU pin 8 (VCC); herojr-p201 pins 10, 11; switching regulator U302', note: 'Shut down in sleep by P201 pin 14 (+5V SHUTDOWN).', verify: true },
+        { rail: '+5 V switched (+5SW)', expect: '5 V with Sense Enable; off otherwise', where: 'Q314 output; ADC0831 pin 8; TL851 pin 1; TL852 pin 5', note: 'Sonar, sense and the ADC sit on this rail. P201 pin 20 (SENSE ENABLE) turns it on.' },
         { rail: 'Vca (always on)', expect: 'About 5 V whenever SW1 is ON', where: 'U209 output; RTC pin 24 (VDD)', note: 'RTC, reset circuits U221/U222 and decoder U202; RAM only if jumpered (J202, J204, J206).', verify: true },
-        { rail: '-10 V', expect: 'About -10 V', where: 'P201 pin 9; U219 pin 1', note: 'Half-wave doubler C312, D302, D303, C313 off the Q301 square wave; RS-232 driver supply.', verify: true }
+        { rail: '-10 V', expect: 'About -10 V', where: 'herojr-p201 pin 9; U219 pin 1', note: 'Half-wave doubler C312, D302, D303, C313 off the Q301 square wave; RS-232 driver supply.', verify: true }
       ],
       testPoints: [
         { tp: 'CPU crystal', where: 'CPU pin 38 (XTAL) and pin 39 (EXTAL)', expect: '4 MHz (Y201, JR-TM)' },
@@ -1602,9 +1602,9 @@ RCS.add({
         ] },
       rails: [
         { rail: 'Battery', expect: '13.8 / 14.5 V marked at the charge node', where: 'Power supply board lugs B (via F101) and D (via F102)', note: 'Marked voltage read from a low-resolution scan.', verify: true },
-        { rail: '+5 V', expect: '4.9-5.1 V', where: 'Backplane pins 71-72', verify: true },
-        { rail: '+12 V', expect: 'About 12 V', where: 'Backplane pins 69-70; U101 7812 output', verify: true },
-        { rail: '+16 V', expect: 'Not given', where: 'Backplane pin 4', verify: true }
+        { rail: '+5 V', expect: '4.9-5.1 V', where: 'hero2000-backplane pins 71, 72', verify: true },
+        { rail: '+12 V', expect: 'About 12 V', where: 'hero2000-backplane pins 69, 70; U101 7812 output', verify: true },
+        { rail: '+16 V', expect: 'Not given', where: 'hero2000-backplane pin 4', verify: true }
       ],
       testPoints: [
         { tp: 'CPU clock crystal', where: 'Y301 at U304 (clock generator)', expect: '15 MHz', verify: true }

@@ -62,7 +62,7 @@ const RC1770 = 'https://www.retro-kit.co.uk/page.cfm/content/RetroClinic-1770-Di
 const JAMULA = 'https://github.com/moogway82/JamSoftElectronULA';
 const WDC02 = 'https://www.westerndesigncenter.com/wdc/documentation/w65c02s.pdf#page=9';
 const WIKI_SAA = 'https://en.wikipedia.org/wiki/Mullard_SAA5050';
-const SM_PHOTO = 'the photo marks no ground, so the trace is drawn from 0 V with the swing read off the graticule';
+const SM_PHOTO = 'the photo marks no ground, so only the peak-to-peak swing is read off the graticule and the trace is drawn AC-coupled with no 0 V reference';
 
 /* Pad layouts for 'custom' drawings, 0-100 box looking into the socket. */
 const hdrPads = n => {   /* 2-row IDC header: odd pins on the lower row, pin 1 at the left, 2 above 1 */
@@ -1339,10 +1339,10 @@ RCS.add({
         ],
         sources: [S('Electron Service Manual, 2 Packaging and installation and 3.4 Power supply, pp. 2, 4', ESM(8)), S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)), S('Electron Service Manual, power supply board circuit diagram, p. 37', ESM(43)), S('Acorn Application Note 015, 1.0 and 3.0 Power supply (thermal fuse, expansion budget), pp. 2, 5', AN15(2)), S('Classic Acorn, Electron ULA repairs (PSU board joint at the mains lead; secondary)', CLA_ULA, true), S('Retro Repairs and Refurbs, Acorn Electron repair (dry, cracked power socket joints; secondary)', RRR_ELK, true)] },
       rails: [
-        { rail: 'Adaptor AC', expect: 'At least 17 V RMS loaded (17.1-20.9 V RMS)', where: 'Grey leads at the PSU board; expansion pins 1-4', note: 'AC: no polarity.' },
+        { rail: 'Adaptor AC', expect: 'At least 17 V RMS loaded (17.1-20.9 V RMS)', where: 'Grey leads at the PSU board; electron-expansion pins 1, 2, 3, 4', note: 'AC: no polarity.' },
         { rail: '+5 V', expect: '4.75-5.25 V, under 50 mV noise', where: 'ULA pin 48; 6502 pin 8; 23256 pin 28; 4164 pin 8', note: 'Main board draws 700-900 mA. The +5 V track runs in a ring round the board, so it must break in two places to isolate a section.' },
         { rail: '+5 V (ULA VCC2)', expect: 'A little under +5 V', where: 'ULA pin 9; ULA pin 43', note: 'Fed through R5 and R58, 24R 1/2 W each.' },
-        { rail: '-5 V', expect: '-4.75 to -5.25 V', where: 'LM324 pin 11; expansion pins 5, 6', note: 'About 25 mA. Only the cassette amplifier uses it on the board; a fault shows as a tape fault. Zero current: a short, or a broken track to the LM324.' },
+        { rail: '-5 V', expect: '-4.75 to -5.25 V', where: 'LM324 pin 11; electron-expansion pins 5, 6', note: 'About 25 mA. Only the cassette amplifier uses it on the board; a fault shows as a tape fault. Zero current: a short, or a broken track to the LM324.' },
         { rail: '0 V', expect: '0 V', where: 'ULA pin 51; ULA pin 68; 6502 pin 1; 6502 pin 21; 4164 pin 16', note: 'Also 23256 pin 14.' }
       ],
       testPoints: [
@@ -1361,7 +1361,7 @@ RCS.add({
         { tp: 'Cassette out', where: 'ULA pin 50', expect: 'About 1.8 V p-p sine while saving',
           scope: { f: '2400 Hz', pp: '1.8 V', shape: 'sine', basis: 'datasheet',
             source: S('Electron Service Manual, 8.8 Cassette interface (synthesised sine of about 1.8 V p-p at ULA pin 50 while saving), p. 13', ESM(19)),
-            note: 'Swing from the service manual text (drawn from 0 V: only the swing is given). 2400 Hz is the high tone that leads every block (Electron Advanced User Guide p. 213); data bits also use 1200 Hz. SAVE a section of ROM to see it.' } },
+            note: 'Swing from the service manual text. It gives only the peak-to-peak swing, so the trace is drawn AC-coupled with no 0 V reference. 2400 Hz is the high tone that leads every block (Electron Advanced User Guide p. 213); data bits also use 1200 Hz. SAVE a section of ROM to see it.' } },
         { tp: 'PAL into the modulator', where: 'PAL wire into the UM1233 modulator (SM Figure 3)', expect: 'PAL line: sync tip 2.6 V, black 2.9 V, burst to 3.05 V, white 3.3 V',
           scope: { period: '64 µs', low: '2.6 V', high: '3.3 V', sync: '2.6 V', black: '2.9 V', shape: 'video-line', basis: 'capture',
             source: S('Electron Service Manual, 8.7 b) Figures 3-5, black and white PAL waveforms at 50 mV/div, 10 µs/div, pp. 12-13', ESM(18)),

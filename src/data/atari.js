@@ -571,7 +571,7 @@ const supplyXL = {
   ],
 };
 const xlRails = [
-  { rail: '+5 V', expect: '4.9-5.1 V (±2 %)', where: 'Power DIN pins 1, 4, 6; ANTIC pin 21; GTIA pin 27; POKEY pin 17', note: 'The only rail. The XL/XE has no +12 V or -5 V; the DRAMs run on +5 V.' },
+  { rail: '+5 V', expect: '4.9-5.1 V (±2 %)', where: 'atari-power pins 1, 4, 6 (power DIN); ANTIC pin 21; GTIA pin 27; POKEY pin 17', note: 'The only rail. The XL/XE has no +12 V or -5 V; the DRAMs run on +5 V.' },
 ];
 /* ---------- test points, waveforms, first ten minutes, clocks (docs/data-schema.md, last section) ----------
    Sams Computerfacts waveform photos are 7 cm wide with the time per cm and the peak-to-peak reading printed beside

@@ -55,10 +55,10 @@ const db19Pads = [
 const DB19_OUTLINE = 'M4 26 H96 L88 76 H12 Z';
 
 const iiRails = [
-  { rail: '+5 V', expect: '4.85-5.15 V', where: '6502 pin 8; 9316B pin 24; PSU connector pin 3; slot pin 25', note: 'Logic supply, regulated directly. Probe this first.' },
-  { rail: '+12 V', expect: '11.3-12.3 V', where: '4116 pin 8; PSU connector pin 4; slot pin 50', note: 'RAM VDD. Nominal 11.8 V. Cards may draw 250 mA in total.' },
-  { rail: '-5 V', expect: '-4.7 to -5.7 V', where: '4116 pin 1; PSU connector pin 6; slot pin 34', note: 'RAM VBB. Nominal -5.2 V. The 4116 needs +5, +12 and -5 V together.' },
-  { rail: '-12 V', expect: '-11 to -13 V', where: 'PSU connector pin 5; slot pin 33; MM5740 pin 18', note: 'Keyboard encoder and serial cards.' },
+  { rail: '+5 V', expect: '4.85-5.15 V', where: '6502 pin 8; 9316B pin 24; ii-psu pin 3 (PSU connector); ii-slot pin 25', note: 'Logic supply, regulated directly. Probe this first.' },
+  { rail: '+12 V', expect: '11.3-12.3 V', where: '4116 pin 8; ii-psu pin 4 (PSU connector); ii-slot pin 50', note: 'RAM VDD. Nominal 11.8 V. Cards may draw 250 mA in total.' },
+  { rail: '-5 V', expect: '-4.7 to -5.7 V', where: '4116 pin 1; ii-psu pin 6 (PSU connector); ii-slot pin 34', note: 'RAM VBB. Nominal -5.2 V. The 4116 needs +5, +12 and -5 V together.' },
+  { rail: '-12 V', expect: '-11 to -13 V', where: 'ii-psu pin 5 (PSU connector); ii-slot pin 33; MM5740 pin 18', note: 'Keyboard encoder and serial cards.' },
 ];
 
 const iiTests = [
@@ -78,7 +78,7 @@ const iiTests = [
   { tp: 'Reset', where: '6502 pin 40', expect: 'LOW briefly at power-on and on Reset; HIGH when running' },
   { tp: 'RDY', where: '6502 pin 2', expect: 'HIGH when the CPU may run' },
   { tp: 'RAM /RAS', where: '4116 pin 4', expect: 'Pulses on each memory cycle' },
-  { tp: 'Slot clocks', where: 'Slot pins 36, 37, 38, 40', expect: '7M 7.16 MHz; Q3 2.04 MHz; Φ1 and Φ0 1.023 MHz' },
+  { tp: 'Slot clocks', where: 'ii-slot pins 36, 37, 38, 40', expect: '7M 7.16 MHz; Q3 2.04 MHz; Φ1 and Φ0 1.023 MHz' },
   { tp: 'Power supply', where: 'Power supply', expect: 'Clicking with no board attached is normal (no-load shutdown); clicking with the board attached means a short or overload' },
 ];
 
@@ -1009,10 +1009,10 @@ const d2Power = {
     ],
   },
   rails: [
-    { rail: '+5 V', expect: '4.75-5.25 V (Sams: 5.0 V at C4 +)', where: '3470 pin 11; 74LS125 pin 14; ribbon pins 11, 12', note: 'Logic. Nothing on the analog card tolerates +12 V here.' },
-    { rail: '+12 V', expect: '11.3-12.5 V (Sams: 11.6 V at Q1 emitter)', where: '2003 pin 9; 3470 pin 18; ribbon pins 13, 15, 17, 19', note: 'Motor, stepper, read amp and write driver.' },
+    { rail: '+5 V', expect: '4.75-5.25 V (Sams: 5.0 V at C4 +)', where: '3470 pin 11; 74LS125 pin 14; disk2-ribbon pins 11, 12', note: 'Logic. Nothing on the analog card tolerates +12 V here.' },
+    { rail: '+12 V', expect: '11.3-12.5 V (Sams: 11.6 V at Q1 emitter)', where: '2003 pin 9; 3470 pin 18; disk2-ribbon pins 13, 15, 17, 19', note: 'Motor, stepper, read amp and write driver.' },
     { rail: '+12 V gated', expect: 'About 11.6 V with the drive enabled; 0 V off', where: 'Q1 (MPSU51) collector; edge contacts 10, 11, 12', note: 'Switched by the 2003 from /ENBL. Missing: Q1 or the 2003.' },
-    { rail: '-12 V', expect: '-11 to -13 V (Sams: -12.0 V at C5 -)', where: 'Ribbon pin 9; C5', note: 'Comparator offset network (R28).' },
+    { rail: '-12 V', expect: '-11 to -13 V (Sams: -12.0 V at C5 -)', where: 'disk2-ribbon pin 9; C5', note: 'Comparator offset network (R28).' },
     { rail: 'Controller +5 V (switched)', expect: '+5 V only while a drive is on', where: 'P6 pin 20; 74LS174 pin 16', note: 'Q3 (MPSU51) on the interface card. P5 pin 20 is switched by Q1/Q2 from /I/O SELECT.' },
   ],
   testPoints: [
@@ -1024,12 +1024,12 @@ const d2Power = {
     { tp: 'Read data shape', where: 'TP7 (3470 pin 10)', expect: 'Single stable pulse image, no double edges (1 µs/div); adjust R28',
       scope: { period: '4 µs', low: '0 V', high: '3.5 V', shape: 'pulse', basis: 'capture', source: S_CD6_SCH,
         note: 'Sams: 3.5 V p-p at 10 µs/cm, trace bottom 0 V. The 3470 puts out a positive pulse about 1 µs wide for every flux reversal (Sather p. 9-9), so spacing is 4 µs or a multiple of it. Double edges at 1 µs/div: adjust R28.' } },
-    { tp: 'Read data out', where: 'TP1 (74LS125 pin 11) / ribbon pin 16', expect: 'Pulse train while a written disk turns' },
-    { tp: 'Drive enable', where: 'Ribbon pin 14 / 2003 pin 2', expect: 'LOW while the drive is on; goes HIGH about 1 s after $C0E8' },
+    { tp: 'Read data out', where: 'TP1 (74LS125 pin 11) / disk2-ribbon pin 16', expect: 'Pulse train while a written disk turns' },
+    { tp: 'Drive enable', where: 'disk2-ribbon pin 14 / 2003 pin 2', expect: 'LOW while the drive is on; goes HIGH about 1 s after $C0E8' },
     { tp: 'Speed (DSPEED)', where: 'Trimpot on the motor control card at the back of the mechanism', expect: 'Within ±26 on the Disk Alignment Aid scale; set to -5 to 0 over 128 passes' },
     { tp: 'Speed (strobe)', where: 'Spindle pulley pattern, VR1 on the motor speed control card', expect: '300 rpm: outer pattern stands still under 60 Hz fluorescent light (inner for 50 Hz)' },
     { tp: 'Motor speed control', where: 'Speed control IC (CX065B) pin 7 / motor transistor', expect: 'Sams: 10.4 V at IC pin 7 and the transistor emitter, 6.0 V at its collector' },
-    { tp: 'Stepper phases', where: 'Ribbon pins 2, 4, 6, 8 / 2003 pins 11-14', expect: 'One or two phases on at a time while seeking; all off at rest (phase 0 left on after boot)' },
+    { tp: 'Stepper phases', where: 'disk2-ribbon pins 2, 4, 6, 8 / 2003 pins 11, 12, 13, 14', expect: 'One or two phases on at a time while seeking; all off at rest (phase 0 left on after boot)' },
     { tp: 'Sequencer clock', where: '74LS323 pin 12 / 74LS174 pin 9', expect: '2 MHz while a drive runs' },
   ],
   sources: [
@@ -1066,9 +1066,9 @@ const d2Power = {
 };
 
 const ctrlRails = (iic) => [
-  { rail: '+5 V', expect: '4.75-5.25 V', where: `DB-19 pin 6${iic ? '' : ' and 16'}`, note: iic ? 'IIc: from the internal converter (1.5 A total for the whole machine).' : 'From slot pin 25 through the controller card.' },
-  { rail: '+12 V', expect: '11.3-12.5 V', where: 'DB-19 pins 7, 8', note: iic ? 'IIc: 0.6 A continuous (0.9 A intermittent, 1.5 A surge under 100 ms) for the whole machine, shared with the built-in drive.' : 'From slot pin 50; motor and stepper.' },
-  { rail: '-12 V', expect: '-11 to -13 V', where: 'DB-19 pin 5', note: iic ? 'IIc: 100 mA max.' : 'From slot pin 33. The UniDisk 5.25 needs it; the later Apple 5.25 Drive does not.' },
+  { rail: '+5 V', expect: '4.75-5.25 V', where: `uni-db19 pin 6${iic ? '' : ' and pin 16'}`, note: iic ? 'IIc: from the internal converter (1.5 A total for the whole machine).' : 'From slot pin 25 through the controller card.' },
+  { rail: '+12 V', expect: '11.3-12.5 V', where: 'uni-db19 pins 7, 8', note: iic ? 'IIc: 0.6 A continuous (0.9 A intermittent, 1.5 A surge under 100 ms) for the whole machine, shared with the built-in drive.' : 'From slot pin 50; motor and stepper.' },
+  { rail: '-12 V', expect: '-11 to -13 V', where: 'uni-db19 pin 5', note: iic ? 'IIc: 100 mA max.' : 'From slot pin 33. The UniDisk 5.25 needs it; the later Apple 5.25 Drive does not.' },
 ];
 
 const drivePower = {
@@ -1087,14 +1087,14 @@ const drivePower = {
       sources: [DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, product description, p. 1.2', url: DUOTP(6) }, { label: 'DuoDisk Technical Procedures, chip-swap notes (C21), p. 4.5', url: DUOTP(23) }],
     },
     rails: [
-      { rail: '+5 V', expect: '4.75-5.25 V', where: 'DB-25 pins 7, 24 (DB-19 pins 6, 16)', note: 'From slot pin 25 through the controller card.' },
-      { rail: '+12 V', expect: '11.3-12.5 V', where: 'DB-25 pins 19, 20 (DB-19 pins 7, 8)', note: 'From slot pin 50; motors and steppers of both drives.' },
-      { rail: '-12 V', expect: '-11 to -13 V', where: 'DB-25 pin 23 (DB-19 pin 5)', note: 'From slot pin 33.' },
+      { rail: '+5 V', expect: '4.75-5.25 V', where: 'duo-db25 pins 7, 24 (duo-db19 pins 6, 16)', note: 'From slot pin 25 through the controller card.' },
+      { rail: '+12 V', expect: '11.3-12.5 V', where: 'duo-db25 pins 19, 20 (duo-db19 pins 7, 8)', note: 'From slot pin 50; motors and steppers of both drives.' },
+      { rail: '-12 V', expect: '-11 to -13 V', where: 'duo-db25 pin 23 (duo-db19 pin 5)', note: 'From slot pin 33.' },
     ],
     testPoints: [
       { tp: 'Speed (DSPEED)', where: 'Adjustment hole under each drive, near the front', expect: '"Good" range on the Apple 5.25-Inch Disk Drive Diagnostic, as close to 0 as possible; keep the unit flat' },
-      { tp: 'Drive enable', where: 'DB-25 pin 11 (drive 1) / pin 8 (drive 2)', expect: 'LOW while that drive runs' },
-      { tp: 'Read data', where: 'DB-25 pin 3', expect: 'Pulse train while reading' },
+      { tp: 'Drive enable', where: 'duo-db25 pin 11 (drive 1) / pin 8 (drive 2)', expect: 'LOW while that drive runs' },
+      { tp: 'Read data', where: 'duo-db25 pin 3', expect: 'Pulse train while reading' },
     ],
     sources: [DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, DSPEED adjustment, p. 3.2', url: DUOTP(17) }, { label: 'DuoDisk Technical Procedures, troubleshooting flowchart, p. 4.2', url: DUOTP(21) }],
     firstTen: [
@@ -1137,8 +1137,8 @@ const drivePower = {
     },
     rails: ctrlRails(true),
     testPoints: [
-      { tp: 'Drive enable', where: 'DB-19 pin 17 (pin 9 for a second drive on a card)', expect: 'LOW while the drive runs' },
-      { tp: 'Read data', where: 'DB-19 pin 18; IWM pin 22 on a IIc', expect: 'Pulse train while reading' },
+      { tp: 'Drive enable', where: 'uni-db19 pin 17 (pin 9 for a second drive on a card)', expect: 'LOW while the drive runs' },
+      { tp: 'Read data', where: 'uni-db19 pin 18; IWM pin 22 on a IIc', expect: 'Pulse train while reading' },
       { tp: 'IIc disk clocks', where: 'IWM pin 24 / IWM pin 25', expect: '7.16 MHz / 2.04 MHz' },
       { tp: 'Speed', where: 'DSPEED hole under the drive (same mechanism as the DuoDisk)', expect: '"Good" range on the Apple 5.25-Inch Disk Drive Diagnostic', verify: true },
     ],
@@ -2243,11 +2243,11 @@ RCS.add({
           { label: 'Applefritter: Apple II and IIe power supply RIFA replacements (forum)', url: 'https://www.applefritter.com/node/33594', verify: true },
         ] },
       rails: [
-        { rail: '+5 V', expect: '4.85-5.15 V', where: 'PSU connector pin 3; MMU pin 25; IOU pin 28; 6502 pin 8; slot pin 25', note: 'The only rail the motherboard logic uses. 2.5 A max.',
+        { rail: '+5 V', expect: '4.85-5.15 V', where: '2e-psu pin 3 (PSU connector); MMU pin 25; IOU pin 28; 6502 pin 8; 2e-slot pin 25', note: 'The only rail the motherboard logic uses. 2.5 A max.',
           conflict: 'Sams CC10 (service check 1A) gives 5.3 V at P14 pin 3 with the supply unplugged from the board; Apple\'s 4.85-5.15 V wins. Sams also gives 12.5 V, -11.9 V and -5.0 V on pins 4, 5 and 6.' },
-        { rail: '+12 V', expect: '11.1-12.5 V', where: 'PSU connector pin 4; slot pin 50', note: 'Nominal 11.8 V. Disk II controller and cards; 250 mA for all slots.' },
-        { rail: '-5 V', expect: '-4.7 to -5.7 V', where: 'PSU connector pin 6; slot pin 34', note: 'Nominal -5.2 V. Slots only on a IIe.' },
-        { rail: '-12 V', expect: '-10.8 to -13.2 V', where: 'PSU connector pin 5; slot pin 33; AY-5-3600 pin 27', note: 'Keyboard encoder VGG and serial cards.' },
+        { rail: '+12 V', expect: '11.1-12.5 V', where: '2e-psu pin 4 (PSU connector); 2e-slot pin 50', note: 'Nominal 11.8 V. Disk II controller and cards; 250 mA for all slots.' },
+        { rail: '-5 V', expect: '-4.7 to -5.7 V', where: '2e-psu pin 6 (PSU connector); 2e-slot pin 34', note: 'Nominal -5.2 V. Slots only on a IIe.' },
+        { rail: '-12 V', expect: '-10.8 to -13.2 V', where: '2e-psu pin 5 (PSU connector); 2e-slot pin 33; AY-5-3600 pin 27', note: 'Keyboard encoder VGG and serial cards.' },
       ],
       testPoints: [
         { tp: 'Master clock', where: '2e-aux pin 32 (14M)', expect: '14.318 MHz',
@@ -2323,11 +2323,11 @@ RCS.add({
           { label: 'Computer History Museum catalog: Apple IIc power supply, model A2M4017', url: 'https://www.computerhistory.org/collections/catalog/102735572' },
         ] },
       rails: [
-        { rail: '+15 V in', expect: '+15 V nominal (9-20 V works)', where: 'Power connector pins 5 and 6', note: 'From the external brick.',
+        { rail: '+15 V in', expect: '+15 V nominal (9-20 V works)', where: '2c-power pin 5 and pin 6 (power connector)', note: 'From the external brick.',
           conflict: 'Sams CSCS7 reads 18.2 V from pin 2 to pin 6 of the brick plug with the brick unplugged from the IIc (no load); Apple rates the brick +15 V DC, which wins.' },
-        { rail: '+5 V', expect: '4.75-5.25 V', where: 'MMU pin 25; IOU pin 28; IWM pin 26; 6502 pin 8; disk port pin 6', note: '±5%. 1.5 A max.' },
-        { rail: '+12 V', expect: '10.8-13.2 V', where: 'Disk port pins 7 and 8; video expansion pin 8', note: '±10%. 0.6 A continuous; 300 mA max on the DB-15.' },
-        { rail: '-12 V', expect: '-10.8 to -13.2 V', where: 'Disk port pin 5', note: '±10%. 100 mA max. Also feeds the -5 V rail.' },
+        { rail: '+5 V', expect: '4.75-5.25 V', where: 'MMU pin 25; IOU pin 28; IWM pin 26; 6502 pin 8; 2c-disk pin 6 (disk port)', note: '±5%. 1.5 A max.' },
+        { rail: '+12 V', expect: '10.8-13.2 V', where: '2c-disk pins 7, 8 (disk port); 2c-video-exp pin 8 (video expansion)', note: '±10%. 0.6 A continuous; 300 mA max on the DB-15.' },
+        { rail: '-12 V', expect: '-10.8 to -13.2 V', where: '2c-disk pin 5 (disk port)', note: '±10%. 100 mA max. Also feeds the -5 V rail.' },
         { rail: '-5 V', expect: 'About -5 V', where: 'Derived from -12 V on the board', note: '50 mA max.', verify: true },
       ],
       testPoints: [
