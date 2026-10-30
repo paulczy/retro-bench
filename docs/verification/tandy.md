@@ -80,7 +80,7 @@ Totals: 160 existing pins checked, 68 new GIME pins, 0 pins left `verify`.
 - CoCo 1 E1-E4 physical lug order and E3 raw DC value: not given in the TRM.
 - "12 V rail on the F-board": not found in the TRM or the bulletins (they cover D, E and the AX-9328 revised board). Notes record the sourced D/E-board issues instead.
 - "CoCo 3 -12 V": the CoCo 3 SM shows no ±12 V rail; RS-232 runs from the SALT -5 V.
-- Dragon 32 (`planned`): untouched.
+- Dragon 32 (`moved to dragon.js (own brand)`): untouched.
 
 ## For other files
 

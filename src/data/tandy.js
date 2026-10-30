@@ -1,4 +1,4 @@
-/* Retro Bench data: Tandy / TRS-80. Color Computer 1, 2, 3, MC-10 (Dragon 32 planned). Pins and ports checked against the Tandy Color Computer Technical Reference Manual, the CoCo 2, CoCo 3 and MC-10 service manuals and schematics, and the Motorola MC6809E, MC6847 and MC6883 data sheets; see docs/verification/tandy.md. Unsourced items carry verify. */
+/* Retro Bench data: Tandy / TRS-80. Color Computer 1, 2, 3, MC-10. Pins and ports checked against the Tandy Color Computer Technical Reference Manual, the CoCo 2, CoCo 3 and MC-10 service manuals and schematics, and the Motorola MC6809E, MC6847 and MC6883 data sheets; see docs/verification/tandy.md. Unsourced items carry verify. */
 (() => {
 const ARC = 'https://colorcomputerarchive.com/repo/Documents';
 const HW = `${ARC}/Manuals/Hardware`;
@@ -159,17 +159,6 @@ RCS.add({
       os: 'Micro Color BASIC 1.0',
       chips: ['cpu6803', 'vdg6847', 'rom-micro-basic'],
       tagline: 'Micro Color BASIC in 4 KB.',
-    },
-    dragon32: {
-      id: 'dragon32',
-      brand: 'tandy',
-      name: 'Dragon 32',
-      year: 1982,
-      status: 'planned',
-      cpu: '6809E @ 0.89 MHz',
-      video: 'MC6847 VDG',
-      chips: ['cpu6809e', 'vdg6847', 'sam6883', 'pia6821'],
-      tagline: 'Same 6809E, 6847, 6883 and 6821 chipset as the CoCo. Facts from memory, not sourced yet.',
     },
   },
   chipLocations: {
