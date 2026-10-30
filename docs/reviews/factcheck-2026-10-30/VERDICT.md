@@ -15,22 +15,27 @@ The highest-stakes slice is clean (all 313 chip power and ground pins confirmed)
 mirrored on five machines, one pin-compatible claim is false, and Plus/4 video pin 8 is wrong; two reviewers found
 the Plus/4 pin independently.
 
-### Coverage and error rates
+### Coverage and error rates (both runs, every item decided)
+
+The first run left 979 items unchecked because its prompt let reviewers stop early. A second run of five GPT-6.1 Sol
+reviewers (same model and effort) checked all of them; its reports and ledgers are the `rest-*` files here.
 
 | Slice | Checked | Confirmed | Wrong | Unverifiable | Wrong rate |
 |---|---:|---:|---:|---:|---:|
 | Chip power/ground pins | 313 / 313 | 313 | 0 | 0 | 0 % |
 | Power-connector pins | 402 / 402 | 336 | 6 | 60 | 1.5 % |
 | Supply blocks | 59 / 59 | 55 | 2 | 2 | 3.4 % |
-| Connector orientation | 67 / 71 | 41 | 10 | 16 | 15 % |
-| Shared-chip text | 11 / 36 | 4 | 6 | 1 | 55 % |
-| Replacement claims (pin-compatible / adapter) | 11 / 123 | 4 | 3 | 4 | 27 % |
+| Connector orientation | 71 / 71 | 42 | 11 | 18 | 15 % |
+| Shared-chip text | 36 / 36 | 21 | 13 | 2 | 36 % |
+| Replacement claims (pin-compatible / adapter) | 123 / 123 | 65 | 7 | 51 | 5.7 % |
 | Photo outlines (55 boxes, 10 photos) | 10 / 10 | 8 | 0 | 2 | 0 % |
-| Random 10 % of other chip pins | 129 / 413 | 112 | 14 | 3 | 11 % |
-| Random 10 % of other connector pins | 75 / 629 | 63 | 1 | 11 | 1.3 % |
+| Random 10 % of other chip pins | 413 / 413 | 382 | 19 | 12 | 4.6 % |
+| Random 10 % of other connector pins | 629 / 629 | 558 | 9 | 62 | 1.4 % |
+| **All items** | **2,056** | **1,780** | **67** | **209** | **3.3 %** |
 
-The Skeptic finished its whole list. The Architect checked 99 of 240 items and the Minimalist 204 of 1,042 (all
-Commodore); the rest were not reached, and no verdict was inferred for them.
+The chip-pin errors cluster in Commodore: 14 of 129 sampled Commodore pins were wrong (11 %), against 5 of 284 for every
+other brand together (1.8 %). Most unverifiable items are acceptance ranges (for example 4.95–5.10 V) that the cited
+source does not state, and 27 HERO 1 pins whose only source, a book on archive.org, is restricted (HTTP 401).
 
 ## Findings
 
@@ -100,6 +105,61 @@ Commodore); the rest were not reached, and no verdict was inferred for them.
     - Lens: all. Principle: prove-it-works.
     - Recommendation: fix in the same pass.
 
+
+### Second-run findings
+
+15. **[high]** Disk II `disk2-mech`: card-edge faces reversed. The lettered contacts belong above the numbered ones with
+    the component side up.
+    - Lens: Architect. Principle: foundational-thinking.
+    - Recommendation: fix the record. This makes six mirrored card edges.
+16. **[high]** The TI console ROM replacement (TMS2532) is wrong on two counts. Pin 18 is A11. Pin 21 needs +5 V while
+    reading, but the TI socket grounds it.
+    - Lens: Architect. Principle: boundary-discipline.
+    - Recommendation: rewrite the row as an adapter that needs pin 21 lifted to +5 V.
+17. **[high]** Model 4 `m4-printer` pin 17 names U94 as the latch; it is U66.
+    - Lens: Minimalist. Principle: subtract-before-you-add.
+    - Recommendation: fix the designator.
+18. **[high]** CPC 6128 `pal40030` pin 16 /CAS1 drives IC119–IC126; the data names the other bank.
+    - Lens: Minimalist. Principle: outcome-oriented-execution.
+    - Recommendation: fix the chip range.
+19. **[high]** CPC 664 printer pin 27 is GND, not NC.
+    - Lens: Minimalist. Principle: outcome-oriented-execution.
+    - Recommendation: fix the pin.
+20. **[high]** `cpu6808` BA: "freed the bus" is misleading, because the address outputs stay driven.
+    - Lens: Minimalist. Principle: outcome-oriented-execution.
+    - Recommendation: reword from the Motorola datasheet, p. 7.
+21. **[medium]** More shared-chip text tied to one machine: `vdg6847` (SAM wiring on the MC-10), `rtc146818` (a HERO Jr
+    address on the BBC Master), `via6522` (PET beep), `crtc6845` (IBM clocks), `rom23128` (board links).
+    - Lens: Architect. Principle: boundary-discipline.
+    - Recommendation: neutral pass, as finding 9.
+22. **[medium]** Chip behaviour errors:
+    - `cpu6809e` BA/BS codes and /HALT timing.
+    - `sam6883` E can run at 0.895 or 1.79 MHz.
+    - The 82C55A bus-hold applies to port B high only.
+    - The XT 640 KB conversion needs a 74LS158 at U84.
+    - GIME-Z exists as a GIME replacement.
+    - TI-99/4A I/O pin 41 is IAQHA.
+    - The TI transformer tap is not a centre tap.
+    - BBC Master 1 MHz bus pin 23 is shared with the Tube.
+    - Atmos expansion /RESET is also an input.
+    - `mmu344` Cxxx covers $C000–$CFFF.
+    - `kbd3600` pins 2 and 5 depend on the mask option.
+    - The Model B drawing number is 103,000/IC, not 105,000/C.
+    - Lens: Architect and Minimalist. Principle: foundational-thinking.
+    - Recommendation: fix each one from the page in the ledger.
+23. **[medium]** More acceptance ranges and electrical qualifiers that the cited source does not state (Apple drives,
+    Atari controllers, ADAM, HERO, IBM 5155, BBC, Oric), and 27 HERO 1 pins whose only source is restricted.
+    - Lens: Minimalist. Principle: subtract-before-you-add.
+    - Recommendation: as finding 11. Mark the HERO 1 pins `verify`.
+
+### Second-run lead judgment
+
+15–20. Accept. Each was checked against a primary source and sends a probe or a part to the wrong place.
+21–22. Accept.
+23. Accept. Ranges the source does not give are removed rather than relabelled: the nominal value stays, and a range
+    stays only where some source states it, with that source cited. This replaces the "label typical" idea in the
+    judgment on finding 11, which would still have shown numbers with nothing behind them.
+
 ## What went well
 
 - Every chip power and ground pin, 313 of 313, matched its datasheet. This is the slice a technician probes first.
@@ -128,6 +188,6 @@ Commodore); the rest were not reached, and no verdict was inferred for them.
 14. Accept. Blocked links stay, since they are access-blocked, not dead, but each gets a working mirror where one
     exists.
 
-Coverage gap: 141 Architect items and 838 Minimalist items were not reached. Given an 11 % chip-pin error rate in the
-Commodore sample and 15 % on connector orientation, the unreached items should be checked before the data is called
-verified. That means a second run limited to the unchecked items, after the fixes above.
+Coverage is now complete: every item of the 2,056 has a decision. Remaining risk is concentrated where the error rate
+was highest: Commodore chip pins (11 %) and card-edge orientation (15 %). Both should be re-checked in full after the
+fixes, not only the sampled items.

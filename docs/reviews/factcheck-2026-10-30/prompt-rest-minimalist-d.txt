@@ -1,0 +1,76 @@
+INTENT: Retro Bench (P:/retro-bench, an offline PWA for 8-bit computer bench repair) promises that every pin, connector, supply and replacement claim matches the document it cites, so a technician can probe and power a 40-year-old board without damaging it. This is a FACT-CHECK of the data against its cited sources, not a code review. The data is in src/data/*.js of the working directory (a read-only copy of the live site, commit 87c9b5a).
+
+You are an adversarial reviewer. Your job is to find real problems, not validate the work. Be specific: cite the record (machine, chip or connector id, pin) and the source page you checked. Rate each finding: high (blocks ship: could damage hardware or send a tech to the wrong pin), medium (should fix), low (worth noting).
+
+METHOD: your item list is a JSON file (path below); each item carries its index i from the first run. This is the SECOND run: a first run checked other items and stopped early, so these items have never been checked. You MUST reach a decision on EVERY item in the list before you finish: CONFIRMED, WRONG (give the correct value and the page) or UNVERIFIABLE (say exactly why: source dead, blocked, unreadable or silent). Do not stop early, do not sample, do not mark items unchecked. Group items by cited source document and open each document once (curl -L -A "Mozilla/5.0" into ./.factcheck-tmp/rest-minimalist-d/, pdftotext -layout for PDFs; render a page with pdftoppm -f N -l N -r 110 -png when the text layer is unusable and read the image; use web search when a cited URL is dead). Do not trust the data's own descriptions or verifiedAgainst text; trust only the source. Write a per-item ledger to ./.factcheck-tmp/rest-minimalist-d/ledger.md (one row per item: index i, record, pin, decision, source page, evidence). Your final message is markdown: a coverage table (checked / confirmed / wrong / unverifiable per item kind; checked must equal the item count), then findings as a numbered list ordered by severity, then dead or wrong source links. Do not modify any file outside ./.factcheck-tmp/.
+
+YOUR LENS:
+## Minimalist
+
+Challenge necessity and complexity. Ask:
+
+- What can be deleted without losing the stated goal?
+- Where is the author solving problems they don't have yet?
+- What abstractions exist for a single call site?
+- Where is configuration or flexibility added without a concrete second use case?
+- Is this the simplest possible path to the outcome, or is it the path that felt most thorough?
+
+Map findings to: subtract-before-you-add, outcome-oriented-execution, cost-aware-delegation.
+
+PRINCIPLES:
+# Subtract Before You Add
+
+**Principle:** When evolving a system, remove complexity first, then build. Deletion creates a simpler substrate that makes subsequent additions cleaner, smaller, and less error-prone.
+
+## Why
+
+Adding to a complex system compounds complexity. Removing first reduces the surface area, reveals the essential structure, and makes the addition's design more obvious. The default action should be subtraction.
+
+## The Pattern
+
+- **Sequence removal before construction.** In plans, schedule deletion phases before build phases. Each piece of dead code, unused feature, or unnecessary abstraction removed makes the subsequent work simpler.
+- **Cut before you polish.** When scoping a feature set, cut ruthlessly to the minimum before investing in quality. Half-finished features are worse than missing ones.
+- **Design for observed usage, not speculative edge cases.** If the real workflow is single-process or low-concurrency, prefer simpler designs that fit that reality. Add edge-case machinery only after usage data says it's needed.
+- **Simplify prompts.** Remove redundant instructions, excessive templates, and sub-band examples. One-line instructions often work as well as 15-line templates.
+- **When a reference has no novel content, delete it** rather than leaving a stub.
+
+## Relationship to Other Principles
+
+This is not about *what* to build ([[principles/foundational-thinking]]) or *how* to redesign it ([[principles/redesign-from-first-principles]]). It's about *when* to act — an ordering principle that says subtraction comes before addition.
+
+See also [[todos]]
+
+# Outcome-Oriented Execution
+
+**Principle:** Optimize for the intended, verifiable end state rather than preserving smooth intermediate states.
+
+## Why
+
+In large refactors and migrations, forcing every intermediate step to stay fully stable often creates temporary compatibility code that becomes long-lived debt. The cleaner strategy is to converge directly on the target architecture and prove correctness at explicit verification boundaries.
+
+## Core Rule
+
+- Prioritize end-state integrity over transitional stability.
+- Intermediate breakage is acceptable when it is planned, scoped, and reversible.
+- Final verification is non-negotiable.
+
+## Guardrails
+
+- Use this for planned rewrites/migrations with explicit phase boundaries.
+- Declare where temporary breakage is acceptable and where it is not.
+- Keep high-signal checks for actively touched areas while migrating.
+- Require full static and runtime verification at plan completion.
+
+## Anti-Pattern
+
+Preserving obsolete paths only to keep every intermediate step green when no long-term compatibility is needed.
+
+## Relationship to Other Principles
+
+This complements [[principles/subtract-before-you-add]] and [[principles/migrate-callers-then-delete-legacy-apis]] by making outcome-first sequencing explicit.
+
+It also reinforces [[principles/prove-it-works]]: the outcome must be proven, not assumed.
+
+FOCUS: items in minimalist.json: a 10 % random sample of all other chip and connector pins (check name, number, direction and description against the source), plus every chip or connector that carries pin data but cites no source. In this lens, a claim with no source behind it should be cut or marked unverified: list each such claim and say whether the data should drop it.
+
+ITEM LIST: P:/retro-bench/.tmp/factcheck/rest-minimalist-d.json
