@@ -291,6 +291,9 @@
 
   .stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 28px; align-items: start; margin-top: 14px; }
   .stage .wire { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 1; }
+  .stage.stack { grid-template-columns: minmax(0, 1fr); }   /* a PLCC too wide for the detail beside it */
+  .stage.stack .detail { max-width: 640px; }
+  svg.dip.plcc .notch { fill: var(--mask); }
   .wire path { fill: none; stroke: var(--copper); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
   .wire circle { fill: var(--copper); }
   .dipwrap { overflow-x: auto; overflow-y: hidden; }
@@ -464,7 +467,7 @@
 
   /* ---------- below 768: the pin detail becomes a bottom panel joined to the pad by a trace ---------- */
   @media (width < 768px) {
-    .stage { grid-template-columns: 1fr; }
+    .stage { grid-template-columns: minmax(0, 1fr); }
     .stage .wire, .stage .detail { display: none; }
     .cgrid { grid-template-columns: minmax(0, 1fr); }
     .cstage .wire, .cdetail { display: none; }

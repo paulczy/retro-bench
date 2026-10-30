@@ -61,6 +61,10 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
 - `dir` is one of: in, out, bidir, `-` (supply or passive).
 - `name` uses a leading `/` for active-low (`/RES`, `/IRQ`) and sets `activeLow: true`.
 - Pins are numbered as the datasheet does: 1 at the notch, down the left, up the right.
+- `pkg: 'PLCC-n'` (square chip carrier, n a multiple of 4 with an odd count per side: 20, 28, 44, 52, 68, 84)
+  draws a square footprint numbered as JEDEC does, top view: pin 1 in the middle of the top edge, then
+  counter-clockwise (left along the top, down the left side, along the bottom, up the right). Any other
+  package draws as a DIP.
 - `terms` are glossary ids from `core.js`. Add a term there only when it is electronics vocabulary a
   tech might not know; keep `short` to one sentence and `long` to 2–3.
 
@@ -104,13 +108,17 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
     B1..Bn bottom), `odd-even` (odd numbers top, even bottom, 2 under 1). Example: C64 user port `edge-12x12-cbm`,
     IBM I/O channel `edge-31x31-ab`, Apple II slot `edge-25x25-seq`, 264-series expansion `edge-25x25-cbm`.
     Optional `pin1: 'right'` when pin 1 is at the right end looking into the socket (default `'left'`).
+    Optional `rowA: 'bottom'` when the manual calls the **underside** row A (the first-named row: A, 1.., odd),
+    as the Spectrum's does: the drawing then puts that row below and the other on top, so it still matches the
+    machine seen from the rear (default `'top'`). The caption over the drawing says which row is on top.
     Optional `keys: [k, ...]`: key slots cut between contact k and k+1. `edge-12x12-cbm` defaults to `[1, 10]`
     (the Commodore user port); give `keys: []` if a 12+12 edge has none.
   - single contact: `rca`, `f` (RF F-connector), `barrel` (all three: pin `1` = centre, `2` = shell or sleeve),
     `trs` (pins `T`, `R`, `S`), `ts` (pins `T`, `S`)
   - anything else: `custom`, with `pads: [{ n, x, y }]` in a 0–100 box as seen looking into the socket, plus an
     optional `outline: '<svg path d>'` in the same box (Atari SIO, TI power plug, Coleco power, headers). The app
-    scales the box so the two closest pads are 50 px apart and crops to the pads and outline. Keep the outline to
+    scales the box so the two closest pads are 50 px apart (no upper limit: a dense header gets wider and scrolls
+    sideways) and crops to the pads and outline. Traces leave through the gaps between pads or round the outside. Keep the outline to
     absolute commands (M L H V C Q A Z) or the crop falls back to the whole box. `gender: 'male'` draws the pads
     as pins (a header on the board); the default draws holes.
 - `gender` (any geo, optional): `'male'` (pins) or `'female'` (holes) for the socket on the machine. Round DIN

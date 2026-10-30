@@ -8,6 +8,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const arr = x => (Array.isArray(x) ? x : []);
+const r1 = v => Math.round(v * 10) / 10;
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
@@ -29,7 +30,7 @@ const LIGHT_MQ = matchMedia('(prefers-color-scheme: light)');
 const state = {
   maskPick: MASKS.includes(LS.get('rb-mask', null)) ? LS.get('rb-mask', null) : null,
   recents: arr(LS.get('rb-recent', [])),
-  flip: false, filter: null, pin: null, chipId: null, compact: null,
+  flip: false, filter: null, pin: null, chipId: null, compact: null, stack: false,
   cview: CVIEWS.includes(LS.get('rb-cview', null)) ? LS.get('rb-cview', null) : 'socket',
   conn: null,   /* { id, pin } the selected connector pad on the ports or power page */
   ctx: { route: { segs: [], q: {} } }, hits: [], hitIdx: -1, palItems: [], palIdx: 0,
@@ -132,6 +133,8 @@ const chipsOf = m => arr(m.chips).map(id => D.chips[id]).filter(Boolean);
 const fits = (m, id) => arr(m.chips).includes(id);   /* only a machine's own chips list counts */
 const fittedIn = c => arr(c.machines).map(id => D.machines[id]).filter(m => m && fits(m, c.id));
 const brandMachines = br => arr(br.machines).map(id => D.machines[id]).filter(Boolean);
+/* `kind: 'drive'` (1541, 1571...) are listed under their own "Drives" heading after the computers; no kind = computer */
+const isDrive = m => m.kind === 'drive';
 function dataFor(table, m) {
   if (table[m.id]) return { data: table[m.id], shared: null };
   if (m.id === 'plus4' && table.c16) return { data: table.c16, shared: D.machines.c16 };
@@ -245,7 +248,9 @@ function machineFootprint(m, big) {
   let pad = '';
   for (let i = 0; i < pads; i++) { const y = 5 + i * pitch; pad += `<circle class="pad" cx="4" cy="${y}" r="3.4"/><circle class="pad" cx="${W - 4}" cy="${y}" r="3.4"/>`; }
   const ready = m.status === 'ready';
-  const label = m.name.length > 16 ? String(m.aka || m.name).split(/ \/ |,|\(/)[0] : m.name;
+  /* a drive's aka is a list of board numbers: label it by its name without the brand ("1541 disk drive") */
+  const b = brandOf(m), bare = b && m.name.startsWith(b.name + ' ') ? m.name.slice(b.name.length + 1) : m.name;
+  const label = isDrive(m) ? bare : m.name.length > 16 ? String(m.aka || m.name).split(/ \/ |,|\(/)[0] : m.name;
   return `<a class="fp ${ready ? 'ready' : ''}" href="${mPath(m)}" aria-label="${esc(m.name)}, ${esc(STATUS_LONG[m.status] || statusOf(m))}">
     <svg width="${W}" height="${H + 18}" viewBox="0 -18 ${W} ${H + 18}" aria-hidden="true">
       <text class="des" x="11" y="-6">${esc(label.length > 20 ? label.slice(0, 19) + '…' : label)}</text>
@@ -260,12 +265,28 @@ const vacantFootprint = () => `<div class="fp vacant" aria-hidden="true"><svg wi
 function dipFootprint(chip, m, x, y, w, link = true) {
   const n = chip.pins ? chip.pins.length : parseInt(String(chip.pkg || '').replace(/\D/g, ''), 10) || 16;
   const per = Math.ceil(n / 2), pitch = Math.min(9, (w - 16) / Math.max(per - 1, 1));
-  const px0 = x + (w - (per - 1) * pitch) / 2, H = 46;
-  let pads = '';
-  for (let i = 0; i < per; i++) {
-    const cx = px0 + i * pitch;
-    pads += i === 0 ? `<rect class="pad" x="${cx - 3}" y="${y + 1}" width="6" height="6"/>` : `<circle class="pad" cx="${cx}" cy="${y + 4}" r="3"/>`;
-    pads += `<circle class="pad" cx="${cx}" cy="${y + H - 4}" r="3"/>`;
+  const px0 = x + (w - (per - 1) * pitch) / 2, H = 46, pl = plccN(chip);
+  let pads = '', body;
+  if (pl) {
+    /* a PLCC: a small square with its J-leads on all four sides and the pin 1 dimple, the name beside it */
+    const sq = H - 12, b0 = x + 12, t0 = y + 6, k = pl / 4, st = (sq - 8) / (k - 1);
+    for (let i = 0; i < k; i++) {
+      const t = 4 + i * st;
+      pads += `<rect class="pad" x="${r1(b0 + t - 0.6)}" y="${t0 - 4}" width="1.2" height="3"/><rect class="pad" x="${r1(b0 + t - 0.6)}" y="${t0 + sq + 1}" width="1.2" height="3"/>`
+        + `<rect class="pad" x="${b0 - 4}" y="${r1(t0 + t - 0.6)}" width="3" height="1.2"/><rect class="pad" x="${b0 + sq + 1}" y="${r1(t0 + t - 0.6)}" width="3" height="1.2"/>`;
+    }
+    body = `<rect class="ol" x="${b0}" y="${t0}" width="${sq}" height="${sq}" rx="2"/><circle class="notchc" cx="${b0 + sq / 2}" cy="${t0 + 6}" r="2.5"/>`;
+    body += `${pads}<text class="nm" x="${b0 + sq + 14}" y="${y + H / 2 + 6}">${esc(chip.short)}</text>`;
+  } else {
+    for (let i = 0; i < per; i++) {
+      const cx = px0 + i * pitch;
+      pads += i === 0 ? `<rect class="pad" x="${cx - 3}" y="${y + 1}" width="6" height="6"/>` : `<circle class="pad" cx="${cx}" cy="${y + 4}" r="3"/>`;
+      pads += `<circle class="pad" cx="${cx}" cy="${y + H - 4}" r="3"/>`;
+    }
+    body = `<rect class="ol" x="${x}" y="${y + 9}" width="${w}" height="${H - 18}" rx="2"/>
+    <path class="notchc" d="M ${x} ${y + H / 2 - 6} A 6 6 0 0 1 ${x} ${y + H / 2 + 6}"/>
+    ${pads}
+    <text class="nm" x="${x + w / 2 + 4}" y="${y + H / 2 + 6}" text-anchor="middle">${esc(chip.short)}</text>`;
   }
   const des = desOf(chip, m), nc = !chip.pins;
   const markX = x + des.length * 8.6 + 10;
@@ -275,10 +296,7 @@ function dipFootprint(chip, m, x, y, w, link = true) {
     <rect class="hit" x="${x - 4}" y="${y - 18}" width="${w + 8}" height="${H + 38}" rx="3"/>
     <text class="des" x="${x}" y="${y - 6}">${esc(des)}</text>
     <text class="pn" x="${x + w}" y="${y - 6}" text-anchor="end">${esc(chip.pkg || '')}</text>
-    <rect class="ol" x="${x}" y="${y + 9}" width="${w}" height="${H - 18}" rx="2"/>
-    <path class="notchc" d="M ${x} ${y + H / 2 - 6} A 6 6 0 0 1 ${x} ${y + H / 2 + 6}"/>
-    ${pads}
-    <text class="nm" x="${x + w / 2 + 4}" y="${y + H / 2 + 6}" text-anchor="middle">${esc(chip.short)}</text>
+    ${body}
     <text class="role" x="${x}" y="${y + H + 14}">${esc(role.length > 30 ? role.slice(0, 29) + '…' : role)}</text>
     ${chip.heat === 'hot' ? `<text class="hotm" x="${markX}" y="${y - 6}">HOT</text>` : ''}${nc ? `<text class="ncm" x="${markX}" y="${y - 6}">NOT CAPTURED</text>` : ''}
   ${link ? '</a>' : '</g>'}`;
@@ -312,12 +330,19 @@ function dipGeom(chip, compact) {
   const BW = compact ? 76 : 128, W = 2 * bodyX + BW, TOP = 52, H = TOP + half * PT + 44;
   return { half, nameEnd, markX, padX, bodyX, BW, W, TOP, H };
 }
-function wantCompact(chip) {
-  if (PANEL_MQ.matches) return true;
+/* the width the footprint has beside PIN DETAIL */
+function besideW() {
   const mw = ($('#main') || document.body).clientWidth - 20;
   const wide = innerWidth >= 1024, detail = wide ? 400 : 340, gap = wide ? 28 : 22;
-  return dipGeom(chip, false).W > mw - detail - gap;
+  return mw - detail - gap;
 }
+const geomOf = (chip, compact) => (isPLCC(chip) ? plccGeom : dipGeom)(chip, compact);
+function wantCompact(chip) {
+  if (PANEL_MQ.matches) return true;
+  return geomOf(chip, false).W > besideW();
+}
+/* a PLCC too wide to sit beside PIN DETAIL puts the detail under it instead (the trace then runs down to it) */
+const wantStack = chip => isPLCC(chip) && !PANEL_MQ.matches && geomOf(chip, state.compact).W > besideW();
 function dipSVG(chip) {
   const G = dipGeom(chip, state.compact), { half, padX: pl, bodyX, W, TOP, H } = G;
   const n = chip.pins.length, bodyY = TOP - 14, bodyH = half * PT + 28, cy = bodyY + bodyH / 2;
@@ -340,6 +365,70 @@ function dipSVG(chip) {
     <rect class="body" x="${bodyX}" y="${bodyY}" width="${W - 2 * bodyX}" height="${bodyH}" rx="3"/>
     <path class="notch" d="M ${W / 2 - 12} ${bodyY} A 12 12 0 0 0 ${W / 2 + 12} ${bodyY}"/>
     <text class="chipname" transform="rotate(-90 ${W / 2} ${cy})" x="${W / 2}" y="${cy + 5}" text-anchor="middle">${esc(chip.short)}${state.compact ? '' : '  ' + esc(chip.pkg)}</text>
+    ${g}
+  </svg>`;
+}
+
+/* ---------- SVG: the big PLCC ----------
+   A square J-lead chip carrier, top view, numbered as JEDEC numbers the PLCC and its datasheets draw it:
+   pin 1 in the middle of the top edge, by the index dimple, then counter-clockwise seen from above: left
+   along the top to the corner, down the left side, left to right along the bottom, up the right side, and
+   right to left along the top to pin n beside pin 1. PLCC-68: 9..1 68..61 across the top, 10-26 down the
+   left, 27-43 along the bottom, 44-60 up the right.
+   Source: the JEDEC MO-047 PLCC outlines as manufacturers draw them, for example Analog Devices P-68A
+   (https://www.analog.com/media/en/package-pcb-resources/package/3952049764524854029344014438152809p_68a.pdf),
+   top view with the pin 1 identifier mid-top and 9/10, 26/27, 43/44, 60/61 at the corners; and every
+   PLCC-44 datasheet (Z84C00, 80C51): 6..1 44..40 across the top, 7-17 down the left.
+   Square parts only (an odd count per side: 20, 28, 44, 52, 68, 84); PLCC-32 is oblong and draws as a DIP.
+   Same 44 px pin pitch as the DIP; a PG px gutter all round is the trace's lane. */
+const PG = 18;
+const plccN = chip => { const mm = /^PLCC-(\d+)$/i.exec(String(chip.pkg || '').trim()), n = mm ? +mm[1] : 0; return n >= 20 && n % 4 === 0 && (n / 4) % 2 === 1 ? n : 0; };
+const isPLCC = chip => !!(chip && chip.pins && plccN(chip) === chip.pins.length);
+/* side ('t' 'l' 'b' 'r') and slot (0 at the left or the top end of that side) of pin index k, top view */
+function plccPlace(k, per) {
+  const a = (per + 1) / 2;                  /* pins 1..a run from mid-top to the top-left corner */
+  if (k < a) return { side: 't', slot: a - 1 - k };
+  k -= a; if (k < per) return { side: 'l', slot: k };
+  k -= per; if (k < per) return { side: 'b', slot: k };
+  k -= per; if (k < per) return { side: 'r', slot: per - 1 - k };
+  return { side: 't', slot: 2 * per - 1 - k };
+}
+function plccGeom(chip, compact) {
+  const per = chip.pins.length / 4;
+  const nameW = Math.ceil(Math.max(3, ...chip.pins.map(p => String(p.name).length)) * CHAR);
+  const nameEnd = PG + nameW + (compact ? 4 : 10), markX = nameEnd + 12, padX = nameEnd + 30, bodyX = padX + 9 + (compact ? 9 : 16);
+  const IN = 16, W = 2 * bodyX + per * PT + 2 * IN;
+  return { per, nameEnd, markX, padX, bodyX, IN, W, H: W };
+}
+function plccSVG(chip) {
+  const { per, nameEnd, markX, padX, bodyX, IN, W } = plccGeom(chip, state.compact);
+  const pos = j => bodyX + IN + j * PT + PT / 2;
+  let g = '', dot = 0;
+  chip.pins.forEach((p, k) => {
+    let { side, slot } = plccPlace(k, per);
+    /* bottom view: the same part turned over left to right, so the numbers run clockwise */
+    if (state.flip) { if (side === 'l' || side === 'r') side = side === 'l' ? 'r' : 'l'; else slot = per - 1 - slot; }
+    const sel = state.pin === p.n, dim = state.filter && p.type !== state.filter;
+    const v = side === 't' || side === 'b', far = side === 'r' || side === 'b', o = d => (far ? W - d : d), a = pos(slot);
+    if (p.n === 1) dot = a;
+    const [px, py] = v ? [a, o(padX)] : [o(padX), a];
+    const pad = p.n === 1 ? `<rect class="pad" x="${px - 9}" y="${py - 9}" width="18" height="18"/>` : `<circle class="pad" cx="${px}" cy="${py}" r="9"/>`;
+    const lead = v ? `<line class="lead" x1="${a}" y1="${o(padX + 9)}" x2="${a}" y2="${o(bodyX)}"/>` : `<line class="lead" x1="${o(padX + 9)}" y1="${a}" x2="${o(bodyX)}" y2="${a}"/>`;
+    const hit = v ? `<rect class="hit" x="${a - PT / 2}" y="${far ? W - bodyX + 1 : 1}" width="${PT}" height="${bodyX - 2}" rx="3"/>`
+      : `<rect class="hit" x="${far ? W - bodyX + 1 : 1}" y="${a - PT / 2}" width="${bodyX - 2}" height="${PT}" rx="3"/>`;
+    const num = v ? `<text class="num" x="${a}" y="${far ? W - bodyX - 9 : bodyX + 18}" text-anchor="middle">${p.n}</text>`
+      : `<text class="num" x="${far ? W - bodyX - 7 : bodyX + 7}" y="${a + 4}" text-anchor="${far ? 'end' : 'start'}">${p.n}</text>`;
+    /* names on the top and bottom stand on end, reading outward from the pad */
+    const name = v ? `<text class="name" transform="rotate(-90 ${a + 5} ${o(nameEnd)})" x="${a + 5}" y="${o(nameEnd)}" text-anchor="${far ? 'end' : 'start'}">${esc(p.name)}</text>`
+      : `<text class="name" x="${o(nameEnd)}" y="${a + 5}" text-anchor="${far ? 'start' : 'end'}">${esc(p.name)}</text>`;
+    g += `<g class="pin${dim ? ' dim' : ''}${sel ? ' sel' : ''}" data-pin="${p.n}" data-side="${side}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="Pin ${p.n}, ${esc(p.name)}, ${esc(ptype(p.type).label)}">
+      ${hit}${lead}${pad}${v ? mark(p.type, a, o(markX)) : mark(p.type, o(markX), a)}${num}${name}</g>`;
+  });
+  const c = W / 2;
+  return `<svg class="dip plcc" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" role="group" aria-label="${esc(chip.name)} ${esc(chip.pkg)} footprint, ${state.flip ? 'viewed from below, numbers clockwise' : 'top view, numbers counter-clockwise from pin 1 at the top centre'}. Tab to a pad, Enter selects it.">
+    <rect class="body" x="${bodyX}" y="${bodyX}" width="${W - 2 * bodyX}" height="${W - 2 * bodyX}" rx="4"/>
+    <circle class="notch" cx="${dot}" cy="${bodyX + 40}" r="7"/>
+    <text class="chipname" x="${c}" y="${c + 5}" text-anchor="middle">${esc(chip.short)}  ${esc(chip.pkg)}</text>
     ${g}
   </svg>`;
 }
@@ -392,7 +481,7 @@ function render() {
         if (state.chipId !== chip.id) { state.chipId = chip.id; state.pin = null; state.filter = null; state.flip = false; }
         const pn = Number(r.q.pin);
         if (r.q.pin && chip.pins.some(p => p.n === pn)) state.pin = pn;
-        state.compact = wantCompact(chip);
+        state.compact = wantCompact(chip); state.stack = wantStack(chip);
         ctx.crumbs.push(['Pinouts', mPath(m) + '/pinouts'], [chip.short]);
         html = viewChip(m, chip);
       } else html = viewNotFound();
@@ -449,13 +538,14 @@ const emptyBlk = (label, text) => `<div class="empty"><b>${esc(label)}</b>${text
 
 function viewHome() {
   const recents = state.recents.map(id => D.machines[id]).filter(Boolean);
-  const ready = Object.values(D.machines).filter(m => m.status === 'ready').length;
+  const ready = Object.values(D.machines).filter(m => m.status === 'ready' && !isDrive(m)).length;
+  const drives = Object.values(D.machines).filter(m => m.status === 'ready' && isDrive(m)).length;
   const drawn = Object.values(D.chips).filter(c => c.pins).length;
   return `
     <div class="grid gap-7 items-start lg:grid-cols-[minmax(280px,380px)_1fr]">
       <div class="tblock">
         <div class="big">Retro Bench<small>REV A, 8-BIT REPAIR REFERENCE</small></div>
-        <div class="meta"><span>${ready}</span> machines fitted, <span>${drawn}</span> chips drawn pin by pin<br><span>${Object.keys(D.terms).length}</span> glossary terms, tap any dotted word</div>
+        <div class="meta"><span>${ready}</span> machines${drives ? ` and <span>${drives}</span> drives` : ''} fitted, <span>${drawn}</span> chips drawn pin by pin<br><span>${Object.keys(D.terms).length}</span> glossary terms, tap any dotted word</div>
         ${recents.length ? `<div class="recent mt-4.5"><div class="h4 mt-0 mb-0">Last on the bench</div>${recents.map(m => `<a href="${mPath(m)}"><span>${esc(mDes(m))}</span>${esc(m.name)}</a>`).join('')}</div>` : ''}
       </div>
       <div>
@@ -466,20 +556,23 @@ function viewHome() {
     </div>
     ${D.brands.map(br => {
       const ms = brandMachines(br), fitted = ms.some(m => m.status === 'ready');
+      const comps = ms.filter(m => !isDrive(m)), drv = ms.filter(isDrive);
       return `<section class="blk${fitted ? '' : ' dim'}" aria-label="${esc(br.name)}"><a class="lbl" href="#/${br.id}">${esc(br.name)}</a>
-        <div class="fp-grid">${ms.length ? ms.map(m => machineFootprint(m, false)).join('') : vacantFootprint()}</div>
+        ${comps.length || !drv.length ? `<div class="fp-grid">${comps.length ? comps.map(m => machineFootprint(m, false)).join('') : vacantFootprint()}</div>` : ''}
+        ${drv.length ? `<div class="h4 mb-1">Drives</div><div class="fp-grid">${drv.map(m => machineFootprint(m, false)).join('')}</div>` : ''}
         ${br.blurb ? `<p class="note">${esc(br.blurb)}</p>` : ''}</section>`;
     }).join('')}
     <p class="note mt-5.5">Solid footprints are fitted with full pinouts. Dashed footprints are on paper only: the cheat sheet exists and is not in the app yet. Every table links to the document it was checked against; the archives are thanked on the <a class="lnk" href="#/credits">credits page</a>.</p>`;
 }
 
 function viewBrand(br) {
-  const ms = brandMachines(br);
+  const ms = brandMachines(br), comps = ms.filter(m => !isDrive(m)), drv = ms.filter(isDrive);
   const res = arr(D.resources[br.id]);
   return head('', esc(br.name), esc(br.blurb || '')) + (ms.length ? `
-    <section class="blk"><span class="lbl">Machines</span><div class="fp-grid">${ms.map(m => machineFootprint(m, true)).join('')}</div></section>
+    ${comps.length ? `<section class="blk"><span class="lbl">Machines</span><div class="fp-grid">${comps.map(m => machineFootprint(m, true)).join('')}</div></section>` : ''}
+    ${drv.length ? `<section class="blk"><span class="lbl">Drives</span><div class="fp-grid">${drv.map(m => machineFootprint(m, true)).join('')}</div></section>` : ''}
     <section class="blk"><span class="lbl">Parts list</span>
-      <div class="legend tri">${ms.map(m => `<div class="k"><a class="lnk" href="${mPath(m)}">${esc(mDes(m))}</a></div><div class="v"><a class="text-silk hover:text-copper-hi" href="${mPath(m)}"><b>${esc(m.name)}</b></a> <span class="tin">${[m.year, m.aka].filter(Boolean).map(esc).join(', ')}</span>${m.tagline ? `<br><span class="tin sm">${esc(m.tagline)}</span>` : ''}</div><div class="v3 mono tin sm">${esc(statusOf(m))}</div>`).join('')}</div>
+      <div class="legend tri">${[...comps, ...drv].map(m => `<div class="k"><a class="lnk" href="${mPath(m)}">${esc(mDes(m))}</a></div><div class="v"><a class="text-silk hover:text-copper-hi" href="${mPath(m)}"><b>${esc(m.name)}</b></a> <span class="tin">${[m.year, m.aka].filter(Boolean).map(esc).join(', ')}</span>${m.tagline ? `<br><span class="tin sm">${esc(m.tagline)}</span>` : ''}</div><div class="v3 mono tin sm">${esc(statusOf(m))}</div>`).join('')}</div>
     </section>` : emptyBlk('NO FOOTPRINTS ON THIS BOARD YET', `No ${esc(br.name)} machines have been entered. They will appear here as their sheets are added.`)) +
     (res.length ? `<section class="blk res"><span class="lbl">Resources</span>${res.map(resRow).join('')}</section>` : '');
 }
@@ -559,10 +652,12 @@ function viewChip(m, chip) {
       <span class="flex-1"></span><span class="tin sm max-sm:hidden">Tap a pad, or Tab to it and press Enter</span>
     </div>
     <div class="types" role="group" aria-label="Pin types, tap to filter">${present.map(t => `<button type="button" data-act="filter" data-t="${esc(t)}" class="${state.filter === t ? 'on' : ''}" aria-pressed="${state.filter === t}">${markIcon(t)}${esc(ptype(t).label)} <span class="c">${count(t)}</span></button>`).join('')}</div>
-    <div class="stage" id="stage">
+    <div class="stage${state.stack ? ' stack' : ''}" id="stage">
       <svg class="wire" id="wire" aria-hidden="true"></svg>
-      <div><div class="dipwrap" id="dipwrap">${dipSVG(chip)}</div>
-        <p class="note text-center mx-auto">${state.flip ? 'VIEW: BOTTOM. Pins toward you, notch still up.' : 'VIEW: TOP. Notch up, pin 1 at the square pad.'}</p></div>
+      <div><div class="dipwrap" id="dipwrap">${isPLCC(chip) ? plccSVG(chip) : dipSVG(chip)}</div>
+        <p class="note text-center mx-auto">${isPLCC(chip)
+          ? (state.flip ? 'VIEW: BOTTOM. Leads toward you; pin 1 still at the top centre, numbers run clockwise.' : 'VIEW: TOP. Pin 1 at the square pad, top centre by the dot; numbers run counter-clockwise.')
+          : state.flip ? 'VIEW: BOTTOM. Pins toward you, notch still up.' : 'VIEW: TOP. Notch up, pin 1 at the square pad.'}</p></div>
       <div class="detail" id="detail">${detailBox(chip, m)}</div>
     </div>
     <section class="blk pinlegend"><span class="lbl">Pin legend</span>
@@ -817,6 +912,7 @@ function selectPin(n) {
   const d = $('#detail'); if (d) d.innerHTML = detailBox(chip, m);
   renderPanel();
   if (nav) { const b = $(`${PANEL_MQ.matches ? '#panel' : '#detail'} [data-nav="${nav}"]`); if (b) b.focus({ preventScroll: true }); }
+  plccIntoView($('svg.dip .pin.sel'));
   if (PANEL_MQ.matches) padIntoView();
   drawWire();
 }
@@ -865,7 +961,7 @@ function padIntoView(pin = $('svg.dip .pin.sel') || $('svg.conn .cpin.sel')) {
 }
 function refreshChip() {
   const { chip, machine } = state.ctx; if (!chip) return;
-  state.compact = wantCompact(chip);
+  state.compact = wantCompact(chip); state.stack = wantStack(chip);
   $('#main').innerHTML = viewChip(machine, chip);
   renderPanel(); drawWire(); watchDip();
 }
@@ -906,6 +1002,15 @@ function drawStageWire() {
   const pad = sel.querySelector('.pad').getBoundingClientRect(), b = box.getBoundingClientRect();
   const sx = pad.left + pad.width / 2 - stage.left, sy = pad.top + pad.height / 2 - stage.top;
   const left = sel.dataset.side === 'l';
+  if (sel.ownerSVGElement.classList.contains('plcc')) {
+    /* under the chip, land beside the box's PIN DETAIL label, never on it */
+    const lb = box.querySelector('.lbl'), ex = lb ? lb.getBoundingClientRect().right - stage.left + 16 : b.left - stage.left + 36;
+    const pts = plccStagePts(sel.dataset.side, sx, sy, plccLanes(stage.left, stage.top), b.left - stage.left, b.top - stage.top, b.left >= dip.right - 8, ex);
+    wire.setAttribute('viewBox', `0 0 ${stage.width} ${stage.height}`);
+    const e = pts[pts.length - 1];
+    wire.innerHTML = `<path d="${chamfer(pts, 9)}"/><circle cx="${e[0]}" cy="${e[1]}" r="4"/>`;
+    return;
+  }
   const dL = Math.max(dip.left, wrap.left) - stage.left, dR = Math.min(dip.right, wrap.right) - stage.left;
   const dTop = dip.top - stage.top + 14, dBot = dip.bottom - stage.top - 16;
   const bx = b.left - stage.left, by = b.top - stage.top, ty = by + 30;
@@ -941,10 +1046,69 @@ function drawPhoneWire() {
   const sx = pad.left + pad.width / 2, sy = pad.top + pad.height / 2, top = panelTop() + 1;
   const gy = sy + PT / 2;
   if (gy > top - 10 || sy < 0) return;
+  if (sel.ownerSVGElement.classList.contains('plcc')) {
+    const pts = plccPhonePts(sel.dataset.side, sx, sy, plccLanes(0, 0), top), e = pts[pts.length - 1];
+    svg.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
+    svg.innerHTML = `<path d="${chamfer(pts, 9)}"/><circle cx="${e[0]}" cy="${e[1]}" r="4.5"/>`;
+    return;
+  }
   const gx = sel.dataset.side === 'l' ? Math.max(dip.left, wrap.left) + 5 : Math.min(dip.right, wrap.right) - 5;
   const pts = [[sx, sy], [sx, gy], [gx, gy], [gx, top]];
   svg.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
   svg.innerHTML = `<path d="${chamfer(pts, 9)}"/><circle cx="${gx}" cy="${top}" r="4.5"/>`;
+}
+/* PLCC traces: out of the pad into the gap beside it (between pad rows on the left and right sides, between
+   pad columns on the top and bottom), out to the gutter round the chip, round it, and on to the detail.
+   The gutters are PG px wide on every side; a side gutter scrolled out of #dipwrap falls back to the wrap's
+   edge (as the DIP's does), which selectPin avoids by scrolling the gutter into view first. A top pin with no
+   gutter in view (mid-top on a narrow screen) drops down its column gap instead, under the body, between the
+   bottom pins: it never crosses a pad. */
+function plccLanes(ox, oy) {
+  const dip = $('svg.dip').getBoundingClientRect(), wrap = $('#dipwrap').getBoundingClientRect(), g = PG / 2;
+  const l = dip.left + g, r = dip.right - g;
+  const Lok = l >= wrap.left - 1, Rok = r <= wrap.right + 1;
+  return { L: (Lok ? l : Math.max(dip.left, wrap.left) + 5) - ox, R: (Rok ? r : Math.min(dip.right, wrap.right) - 5) - ox,
+    T: dip.top + g - oy, B: dip.bottom - g - oy, Lok, Rok };
+}
+/* bx, by: the PIN DETAIL box's top left; right: the box is beside the chip (else under it) */
+function plccStagePts(side, sx, sy, lanes, bx, by, right, ex) {
+  const { L, R, T, B } = lanes;
+  const h = PT / 2, ty = by + 30;
+  if (right) {
+    const Rx = Math.max(R, bx - 20);
+    if (side === 'r') { const gy = sy + (ty < sy ? -h : h); return [[sx, sy], [sx, gy], [R, gy], [R, ty], [bx, ty]]; }
+    if (side === 'l') { const around = sy - T < B - sy ? T : B, gy = sy + (around < sy ? -h : h); return [[sx, sy], [sx, gy], [L, gy], [L, around], [Rx, around], [Rx, ty], [bx, ty]]; }
+    const ey = side === 't' ? T : B;
+    return [[sx, sy], [sx + h, sy], [sx + h, ey], [Rx, ey], [Rx, ty], [bx, ty]];
+  }
+  const ly = by - 14, end = [[ex, ly], [ex, by]];
+  if (side === 'l' || side === 'r') { const g = side === 'l' ? L : R; return [[sx, sy], [sx, sy + h], [g, sy + h], [g, ly], ...end]; }
+  if (side === 'b') return [[sx, sy], [sx + h, sy], [sx + h, ly], ...end];
+  return plccTop(sx, sy, lanes, ly).concat(end);
+}
+/* a top pin: up and round the nearer gutter in view, down to y; else straight down its column gap */
+function plccTop(sx, sy, { L, R, T, Lok, Rok }, y) {
+  const h = PT / 2;
+  if (!Lok && !Rok) return [[sx, sy], [sx + h, sy], [sx + h, y]];
+  const g = Lok && (!Rok || sx - L < R - sx) ? L : R, gx = sx + (g < sx ? -h : h);
+  return [[sx, sy], [gx, sy], [gx, T], [g, T], [g, y]];
+}
+/* phone: the same, down to the panel's copper edge at y = top */
+function plccPhonePts(side, sx, sy, lanes, top) {
+  const h = PT / 2, { L, R } = lanes;
+  if (side === 'l' || side === 'r') { const g = side === 'l' ? L : R; return [[sx, sy], [sx, sy + h], [g, sy + h], [g, top]]; }
+  if (side === 'b') return [[sx, sy], [sx + h, sy], [sx + h, top]];
+  return plccTop(sx, sy, lanes, top);
+}
+/* a PLCC wider than its box: scroll the selected pad, and the gutter its trace runs down, into view */
+function plccIntoView(pin) {
+  const wrap = $('#dipwrap'); if (!wrap || !pin || !pin.ownerSVGElement.classList.contains('plcc') || wrap.scrollWidth <= wrap.clientWidth + 1) return;
+  const side = pin.dataset.side, pad = pin.querySelector('.pad').getBoundingClientRect(), w = wrap.getBoundingClientRect();
+  /* the pad's x in the drawing; a top pin also wants the nearer gutter in view when both fit */
+  const px = pad.left + pad.width / 2 - pin.ownerSVGElement.getBoundingClientRect().left, W = wrap.scrollWidth, ww = wrap.clientWidth;
+  if (side === 'l' || (side === 't' && px + 40 <= ww)) wrap.scrollLeft = 0;
+  else if (side === 'r' || (side === 't' && W - px + 40 <= ww)) wrap.scrollLeft = W;
+  else if (pad.left < w.left + 30 || pad.right > w.right - 30) wrap.scrollLeft += pad.left - (w.left + w.width / 2);
 }
 function chamfer(pts, r) {
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
@@ -1077,7 +1241,7 @@ window.addEventListener('resize', () => {
   rt = setTimeout(() => {
     const { chip, conns } = state.ctx;
     if (chip) {
-      if (wantCompact(chip) !== state.compact) refreshChip();
+      if (wantCompact(chip) !== state.compact || wantStack(chip) !== state.stack) refreshChip();
       else { renderPanel(); drawWire(); }
     } else if (conns) {
       /* the power page drops pad labels on a phone: redraw when the width crosses that line */
@@ -1089,6 +1253,6 @@ window.addEventListener('resize', () => {
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 render();
 /* after fonts and layout settle: bring a deep-linked pad above the phone panel, then route the trace */
-window.addEventListener('load', () => { if ((state.ctx.chip || state.conn) && PANEL_MQ.matches) padIntoView(); drawWire(); });
+window.addEventListener('load', () => { plccIntoView($('svg.dip .pin.sel')); if ((state.ctx.chip || state.conn) && PANEL_MQ.matches) padIntoView(); drawWire(); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => drawWire());
 })();

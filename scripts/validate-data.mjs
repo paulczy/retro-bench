@@ -95,6 +95,7 @@ for (const [mid, list] of Object.entries(R.connectors)) {
       }
       if (c.outline && !/^[MmLlHhVvZzAaCcQqSsTt0-9 ,.\-]+$/.test(c.outline)) err(f, `${c.id} outline is not a plain SVG path`);
     }
+    if (c.rowA != null && (!/^edge-/.test(c.geo || '') || !['top', 'bottom'].includes(c.rowA))) err(f, `${c.id} rowA must be 'top' or 'bottom' on an edge-* geo`);
     if (/^(de9|da15|db25)$/.test(c.geo) && !c.gender) warn(f, `${c.id} D-sub without gender (male assumed)`);
     for (const p of c.pins || []) {
       if (p.n === '?' || p.n === '-' || p.n == null) warn(f, `${c.id} has an unplaced pin ${p.name}`);

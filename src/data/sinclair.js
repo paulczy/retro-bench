@@ -142,7 +142,7 @@ const SPEC_EDGE_SRC = [
   S('Sinclair ZX Archive, ZX Spectrum Connectors (expansion bus drawing, side naming note)', SPCONN),
   S('ZX Spectrum Service Manual 1.5.1 (external ROM select on pin 25A), p. 10', SM48(10))
 ];
-const SPEC_EDGE_SUMMARY = 'Side A is the UNDERSIDE (solder side) and side B the component side, as the Issue 3 circuit diagram and the service manual label them (ROMCS on 25A). The drawing puts row A on top, so turn it over in your head: on the machine side A faces down. Issue 1 and 2 documents swap the letters (k1). Position 5 is the keyway slot on both sides. Pin 1 is drawn at the right, as in the k1 drawing. Dirty contacts cause crashes: clean and reseat before blaming a chip.';
+const SPEC_EDGE_SUMMARY = 'Side A is the UNDERSIDE (solder side) and side B the component side, as the Issue 3 circuit diagram and the service manual label them (ROMCS on 25A). The drawing puts row A at the bottom to match the socket view. Issue 1 and 2 documents swap the letters (k1). Position 5 is the keyway slot on both sides. Pin 1 is drawn at the right, as in the k1 drawing. Dirty contacts cause crashes: clean and reseat before blaming a chip.';
 
 /* +3 manual chapter 10, Joystick sockets (Sinclair wiring, not Atari) */
 const sinclairJoyPins = () => [
@@ -600,7 +600,7 @@ RCS.add({
         summary: 'Composite video into an encapsulated UHF modulator on European channel 36. Picture only: the 48K beeper comes from its own speaker, not the TV.',
         pins: [P('1', 'RF', 'video', 'Modulated UHF picture.'), P('2', 'GND', 'ground', 'Shell, ground.', { expect: '0 V' })],
         sources: [S('ZX Spectrum Service Manual 1.7 TV picture generation, p. 13', SM48(13)), S('Sinclair ZX Archive, ZX Spectrum Connectors (TV out)', SPCONN)], terms: [] },
-      { id: 'spectrum-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right',
+      { id: 'spectrum-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', rowA: 'bottom',
         verifiedAgainst: 'ZX Spectrum Issue 3 circuit diagram, edge connector table',
         summary: 'The expansion bus: address, data, control and the +5 V, +9 V, +12 V, -5 V and -12 V rails. ' + SPEC_EDGE_SUMMARY,
         pins: specEdgePins(), sources: SPEC_EDGE_SRC, terms: ['edge-connector'] }
@@ -639,7 +639,7 @@ RCS.add({
           P(8, 'BLUE', 'video', 'Blue, TTL.', { expect: 'TTL' })
         ],
         sources: [S('Spectrum 128 Introduction manual, page 3 (RGB output table)', UM128), S('World of Spectrum FAQ, Pinouts: 128K RGB video', WOSPIN), S('Spectrum 128 Service Manual, parts list (RGB 8-way DIN), p. 5.4', SM128(39))], terms: [] },
-      { id: 'spectrum128-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', verify: true,
+      { id: 'spectrum128-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', rowA: 'bottom', verify: true,
         summary: 'Spectrum-compatible expansion edge (service manual 1.3; k1: the same port up to the grey +2). This is the 48K Issue 3 table: the 128 service manual confirms +5 V on 3A, +9 V on 4A, 0 V on 6A, 7A and 14A and -5 V on 20B, but lists +12 V on 23A and pulsed +12 V on 23B (see the conflicts on A23 and B23). ' + SPEC_EDGE_SUMMARY,
         pins: specEdgePins().map(p => (p.n === 'A23' ? Object.assign({}, p, { conflict: '128 Service Manual 6.4 lists +12 V on pin 23A; the 48K table and k1 have A5 here.' })
           : p.n === 'B23' ? Object.assign({}, p, { conflict: '128 Service Manual 6.4 lists pulsed +12 V on 23B; the 48K table has -12 V.' }) : p)),
@@ -684,7 +684,7 @@ RCS.add({
       { id: 'spectrumplus2-keypad', name: 'Keypad', kind: 'BT-style 6-way socket', verify: true,
         summary: 'BT-style keypad socket kept from the 128 (review). Pin table not sourced.',
         pins: [], sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (ports)', P2REV)], terms: [] },
-      { id: 'spectrumplus2-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', verify: true,
+      { id: 'spectrumplus2-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', rowA: 'bottom', verify: true,
         summary: 'The standard Spectrum edge, "absolutely as normal" (review; k1: the same port up to the grey +2). Table from the 48K Issue 3 diagram, not checked on a +2 board. ' + SPEC_EDGE_SUMMARY,
         pins: specEdgePins(), sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (edge connector)', P2REV)].concat(SPEC_EDGE_SRC), terms: ['edge-connector'] }
     ],

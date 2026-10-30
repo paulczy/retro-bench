@@ -8,7 +8,9 @@
 
    Each pad carries a route for the copper trace: data-route is an SVG path from the pad edge to the bottom
    edge of the drawing, data-rx is where it leaves; the app finishes it down to the PIN DETAIL box. Routes run
-   between contacts (row gaps, finger gaps, around the outside of a round shell), never across another pad. */
+   between contacts (row gaps, finger gaps, around the outside of a round shell), never across another pad.
+   Hit targets never overlap: where a custom layout is too dense for 44 px each, a pad's target shrinks to
+   half the distance to its nearest neighbour. */
 (() => {
 'use strict';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -73,6 +75,8 @@ const DSUB = { de9: ['DE-9', 5, 4], da15: ['DA-15', 8, 7], db25: ['DB-25', 13, 1
 
 /* ---------- card edge ----------
    edge-<top>x<bottom>-<scheme>. Contacts run from pin 1's end (`pin1: 'left' | 'right'`, default left).
+   The first-named row (A, 1.., odd) is drawn on top; `rowA: 'bottom'` draws it as the lower row instead, for
+   boards whose manual calls the underside row A (the Spectrum), so the drawing still matches the machine.
    seq: 1..N along the top, then N+1.. back along the bottom (N+1 under N; the Apple II slot: 1 opposite 50).
    cbm: 1..N top, letters bottom (A under 1). ab: A1..An top, B1..Bn bottom. odd-even: 1 3 5 top, 2 4 6 bottom.
    `keys: [k, ...]` are slots cut between contact k and k+1. Default for Commodore 12+12 (user port):
@@ -151,15 +155,22 @@ function dsub(spec, conn, o) {
 }
 
 function edge(m, conn, o) {
-  const nTop = +m[1], nBot = +m[2], scheme = m[3], P = 44, fw = 30, fh = 30, bar = 10, band = o.labels ? 96 : 0;
+  /* bar 14: the rows' centres are 44 px apart, so their 44 px targets meet without overlapping */
+  const nTop = +m[1], nBot = +m[2], scheme = m[3], P = 44, fw = 30, fh = 30, bar = 14, band = o.labels ? 96 : 0;
   const n = Math.max(nTop, nBot), x0 = 36, W = 2 * x0 + (n - 1) * P;
   const yTop = 16 + band, barY = yTop + fh, yBot = barY + bar, H = yBot + fh + band + 34;
   const rtl = conn.pin1 === 'right', X = i => (rtl ? W - x0 - i * P : x0 + i * P);
   const top = i => (scheme === 'ab' ? 'A' + (i + 1) : scheme === 'odd-even' ? String(2 * i + 1) : String(i + 1));
   const bot = j => (scheme === 'ab' ? 'B' + (j + 1) : scheme === 'odd-even' ? String(2 * j + 2) : scheme === 'cbm' ? cbmLetter(j) : String(nTop + nBot - j));
+  /* row: 0 is the row drawn on top, 1 the lower one; rowA 'bottom' swaps which named row is where */
+  const aLow = conn.rowA === 'bottom', rA = aLow ? 1 : 0, rB = 1 - rA, yOf = r => (r ? yBot : yTop) + fh / 2;
   const pads = [];
-  for (let i = 0; i < nTop; i++) pads.push({ n: top(i), x: X(i), y: yTop + fh / 2, shape: 'r', w: fw, h: fh, row: 0 });
-  for (let j = 0; j < nBot; j++) pads.push({ n: bot(j), x: X(j), y: yBot + fh / 2, shape: 'r', w: fw, h: fh, row: 1 });
+  for (let i = 0; i < nTop; i++) pads.push({ n: top(i), x: X(i), y: yOf(rA), shape: 'r', w: fw, h: fh, row: rA });
+  for (let j = 0; j < nBot; j++) pads.push({ n: bot(j), x: X(j), y: yOf(rB), shape: 'r', w: fw, h: fh, row: rB });
+  const rowName = first => (scheme === 'ab' ? (first ? `A1-A${nTop}` : `B1-B${nBot}`)
+    : scheme === 'odd-even' ? (first ? 'odd contacts' : 'even contacts')
+    : first ? `1-${nTop}` : scheme === 'cbm' ? `A-${cbmLetter(nBot - 1)}` : `${nTop + 1}-${nTop + nBot}`);
+  const rows = nBot ? `, ${rowName(!aLow)} on top` : '';
   /* the board edge seen end on, broken at each key slot */
   const keys = (Array.isArray(conn.keys) ? conn.keys : EDGE_KEYS[`${nTop}x${nBot}-${scheme}`] || []).map(Number).filter(k => k >= 1 && k < n);
   const cuts = keys.map(k => (X(k - 1) + X(k)) / 2).sort((a, b) => a - b);
@@ -173,7 +184,7 @@ function edge(m, conn, o) {
   const label = (q, text) => (q.row === 0 ? { x: q.x + 4, y: yTop - 8, anchor: 'start', rot: true, text: fit(text, 12) } : { x: q.x + 14, y: yBot + fh + 8, anchor: 'end', rot: true, text: fit(text, 12) });
   const slots = keys.length ? `, ${keys.length > 1 ? 'slots' : 'slot'} between ${keys.map(k => `${top(k - 1)}-${top(k)}`).join(' and ')}` : '';
   const end = rtl !== (o.view === 'plug') ? 'right' : 'left';   /* the plug view mirrors it */
-  return { W, H, name: `Card edge, ${nTop} + ${nBot} contacts`, shell, pads, route, label, note: `pin ${top(0)} at the ${end}${slots}` };
+  return { W, H, name: `Card edge, ${nTop} + ${nBot} contacts`, shell, pads, route, label, note: `pin ${top(0)} at the ${end}${rows}${slots}` };
 }
 
 function single(geo, conn, o) {
@@ -222,19 +233,46 @@ function custom(conn, o) {
   if (!src.length) return null;
   let dmin = Infinity;
   for (let i = 0; i < src.length; i++) for (let j = i + 1; j < src.length; j++) dmin = Math.min(dmin, Math.hypot(src[i].x - src[j].x, src[i].y - src[j].y));
-  /* scale so the two closest pads are 50 px apart, then crop to the pads and the outline */
-  const k = Math.max(2.4, Math.min(8, dmin === Infinity ? 3 : 50 / dmin)), m = (PAD + 12) / k;
+  /* scale so the two closest pads are 50 px apart (44 px targets with room between), then crop to the pads
+     and the outline. No upper cap: a dense header simply gets wider and scrolls sideways in its box, as the
+     wide card edges do. Only a degenerate layout (drawing over 3000 px) is held back; its targets then shrink. */
   const outline = pathOK(conn.outline) && conn.outline ? conn.outline : '';
   const ob = outline ? pathBox(outline) || [0, 0, 100, 100] : null;
+  const span = [Math.min(...src.map(p => p.x)), Math.min(...src.map(p => p.y)), Math.max(...src.map(p => p.x)), Math.max(...src.map(p => p.y))];
+  if (ob) { span[0] = Math.min(span[0], ob[0]); span[1] = Math.min(span[1], ob[1]); span[2] = Math.max(span[2], ob[2]); span[3] = Math.max(span[3], ob[3]); }
+  const k = Math.max(2.4, Math.min(3000 / Math.max(span[2] - span[0], span[3] - span[1], 1), dmin === Infinity ? 3 : 50 / dmin)), m = (PAD + 12) / k;
   const bx = [Math.min(...src.map(p => p.x)) - m, Math.min(...src.map(p => p.y)) - m, Math.max(...src.map(p => p.x)) + m, Math.max(...src.map(p => p.y)) + m];
   if (ob) { bx[0] = Math.min(bx[0], ob[0]); bx[1] = Math.min(bx[1], ob[1]); bx[2] = Math.max(bx[2], ob[2]); bx[3] = Math.max(bx[3], ob[3]); }
   const mid = (Math.min(...src.map(p => p.y)) + Math.max(...src.map(p => p.y))) / 2, lower = src.some(p => p.y > mid);
   const band = o.labels ? 104 : 0, side = 30, top = 14 + band;
-  const W = 2 * side + (bx[2] - bx[0]) * k, H = top + (bx[3] - bx[1]) * k + (lower ? band : 0) + 40;
+  const W = Math.ceil(2 * side + (bx[2] - bx[0]) * k), H = Math.ceil(top + (bx[3] - bx[1]) * k + (lower ? band : 0) + 40);
   const X = x => side + (x - bx[0]) * k, Y = y => top + (y - bx[1]) * k;
   const pads = src.map(p => ({ n: p.n, x: X(p.x), y: Y(p.y), shape: 'c', row: p.y > mid ? 1 : 0 }));
+  /* targets: 44 px, or half the distance to the nearest pad when that is closer (two never overlap) */
+  for (const q of pads) q.hr = Math.min(HIT, ...pads.filter(p => p !== q).map(p => Math.hypot(p.x - q.x, p.y - q.y) / 2));
   const shell = outline ? `<path class="shell" vector-effect="non-scaling-stroke" transform="translate(${r1(X(0))} ${r1(Y(0))}) scale(${r1(k * 100) / 100})" d="${esc(outline)}"/>` : '';
-  const route = q => down(q.x, q.y + PAD, H);
+  /* trace: straight down when nothing is below; else sideways at the pad's height into the nearest clear lane
+     (a gap between pad columns, or the gutter outside the pads) and down it; else up over the top of the
+     pads and down a gutter. The trace's centre stays CLR from every other pad's centre. mx is the view's
+     mirror, so the check runs on the pads as drawn. */
+  const CLR = PAD + 5;
+  const route = (q, _W, _H, mx = x => x) => {
+    const ps = pads.map(p => ({ x: mx(p.x), y: p.y, n: p.n })).filter(p => p.n !== q.n);
+    const clearV = (x, y0, y1) => !ps.some(p => Math.abs(p.x - x) < CLR && p.y > y0 - CLR && p.y < y1 + CLR);
+    const clearH = (y, x0, x1) => !ps.some(p => Math.abs(p.y - y) < CLR && p.x > Math.min(x0, x1) - CLR && p.x < Math.max(x0, x1) + CLR);
+    if (clearV(q.x, q.y, H)) return down(q.x, q.y + PAD, H);
+    const xs = [...new Set([q.x, ...ps.map(p => p.x)])].sort((a, b) => a - b);
+    const gl = xs[0] - CLR - 4, gr = xs[xs.length - 1] + CLR + 4, lanes = [gl, gr];
+    for (let i = 0; i < xs.length - 1; i++) if (xs[i + 1] - xs[i] >= 2 * CLR) lanes.push((xs[i] + xs[i + 1]) / 2);
+    lanes.sort((a, b) => Math.abs(a - q.x) - Math.abs(b - q.x));
+    for (const x of lanes) {
+      const s = x < q.x ? -1 : 1;
+      if (clearH(q.y, q.x, x) && clearV(x, q.y, H)) return { d: chamfer([[q.x + s * PAD, q.y], [x, q.y], [x, H]], 6), rx: x };
+    }
+    const yUp = Math.min(...ps.map(p => p.y), q.y) - CLR - 2, g = q.x - gl < gr - q.x ? gl : gr;
+    if (clearV(q.x, yUp, q.y)) return { d: chamfer([[q.x, q.y - PAD], [q.x, yUp], [g, yUp], [g, H]], 6), rx: g };
+    return down(q.x, q.y + PAD, H);
+  };
   /* labels stand on end: above the upper pads, below the lower ones, beside each pad's trace */
   const yTop = Y(bx[1]) - 6, yBot = Y(bx[3]) + 6;
   const label = (q, text) => (q.row === 0 ? { x: q.x + 4, y: Math.min(q.y - PAD - 6, yTop), anchor: 'start', rot: true, text: fit(text, 13) } : { x: q.x + 14, y: Math.max(q.y + PAD + 6, yBot), anchor: 'end', rot: true, text: fit(text, 13) });
@@ -270,11 +308,11 @@ function draw(conn, o = {}) {
     let pad, hit;
     if (q.shape === 'r') { pad = `<rect class="pad" x="${r1(q.x - q.w / 2)}" y="${r1(q.y - q.h / 2)}" width="${q.w}" height="${q.h}" rx="2"/>`; hit = `<rect class="hit" x="${r1(q.x - Math.max(q.w, 44) / 2)}" y="${r1(q.y - 22)}" width="${Math.max(q.w, 44)}" height="44" rx="3"/>`; }
     else if (q.shape === 'ring') { pad = `<circle class="pad ring" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${q.r}" style="stroke-width:${q.sw}px"/>`; hit = `<circle class="hit" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${q.r + q.sw / 2 + 6}"/>`; }
-    else { pad = `<circle class="pad" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${q.r || PAD}"/>`; hit = `<circle class="hit" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${HIT}"/>`; }
+    else { pad = `<circle class="pad" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${q.r || PAD}"/>`; hit = `<circle class="hit" cx="${r1(q.x)}" cy="${r1(q.y)}" r="${Math.floor((q.hr || HIT) * 10) / 10}"/>`; }
     const ringNum = q.shape === 'ring' ? `<text class="num" x="${r1(q.x + q.r * 0.71)}" y="${r1(q.y - q.r * 0.71 + 4)}" text-anchor="middle">${t}</text>` : num;
     if (!p) { body += `<g class="cpin vac" aria-hidden="true">${pad}${ringNum}</g>`; continue; }
     placed.add(q.n);
-    const rt = L.route(q, L.W, L.H), on = sel === q.n;
+    const rt = L.route(q, L.W, L.H, MX), on = sel === q.n;
     const cls = `cpin${drawn ? ' ' + drawn : ''}${p.type ? ' t-' + esc(p.type) : ''}${on ? ' sel' : ''}`;
     body += `<g class="${cls}" data-cpin="${t}" data-conn="${esc(conn.id)}" data-route="${rt.d}" data-rx="${r1(rt.rx)}" tabindex="0" role="button" aria-pressed="${on}" aria-label="Pin ${t}, ${esc(p.name || '')}">${hit}${pad}${ringNum}</g>`;
     if (o.labels && p[o.labels]) {
