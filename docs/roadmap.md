@@ -89,3 +89,7 @@ and 8 last. Cross-model review and a push to GitHub Pages after each group.
 - Apple IIe MMU kept as 344-0010 (Sams lists 344-0010-B); Apple's schematic print 344-0100 noted. IOU is at UE5.
 - Atari 130XE: Sams CC16 shows only 64K x 1 (4164-type) RAM; the 4464 fit stays `verify` and probably should be removed.
 - Apple IIc, ZX80, Spectrum 128, +2, +3, TS1500, PCjr and Portable 5155 are now ready. Open: TS1500 has no service manual (no first ten minutes or clocks); +2 supply voltages unreadable; AY clock on the 128/+2 unsourced.
+
+## Board photos (feature 8) shipped 2026-10-30
+
+20 machines, 122 chip outlines, 23 flagged `verify`. Open: about 30 machines have no freely licensed photo (all Amstrad, Acorn, MSX, CoCo, Heathkit, Oric); the C64 VIC-II and Plus/4 TED sit under RF shields; Apple IIe board 820-0087-C and the VIC-20 board have no matching entry in schematics.js. Ideas: let the user add their own board photos; ask photographers of GFDL/unlicensed shots for CC BY-SA.
