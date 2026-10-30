@@ -50,3 +50,9 @@ schematics block (links only, per board assembly; data in src/data/schematics.js
 
 Schematic links for every machine, then 10, 11, 12, 18, 14, 15, 13, 16, 17, then features 2, 1, 3, 4, 5, 6, 9, 7,
 and 8 last. Cross-model review and a push to GitHub Pages after each group.
+
+## App follow-ups raised by the data pass
+
+- PLCC footprint drawing: the CoCo 3 GIME is a PLCC-68 and currently draws as a DIP. Add a square footprint for `PLCC-n`.
+- Dragon 32 moves from tandy.js to a Dragon Data brand file with the Dragon 64.
+- Card-edge row layout: where a manual numbers pins without drawing rows (CoCo cartridge, MC-10 edge), the odd/even assumption is flagged in the connector summary; replace when a drawing is found.
