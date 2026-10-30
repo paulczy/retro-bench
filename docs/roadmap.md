@@ -59,3 +59,9 @@ and 8 last. Cross-model review and a push to GitHub Pages after each group.
 - Card-edge row side: `ab` edges always draw row A on top, but the Spectrum manuals call the underside A. Add an edge option (e.g. `rowA: 'bottom'`) in connectors.js and set it on the Spectrum edges.
 - The AY-3-8912 pin text in timex.js is TS2068-specific but the chip is shared with the Spectrum 128, +2 and +3: make it machine-neutral.
 - `rom23128` in commodore.js: the select pins 20 and 27 differ by ROM maker on the Spectrum; note it.
+
+## Data follow-ups raised by the pass
+
+- ti.js `vdp9918` pins 35, 36, 38: the ColecoVision Technical Manual confirms B-Y, Y, R-Y (coleco.js cites it); clear their `verify` with that source.
+- heathkit.js `rom2764` pin 26 is NC on a 2764, A13 only on the 27128 (sent to the Heathkit agent).
+- Connector-pin `conflict` entries are not reported by the validator; add a WARN so they show up in reviews.
