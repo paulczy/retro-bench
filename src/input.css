@@ -146,6 +146,9 @@
   .legend.tri { grid-template-columns: max-content fit-content(45%) 1fr; }
   .legend.tri > :nth-child(-n+3) { border-top: 0; }
   .legend.tri .v3 { padding-right: 0; }
+  /* replacement part names are long lists: let them wrap so a phone never scrolls sideways */
+  .legend.repl { grid-template-columns: minmax(0, 16rem) max-content minmax(0, 1fr); }
+  .legend.repl .k { white-space: normal; overflow-wrap: anywhere; }
 
   .chk { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; border: 1px solid var(--tin); color: var(--tin); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; text-transform: uppercase; }
   .hot { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; color: var(--pwr); border: 1px solid var(--pwr); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; }
@@ -590,6 +593,7 @@
     .legend.tri > .v { padding-top: 10px; border-top: 1px solid var(--silk-12); padding-bottom: 2px; }
     .legend.tri > .v:nth-child(2) { border-top: 0; }
     .legend.tri > .v3 { grid-column: 1 / -1; text-align: left; padding: 0 0 10px; color: var(--tin); }
+    .legend.repl { grid-template-columns: minmax(0, 1fr) max-content; }
     .memmap { grid-template-columns: 150px 1fr; }
     .chiprow { grid-template-columns: 110px 1fr; gap: 12px; }
     .board-grid { --fpw: 136px; }

@@ -922,7 +922,7 @@ function replacementsBlock(chip) {
   const list = arr(chip.replacements).filter(r => r && r.part);
   if (!list.length) return '';
   return `<section class="blk scroll-mt-4" id="replacements"><span class="lbl">Replacements</span>
-    <div class="legend tri">${list.map(r => `<div class="k silk">${esc(r.part)}</div><div class="v"><span class="tag kind ${esc(r.kind || '')}">${esc(REPL_KIND[r.kind] || r.kind || '')}</span></div><div class="v3">${esc(r.note || '')}${r.verify ? chk() : ''}${r.source ? `<br>${srcLink(r.source)}` : ''}</div>`).join('')}</div>
+    <div class="legend tri repl">${list.map(r => `<div class="k silk">${esc(r.part)}</div><div class="v"><span class="tag kind ${esc(r.kind || '')}">${esc(REPL_KIND[r.kind] || r.kind || '')}</span></div><div class="v3">${esc(r.note || '')}${r.verify ? chk() : ''}${r.source ? `<br>${srcLink(r.source)}` : ''}</div>`).join('')}</div>
     ${samsNote(list.map(r => r.source))}</section>`;
 }
 function detailBox(chip, m) {
