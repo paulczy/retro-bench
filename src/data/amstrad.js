@@ -24,6 +24,14 @@ const W_MON = { label: 'CPCWiki, Connector:Monitor (archived copy)', url: WB + '
 const W_PAL = { label: 'CPCWiki, PAL16L8 (archived copy)', url: WB + 'PAL16L8' };
 const W_FDC = { label: 'CPCWiki, 765 FDC (archived copy)', url: WB + '765_FDC' };
 const UPD = 'https://bitsavers.org/components/nec/_dataSheets/uPD765_Data_Sheet_Dec78.pdf';
+/* Features 1, 3, 4, 6 sources (fetched 2026-10-30) */
+const W_CRTC = { label: 'CPCWiki, CRTC (types 0-4, 1 MHz clock; archived copy)', url: WB + 'CRTC' };
+const Z80PS = 'http://www.bitsavers.org/components/zilog/z80/03-0027-02_Z80_CPU_Product_Specification_Mar78.pdf#page=8';
+const AMSGA = { label: 'AMSGateArray: Xilinx CPLD replacements for the 40010 and 40007 (GitHub, archived 2024)', url: 'https://github.com/codedchip/AMSGateArray' };
+const MC27C256 = { label: 'Microchip 27C256 data sheet DS11001N, pinout and read-mode VPP, pp. 1-2', url: 'https://ww1.microchip.com/downloads/en/DeviceDoc/11001N.pdf#page=2' };
+const z80clk = via => ({ f: '4 MHz', low: '0.45 V', high: '4.4 V', shape: 'square', basis: 'datasheet',
+  source: { label: 'Zilog Z80 CPU Product Specification 03-0027-02 (Mar 1978), D.C. characteristics: clock input LOW max 0.45 V, HIGH min VCC - 0.6 V, p. 8', url: Z80PS },
+  note: `Levels are the Z80A clock-input limits (LOW below 0.45 V, HIGH above VCC - 0.6 V = 4.4 V); 4 MHz is the service manual specification. The clock comes ${via}. A clock that does not reach both limits makes the CPU flaky; a flat line means a dead machine.` });
 const upd = (label, page) => ({ label: `NEC uPD765 Floppy Disk Controller data sheet (Dec 1978), ${label}`, url: `${UPD}#page=${page}` });
 
 /* chip pin and connector pin helpers; a leading / sets activeLow */
@@ -171,6 +179,11 @@ const disc2 = (mid, src) => ({
 const S464 = [um464('Appendix V, Rear panel connection, p. 235-236', 234), sm464('CPC464 circuit diagram p. 15-16', 12)];
 const S664 = [um664('ch. 7 part 9 Connections, p. 38-41', 302), sm664('CPC664 CPU circuit diagram', 16)];
 const S6128 = [um6128('ch. 7 part 9 Connections, p. 38-41', 348), sm6128('CPC6128 CPU circuit diagram p. 19-20', 16)];
+const fdcclk = () => ({ f: '4 MHz', low: '0.8 V', high: '4.25 V', shape: 'square', basis: 'datasheet', source: upd('D.C. characteristics: CLK input LOW max 0.8 V, HIGH min VCC - 0.75 V, p. 2', 2),
+  note: 'Levels are the uPD765 clock-input limits. The data sheet specifies an 8 MHz square wave; the CPC runs it at 4 MHz (CPCWiki 765 FDC), which doubles every step and head-load time (data sheet p. 16).' });
+const FLOW464 = sm464('CPC464 basic hardware analysis flowchart, p. 9', 8);
+const FLOW664 = sm664('CPC664 basic hardware analysis flowchart, p. 4', 3);
+const FLOW6128 = sm6128('CPC6128 basic hardware analysis flowchart, p. 4', 3);
 const S6128P = [sm6128('cassette control circuit diagram p. 36', 28), sm6128('technical specification, back page', 30)];
 
 RCS.add({
@@ -209,6 +222,10 @@ RCS.add({
       fails: ['No picture, or black screen with the power LED on', 'Picture with wrong or flashing colours', 'Machine dead (no CPU clock, no READY)', 'Faults after warm-up (heat plate missing)'],
       heat: 'hot', verifiedAgainst: 'CPC464 service manual circuit diagram p. 15-16 (IC116 20RA043); CPCWiki Gate Array pin-outs (40007)',
       datasheets: [sm464('CPC464 circuit diagram p. 15-16, IC116 gate array', 12), sm464('electrical parts list p. 17 (IC116 20RA043, part 40007)', 13), W_GAPIN],
+      replacements: [
+        { part: 'Amstrad 40008', kind: 'pin-compatible', note: 'Updated 40007 on the same pinout; it also needs the cooling plate. The 40010 has a rearranged pinout and does not fit a 40007 board.', source: W_GAPIN },
+        { part: 'AMSGateArray, 40007 version', kind: 'modern', note: 'Open prototype: a Xilinx XC95288XL CPLD (5 V-tolerant I/O, own 3.6 V regulator) on a DIP-40 carrier. The author has not tested the 40007 version in a CPC 464.', source: AMSGA }
+      ],
       pins: [
         p(1, '/CPU ADDR', 'ctrl', 'out', 'Selects CPU address (LOW) or CRTC address on the 74LS153 DRAM address multiplexers.', { terms: ['mux'] }),
         p(2, 'READY', 'ctrl', 'out', 'To Z80 /WAIT and expansion pin 39. Open collector with a 600 ohm pull-up.', { terms: ['wait', 'open-drain'] }),
@@ -255,6 +272,9 @@ RCS.add({
       fails: ['No picture, or black screen with the power LED on', 'Wrong colours or a missing colour level', 'Machine dead (no CPU clock or READY stuck LOW)', 'RAM faults that move when the Gate Array is swapped'],
       heat: 'warm', verifiedAgainst: 'CPC6128 service manual CPU circuit diagram p. 19-20 (IC116 40010), cross-checked on the CPC664 CPU circuit diagram; CPCWiki Gate Array pin-outs (40010)',
       datasheets: [sm6128('CPU circuit diagram p. 19-20, IC116 gate array', 16), sm664('CPU circuit diagram, IC116', 16), W_GAPIN, W_GA],
+      replacements: [
+        { part: 'AMSGateArray, 40010 version', kind: 'modern', note: 'Open prototype CPLD board for the 40010 socket. It passed basic tests on a real CPC 6128 only; the author lists possible timing glitches from asynchronous logic (vsync, CAS) and a combinatorial loop. Archived in 2024, so no further fixes. A 40007 or 40008 does not fit a 40010 socket (earlier pinout).', source: AMSGA }
+      ],
       pins: [
         p(1, 'D5', 'data', 'in', 'Data bus bit 5 (write-only chip).'), p(2, 'D6', 'data', 'in', 'Data bit 6.'), p(3, 'D7', 'data', 'in', 'Data bit 7.'),
         p(4, 'CCLK', 'clock', 'out', 'Character clock to 6845 pin 21.', { terms: ['clock', 'crtc'], probe: '1 MHz' }),
@@ -301,6 +321,9 @@ RCS.add({
       fails: ['Second 64K missing (CP/M Plus will not start, Bank Manager errors)', 'Crash as soon as a bank is switched', 'Dead machine if /CAS0 never goes LOW'],
       heat: 'cool', verifiedAgainst: 'CPC6128 service manual CPU circuit diagram p. 19-20 (IC118 PAL16L8AC AMG40030); CPCWiki Gate Array pin-outs and PAL16L8 pages',
       datasheets: [sm6128('CPU circuit diagram p. 19-20, IC118', 16), W_GAPIN, W_PAL],
+      replacements: [
+        { part: 'GAL programmed from the CPCWiki equations', kind: 'modern', note: 'Amstrad also marks this part 40031. CPCWiki carries Porchy\'s equations and a fixed JED (CPC6128.JED) for a GAL replacement. A blank PAL16L8 or GAL does nothing until programmed; check the second 64K with a bank test afterwards.', source: W_PAL }
+      ],
       pins: [
         p(1, 'D7·D6', 'ctrl', 'in', 'D7 AND D6 from a 74LS08 gate: HIGH marks a RAM-configuration write.'),
         p(2, 'D0', 'data', 'in', 'RAM configuration bit 0.'),
@@ -333,6 +356,9 @@ RCS.add({
       fails: ['No boot, black or garbage screen', 'Boots but BASIC crashes on certain keywords', 'Wrong sign-on after a ROM swap'],
       heat: 'cool', verifiedAgainst: 'CPC6128 service manual CPU circuit diagram p. 19-20 (IC103 TMM23256P-1953); parts lists of the CPC464, CPC664 and CPC6128 manuals and the amendment',
       datasheets: [sm6128('CPU circuit diagram p. 19-20, IC103 ROM', 16), sm664('electrical parts list (IC103 TMM-23256P-1952, part 40022)', 17), AMEND],
+      replacements: [
+        { part: '27256 / 27C256 EPROM', kind: 'pin-compatible', note: 'Same pinout, but pin 1 is VPP and must sit at VCC in read mode (VCC - 0.7 V to VCC); the CPC leaves pin 1 unconnected, so tie it to +5 V. Burn the image for that model: 464, 664 and 6128 firmware differ.', source: MC27C256 }
+      ],
       pins: [
         p(1, 'NC', 'nc', '-', 'Not connected (VPP on a 27256 EPROM).', { terms: ['vpp'] }),
         p(2, 'A12', 'addr', 'in', 'Address bit 12.'), p(3, 'A7', 'addr', 'in', 'Address bit 7.'), p(4, 'A6', 'addr', 'in', 'Address bit 6.'),
@@ -359,6 +385,10 @@ RCS.add({
       fails: ['"Drive A: disc missing" with a disc in and the motor turning', 'Read fail / Bad command on every disc', 'Motor never starts (motor latch, not the FDC)', 'Works on the internal drive but not drive B (74LS38 buffers)'],
       heat: 'warm', verifiedAgainst: 'NEC uPD765 data sheet (Dec 1978) pin configuration p. 1 and pin identification p. 3; CPC6128 service manual interface circuit diagram (IC201 pin voltages)',
       datasheets: [upd('pin configuration p. 1', 1), upd('pin identification p. 3', 3), sm6128('interface circuit diagram p. 33-34, IC201', 27), W_FDC],
+      replacements: [
+        { part: 'Intel 8272A / UMC UM8272A', kind: 'pin-compatible', note: 'The 8272 is the same design as the uPD765 under a cross-licence; UMC UM8272A parts were fitted in CPCs. Timings scale with the clock: the CPC runs any of them at 4 MHz.', source: W_FDC },
+        { part: 'NEC uPD765AC-2 / Zilog Z765A', kind: 'pin-compatible', note: 'Other makers\' 765s found on CPC boards; all should behave almost identically.', source: W_FDC }
+      ],
       pins: [
         p(1, 'RESET', 'ctrl', 'in', 'Reset, active HIGH: idles the FDC and drives the drive lines LOW.', { terms: ['reset'], probe: '0 V when running' }),
         p(2, '/RD', 'ctrl', 'in', 'Read strobe from the CPU.', { probe: '4.6 V idle (manual)' }),
@@ -470,12 +500,33 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'Master clock', where: '40007 pin 8', expect: '16 MHz (X101 with a 7400 oscillator)' },
-        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '4 MHz' },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '4 MHz', scope: z80clk('from 40007 pin 39 with a passive pull-up (40010 boards: through the 74HCU04 from 40010 pin 19)') },
         { tp: 'CRTC clock', where: '6845 pin 21', expect: '1 MHz (from 40007 pin 40)' },
         { tp: 'Sound clock', where: 'AY-3-8912 pin 15', expect: '1 MHz' },
         { tp: 'Frame sync', where: '6845 pin 40', expect: '50 Hz pulses' },
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' },
         { tp: 'Wait', where: 'Z80A pin 24', expect: 'Regular LOW pulses (READY from the Gate Array); stuck LOW = hung CPU' }
+      ],
+      firstTen: [
+        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+4.75 to +5.25 V DC on the plug, centre positive',
+          ifNot: 'No 5 V: the monitor mains fuse, then the cable or plug assembly from the monitor. The computer has no regulator of its own.', source: FLOW464 },
+        { step: 2, check: 'Red LED and +5 V on the board', where: 'Z80A pin 11 to Z80A pin 29', expect: 'LED lit; +4.75 to +5.25 V',
+          ifNot: '5 V on the cable but not here: internal connectors, soldered joints, a broken track, the LED or the power switch.', source: FLOW464 },
+        { step: 3, check: '16 MHz master clock', where: '40007 pin 8 (later boards: 40010 pin 24)', expect: '16 MHz',
+          ifNot: 'Crystal X101 and its 7400 oscillator.', source: sm464('circuit diagram p. 15-16 (X101, IC116)', 12) },
+        { step: 4, check: 'Z80 clock', where: 'Z80A pin 6', expect: '4 MHz square wave',
+          ifNot: 'Trace back to 40007 pin 39 (40010 pin 19 on later boards); no clock out with 16 MHz in suspects the Gate Array.', source: sm464('circuit diagram p. 15-16', 12) },
+        { step: 5, check: 'Reset released', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH', ifNot: 'Held LOW: the reset circuit or a short on the reset line.', source: sm464('circuit diagram p. 15-16', 12) },
+        { step: 6, check: 'Gate Array READY', where: 'Z80A pin 24', expect: 'Regular LOW pulses', ifNot: 'Stuck LOW: the CPU is hung waiting; suspect the Gate Array or a short on READY.', source: sm464('circuit diagram p. 15-16', 12) },
+        { step: 7, check: 'CRTC clock and frame sync', where: '6845 pin 21; 6845 pin 40', expect: '1 MHz character clock; VSYNC pulses at 50 Hz',
+          ifNot: 'With 5 V and clocks good and still no picture on a known-good monitor, the flowchart suspects the Gate Array, Z80A, 6845, crystal and RAM.', source: FLOW464 }
+      ],
+      clocks: [
+        { name: 'Crystal X101 (7400 oscillator)', where: '40007 pin 8 (40010 boards: 40010 pin 24)', f: '16 MHz', source: sm464('electrical parts list p. 17 (X101 crystal HC-18/U 16 MHz)', 13) },
+        { name: 'Z80 clock', where: '40007 pin 39 to Z80A pin 6', f: '4 MHz', source: sm464('circuit diagram p. 15-16', 12) },
+        { name: 'CRTC character clock', where: '40007 pin 40 to 6845 pin 21', f: '1 MHz', source: W_CRTC },
+        { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', source: AMEND },
+        { name: 'Interrupt (every 52 HSYNCs)', where: 'Z80A pin 16', f: '300 Hz', source: W_GA }
       ],
       sources: [sm464('circuit diagram p. 15-16', 12), sm464('electrical parts list p. 17', 13)]
     },
@@ -497,11 +548,34 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'Master clock', where: '40010 pin 24', expect: '16 MHz' },
-        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '4 MHz' },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '4 MHz', scope: z80clk('from 40010 pin 19 (/PHI) through a 74HCU04 inverter') },
         { tp: 'CRTC clock', where: '6845 pin 21', expect: '1 MHz' },
-        { tp: 'FDC clock', where: '765 pin 19', expect: '4 MHz' },
+        { tp: 'FDC clock', where: '765 pin 19', expect: '4 MHz', scope: fdcclk() },
         { tp: 'Index', where: '765 pin 17', expect: 'One pulse per 200 ms with a disc turning' },
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
+      ],
+      firstTen: [
+        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+4.75 to +5.25 V DC on the plug, centre positive',
+          ifNot: 'No 5 V: the monitor mains fuse, then the cable or plug assembly from the monitor. The computer has no regulator of its own.', source: FLOW664 },
+        { step: 2, check: 'Red LED and +5 V on the board', where: 'Z80A pin 11 to Z80A pin 29', expect: 'LED lit; +4.75 to +5.25 V',
+          ifNot: '5 V on the cable but not here: internal connectors, soldered joints, a broken track, the LED or the power switch.', source: FLOW664 },
+        { step: 3, check: '12 V for the drive', where: '12V DC lead (to the monitor, for the disc drive) pin 2 to pin 1', expect: '+11.4 to +12.6 V on the outer sleeve',
+          ifNot: 'Missing 12 V gives "Drive A: disc missing" with everything else working.', source: sm6128('cassette control circuit diagram p. 36 (CD301: inner GND, outer +12 V)', 28) },
+        { step: 4, check: '16 MHz master clock', where: '40010 pin 24', expect: '16 MHz', ifNot: 'Crystal X101 and its 74HCU04 oscillator.', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
+        { step: 5, check: 'Z80 clock', where: 'Z80A pin 6', expect: '4 MHz square wave',
+          ifNot: 'Trace back through the 74HCU04 to 40010 pin 19; no clock out with 16 MHz in suspects the Gate Array.', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
+        { step: 6, check: 'Reset released', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH', ifNot: 'Held LOW: the reset circuit or a short on the reset line (it also resets the FDC).', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
+        { step: 7, check: 'Gate Array READY', where: 'Z80A pin 24', expect: 'Regular LOW pulses', ifNot: 'Stuck LOW: the CPU is hung waiting; suspect the Gate Array or a short on READY.', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
+        { step: 8, check: 'CRTC clock and frame sync', where: '6845 pin 21; 6845 pin 40', expect: '1 MHz character clock; VSYNC pulses at 50 Hz',
+          ifNot: 'With 5 V and clocks good and still no picture on a known-good monitor, the flowchart suspects the Gate Array, Z80A, 6845, crystal and RAM.', source: FLOW664 }
+      ],
+      clocks: [
+        { name: 'Crystal X101', where: '40010 pin 24', f: '16 MHz', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
+        { name: 'Z80 clock (40010 /PHI inverted by a 74HCU04)', where: '40010 pin 19 to Z80A pin 6', f: '4 MHz', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
+        { name: 'CRTC character clock', where: '40010 pin 4 to 6845 pin 21', f: '1 MHz', source: W_CRTC },
+        { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', source: AMEND },
+        { name: 'FDC clock', where: '765 pin 19', f: '4 MHz', source: W_FDC },
+        { name: 'Interrupt (every 52 HSYNCs)', where: 'Z80A pin 16', f: '300 Hz', source: W_GA }
       ],
       sources: [sm664('CPU circuit diagram', 16), sm6128('interface circuit diagram p. 33-34 (FDC voltages)', 27)]
     },
@@ -523,12 +597,35 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'Master clock', where: '40010 pin 24', expect: '16 MHz (X101, 74HCU04 oscillator)' },
-        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '4 MHz' },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '4 MHz', scope: z80clk('from 40010 pin 19 (/PHI) through a 74HCU04 inverter') },
         { tp: 'CRTC clock', where: '6845 pin 21', expect: '1 MHz' },
         { tp: 'Sound clock', where: 'AY-3-8912 pin 15', expect: '1 MHz' },
-        { tp: 'FDC clock', where: '765 pin 19', expect: '4 MHz' },
+        { tp: 'FDC clock', where: '765 pin 19', expect: '4 MHz', scope: fdcclk() },
         { tp: 'Bank 1 CAS', where: '40030 pin 16', expect: 'Idle HIGH; pulses only while a second-bank configuration is selected', verify: true },
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
+      ],
+      firstTen: [
+        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+4.75 to +5.25 V DC on the plug, centre positive',
+          ifNot: 'No 5 V: the monitor mains fuse, then the cable or plug assembly from the monitor. The computer has no regulator of its own.', source: FLOW6128 },
+        { step: 2, check: 'Red LED and +5 V on the board', where: 'Z80A pin 11 to Z80A pin 29', expect: 'LED lit; +4.75 to +5.25 V',
+          ifNot: '5 V on the cable but not here: internal connectors, soldered joints, a broken track, the LED or the power switch.', source: FLOW6128 },
+        { step: 3, check: '12 V for the drive', where: '12V DC lead (to the monitor, for the disc drive) pin 2 to pin 1', expect: '+11.4 to +12.6 V on the outer sleeve',
+          ifNot: 'Missing 12 V gives "Drive A: disc missing" with everything else working.', source: sm6128('cassette control circuit diagram p. 36 (CD301: inner GND, outer +12 V)', 28) },
+        { step: 4, check: '16 MHz master clock', where: '40010 pin 24', expect: '16 MHz', ifNot: 'Crystal X101 and its 74HCU04 oscillator.', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
+        { step: 5, check: 'Z80 clock', where: 'Z80A pin 6', expect: '4 MHz square wave',
+          ifNot: 'Trace back through the 74HCU04 to 40010 pin 19; no clock out with 16 MHz in suspects the Gate Array.', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
+        { step: 6, check: 'Reset released', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH', ifNot: 'Held LOW: the reset circuit or a short on the reset line (it also resets the FDC).', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
+        { step: 7, check: 'Gate Array READY', where: 'Z80A pin 24', expect: 'Regular LOW pulses', ifNot: 'Stuck LOW: the CPU is hung waiting; suspect the Gate Array or a short on READY.', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
+        { step: 8, check: 'CRTC clock and frame sync', where: '6845 pin 21; 6845 pin 40', expect: '1 MHz character clock; VSYNC pulses at 50 Hz',
+          ifNot: 'With 5 V and clocks good and still no picture on a known-good monitor, the flowchart suspects the Gate Array, Z80A, 6845, crystal and RAM.', source: FLOW6128 }
+      ],
+      clocks: [
+        { name: 'Crystal X101', where: '40010 pin 24', f: '16 MHz', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
+        { name: 'Z80 clock (40010 /PHI inverted by a 74HCU04)', where: '40010 pin 19 to Z80A pin 6', f: '4 MHz', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
+        { name: 'CRTC character clock', where: '40010 pin 4 to 6845 pin 21', f: '1 MHz', source: W_CRTC },
+        { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', source: AMEND },
+        { name: 'FDC clock', where: '765 pin 19', f: '4 MHz', source: W_FDC },
+        { name: 'Interrupt (every 52 HSYNCs)', where: 'Z80A pin 16', f: '300 Hz', source: W_GA }
       ],
       sources: [sm6128('CPU circuit diagram p. 19-20', 16), sm6128('interface circuit diagram p. 33-34', 27), sm6128('electrical parts list p. 21', 17)]
     }

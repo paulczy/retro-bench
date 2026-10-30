@@ -52,6 +52,18 @@ const DSR_SOCK = 'https://www.dataserve-retro.co.uk/contents/en-uk/p2455_Acorn-E
 const TI = n => `https://www.ti.com/lit/ds/symlink/${n}.pdf`;
 const S = (label, url, verify) => (verify ? { label, url, verify: true } : { label, url });
 
+/* Features 1, 3, 4, 6 (scope, firstTen, clocks, replacements); all fetched 2026-10-30. SM85P pages are PDF pages of
+   the October 1985 service manual section 1 scan (printed page = PDF page - 10). */
+const SM85P = p => `${SM85}#page=${p}`;
+const PHIL79P = p => PHIL79.replace('#page=181', `#page=${p}`);
+const WD84P = p => WD84.replace('#page=53', `#page=${p}`);
+const KIT1770 = 'https://chrisacorns.computinghistory.org.uk/docs/Acorn/Tech/Acorn_1770DiscIFUpgradeKit.pdf';
+const RC1770 = 'https://www.retro-kit.co.uk/page.cfm/content/RetroClinic-1770-Disc-Interface/';
+const JAMULA = 'https://github.com/moogway82/JamSoftElectronULA';
+const WDC02 = 'https://www.westerndesigncenter.com/wdc/documentation/w65c02s.pdf#page=9';
+const WIKI_SAA = 'https://en.wikipedia.org/wiki/Mullard_SAA5050';
+const SM_PHOTO = 'the photo marks no ground, so the trace is drawn from 0 V with the swing read off the graticule';
+
 /* Pad layouts for 'custom' drawings, 0-100 box looking into the socket. */
 const hdrPads = n => {   /* 2-row IDC header: odd pins on the lower row, pin 1 at the left, 2 above 1 */
   const cols = n / 2, s = Math.round((92 / (cols - 1)) * 10) / 10;
@@ -518,7 +530,7 @@ RCS.add({
       video: 'Video ULA + 6845: MODEs 0-6 bitmapped (up to 640 x 256), MODE 7 teletext by SAA5050; RGB, composite, UHF',
       sound: 'SN76489: three tones plus noise; optional TMS5220 speech',
       os: 'MOS 1.2, BBC BASIC II',
-      chips: ['cpu6502', 'vidproc', 'crtc6845', 'saa5050', 'via6522', 'serproc', 'acia6850', 'psg76489', 'adc7002', 'fdc8271', 'fdc1770', 'adlc6854', 'dram4816', 'rom27128', 'rom2764', 'ls138'],
+      chips: ['cpu6502', 'vidproc', 'crtc6845', 'saa5050', 'via6522', 'serproc', 'acia6850', 'psg76489', 'adc7002', 'fdc8271', 'fdc1770', 'adlc6854', 'dram4816', 'rom27128', 'rom2764', 'ls138', 'ttl7404'],
       tagline: 'A 2 MHz 6502 with Acorn ULAs, a 6845 and a stack of IDC headers underneath; the CRTC refreshes the DRAM, so a dead CRTC looks like a dead machine.' },
     bbcmaster: { id: 'bbcmaster', brand: 'acorn', name: 'BBC Master 128', aka: 'BBC Master Series', year: 1986, status: 'ready',
       cpu: '65SC12 (CMOS 6502 with the 65C02 extra instructions) at 2 MHz',
@@ -549,6 +561,9 @@ RCS.add({
       heat: 'cool',
       verifiedAgainst: 'Master main PCB circuit diagram 0143,000 sheet 1 (IC14 pin numbers and names); Master Reference Manual Part 2, O.4',
       datasheets: [S('Master main PCB circuit diagram 0143,000, sheet 1 (IC14 and supply table)', MSCH), S('Master Reference Manual Part 2, O.4 The 65C12 microprocessor', MRM2(152))],
+      replacements: [
+        { part: 'WDC W65C02S', kind: 'modern', note: 'Still made and runs the 65C02 instructions, but pins 1 (VPB) and 5 (MLB) are outputs where the Master grounds both (VSS), and pin 36 (BE) must be HIGH. Check all three before fitting one.', source: S('WDC W65C02S data sheet, pin functions, pp. 9-13', WDC02) }
+      ],
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
         { n: 2, name: 'RDY', type: 'ctrl', dir: 'in', desc: 'Ready from the I/O controller (IC15 pin 17); also goes to the PBC. Low stretches the cycle.', terms: ['rdy'] },
@@ -600,6 +615,11 @@ RCS.add({
       heat: 'hot',
       verifiedAgainst: 'Model B circuit diagram 105,000/C (IC6 pins 1-3, 9-28); BBC Service Manual 6.3 (pins 4-7); Master Series Service Manual 7.1.2 and 7.3.4 (pins 4-8, 9-14); Master PCB diagram supply table (1, 16)',
       datasheets: [S('Circuit diagram for BBC Microcomputer 105,000/C, IC6 video processor', CD), S('Master Series Service Manual, 7.1.2 and 7.3.4, pp. 32, 39', MSM(32)), S('BeebWiki, Video ULA (pinout, registers; secondary)', BW_VULA, true)],
+      replacements: [
+        { part: 'VLSI VC2069 VIDPROC', kind: 'pin-compatible', note: 'Functionally and physically compatible with the Ferranti 5C094 Video ULA (Acorn part 201,647).', source: S('BeebWiki, Video ULA (5C094, VC 2023, VC 2069)', BW_VULA) },
+        { part: 'VLSI VC2023 VIDPROC', kind: 'pin-compatible', note: 'The first VLSI revision needed a patch wire soldered on the main board. Fit a VC2069 where you can; a board that carries the wire was modified for a VC2023.', source: S('BeebWiki, Video ULA (5C094, VC 2023, VC 2069)', BW_VULA) },
+        { part: 'VideoNuLA', kind: 'modern', note: 'Rob Coleman\'s board replaces the Video ULA or VIDPROC in IC6 of the Model B and adds 12-bit colour; it needs a flying lead to the A1 address line.', source: S('BeebWiki, Video ULA, Third-party hardware', BW_VULA) }
+      ],
       pins: [
         { n: 1, name: 'GND', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
         { n: 2, name: 'A0', type: 'addr', dir: 'in', desc: 'Register select: 0 = control (&FE20), 1 = palette (&FE21).' },
@@ -639,6 +659,10 @@ RCS.add({
       heat: 'warm',
       verifiedAgainst: 'Model B circuit diagram 105,000/C (IC7, all 28 pins); Master Series Service Manual 7.6-7.7 (pins 12, 20, 23, 25, 27); Master PCB supply table (14, 28)',
       datasheets: [S('Circuit diagram for BBC Microcomputer 105,000/C, IC7 serial interface 2C199', CD), S('Master Series Service Manual, 7.6 and 7.7, pp. 41-43', MSM(41)), S('BeebWiki, Serial ULA (secondary)', BW_SULA, true)],
+      replacements: [
+        { part: 'VLSI VC2026 SERPROC', kind: 'pin-compatible', note: 'Second source for the Ferranti 2C199. Its register bit 3 can swap the cassette tones, so BASICODE 2 (The Chip Shop), Facemaker and Caveman Capers load only on the Ferranti part.', source: S('BeebWiki, Serial ULA (VLSI extension and incompatible tapes)', BW_SULA) },
+        { part: 'Ferranti 2C199E, -3 or -7', kind: 'pin-compatible', note: 'R75 must match the ULA issue: 100K or 56K for 2C199E and 2C199E-3, 82K for 2C199E-7, or tapes load unreliably.', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.4 Most common faults (R75 by serial processor issue), p. 41', SM85P(51)) }
+      ],
       pins: [
         ...[0, 1, 2, 3, 4, 5, 6, 7].map(b => ({ n: b + 1, name: `D${b}`, type: 'data', dir: 'in', desc: `Data bit ${b} (control register at &FE10 is write only).` })),
         { n: 9, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select (SERPROC decode).', terms: ['cs'] },
@@ -671,6 +695,10 @@ RCS.add({
       heat: 'warm',
       verifiedAgainst: 'Philips SAA5050 data sheet, August 1978 (pinning and application data); Model B circuit diagram 105,000/C (IC5); Master Series Service Manual 7.3.4/7.3.6',
       datasheets: [S('Philips Semiconductors and ICs Part 6b (1979), SAA5050 data sheet, pinning p. 2', PHIL79), S('Circuit diagram for BBC Microcomputer 105,000/C, IC5', CD)],
+      replacements: [
+        { part: 'SAA5051 / SAA5052', kind: 'pin-compatible', note: 'German and Swedish character sets: same pins, but the national characters differ in MODE 7. Fit an SAA5050 for the English set.', source: S('Philips Semiconductors and ICs Part 6b (1979), teletext family list (SAA5050 English, SAA5051 German, SAA5052 Swedish), p. 13', PHIL79P(13)) },
+        { part: 'SAA5053 / SAA5054 / SAA5055', kind: 'pin-compatible', note: 'Later national variants (the SAA5054 is given as Belgian or French depending on the source); the character set differs. No maker data sheet for these was found.', source: S('Wikipedia, Mullard SAA5050, variants (secondary)', WIKI_SAA, true) }
+      ],
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
         { n: 2, name: 'SUPERIMPOSE', type: 'io', dir: 'bidir', desc: 'Superimpose (open drain).', terms: ['open-drain'] },
@@ -710,6 +738,10 @@ RCS.add({
       heat: 'warm',
       verifiedAgainst: 'Intel 1979 Peripheral Design Handbook, 8271 data sheet pp. 1-108 to 1-109 (pin configuration and pin descriptions)',
       datasheets: [S('Intel 1979 Peripheral Design Handbook, 8271 Programmable Floppy Disk Controller, p. 1-108', INTEL79), S('Advanced User Guide, 25.1 The 8271 floppy disc controller', AUG)],
+      replacements: [
+        { part: 'Acorn 1770 Disc Interface Module (kit 0433,050)', kind: 'adapter', note: 'Plugs into the 8271 socket IC78 once the 8271 is out, with the 1770 DFS ROM. Cut link S9, take the 74LS393 out of IC86 and fit a wire link there between pins 1 and 4. Model B only (the B+ has a 1770); issue 2 and 3 boards may need PCB changes.', source: S('Acorn BBC Model B 1770 Disc Interface Upgrade Kit fitting instructions 0433,050, sections 3-4, pp. 6-7', `${KIT1770}#page=8`) },
+        { part: 'RetroClinic 177x disc interface', kind: 'modern', note: 'Fits the 8271 socket with a VLSI 1772; sold with Acorn 177x DFS or Watford DDFS ROMs. On a machine with no 8271 interface fitted, the kit adds the missing logic chips.', source: S('Retro-Kit, RetroClinic 1770 Disc Interface', RC1770) }
+      ],
       pins: [
         { n: 1, name: 'FAULT RESET/OPO', type: 'io', dir: 'out', desc: 'Optional fault reset or general output.' },
         { n: 2, name: 'SELECT 0', type: 'ctrl', dir: 'out', desc: 'Drive select 0.' },
@@ -754,6 +786,9 @@ RCS.add({
       heat: 'warm',
       verifiedAgainst: 'Western Digital WD1770/1772 data sheet, 1984 Storage Management Products Handbook pp. 43-44 (pin designation and pin table); Master Series Service Manual 7.8',
       datasheets: [S('Western Digital 1984 Storage Products Handbook, WD1770/1772 data sheet, pp. 43-44', WD84), S('Master Series Service Manual, 7.8 Disc drive interface, p. 44', MSM(44))],
+      replacements: [
+        { part: 'WD1772', kind: 'pin-compatible', note: 'Same pins, but the four step-rate codes give 2, 3, 5 and 6 ms instead of 6, 12, 20 and 30 ms. Software set for a slow 1770 rate steps a 1772 much faster, which old drives can miss.', source: S('Western Digital 1984 Storage Products Handbook, WD1770/1772 stepping rate table, p. 48', WD84P(58)) }
+      ],
       pins: [
         { n: 1, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select.', terms: ['cs'], probe: 'Pulses low when the host accesses the controller.' },
         { n: 2, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'High = read, low = write.', terms: ['rw'] },
@@ -914,6 +949,9 @@ RCS.add({
       heat: 'hot',
       verifiedAgainst: 'Electron Service Manual 0405001 issue 2, ch. 6 and main PCB circuit diagram (issue 4 board, IC1 all 68 pins), 8.2-8.10; Electron Advanced User Guide Appendix G (issue 6 board, all 68 pins agree)',
       datasheets: [S('Electron Service Manual, 6 The uncommitted logic array (pin functions), p. 8', ESM(14)), S('Electron Service Manual, main PCB circuit diagram, IC1 pin numbers, pp. 31-32', ESM(37)), S('Electron Service Manual, 8.3 ULA (supply, clock, RAS/CAS test pins), p. 11', ESM(17)), S('Electron Advanced User Guide, Appendix G main board circuit diagram issue 6 (IC1 12C021)', EAUG(285)), S('Electron Advanced User Guide, 14.1 The ULA and its registers, pp. 211-224', EAUG(212)), S('Acorn Application Note 015 (NMI and IRQ pull-ups in the ULA), p. 4', AN15(4))],
+      replacements: [
+        { part: 'JamSoft Electron ULA (iCE40 FPGA)', kind: 'modern', note: 'Open project: an iCE40 FPGA board on a socket adapter in place of the ULA. The 68-pin socket must be replaced with a good PGA socket or SIL headers. It ignores NMI, so peripherals that use it crash; the author has stopped development.', source: S('JamSoftElectronULA README (GitHub)', JAMULA) }
+      ],
       pins: (() => {
         const t = {
           1: ['A1', 'addr', 'in'], 2: ['A8', 'addr', 'in'], 3: ['RED', 'video', 'out', 'Red, TTL active high, to RGB pin 1 (R47) and the PAL encoder.'], 4: ['GREEN', 'video', 'out', 'Green, to RGB pin 2 (R46) and the encoder.'],
@@ -961,8 +999,8 @@ RCS.add({
 
     ttl7404: { id: 'ttl7404', name: '7404 / 74S04 hex inverter', short: '74S04', family: 'TTL (Schottky)',
       role: 'Six inverters; often used, with a crystal, as a clock oscillator', pkg: 'DIP-14',
-      machines: ['electron'], location: { electron: 'IC8' },
-      summary: 'On the Electron (IC8) it runs both crystal oscillators. Pins 13-12, 11-10 and 9-8 with X1 (R1, R2 820R) make the 16 MHz clock, out on pin 8 to ULA pin 49, the 74LS169 and expansion pin 12. Pins 1-6 with X2 and trimmer VC1 make the 17.7345 MHz PAL subcarrier, out on pin 6 (TP1) to the 74S74 IC11; trim it to within 200 Hz. No 16 MHz = a dead machine; no 17.7 MHz = black and white on the TV only. Fit an S part, not LS.',
+      machines: ['electron', 'bbcb'], location: { electron: 'IC8', bbcb: 'IC43' },
+      summary: 'On the BBC Model B, IC43 is the 74S04 of the 16 MHz crystal oscillator, and the service manual photographs RAS on its pin 12. On the Electron (IC8) it runs both crystal oscillators. Pins 13-12, 11-10 and 9-8 with X1 (R1, R2 820R) make the 16 MHz clock, out on pin 8 to ULA pin 49, the 74LS169 and expansion pin 12. Pins 1-6 with X2 and trimmer VC1 make the 17.7345 MHz PAL subcarrier, out on pin 6 (TP1) to the 74S74 IC11; trim it to within 200 Hz. No 16 MHz = a dead machine; no 17.7 MHz = black and white on the TV only. Fit an S part, not LS.',
       fails: ['Dead machine (no 16 MHz)', 'No colour on UHF or composite'], heat: 'warm',
       verifiedAgainst: 'TI SN74S04 data sheet (pin assignment); Electron Service Manual 8.2, 8.7 c) and circuit diagram (IC8)',
       datasheets: [S('TI SN7404 / SN74LS04 / SN74S04 data sheet, p. 1', TI('sn74ls04')), S('Electron Service Manual, 8.2 Oscillator and 8.7 c), pp. 10, 13', ESM(16))],
@@ -1157,7 +1195,23 @@ RCS.add({
       testPoints: [
         { tp: 'Reset', where: '6502 pin 40', expect: 'High; low only while BREAK is held' },
         { tp: 'IRQ', where: '6502 pin 4', expect: 'Pulsing (100 Hz system timer), not stuck high or low' },
-        { tp: 'CPU clock in / out', where: '6502 pin 37 and 6502 pin 3', expect: '2 MHz, stretched to 1 MHz for slow devices' },
+        { tp: 'CPU clock in', where: '6502 pin 37', expect: '2 MHz, stretched to 1 MHz for slow devices',
+          scope: { f: '2 MHz', low: '0 V', high: '4.2 V', shape: 'square', duty: '50%', basis: 'capture',
+            source: S('BBC Microcomputer Service Manual (Oct 1985), 6.5.1 sample waveforms: 2 MHz at IC1 pin 37, 2 V/cm, 100 ns/cm, p. 45', SM85P(55)),
+            note: `Photo: 500 ns period, mark and space about equal, about 4.2 V p-p (${SM_PHOTO}). An access to a 1 MHz device stretches one cycle to 1 µs. Sloping ("slack") edges, or levels outside TTL (high above 2.8 V, low below 0.8 V), point to a fault (SM 6.3).` } },
+        { tp: 'CPU clock out', where: '6502 pin 3', expect: '2 MHz, stretched with pin 37' },
+        { tp: 'DRAM RAS', where: '74S04 pin 12', expect: '4 MHz pulses (IC43)',
+          scope: { f: '4 MHz', low: '0 V', high: '3.6 V', shape: 'square', duty: '45%', basis: 'capture',
+            source: S('BBC Microcomputer Service Manual (Oct 1985), 6.5.1 sample waveforms: RAS at IC43 pin 12 under the 2 MHz clock, 2 V/cm, 100 ns/cm, p. 46', SM85P(56)),
+            note: `Photo: 250 ns period, high for a little under half of it, about 3.6 V p-p (${SM_PHOTO}). RAS is made from the 8 and 4 MHz clocks by a D-type (IC44, SM 3.2); no RAS means no RAM and a dead machine.` } },
+        { tp: 'ADC select (SM test loop at &FEC0)', where: '7002 pin 23', expect: 'Low 1 µs in every 4 µs while the SM 6.5.1 test program reads &FEC0',
+          scope: { period: '4 µs', low: '0 V', high: '4.6 V', shape: 'pulse', duty: '75%', basis: 'capture',
+            source: S('BBC Microcomputer Service Manual (Oct 1985), 6.5.1 test program and IC73 pin 23 waveform, 1 V/cm, 1 µs/cm, p. 44', SM85P(54)),
+            note: `Only with the SM test program running (a closed LDA loop on the address typed in). A slow (1 MHz) device is selected for a full 1 µs, then high for 3 µs. About 4.6 V p-p (${SM_PHOTO}). No pulse: the address decode to this chip is broken.` } },
+        { tp: 'Disc controller select (SM test loop at &FE80)', where: '8271 pin 24', expect: 'Low 500 ns in every 3.5 µs while the SM 6.5.1 test program reads &FE80',
+          scope: { period: '3.5 µs', low: '0 V', high: '4.6 V', shape: 'pulse', duty: '86%', basis: 'capture',
+            source: S('BBC Microcomputer Service Manual (Oct 1985), 6.5.1 IC78 pin 24 waveform, 1 V/cm, 1 µs/cm, p. 45', SM85P(55)),
+            note: `Only with the SM test program running. A fast (2 MHz) device is selected for 500 ns, then high for 3 µs. About 4.6 V p-p (${SM_PHOTO}).` } },
         { tp: 'SYNC (CPU alive)', where: '6502 pin 7', expect: 'Toggling; stuck = CPU stalled' },
         { tp: 'R/W', where: '6502 pin 34', expect: 'Toggling; also check IC33 pin 10' },
         { tp: 'Master clock', where: 'VIDPROC pin 8', expect: '16 MHz from IC43' },
@@ -1166,6 +1220,40 @@ RCS.add({
         { tp: 'Teletext dot clock', where: 'SAA5050 pin 19', expect: '6 MHz, uneven duty' },
         { tp: 'Serial clock', where: 'SERPROC pin 25', expect: '1.23 MHz (812 ns period)' },
         { tp: 'Logic levels', where: 'Any TTL node', expect: 'High above 2.8 V (normally 3.4 V+), low below 0.8 V (normally under 0.4 V)' }
+      ],
+      firstTen: [
+        { step: 1, check: '+5 V at all three supply pairs', where: 'Push-on tabs +5V-1, +5V-2 and +5V-3, each against its 0V tab', expect: '+5 V on every pair (4.9 to 5.2 V)',
+          ifNot: 'A linear supply has one regulator per pair, so one pair can be dead alone. If a flick of a lead makes the picture flicker, resolder the crimps. Do not repair the supply itself: Acorn requires a 10 A earth and 1500 V AC test after any repair.',
+          source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 Fault isolation (supply) and 6.4 (power leads), pp. 39-41', SM85P(49)) },
+        { step: 2, check: '-5 V rail', where: 'Purple -5V tab against a 0V tab', expect: '-4.75 to -5.25 V',
+          ifNot: 'CPU, memory and display work without it; cassette, sound, speech and RS423 do not.', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 Fault isolation, p. 39', SM85P(49)) },
+        { step: 3, check: 'Reset released', where: '6502 pin 40', expect: 'High; low only while BREAK is held',
+          ifNot: 'Reset held low: look for a short on the reset line before suspecting the CPU.', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 i), p. 39', SM85P(49)) },
+        { step: 4, check: '16 MHz master clock', where: 'VIDPROC pin 8', expect: '16 MHz from the 74S04 oscillator (IC43)',
+          ifNot: 'Check the 74S04 (IC43) and crystal X1; every other clock comes from this one.', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1 Processor and clock circuitry, p. 9', SM85P(19)) },
+        { step: 5, check: 'Divided clocks and CPU clock', where: 'VIDPROC pins 4, 5, 6, 7; 6502 pin 37 and pin 3', expect: '1, 2, 4 and 8 MHz on VIDPROC 4 to 7; 2 MHz into and out of the 6502',
+          ifNot: '16 MHz present but no outputs: swap the VIDPROC (IC6).', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 iii), p. 40', SM85P(50)) },
+        { step: 6, check: 'IRQ not stuck', where: '6502 pin 4', expect: 'Neither permanently high nor permanently low',
+          ifNot: 'Stuck low: pull the socketed interrupt sources (ACIA IC4, user VIA IC69) one at a time.', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 ii), p. 39', SM85P(49)) },
+        { step: 7, check: 'CPU fetching', where: '6502 pin 7 and pin 34', expect: 'SYNC and R/W toggling (R/W also at IC33, leg 10)',
+          ifNot: 'SYNC fixed high or low: the 6502 is stalled. Check address and data lines at the 6502 and the MOS ROM (IC51) for a line stuck high or low.', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 iv) and v), p. 40', SM85P(50)) },
+        { step: 8, check: 'CRTC programmed', where: '6845 pin 39 and pin 40', expect: 'HSYNC and VSYNC pulsing (the CRTC was set up at reset and is refreshing the DRAM)',
+          ifNot: 'Pull the socketed ACIA (IC4), SERPROC (IC7), ADC (IC73) and user VIA (IC69); if still dead, swap the system VIA (IC3), 6502 (IC1), 6845 (IC2) and VIDPROC (IC6).', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 vi) and following, p. 40', SM85P(50)) }
+      ],
+      clocks: [
+        { name: 'Crystal X1 (system)', where: 'X1 with the 74S04 oscillator (IC43) into VIDPROC pin 8', f: '16 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1 and parts list item 98 (X1 16 MHz), pp. 9, 83', SM85P(19)) },
+        { name: '8 MHz (DRAM timing, disc)', where: 'VIDPROC pin 7', f: '8 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 iii), p. 40', SM85P(50)) },
+        { name: '4 MHz (DRAM timing)', where: 'VIDPROC pin 6', f: '4 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 iii), p. 40', SM85P(50)) },
+        { name: '2 MHz CPU clock', where: 'VIDPROC pin 5 to 6502 pin 37', f: '2 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1 Processor and clock circuitry, p. 9', SM85P(19)) },
+        { name: 'CPU phi2 out (stretched to 1 MHz for slow devices)', where: '6502 pin 39', f: '2 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1 (1 MHz cycles for the VIAs, 6845, ACIA, SERPROC, ADC, 1 MHz bus), p. 9', SM85P(19)) },
+        { name: '1 MHz (teletext only)', where: 'VIDPROC pin 4 to SAA5050 pin 20', f: '1 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1: the VIDPROC 1 MHz is used only by the teletext chip, p. 9', SM85P(19)) },
+        { name: '1MHzE system 1 MHz (2 MHz divided by a D-type, IC34)', where: '1 MHz bus (PL11) pin 4', f: '1 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1, p. 9', SM85P(19)) },
+        { name: '6845 character clock (2 MHz in MODEs 0-3, 1 MHz in 4-7)', where: 'VIDPROC pin 28 to 6845 pin 21', f: '2 MHz', source: S('BBC Micro Advanced User Guide, 19.1.4 6845 clock rate select (video ULA control register bit 4)', AUG) },
+        { name: 'Teletext dot clock (from the 8, 4 and 2 MHz by IC40 and IC38)', where: 'SAA5050 pin 19', f: '6 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.3 teletext 6 MHz clock, p. 17', SM85P(27)) },
+        { name: 'Serial clock (16 MHz / 13 by IC42)', where: 'SERPROC pin 25', f: '1.2308 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.5 Cassette + RS423 + serial processor, p. 19', SM85P(29)) },
+        { name: 'Cassette tone (1.23 MHz / 1024; 2400 Hz for the other bit value)', where: 'Cassette (SK5) pin 1', f: '1200 Hz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.5 (1200 Hz cassette signal), p. 19', SM85P(29)) },
+        { name: 'PAL crystal X2 (Q10 oscillator)', where: 'X2 at Q10', f: '17.7345 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.4 PAL encoder and parts list item 99 (X2 17.7345 MHz), p. 19', SM85P(29)) },
+        { name: 'PAL colour subcarrier (ring counter IC46; U signal on its leg 9)', where: 'IC46', f: '4.433618 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.4 PAL encoder, p. 19', SM85P(29)) }
       ],
       sources: [S('BBC Microcomputer Service Manual, 3.1, 3.3, 3.5, 3.14, 6.3 Fault isolation, 6.4 Most common faults', SM), S('Circuit diagram for BBC Microcomputer 105,000/C', CD), S('BBC Microcomputer Service Manual, October 1985 edition (Acorn part 0433,001), section 1', SM85)]
     },
@@ -1187,7 +1275,10 @@ RCS.add({
         { rail: 'ADC reference', expect: 'About 1.8 V', where: '7002 pin 8 to 7002 pin 9', note: 'LK13 lets an external reference up to 2.5 V in.' }
       ],
       testPoints: [
-        { tp: 'Master oscillator', where: 'IC43 pin 2 (74S04) and VIDPROC pin 8', expect: '16 MHz, about 4 V p-p' },
+        { tp: 'Master oscillator', where: 'VIDPROC pin 8', expect: '16 MHz, about 4 V p-p (oscillator output on IC43, leg 2)',
+          scope: { f: '16 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'datasheet',
+            source: S('Master Series Service Manual, 7.1.2 step 3 (16 MHz, reasonably clean, 4 V peak to peak), p. 32', MSM(32)),
+            note: 'Level from the service manual text (no drawing); drawn from 0 V because only the swing is given. If the 16 MHz stops, RAS and CAS can sit low and destroy the DRAMs: power on for 30 s at most while you look.' } },
         { tp: 'Divided clocks', where: 'VIDPROC pin 4', expect: '1 MHz; pins 5, 6, 7 give 2, 4, 8 MHz' },
         { tp: 'CPU clock', where: '65SC12 pin 37', expect: 'Clean 2 MHz' },
         { tp: 'NMI / IRQ / SYNC / R/W', where: '65SC12 pin 6', expect: 'TP3 NMI high at rest; TP4 IRQ (65SC12 pin 4), TP5 SYNC (pin 7), TP6 R/W (pin 34) toggling' },
@@ -1199,6 +1290,38 @@ RCS.add({
         { tp: 'Serial clock', where: 'SERPROC pin 25', expect: '1.23 MHz' },
         { tp: 'RTC crystal', where: 'RTC pin 2', expect: '32.768 kHz (trim VC1)' },
         { tp: 'Disc clock', where: '1770 pin 18', expect: '8 MHz' }
+      ],
+      firstTen: [
+        { step: 1, check: 'Supply alive', where: 'Keyboard power LED; supply leads on the push-on tabs (red +5V, black 0V, purple -5V)', expect: 'Power LED lit and the power-on beep',
+          ifNot: 'LED off and no beep: the supply is dead or its fuse has blown; try another supply.', source: S('Master Series Service Manual, 7.1.1, p. 31', MSM(31)) },
+        { step: 2, check: '+5 V at the chips', where: '65SC12 pin 8 to 65SC12 pin 1; VIDPROC pin 16', expect: '+5 V (4.9 to 5.2 V) on every IC supply pin',
+          ifNot: 'Make good dry joints, feel for hot ICs and shorted tracks; a -5 V short to the I/O controller latches it up. Replace any IC that ran hot, even if it then works.', source: S('Master Series Service Manual, 7.1.2 steps 1-2, p. 31', MSM(31)) },
+        { step: 3, check: '16 MHz master clock', where: 'VIDPROC pin 8 (from the oscillator, IC43 leg 2)', expect: 'Reasonably clean 16 MHz, about 4 V p-p',
+          ifNot: 'Check the oscillator (half of IC43 and crystal X2). With no 16 MHz, RAS and CAS can sit low and destroy the DRAMs: 30 s on at most.', source: S('Master Series Service Manual, 7.1.2 step 3, p. 32', MSM(32)) },
+        { step: 4, check: 'Divided clocks', where: 'VIDPROC pins 4, 5, 6, 7', expect: '1, 2, 4 and 8 MHz, clean square waves at TTL levels',
+          ifNot: 'Any missing or not clean: replace the VIDPROC (IC42).', source: S('Master Series Service Manual, 7.1.2 step 4, p. 32', MSM(32)) },
+        { step: 5, check: 'CPU clock', where: '65SC12 pin 37', expect: 'Clean 2 MHz',
+          ifNot: 'Look for a broken or shorting track from the VIDPROC.', source: S('Master Series Service Manual, 7.1.2 step 5, p. 32', MSM(32)) },
+        { step: 6, check: 'Bus lines and ROM', where: '65SC12 pin 9 (A0) to pin 25 (A15); 65SC12 pin 33 (D0) to pin 26 (D7)', expect: 'No line shorted to another, to +5 V or to 0 V; system ROM plugged in',
+          ifNot: 'Clear the short. The PBC (IC21) buffers the data bus and can hide a fault: check each node, do not assume it joins another.', source: S('Master Series Service Manual, 7.1.2 steps 6-7 and the PBC note, pp. 31-33', MSM(32)) },
+        { step: 7, check: 'DRAM RAS and CAS', where: 'DRAMs IC17 and IC23 (4464): RAS on leg 5, CAS on leg 16', expect: 'Clean 4 MHz square waves (SM Figure 8)',
+          ifNot: 'Look for shorted tracks. RAS comes from the D-type IC28 (leg 9). RAS stuck low destroys the DRAMs.', source: S('Master Series Service Manual, 7.1.2 step 8 and Figure 8 DRAM timing, p. 33', MSM(33)) },
+        { step: 8, check: 'CRTC running', where: '6845 pin 40 and pin 39; MA0 at 6845 pin 4', expect: 'VSYNC pulse every 20 ms, HSYNC every 64 µs; MA and RA lines switching between good logic levels',
+          ifNot: 'Replace the 6845, then look for shorted tracks. Composite sync should then reach RGB (SK9) pin 4.', source: S('Master Series Service Manual, 7.1.3, p. 34', MSM(34)) }
+      ],
+      clocks: [
+        { name: 'Crystal X2 (system)', where: 'X2 with IC43 into VIDPROC pin 8', f: '16 MHz', source: S('Master Series Service Manual, parts list item 218 (X2 16.000 MHz) and 7.1.2 step 3', MSM(58)) },
+        { name: '8 MHz (DRAM timing, disc, cartridges)', where: 'VIDPROC pin 7', f: '8 MHz', source: S('Master Series Service Manual, 7.1.2 step 4, p. 32', MSM(32)) },
+        { name: '4 MHz (RAS timing, sound)', where: 'VIDPROC pin 6', f: '4 MHz', source: S('Master Series Service Manual, 7.1.2 step 4, p. 32', MSM(32)) },
+        { name: '2 MHz CPU clock', where: 'VIDPROC pin 5 to 65SC12 pin 37', f: '2 MHz', source: S('Master Series Service Manual, 7.1.2 steps 4-5, p. 32', MSM(32)) },
+        { name: '1 MHz', where: 'VIDPROC pin 4', f: '1 MHz', source: S('Master Series Service Manual, 7.1.2 step 4, p. 32', MSM(32)) },
+        { name: 'Disc controller clock', where: '1770 pin 18', f: '8 MHz', source: S('Master Series Service Manual, 7.7 step 6 (8 MHz at IC3 pin 18), p. 44', MSM(44)) },
+        { name: 'Sound reference', where: 'SN76489 pin 14', f: '4 MHz', source: S('Master Series Service Manual, 5 sound generator (4 MHz from central timing), p. 20', MSM(20)) },
+        { name: '6845 character clock (2 MHz in MODEs 0-3, 1 MHz in 4-7, as the Model B)', where: 'VIDPROC pin 28 to 6845 pin 21', f: '2 MHz', source: S('BBC Micro Advanced User Guide, 19.1.4 6845 clock rate select (video ULA control register bit 4)', AUG) },
+        { name: 'Teletext dot clock (generator IC39 and IC25)', where: 'SAA5050 pin 19', f: '6 MHz', source: S('Master Series Service Manual, 7.3 MODE 7 faults, p. 40', MSM(40)) },
+        { name: 'Serial reference (CHROMA output via LK14)', where: 'SERPROC pin 25', f: '1.23 MHz', source: S('Master Series Service Manual, LK14 and 7.6 step 5, pp. 10, 42', MSM(42)) },
+        { name: 'PAL crystal (trim VC2)', where: 'IC43, leg 12', f: '17.7345 MHz', source: S('Master Series Service Manual, 7.2 colour fault step 1, p. 39', MSM(39)) },
+        { name: 'Clock crystal X3 (trim VC1)', where: 'RTC pin 2', f: '32.768 kHz', source: S('Master Series Service Manual, 7.4 step 1, p. 40', MSM(40)) }
       ],
       sources: [S('Master Series Service Manual, 7 Fault finding, pp. 31-49', MSM(31)), S('Master main PCB circuit diagram 0143,000 (supply table, test points)', MSCH)]
     },
@@ -1223,7 +1346,10 @@ RCS.add({
         { rail: '0 V', expect: '0 V', where: 'ULA pin 51; ULA pin 68; 6502 pin 1; 6502 pin 21; 4164 pin 16', note: 'Also 23256 pin 14.' }
       ],
       testPoints: [
-        { tp: 'Master clock', where: 'ULA pin 49', expect: '16 MHz, about 4 V p-p (from 74S04 pin 8)' },
+        { tp: 'Master clock', where: 'ULA pin 49', expect: '16 MHz, about 4 V p-p (from 74S04 pin 8)',
+          scope: { f: '16 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'datasheet',
+            source: S('Electron Service Manual, 8.2 Oscillator (16 MHz, 4 V peak to peak clock pulse at ULA pin 49), p. 10', ESM(16)),
+            note: 'Level from the service manual text (no drawing); drawn from 0 V because only the swing is given. Missing at the ULA but present at 74S04 pin 8: broken track. Missing at both: the 74S04, crystal X1 or the parts round them.' } },
         { tp: 'CPU clock', where: 'ULA pin 60', expect: 'PHI OUT: 1-2 MHz in MODEs 4-6, with gaps in MODEs 0-3; same at 6502 pin 37' },
         { tp: 'ROM select', where: 'ULA pin 61', expect: 'Toggling, not stuck' },
         { tp: 'DRAM strobes', where: 'ULA pin 52', expect: 'RAS toggling (stuck low destroys the DRAMs); CAS on ULA pin 53; at 4164 pins 4 and 15' },
@@ -1232,12 +1358,47 @@ RCS.add({
         { tp: 'Divide-by-13 clock', where: '74LS169 pin 11', expect: '812 ns period, reaching ULA pin 55' },
         { tp: 'PAL subcarrier', where: '74S04 pin 6', expect: '17.7345 MHz +/-200 Hz (TP1; trim VC1). TP2 is 0 V' },
         { tp: 'Colour divider', where: '7474 pin 9', expect: '4.4336 MHz at IC11 pins 9 and 6' },
-        { tp: 'Cassette out', where: 'ULA pin 50', expect: 'About 1.8 V p-p sine while saving' },
+        { tp: 'Cassette out', where: 'ULA pin 50', expect: 'About 1.8 V p-p sine while saving',
+          scope: { f: '2400 Hz', low: '0 V', high: '1.8 V', shape: 'sine', basis: 'datasheet',
+            source: S('Electron Service Manual, 8.8 Cassette interface (synthesised sine of about 1.8 V p-p at ULA pin 50 while saving), p. 13', ESM(19)),
+            note: 'Swing from the service manual text (drawn from 0 V: only the swing is given). 2400 Hz is the high tone that leads every block (Electron Advanced User Guide p. 213); data bits also use 1200 Hz. SAVE a section of ROM to see it.' } },
+        { tp: 'PAL into the modulator', where: 'PAL wire into the UM1233 modulator (SM Figure 3)', expect: 'PAL line: sync tip 2.6 V, black 2.9 V, burst to 3.05 V, white 3.3 V',
+          scope: { period: '64 µs', low: '2.6 V', high: '3.3 V', shape: 'video-line', basis: 'capture',
+            source: S('Electron Service Manual, 8.7 b) Figures 3-5, black and white PAL waveforms at 50 mV/div, 10 µs/div, pp. 12-13', ESM(18)),
+            note: 'After BREAK: 4 µs sync at 2.6 V, black at 2.9 V, burst to 3.05 V. After COLOUR129: CLS the line rises to 3.3 V white. Burst missing: chrominance circuit (IC11 must be a 74S74). Anything else wrong: make LK4 and check composite out (1 V p-p); good there but no TV picture means the UHF luminance stage (Q5, D1-D3, C13).' } },
         { tp: 'Cassette in', where: 'ULA pin 59', expect: '0.5-2 V p-p while loading a good tape' },
         { tp: 'Sound', where: 'ULA pin 62', expect: 'Signal during a SOUND command' },
         { tp: 'ROM enable', where: '23256 pin 22', expect: 'Toggling' },
         { tp: 'Tape amplifier', where: 'LM324 pin 7', expect: 'Under 100 mV after BREAK; same for LM324 pins 8 and 14' },
         { tp: 'RGB sync', where: '74LS86 pin 11', expect: 'Sync pulses every 64 us, not stuck low (IC14)' }
+      ],
+      firstTen: [
+        { step: 1, check: 'Mains adaptor output', where: 'Grey 18 VAC leads at the PSU board, machine running', expect: 'At least 17 V AC RMS',
+          ifNot: 'Replace the mains adaptor.', source: S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)) },
+        { step: 2, check: 'PSU board +5 V off the main board', where: 'PSU lead unplugged; 10 ohm 2.5 W across red (+5 V) and black (0 V)', expect: '+4.75 to +5.25 V, under 50 mV noise',
+          ifNot: 'Replace or repair the PSU board (it is easy to work on; see its circuit diagram).', source: S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)) },
+        { step: 3, check: 'PSU board -5 V', where: '47 ohm across blue (-5 V) and black, 10 ohm still on red', expect: 'About -5 V (the trace deflects the other way)',
+          ifNot: 'A -5 V fault shows only as a cassette fault.', source: S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)) },
+        { step: 4, check: 'Main board current', where: 'Loads removed, PSU lead back on, meter in the red +5 V lead', expect: '700 to 900 mA',
+          ifNot: 'Zero with 5 V present: an open connector or track. Zero with 0 V: a short on the board tripped the supply (leave it unplugged 15 s to reset). High with 5 V in spec: feel for the hot IC. Over 5.25 V: replace the PSU board.', source: S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)) },
+        { step: 5, check: '16 MHz at the ULA', where: 'ULA pin 49 (from 74S04 pin 8)', expect: '16 MHz, 4 V p-p',
+          ifNot: 'Track from 74S04 pin 8; then +5 V across 74S04 pin 14 and pin 7; then the 74S04, the crystal and the parts round them.', source: S('Electron Service Manual, 8.2 Oscillator, p. 10', ESM(16)) },
+        { step: 6, check: 'ULA outputs', where: 'ULA pin 60; ULA pin 61; ULA pin 52 and pin 53', expect: 'PHI OUT 1 to 2 MHz (gaps in MODEs 0-3); ROM select, RAS and CAS toggling',
+          ifNot: 'Check +5 V on ULA pin 9, pin 43, pin 48 and 0 V on pin 51, pin 68, then try a known-good ULA. RAS fixed at 0 V destroys the 4164s quickly.', source: S('Electron Service Manual, 8.3 ULA, p. 11', ESM(17)) },
+        { step: 7, check: 'CPU alive', where: '6502 pin 40; 6502 pin 4, pin 6 and pin 34', expect: 'Reset at +5 V (0 V while BREAK is held); IRQ, NMI and R/W toggling',
+          ifNot: 'Reset held low: a short on the board or a faulty ULA.', source: S('Electron Service Manual, 8.4 CPU, p. 11', ESM(17)) },
+        { step: 8, check: 'ROM enabled', where: '23256 pin 22; 23256 pin 28', expect: 'Output enable toggling; +5 V on pin 28',
+          ifNot: 'Output enable fixed: check the ULA ROM select (ULA pin 61) and the track to the ROM.', source: S('Electron Service Manual, 8.5 ROM, p. 11', ESM(17)) }
+      ],
+      clocks: [
+        { name: 'Crystal X1 (system)', where: '74S04 pin 8 to ULA pin 49', f: '16 MHz', source: S('Electron Service Manual, 8.2 Oscillator and parts list item 98 (X1 16 MHz), p. 10', ESM(16)) },
+        { name: 'CPU clock PHI OUT (2 MHz for ROM, 1 MHz for RAM and I/O, stopped while the screen reads RAM)', where: 'ULA pin 60 to 6502 pin 37', f: '2 MHz', source: S('Electron Service Manual, 5 Microprocessor clock, p. 7', ESM(13)) },
+        { name: '16 MHz / 13 (812 ns period)', where: '74LS169 pin 11 to ULA pin 55', f: '1.2308 MHz', source: S('Electron Service Manual, 8.8 Cassette interface, p. 13', ESM(19)) },
+        { name: 'Expansion 16 MHz and 16/13 MHz', where: 'Expansion connector (PL1) pin 12 and pin 13', f: '16 MHz', source: S('Electron Advanced User Guide, expansion connector signals (16 MHz, 16/13 MHz), p. 228', EAUG(229)) },
+        { name: 'PAL crystal X2 (trim VC1, +/-200 Hz)', where: '74S04 pin 6', f: '17.7345 MHz', source: S('Electron Service Manual, 8.7 c) chrominance, p. 13', ESM(19)) },
+        { name: 'Colour subcarrier (IC11, a 74S74)', where: '7474 pin 9 and pin 6', f: '4.4336 MHz', source: S('Electron Service Manual, 8.7 c) chrominance, p. 13', ESM(19)) },
+        { name: 'PAL switch, about 7.7 kHz (IC12)', where: '7474 pin 5', f: '7.7 kHz', source: S('Electron Service Manual, 8.7 c) chrominance, p. 13', ESM(19)) },
+        { name: 'Cassette high tone (1200 Hz is the other tone)', where: 'ULA pin 50', f: '2400 Hz', source: S('Electron Advanced User Guide, &FE00 high tone detect (20 cycles of 2400 Hz), p. 213', EAUG(213)) }
       ],
       sources: [S('Electron Service Manual, 8 Fault finding inside a dead Electron, pp. 10-14', ESM(16)), S('Electron Service Manual, main PCB circuit diagram, pp. 31-32', ESM(37)), S('Electron Service Manual, power supply board circuit diagram, p. 37', ESM(43)), S('Acorn Application Note 015, 2.1 signal definitions, pp. 3-5', AN15(3))]
     }
