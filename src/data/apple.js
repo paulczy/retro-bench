@@ -10,6 +10,30 @@ const IIRM = n => `https://archive.org/details/Apple_II_Reference_Manual_1979_Ap
 const IIE = n => `https://archive.org/details/Apple_IIe_Technical_Reference_Manual/page/n${n}`;
 const IIE87 = n => `https://archive.org/details/apple-iie-technical-reference-manual-1987-edition/page/n${n}`;
 const IIC = n => `https://archive.org/details/Apple_IIc_Technical_Reference_Manual/page/n${n}`;
+const SAMS2P = n => `https://archive.org/details/Sams_Computer_Facts_Apple_II_II_Plus/page/n${n}`;
+const SAMS2E = n => `https://archive.org/details/Sams_Computer_Facts_Apple_IIe/page/n${n}`;
+const SAMS2C = n => `https://archive.org/details/Sams_Computer_Facts_Apple_IIc/page/n${n}`;
+const SATHER = n => `https://archive.org/details/understanding_the_apple_ii/page/n${n}`;
+const SATHERE = n => `https://archive.org/details/Understanding_the_Apple_IIe/page/n${n}`;
+/* Sams COMPUTERFACTS folders: CC1 (II, II Plus), CC10 (IIe), CSCS7 (IIc). Sams designators (UB1, UE4) are Sams's own;
+   on the II and II Plus they match Apple's board grid (Sather Figure 3.2). Waveform notes give Sams's p-p reading,
+   cm sweep and the DC level of the trace bottom. */
+const S_CC1_TIM = { label: 'Sams CC1 Apple II/II Plus, timing generator schematic with waveforms, p. 5', url: SAMS2P(12), sams: true };
+const S_CC1_TS = { label: 'Sams CC1 Apple II/II Plus, troubleshooting: CPU, crystal oscillator, dividers, p. 12', url: SAMS2P(19), sams: true };
+const S_CC1_TS2 = { label: 'Sams CC1 Apple II/II Plus, troubleshooting: ROM and RAM chip selects, p. 13', url: SAMS2P(20), sams: true };
+const S_CC10_PARTS1 = { label: 'Sams CC10 Apple IIe, preliminary service checks: replacement parts (scan p. 8)', url: SAMS2E(7), sams: true };
+const S_CC10_CHK = { label: 'Sams CC10 Apple IIe, service checks 1, Computer dead (scan p. 9)', url: SAMS2E(8), sams: true };
+const S_CC10_CPU = { label: 'Sams CC10 Apple IIe, main board schematic, CPU section waveforms (scan p. 61)', url: SAMS2E(60), sams: true };
+const S_CC10_TIM = { label: 'Sams CC10 Apple IIe, main board schematic, timing section waveforms (scan p. 62)', url: SAMS2E(61), sams: true };
+const S_CC10_VID = { label: 'Sams CC10 Apple IIe, main board schematic, video output waveforms (scan p. 64)', url: SAMS2E(63), sams: true };
+const S_CC10_PARTS = { label: 'Sams CC10 Apple IIe, parts list, semiconductors and replacement data, p. 17', url: SAMS2E(36), sams: true };
+const S_CS7_CPU = { label: 'Sams CSCS7 Apple IIc, system board schematic, 65C02 waveforms (scan p. 5)', url: SAMS2C(4), sams: true };
+const S_CS7_OSC = { label: 'Sams CSCS7 Apple IIc, system board schematic, oscillator OS1 waveform (scan p. 6)', url: SAMS2C(5), sams: true };
+const S_CS7_TS = { label: 'Sams CSCS7 Apple IIc, troubleshooting: power supply and CPU operation, p. 8', url: SAMS2C(12), sams: true };
+const S_CS7_TMG = { label: 'Sams CSCS7 Apple IIc, system board schematic, TMG waveforms, p. 27', url: SAMS2C(31), sams: true };
+const SATHER_T31 = { label: 'Understanding the Apple II (Sather), Table 3.1 timing signal durations and frequencies, p. 3-4', url: SATHER(37) };
+const SATHER_F32 = { label: 'Understanding the Apple II (Sather), Figure 3.2 timing diagram with source pins, p. 3-5', url: SATHER(38) };
+const SATHERE_T31 = { label: 'Understanding the Apple IIe (Sather), Table 3.1 timing signal durations and frequencies, p. 3-5', url: SATHERE(46) };
 const REDBOOK = 'https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/hardware/machines/Apple%20II%20Reference%20Manual%20-%20The%20Red%20Book%20v2.pdf';
 
 /* Pad layouts for 'custom' connector drawings, in a 0-100 box looking into the socket. */
@@ -38,8 +62,18 @@ const iiRails = [
 ];
 
 const iiTests = [
-  { tp: 'Master crystal', where: 'Timing crystal (no chip entry yet)', expect: '14.318 MHz', verify: true },
+  { tp: 'Master crystal', where: 'B2-10, the oscillator into the 74S86 (Sams UB2)', expect: '14.31818 MHz on a frequency counter' },
+  { tp: '14M', where: 'B2-8 (74S86 output, Sams UB2)', expect: '14.318 MHz square',
+    scope: { f: '14.31818 MHz', low: '0 V', high: '4.5 V', shape: 'square', basis: 'capture', source: S_CC1_TIM,
+      note: 'Sams: 4.5 V p-p at 0.2 µs/cm, trace bottom 0 V. Sams counts the oscillator at B2-10, then checks the divider outputs at B1 and C2.' } },
+  { tp: 'Colour reference', where: 'B1-3 (74S175, Sams UB1); ii-slot pin 35 (slot 7)', expect: '3.58 MHz square',
+    scope: { f: '3.579545 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'capture', source: S_CC1_TIM, note: 'Sams: 4 V p-p at 0.2 µs/cm, trace bottom 0 V.' } },
   { tp: 'Phi0 (clock in)', where: '6502 pin 37', expect: '1.023 MHz square wave' },
+  { tp: 'Φ0 at the timing flip-flop', where: 'B1-7 (74S175, Sams UB1), which drives 6502 pin 37', expect: '1.023 MHz square',
+    scope: { f: '1.0227 MHz', low: '0 V', high: '4.1 V', shape: 'square', duty: '50%', basis: 'capture', source: S_CC1_TIM,
+      note: 'Sams: 4.1 V p-p at 0.2 µs/cm, trace bottom 0 V. Every 65th cycle is 16 instead of 14 periods of 14M, 1.117 µs (Sather p. 3-4).' } },
+  { tp: 'Φ1', where: 'B1-6 (74S175, Sams UB1); ii-slot pin 38', expect: '1.023 MHz square, Φ0 inverted',
+    scope: { f: '1.0227 MHz', low: '0 V', high: '4.1 V', shape: 'square', duty: '50%', basis: 'capture', source: S_CC1_TIM, note: 'Sams: 4.1 V p-p at 0.2 µs/cm, trace bottom 0 V.' } },
   { tp: 'Phi2 (system clock)', where: '6502 pin 39', expect: '1.023 MHz' },
   { tp: 'Reset', where: '6502 pin 40', expect: 'LOW briefly at power-on and on Reset; HIGH when running' },
   { tp: 'RDY', where: '6502 pin 2', expect: 'HIGH when the CPU may run' },
@@ -234,9 +268,34 @@ const iiPower = {
       { label: 'Applefritter: Apple II and IIe power supply RIFA replacements (forum)', url: 'https://www.applefritter.com/node/33594', verify: true },
     ] },
   rails: iiRails, testPoints: iiTests,
+  firstTen: [
+    { step: 1, check: 'Supply chirp', where: 'Power supply, cable off and then on the board', expect: 'Click-click or squeal with the cable off the board (no load: normal); runs quietly with the board on',
+      ifNot: 'Chirping with the board on: a short or overload. Pull every card, then unplug the board, before you blame the supply.', source: { label: 'Apple II Reference Manual (1979), protection and restart cycle, p. 94', url: IIRM(104) } },
+    { step: 2, check: 'Rails at the supply connector', where: 'ii-psu pin 3 (+5 V), ii-psu pin 4 (+12 V), ii-psu pin 6 (-5 V), ii-psu pin 5 (-12 V)', expect: '+4.85 to +5.15 V; +11.3 to +12.3 V; -4.7 to -5.7 V; -11 to -13 V',
+      ifNot: 'One rail low with the board on: pull the cards, then look for a shorted chip on that rail (the 4116s use +12 V and -5 V).', source: { label: 'Apple II Reference Manual (1979), Power Supply specs, p. 92', url: IIRM(102) } },
+    { step: 3, check: 'Master oscillator', where: 'B2-10 (74S86 input, Sams UB2)', expect: '14.31818 MHz on a frequency counter',
+      ifNot: 'Missing or off frequency: the oscillator transistors and crystal (Q1, Q2, XT001 in Sams).', source: S_CC1_TS },
+    { step: 4, check: 'Timing dividers', where: 'B2-8 (14M); B1-15 (7M); B1-3 (colour reference); B1-7 (Φ0); B1-6 (Φ1); C2-12 (Q3)', expect: '14.318, 7.16, 3.58, 1.023, 1.023 and 2.05 MHz',
+      ifNot: 'An output missing: the chip that makes it. Sams lists B1 74S175, B2 74S86, C2 74S195 and A2 74LS00 in the divider chain.', source: S_CC1_TS },
+    { step: 5, check: 'CPU clock in', where: '6502 pin 37', expect: '1.023 MHz square, about 4 V p-p', ifNot: 'Present at B1-7 but not here: the trace or the CPU socket.', source: SATHER_F32 },
+    { step: 6, check: 'CPU running', where: '6502 pins 9 to 20 and 22 to 25 (address); 6502 pins 26 to 33 (data)', expect: 'Pulses on every line; pins 16 and 18 read LOW after power-on and pulse when RETURN is pressed',
+      ifNot: 'A line stuck HIGH or LOW: follow it to the chips that share it before swapping the 6502.', source: S_CC1_TS },
+    { step: 7, check: 'ROM and RAM selects', where: '9316B pins 20, 21; 4116 pin 15', expect: 'Pulses on a logic probe in the Monitor',
+      ifNot: 'Sams gives Monitor ranges that exercise each ROM socket (D000.D7FF to F000.F7FF) and each RAM row.', source: S_CC1_TS2 },
+  ],
+  clocks: [
+    { name: 'Crystal', where: 'Oscillator Q1, Q2 and XT001 (Sams designators); count it at B2-10', f: '14.31818 MHz', source: S_CC1_TS },
+    { name: '14M', where: 'B2-8', f: '14.31818 MHz', source: SATHER_F32 },
+    { name: '7M', where: 'B1-15; ii-slot pin 36', f: '7.15909 MHz', source: SATHER_T31 },
+    { name: 'Colour reference', where: 'B1-3; ii-slot pin 35 (slot 7 only)', f: '3.579545 MHz', source: SATHER_T31 },
+    { name: 'Q3', where: 'C2-12; ii-slot pin 37', f: '2.0454 MHz', note: 'Asymmetric. One cycle in 130 is long (0.629 µs).', source: SATHER_T31 },
+    { name: 'Φ0 (CPU clock in)', where: 'B1-7; 6502 pin 37; ii-slot pin 40', f: '1.0227 MHz', note: 'Every 65th cycle is stretched to 1.117 µs, so the average is 1.0205 MHz.', source: SATHER_T31 },
+    { name: 'Φ1', where: 'B1-6; ii-slot pin 38', f: '1.0227 MHz', note: 'Φ0 inverted.', source: SATHER_T31 },
+  ],
   sources: [
     { label: 'Apple II Reference Manual (1979), Power Supply specs, p. 92', url: IIRM(102) },
     { label: 'Apple II Reference Manual (1979), Power Connector, p. 104', url: IIRM(114) },
+    S_CC1_TIM, S_CC1_TS, SATHER_T31, SATHER_F32,
   ],
 };
 
@@ -255,6 +314,13 @@ const D2TP = n => `${DISKDOCS}/Apple%20Disk%20II%20Technical%20Procedures.pdf#pa
 const DUOTP = n => `${DISKDOCS}/AppleService%20Technical%20Procedures%20-%20Apple%20DuoDisk.pdf#page=${n}`;
 const D2MAN = n => `${DISKDOCS}/Disk%20II%20Floppy%20Disk%20Subsystem%20Installation%20and%20Operating%20Manual.pdf#page=${n}`;
 const SAMSD2 = n => `${DISKDOCS}/Sams%20Technical%20-%20Disk%20II.pdf#page=${n}`;
+const SAMSCD6 = n => `https://archive.org/details/Sams_Technical_Disk_II/page/n${n}`;
+const S_CD6_SCH = { label: 'Sams CD6 Disk II, analog board schematic with waveforms, p. 15', url: SAMSCD6(26), sams: true };
+const S_CD6_PARTS = { label: 'Sams CD6 Disk II, parts list, semiconductors and replacement data, p. 8', url: SAMSCD6(19), sams: true };
+const S_CD6_CHK = { label: 'Sams COMPUTERFACTS CD6 Disk II, power supply service checks, p. 6', url: SAMSD2(6), sams: true };
+const SATHER_READ = { label: 'Understanding the Apple II (Sather), The Read Pulse (MC3470, 1 µs pulse, mask delay), p. 9-9', url: 'https://archive.org/details/understanding_the_apple_ii/page/n238' };
+const SATHER_WRITE = { label: 'Understanding the Apple II (Sather), write timing (one bit every four MPU cycles), p. 9-24', url: 'https://archive.org/details/understanding_the_apple_ii/page/n253' };
+const SATHER_Q3 = { label: 'Understanding the Apple II (Sather), Table 3.1 timing frequencies (Q3), p. 3-4', url: 'https://archive.org/details/understanding_the_apple_ii/page/n37' };
 const D2CARD = `${A2DP}/Interface%20Cards/Disk%20Drive%20Controllers/Apple%20Disk%20II%20Interface%20Card/Schematics/Apple%20Disk%20II%20-%20Schematics%20050-0005-01.pdf#page=2`;
 const D2ANALOG = `${A2DP}/Peripherals/Disk%20Drives/Apple%20Disk%20II/Schematics/Apple%20Disk%20II%20-%20Schematics%20Analog%20Board%20050-0007-H.pdf#page=2`;
 const D2ROMS = `${A2DP}/Interface%20Cards/Disk%20Drive%20Controllers/Apple%20Disk%20II%20Interface%20Card/ROM%20Images/`;
@@ -370,6 +436,10 @@ const driveMachines = {
 const driveChips = {
   mc3470: {
     id: 'mc3470', name: 'MC3470 floppy disk read amplifier', short: '3470', family: 'Motorola linear',
+    replacements: [
+    { part: 'MC3470A', kind: 'pin-compatible', note: 'Same data sheet and pinout; the A grade guarantees peak shift within 2 %.', source: { label: 'Motorola MC3470/MC3470A data sheet, p. 1 (bitsavers)', url: MC3470DS } },
+    { part: 'ECG3470', kind: 'pin-compatible', note: 'The cross Sams gives for the MC3470P. Apple\'s own number is 355-3470; it sits in a socket at B1.', source: S_CD6_PARTS },
+  ],
     role: 'Read amplifier, peak detector and pulse shaper', pkg: 'DIP-18',
     machines: ['disk2', 'duodisk'], location: { disk2: 'B1 on the analog card (socketed, Apple 355-3470)', duodisk: 'C1 on the DuoDisk analog card' },
     summary: 'Amplifies the millivolt head signal, filters and differentiates it, and puts out one TTL pulse per flux reversal after a time-domain mask (one-shot 1, pins 6-7) that rejects narrow noise. On the Disk II card R33 (or R21) on that one-shot is the comparator offset adjustment at TP5; R28 trims the output at TP7. Runs on +5 V (pin 11) and +12 V (pin 18). A bad one gives repeated recalibration and I/O errors.',
@@ -404,6 +474,9 @@ const driveChips = {
   },
   ls125: {
     id: 'ls125', name: '74LS125 quad 3-state buffer', short: '74LS125', family: '74LS TTL',
+    replacements: [
+    { part: '74HCT125', kind: 'modern', note: 'Same pinout and TTL input thresholds. No more tolerant of the +12 V that kills the 74LS125 on the analog card: 7 V absolute maximum on VCC.', source: { label: 'TI SN74HCT125 data sheet, pin configuration p. 3, absolute maximum ratings p. 4', url: 'https://www.ti.com/lit/ds/symlink/sn74hct125.pdf#page=3' } },
+  ],
     role: 'Drive-side 3-state gates: write protect, read data, write data, write request', pkg: 'DIP-14',
     machines: ['disk2', 'duodisk'], location: { disk2: 'B4 on the analog card (socketed, Apple 305-0125)', duodisk: 'B3 (cards 676-11101/11102) or C3 (676-11107) on the analog card' },
     summary: 'Four non-inverting buffers, each with its own active-LOW enable. On the Disk II analog card two of them put W PROT and RD DATA on the shared ribbon only while this drive is enabled; the other two gate WR DATA and write request. It sits on the +5 V rail, so it dies with C4 when +12 V reaches the 5 V pins (misplugged ribbon, or a card plugged in with power on).',
@@ -434,6 +507,11 @@ const driveChips = {
   },
   ca3146: {
     id: 'ca3146', name: 'CA3146E transistor array (write driver)', short: '3146', family: 'RCA linear (NPN array)',
+    replacements: [
+    { part: 'CA3146AE', kind: 'pin-compatible', note: 'Premium grade of the same array: VCEO 40 V against 30 V.', source: { label: 'RCA 1978 Linear Integrated Circuits, CA3118/CA3146/CA3183 ratings, PDF p. 211 (bitsavers)', url: RCA78(211) } },
+    { part: 'CA3046', kind: 'pin-compatible', note: 'Same five-transistor layout and terminal numbers, but VCEO is only 15 V against 30 V for the CA3146E, on a write driver fed from +12 V. Prefer the CA3146.', source: { label: 'RCA 1978 Linear Integrated Circuits, CA3045/CA3046 data and terminal diagram, PDF p. 115 (bitsavers)', url: RCA78(115) } },
+    { part: 'RCA SK3697', kind: 'pin-compatible', note: 'The cross Sams gives for the CA3146E.', source: S_CD6_PARTS },
+  ],
     role: 'Head write driver and write/erase current switch', pkg: 'DIP-14',
     machines: ['disk2'], location: { disk2: 'A3 on the analog card (socketed, Apple 351-3146)' },
     summary: 'Five NPN transistors: a differential pair (Q1, Q2, common emitter pin 3) and three singles (Q3-Q5, Q5 emitter tied to the substrate at pin 13). On the Disk II card the pair switches current into the two halves of the centre-tapped head through CR1 and CR2 as WR DATA toggles, and the other transistors switch the write current on with write request. Sams calls it the write amp. On Apple\'s chip-swap chart for I/O errors and for "reads but will not write".',
@@ -564,6 +642,10 @@ const driveChips = {
   },
   ls259: {
     id: 'ls259', name: '74LS259 8-bit addressable latch (9334)', short: '74LS259', family: '74LS TTL',
+    replacements: [
+    { part: '9334 or 74259', kind: 'pin-compatible', note: 'Fitted on many Disk II cards in place of the 74LS259; Sams lists an N9334N latch on the IIe\'s Disk II card.', source: S_CC10_PARTS1 },
+    { part: '74HCT259', kind: 'modern', note: 'Same pinout (S0-S2, Q0-Q7, D, G, CLR) with TTL input levels.', source: { label: 'TI CD74HCT259 data sheet, pin configuration, p. 3', url: 'https://www.ti.com/lit/ds/symlink/cd74hct259.pdf#page=3' } },
+  ],
     role: 'Controller soft switches $C080-$C08F,X: phases, motor, drive select, Q6, Q7', pkg: 'DIP-16',
     machines: ['disk2', 'duodisk', 'unidisk525'], location: { disk2: 'C2 on the Disk II Interface Card (9334, 74259 or 74LS259)', duodisk: '74LS259 on the 5.25 controller card', unidisk525: '74LS259 on the 5.25 controller card (II/IIe hosts only)' },
     summary: 'Any access to $C080+slot×$10 to $C08F+slot×$10 sets or clears one of eight latches: A1-A3 pick the latch, A0 is the new value (even address off, odd on). Q0-Q3 are the stepper phases, Q4 motor, Q5 drive 1/2, Q6 and Q7 the sequencer mode. /RESET clears them all, so Control-Reset stops the drive. Schematic rev 01 changed the part from 74LS259 to the pin-compatible 9334.',
@@ -596,6 +678,9 @@ const driveChips = {
   },
   ls174: {
     id: 'ls174', name: '74LS174 hex D flip-flop', short: '74LS174', family: '74LS TTL',
+    replacements: [
+    { part: '74HCT174', kind: 'modern', note: 'Same pinout. Trap: on the Disk II card this chip gets +5 V through Q3 only while a drive runs, while chips on the always-on +5 V still drive its inputs; an unpowered CMOS part then conducts through its input clamp diodes (TI limit ±20 mA). Prefer the 74LS174 here.', source: { label: 'TI CD74HCT174 data sheet, pinout p. 1, absolute maximum ratings p. 3', url: 'https://www.ti.com/lit/ds/symlink/cd74hct174.pdf#page=3' } },
+  ],
     role: 'Sequencer state latch and read-pulse synchroniser', pkg: 'DIP-16',
     machines: ['disk2', 'duodisk', 'unidisk525'], location: { disk2: 'A3 on the Disk II Interface Card', duodisk: '74LS174 on the 5.25 controller card', unidisk525: '74LS174 on the 5.25 controller card (II/IIe hosts only)' },
     summary: 'Four flip-flops hold the sequencer state (P6 outputs D4-D7 in, fed back to P6 address lines A0, A5, A6, A7); two more clock RD DATA through twice to line it up with Q3. Clocked on Q3, cleared when the drives go off, and powered with P6 through Q3 (MPSU51) only while a drive is on, so 0 V on pin 16 with the drives off is normal.',
@@ -933,8 +1018,12 @@ const d2Power = {
   testPoints: [
     { tp: 'Ground', where: 'TP2, TP3, TP4 on the analog card', expect: '0 V (use TP4 for the scope ground)' },
     { tp: 'Read amplitude', where: 'TP8 and TP9 (3470 pin 16/17 filter side)', expect: 'At least 150 mV p-p (3 div at 50 mV/div, 1 µs/div, AC) with the Amplitude test writing a scratch disk' },
-    { tp: 'Comparator offset', where: 'TP5 (3470 pin 6)', expect: 'Rising part 2.5-3.0 µs, whole pulse 3.75-4.0 µs (0.5 µs/div); adjust R33, or R21 on boards where it is the pot' },
-    { tp: 'Read data shape', where: 'TP7 (3470 pin 10)', expect: 'Single stable pulse image, no double edges (1 µs/div); adjust R28' },
+    { tp: 'Comparator offset', where: 'TP5 (3470 pin 6)', expect: 'Rising part 2.5-3.0 µs, whole pulse 3.75-4.0 µs (0.5 µs/div); adjust R33, or R21 on boards where it is the pot',
+      scope: { period: '4 µs', low: '-4 V', high: '1 V', shape: 'pulse', basis: 'capture', source: S_CD6_SCH,
+        note: 'Sams: 5 V p-p at 10 µs/cm, trace bottom -4 V. Pulse spacing follows the data: one bit cell is four CPU cycles, about 4 µs (Sather p. 9-24). Apple judges TP5 at 0.5 µs/div, AC coupled, by the pulse widths above.' } },
+    { tp: 'Read data shape', where: 'TP7 (3470 pin 10)', expect: 'Single stable pulse image, no double edges (1 µs/div); adjust R28',
+      scope: { period: '4 µs', low: '0 V', high: '3.5 V', shape: 'pulse', basis: 'capture', source: S_CD6_SCH,
+        note: 'Sams: 3.5 V p-p at 10 µs/cm, trace bottom 0 V. The 3470 puts out a positive pulse about 1 µs wide for every flux reversal (Sather p. 9-9), so spacing is 4 µs or a multiple of it. Double edges at 1 µs/div: adjust R28.' } },
     { tp: 'Read data out', where: 'TP1 (74LS125 pin 11) / ribbon pin 16', expect: 'Pulse train while a written disk turns' },
     { tp: 'Drive enable', where: 'Ribbon pin 14 / 2003 pin 2', expect: 'LOW while the drive is on; goes HIGH about 1 s after $C0E8' },
     { tp: 'Speed (DSPEED)', where: 'Trimpot on the motor control card at the back of the mechanism', expect: 'Within ±26 on the Disk Alignment Aid scale; set to -5 to 0 over 128 passes' },
@@ -950,6 +1039,29 @@ const d2Power = {
     { label: 'Sams COMPUTERFACTS CD6 Disk II, motor speed adjustment and service checks, p. 6', url: SAMSD2(6) },
     { label: 'Understanding the Apple II (Sather), Disk II overview (300 rpm), p. 9-3', url: UTA2(232) },
     d2Sources.analog,
+    S_CD6_SCH, SATHER_READ,
+  ],
+  firstTen: [
+    { step: 1, check: 'Look before power', where: 'Analog card: C4 and the 74LS125', expect: 'C4 (470 µF) whole, no scorching round the 74LS125',
+      ifNot: 'Burst C4 or a cooked 74LS125: +12 V reached the 5 V net (offset ribbon or a card fitted with power on). Replace both and check the ribbon plug.', source: { label: 'Disk ][ Technical Procedures, visual inspection (C4 and the 74LS125), p. 5.5', url: D2TP(57) } },
+    { step: 2, check: 'Rails on the ribbon', where: 'disk2-ribbon pins 11, 12 (+5 V); disk2-ribbon pins 13, 15, 17, 19 (+12 V); disk2-ribbon pin 9 (-12 V)', expect: '+4.75 to +5.25 V; +11.3 to +12.5 V; -11 to -13 V',
+      ifNot: 'Present at the slot but not at the drive: the ribbon or the interface card. Low +12 V with the motor on: check the computer supply.', source: d2Sources.analog },
+    { step: 3, check: 'Drive enable', where: 'disk2-ribbon pin 14', expect: 'LOW after PR#6 or any disk access; HIGH again about 1 s after the last access',
+      ifNot: 'Stays HIGH: the interface card. LOW but no motor: Q1 (MPSU51) or the 2003 on the analog card.', source: d2Sources.sather },
+    { step: 4, check: 'Gated motor supply', where: 'Q1 (MPSU51) collector on the analog card', expect: 'About 11.6 V with the drive enabled, 0 V off (Sams)',
+      ifNot: 'Missing with the enable LOW: Q1 or the 2003 driver.', source: S_CD6_CHK },
+    { step: 5, check: 'Spindle speed', where: 'Trimpot on the motor speed control card', expect: '300 rpm: DSPEED within ±26 on the Alignment Aid, set to -5 to 0',
+      ifNot: 'Will not come into range: the motor speed control card or the motor.', source: { label: 'Disk ][ Technical Procedures, D-Speed test, pp. 2.8-2.9', url: D2TP(20) } },
+    { step: 6, check: 'Stepper phases', where: 'disk2-ribbon pins 2, 4, 6, 8', expect: 'One or two phases HIGH while seeking; all off at rest, except phase 0 left on after boot',
+      ifNot: 'No phase activity: the 74LS259 on the card. Phases arrive but the head does not move: the 2003 or the stepper.', source: SATHER_READ },
+    { step: 7, check: 'Read pulses', where: 'TP7 (3470 pin 10); disk2-ribbon pin 16', expect: 'Positive pulses about 1 µs wide while a written disk turns',
+      ifNot: 'None at TP7: the 3470 or the head. At TP7 but not on ribbon pin 16: the 74LS125.', source: SATHER_READ },
+    { step: 8, check: 'Read amplitude and comparator offset', where: 'TP8 and TP9 (ground on TP4); TP5 (3470 pin 6)', expect: 'At least 150 mV p-p at TP8 and TP9 (Amplitude test, 1 µs/div, AC); TP5 rising part 2.5-3.0 µs, whole pulse 3.75-4.0 µs',
+      ifNot: 'Low amplitude: replace the mechanism, then the analog card. TP5 out: adjust R33 (or R21).', source: { label: 'Disk ][ Technical Procedures, Amplitude test (TP8/TP9), pp. 3.4-3.6', url: D2TP(29) } },
+  ],
+  clocks: [
+    { name: 'Sequencer clock (Q3)', where: '74LS323 pin 12; 74LS174 pin 9', f: '2.0454 MHz', note: 'Q3 from the slot, gated through the 74LS132 while a drive is on.', source: SATHER_Q3 },
+    { name: 'Bit cell', where: 'disk2-ribbon pin 18 (WR DATA); disk2-ribbon pin 16 (RD DATA)', f: '255.7 kHz', note: 'One bit every four CPU cycles (3.9 µs). A 1 is a level change on WR DATA and a read pulse on RD DATA.', source: SATHER_WRITE },
   ],
 };
 
@@ -984,7 +1096,26 @@ const drivePower = {
       { tp: 'Drive enable', where: 'DB-25 pin 11 (drive 1) / pin 8 (drive 2)', expect: 'LOW while that drive runs' },
       { tp: 'Read data', where: 'DB-25 pin 3', expect: 'Pulse train while reading' },
     ],
-    sources: [DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, DSPEED adjustment, p. 3.2', url: DUOTP(17) }],
+    sources: [DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, DSPEED adjustment, p. 3.2', url: DUOTP(17) }, { label: 'DuoDisk Technical Procedures, troubleshooting flowchart, p. 4.2', url: DUOTP(21) }],
+    firstTen: [
+      { step: 1, check: 'Fit with the power off', where: 'Controller card in slot 6 and cable 590-0114', expect: 'Card and cable fitted with the computer off',
+        ifNot: 'Fuzz on the analog card means C21 burst because the card went in with power on: check the 74LS125 and C21, or return the card.', source: { label: 'DuoDisk Technical Procedures, chip-swap notes (C21), p. 4.5', url: DUOTP(23) } },
+      { step: 2, check: 'Rails at the drive', where: 'duo-db25 pins 7, 24 (+5 V); duo-db25 pins 19, 20 (+12 V); duo-db25 pin 23 (-12 V)', expect: '+4.75 to +5.25 V; +11.3 to +12.5 V; -11 to -13 V',
+        ifNot: 'Present at the card but not at the drive: cable 590-0114.', source: DUOCABLE_SRC },
+      { step: 3, check: 'Motor', where: 'Drive 1 (the left-hand drive)', expect: 'Motor runs when you boot a system disk on a known-good Apple',
+        ifNot: 'Swap in order: interface card, cable, analog board, mechanical assembly.', source: { label: 'DuoDisk Technical Procedures, troubleshooting flowchart, p. 4.2', url: DUOTP(21) } },
+      { step: 4, check: 'IN USE light', where: 'Drive 1 front panel LED', expect: 'Lit while the drive runs',
+        ifNot: 'Swap in order: interface card, LED, analog board.', source: { label: 'DuoDisk Technical Procedures, troubleshooting flowchart, p. 4.2', url: DUOTP(21) } },
+      { step: 5, check: 'Drive enable', where: 'duo-db25 pin 11 (drive 1); duo-db25 pin 8 (drive 2)', expect: 'LOW while that drive runs', ifNot: 'Stays HIGH: the controller card or the cable.', source: DUOCABLE_SRC },
+      { step: 6, check: 'Reads the disk', where: 'duo-db25 pin 3 (read data)', expect: 'Pulse train while reading; the catalog appears',
+        ifNot: 'Swap the card and cable, set DSPEED, then the chip-swap chart (CA3141, 74LS125, MC3470), the analog board and the mechanism.', source: { label: 'DuoDisk Technical Procedures, troubleshooting flowchart, p. 4.2', url: DUOTP(21) } },
+      { step: 7, check: 'Speed', where: 'DSPEED hole under each drive, near the front', expect: '"Good" on the Apple 5.25-Inch Disk Drive Diagnostic, as close to 0 as possible, unit flat',
+        ifNot: 'Will not come into range: the mechanical assembly.', source: { label: 'DuoDisk Technical Procedures, DSPEED adjustment, p. 3.2', url: DUOTP(17) } },
+    ],
+    clocks: [
+      { name: 'Sequencer clock (Q3)', where: '74LS323 pin 12; 74LS174 pin 9 (controller card)', f: '2.0454 MHz', note: 'The controller card is the Disk II circuit; pin use taken from the Disk II card, not checked on this card.', verify: true, source: SATHER_Q3 },
+      { name: 'Bit cell', where: 'duo-db25 pin 3 (read data); duo-db25 pin 6 (write data)', f: '255.7 kHz', note: 'One bit every four CPU cycles (3.9 µs).', source: SATHER_WRITE },
+    ],
   },
   unidisk525: {
     supply: {
@@ -1012,6 +1143,23 @@ const drivePower = {
       { tp: 'Speed', where: 'DSPEED hole under the drive (same mechanism as the DuoDisk)', expect: '"Good" range on the Apple 5.25-Inch Disk Drive Diagnostic', verify: true },
     ],
     sources: [{ label: 'Apple IIc Technical Reference Manual, IWM pinouts, pp. 247-248', url: IIC(274) }, DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, same mechanism in DuoDisk, UniDisk and Apple 5.25 Drive, p. 2.2', url: DUOTP(8) }],
+    firstTen: [
+      { step: 1, check: 'Port or card power', where: 'uni-db19 pin 6 (+5 V); uni-db19 pins 7, 8 (+12 V); uni-db19 pin 5 (-12 V)', expect: '+4.75 to +5.25 V; +10.8 to +13.2 V on a IIc (+11.3 to +12.5 V on a card); -11 to -13 V',
+        ifNot: 'Missing on a IIc: the internal converter (it also feeds the built-in drive). On a card: the card or the slot supply.', source: { label: 'Apple IIc Technical Reference Manual, Table 11-4 internal converter, p. 234', url: IIC(261) } },
+      { step: 2, check: 'Drive count', where: 'Controller card plate or IIc rear port', expect: 'At most two UniDisks on one controller card; one on a IIc port',
+        ifNot: 'A third or fourth drive needs a second card. The IIc port power is for one drive only.', source: { label: 'Apple IIc Technical Reference Manual, Disk I/O warning (port power for a drive only), p. 273', url: IIC(300) } },
+      { step: 3, check: 'Drive enable', where: 'uni-db19 pin 17 (pin 9 for a second drive on a card)', expect: 'LOW while the drive runs', ifNot: 'Stays HIGH: the card, or the IWM and GLU on a IIc.', source: DUOCABLE_SRC },
+      { step: 4, check: 'Speed', where: 'DSPEED hole under the drive', expect: '"Good" on the Apple 5.25-Inch Disk Drive Diagnostic',
+        ifNot: 'Same mechanism as the DuoDisk: follow its DSPEED procedure.', source: { label: 'DuoDisk Technical Procedures, same mechanism in DuoDisk, UniDisk and Apple 5.25 Drive, p. 2.2', url: DUOTP(8) } },
+      { step: 5, check: 'Read data', where: 'uni-db19 pin 18; IWM pin 22 on a IIc', expect: 'Pulse train while reading', ifNot: 'At the drive connector but not at the IWM: the IIc port wiring.', source: { label: 'Apple IIc Technical Reference Manual, IWM pinouts, pp. 247-248', url: IIC(274) } },
+      { step: 6, check: 'IIc disk clocks', where: 'IWM pin 24 (7M); IWM pin 25 (Q3)', expect: '7.16 MHz; 2.04 MHz', ifNot: 'Missing: the IIc timing (TMG), not the drive.', source: { label: 'Apple IIc Technical Reference Manual, IWM pinouts, pp. 247-248', url: IIC(274) } },
+    ],
+    clocks: [
+      { name: 'IWM 7M (IIc)', where: 'IWM pin 24', f: '7.15909 MHz', source: { label: 'Apple IIc Technical Reference Manual, IWM pinouts, pp. 247-248', url: IIC(274) } },
+      { name: 'IWM Q3 (IIc)', where: 'IWM pin 25', f: '2.0454 MHz', source: { label: 'Apple IIc Technical Reference Manual, IWM pinouts, pp. 247-248', url: IIC(274) } },
+      { name: 'Sequencer clock (Q3, controller card)', where: '74LS323 pin 12; 74LS174 pin 9', f: '2.0454 MHz', note: 'The UniDisk controller card is the Disk II circuit; pin use taken from the Disk II card, not checked on this card.', verify: true, source: SATHER_Q3 },
+      { name: 'Bit cell', where: 'uni-db19 pin 18 (read data); uni-db19 pin 19 (write data)', f: '255.7 kHz', note: 'One bit every four CPU cycles (3.9 µs).', source: SATHER_WRITE },
+    ],
   },
 };
 
@@ -1088,6 +1236,10 @@ RCS.add({
   chips: {
     cpu6502: {
       id: 'cpu6502',
+      replacements: [
+        { part: '65C02 (Rockwell, NCR or GTE, as in the Enhanced IIe)', kind: 'pin-compatible', note: 'On a IIe fit it only with the enhanced ROM set (342-0303 EF, 342-0304 CD, 342-0265 video); Apple calls any other mix of CPU and ROMs not acceptable.', source: { label: 'Apple IIe logic board identification, enhanced and unenhanced ROM sets, p. 1.2.2 (Apple page bound into the Sams CC10 scan)', url: SAMS2E(4) } },
+        { part: 'WDC W65C02S', kind: 'modern', note: 'Still made, but pin 1 is VPB, an output, where the NMOS 6502 has ground (Vss); pins 5 (MLB) and 36 (BE) replace no-connects, and BE must be HIGH or the address, data and R/W buffers float.', source: { label: 'WDC W65C02S data sheet, Bus Enable (BE) and pinout, pp. 9-13', url: 'https://www.westerndesigncenter.com/wdc/documentation/w65c02s.pdf#page=9' } },
+      ],
       name: '6502 / 65C02 CPU',
       short: '6502',
       family: 'MOS 6502',
@@ -1151,6 +1303,9 @@ RCS.add({
     },
     mmu344: {
       id: 'mmu344',
+      replacements: [
+        { part: '344-0010 MMU from another IIe', kind: 'pin-compatible', note: 'Apple custom part with no second source: Sams crosses every other IC on the board to generic parts but gives no replacement for the MMU. Sams tests it by substitution with a known-good one.', source: S_CC10_PARTS },
+      ],
       name: 'MMU 344-0010',
       short: 'MMU',
       family: 'Apple custom',
@@ -1214,6 +1369,9 @@ RCS.add({
     },
     iou344: {
       id: 'iou344',
+      replacements: [
+        { part: '344-0020 IOU from another IIe', kind: 'pin-compatible', note: 'Apple custom part with no second source: Sams gives no generic replacement for the IOU. Sams tests it by substitution with a known-good one.', source: S_CC10_PARTS },
+      ],
       name: 'IOU 344-0020',
       short: 'IOU',
       family: 'Apple custom',
@@ -2085,15 +2243,32 @@ RCS.add({
           { label: 'Applefritter: Apple II and IIe power supply RIFA replacements (forum)', url: 'https://www.applefritter.com/node/33594', verify: true },
         ] },
       rails: [
-        { rail: '+5 V', expect: '4.85-5.15 V', where: 'PSU connector pin 3; MMU pin 25; IOU pin 28; 6502 pin 8; slot pin 25', note: 'The only rail the motherboard logic uses. 2.5 A max.' },
+        { rail: '+5 V', expect: '4.85-5.15 V', where: 'PSU connector pin 3; MMU pin 25; IOU pin 28; 6502 pin 8; slot pin 25', note: 'The only rail the motherboard logic uses. 2.5 A max.',
+          conflict: 'Sams CC10 (service check 1A) gives 5.3 V at P14 pin 3 with the supply unplugged from the board; Apple\'s 4.85-5.15 V wins. Sams also gives 12.5 V, -11.9 V and -5.0 V on pins 4, 5 and 6.' },
         { rail: '+12 V', expect: '11.1-12.5 V', where: 'PSU connector pin 4; slot pin 50', note: 'Nominal 11.8 V. Disk II controller and cards; 250 mA for all slots.' },
         { rail: '-5 V', expect: '-4.7 to -5.7 V', where: 'PSU connector pin 6; slot pin 34', note: 'Nominal -5.2 V. Slots only on a IIe.' },
         { rail: '-12 V', expect: '-10.8 to -13.2 V', where: 'PSU connector pin 5; slot pin 33; AY-5-3600 pin 27', note: 'Keyboard encoder VGG and serial cards.' },
       ],
       testPoints: [
-        { tp: 'Master clock', where: 'Aux slot pin 32 (14M)', expect: '14.318 MHz' },
-        { tp: 'PHI0', where: 'MMU pin 3 / IOU pin 26 / 6502 pin 37', expect: '1.023 MHz' },
-        { tp: 'Q3', where: 'MMU pin 4 / IOU pin 27', expect: '2 MHz asymmetric' },
+        { tp: 'Master clock', where: '2e-aux pin 32 (14M)', expect: '14.318 MHz',
+          scope: { f: '14.31818 MHz', low: '0.2 V', high: '4.4 V', shape: 'square', basis: 'capture', source: S_CC10_TIM,
+            note: 'Sams probes the 14M line at UE1-11, the 74LS125 buffer after the oscillator: 4.2 V p-p at 0.2 µs/cm, trace bottom 0.2 V.' } },
+        { tp: '7M', where: 'UC1-6 (74F109 flip-flop, Sams designator)', expect: '7.16 MHz square',
+          scope: { f: '7.15909 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: S_CC10_TIM, note: 'Sams: 5 V p-p at 0.2 µs/cm, trace bottom 0 V.' } },
+        { tp: 'PHI0', where: 'MMU pin 3 / IOU pin 26 / 6502 pin 37', expect: '1.023 MHz',
+          scope: { f: '1.0227 MHz', low: '-1 V', high: '4 V', shape: 'square', duty: '50%', basis: 'capture', source: S_CC10_CPU,
+            note: 'Sams probes 6502 pin 37, driven by the 74S02 at UB8: 5 V p-p at 0.5 µs/cm, trace bottom -1 V. Sams: clock at UE1 but none here means UC1, the timing HAL UD1, UE1 or UB8.' } },
+        { tp: 'PHI1', where: 'UD1-14 (timing HAL, Sams designator)', expect: '1.023 MHz square, PHI0 inverted',
+          scope: { f: '1.0227 MHz', low: '-1 V', high: '4 V', shape: 'square', duty: '50%', basis: 'capture', source: S_CC10_TIM, note: 'Sams: 5 V p-p at 0.5 µs/cm, trace bottom -1 V.' } },
+        { tp: 'Q3', where: 'MMU pin 4 / IOU pin 27', expect: '2 MHz asymmetric',
+          scope: { f: '2.0454 MHz', low: '-1 V', high: '4 V', shape: 'square', basis: 'capture', source: S_CC10_TIM,
+            note: 'Sams probes it at the timing HAL output (UD1-16): 5 V p-p at 0.2 µs/cm, trace bottom -1 V. High and low times differ, so no duty is given.' } },
+        { tp: '/PRAS', where: 'MMU pin 5', expect: 'RAM row strobe twice per CPU cycle (2.05 MHz)',
+          scope: { f: '2.0454 MHz', low: '-1 V', high: '4 V', shape: 'pulse', basis: 'capture', source: S_CC10_TIM,
+            note: 'Sams probes it at the timing HAL output (UD1-19): 5 V p-p at 0.2 µs/cm, trace bottom -1 V; short HIGH gaps between long LOW strobes.' } },
+        { tp: 'Video out', where: 'Q2 emitter, ahead of the 75 Ω resistor R8 (Sams designators)', expect: 'Composite video, about 2.5 V p-p at this point',
+          scope: { period: '63.7 µs', low: '0 V', high: '2.5 V', shape: 'video-line', basis: 'capture', source: S_CC10_VID,
+            note: 'Sams: 2.5 V p-p at 10 µs/cm, sync tips at 0 V. A line is 65 CPU cycles, 64 of 0.978 µs and one of 1.117 µs (Sather Table 3.1). At the jack into 75 Ω Apple gives about 1 V p-p.' } },
         { tp: 'Reset', where: 'IOU pin 15 / 6502 pin 40', expect: 'HIGH when running; LOW on Control-Reset' },
         { tp: 'Composite sync', where: 'IOU pin 39', expect: '15.7 kHz horizontal pulses' },
         { tp: 'Speaker', where: 'IOU pin 8', expect: 'Toggles on beep' },
@@ -2104,6 +2279,33 @@ RCS.add({
         { label: 'Apple IIe Technical Reference Manual, Table 7-2 power supply specifications, p. 159', url: IIE(192) },
         { label: 'Apple IIe Technical Reference Manual, Table 7-3 power connector, p. 161', url: IIE(194) },
         { label: 'Apple IIe Technical Reference Manual, MMU and IOU pinouts, pp. 165-167', url: IIE(198) },
+        S_CC10_CHK, S_CC10_TIM, S_CC10_CPU, S_CC10_VID, SATHERE_T31,
+      ],
+      firstTen: [
+        { step: 1, check: 'Supply chirp', where: 'Power supply, cable off and then on the board', expect: 'Stop-start chirp with the cable off the board (normal); runs quietly with the board on',
+          ifNot: 'Chirping with the board on: a short. Pull the cards, then unplug the board, before you condemn the supply.', source: { label: 'Apple IIe Technical Reference Manual, The Power Supply (protection and restart), p. 160', url: IIE(193) } },
+        { step: 2, check: 'Rails at the supply connector', where: '2e-psu pin 3 (+5 V), 2e-psu pin 4 (+12 V), 2e-psu pin 5 (-12 V), 2e-psu pin 6 (-5 V)', expect: '+4.85 to +5.15 V; +11.1 to +12.5 V; -10.8 to -13.2 V; -4.7 to -5.7 V (Apple TRM Table 7-2)',
+          ifNot: 'All missing: fuse F1, the power switch and the line cord (Sams). One rail low: a load on that rail.', source: S_CC10_CHK },
+        { step: 3, check: 'Strip to the bare board', where: 'Peripheral slots 1-7 and the auxiliary slot', expect: 'Pull every card and the 80-column card; the machine still runs',
+          ifNot: 'If it runs bare, refit the cards one at a time to find the bad one. If it is still dead, carry on.', source: S_CC10_CHK },
+        { step: 4, check: 'Boot beep', where: 'IOU pin 8 (speaker)', expect: 'Beep at power-on and on Control-G',
+          ifNot: 'No beep: the CPU is not running, so check reset and clocks. A beep but no picture: go to the video checks.', source: S_CC10_CHK },
+        { step: 5, check: 'Reset', where: '6502 pin 40', expect: 'LOW for a moment at power-on, then HIGH', ifNot: 'Wrong: the IOU, which makes the power-on reset (Sams: check UE5 by substitution).', source: S_CC10_CHK },
+        { step: 6, check: 'Master clock', where: '2e-aux pin 32 (14M); Sams counts the oscillator at UE1-12', expect: '14.31818 MHz',
+          ifNot: 'Off frequency: crystal Y1. Missing: the oscillator transistor Q4 or the 74LS125 at UE1 (Sams designators).', source: S_CC10_CHK },
+        { step: 7, check: 'CPU clock', where: '6502 pin 37', expect: '1.023 MHz square, 5 V p-p (Sams photo)',
+          ifNot: 'Clock at UE1 but not here: the 74F109 (UC1), the timing HAL (UD1), UE1 and the 74S02 (UB8), by substitution.', source: S_CC10_CHK },
+        { step: 8, check: 'CPU running', where: '6502 pin 7 (SYNC)', expect: 'Pulses (Sams photo: 4 V p-p at 2 µs/cm)',
+          ifNot: 'Clocks good but dead: swap the 6502, the CD and EF ROMs and the RAMs, then the 74LS244 (UB1), the 74LS245 (UB2), the MMU and the IOU (Sams).', source: S_CC10_CHK },
+      ],
+      clocks: [
+        { name: 'Crystal', where: 'Y1 (Sams designator)', f: '14.31818 MHz', source: S_CC10_PARTS1 },
+        { name: '14M', where: '2e-aux pin 32', f: '14.31818 MHz', source: { label: 'Apple IIe Technical Reference Manual, Table 7-21 auxiliary slot signals, pp. 198-199', url: IIE(231) } },
+        { name: '7M', where: '2e-slot pin 36', f: '7.15909 MHz', source: SATHERE_T31 },
+        { name: '3.58M colour reference', where: '2e-slot pin 35 (slot 7 only); 2e-aux pin 1', f: '3.579545 MHz', source: SATHERE_T31 },
+        { name: 'Q3', where: 'MMU pin 4; IOU pin 27; 2e-slot pin 37; 2e-aux pin 53', f: '2.0454 MHz', note: 'Asymmetric; one cycle in 130 is long.', source: SATHERE_T31 },
+        { name: 'Φ0 (PHI0)', where: '6502 pin 37; MMU pin 3; IOU pin 26; 2e-slot pin 40; 2e-aux pin 23', f: '1.0227 MHz', note: 'Every 65th cycle is stretched to 1.117 µs; average 1.0205 MHz.', source: SATHERE_T31 },
+        { name: 'Φ1 (PHI1)', where: '2e-slot pin 38; 2e-aux pin 36', f: '1.0227 MHz', note: 'Φ0 inverted.', source: SATHERE_T31 },
       ],
     },
     apple2c: {
@@ -2121,17 +2323,24 @@ RCS.add({
           { label: 'Computer History Museum catalog: Apple IIc power supply, model A2M4017', url: 'https://www.computerhistory.org/collections/catalog/102735572' },
         ] },
       rails: [
-        { rail: '+15 V in', expect: '+15 V nominal (9-20 V works)', where: 'Power connector pins 5 and 6', note: 'From the external brick.' },
+        { rail: '+15 V in', expect: '+15 V nominal (9-20 V works)', where: 'Power connector pins 5 and 6', note: 'From the external brick.',
+          conflict: 'Sams CSCS7 reads 18.2 V from pin 2 to pin 6 of the brick plug with the brick unplugged from the IIc (no load); Apple rates the brick +15 V DC, which wins.' },
         { rail: '+5 V', expect: '4.75-5.25 V', where: 'MMU pin 25; IOU pin 28; IWM pin 26; 6502 pin 8; disk port pin 6', note: '±5%. 1.5 A max.' },
         { rail: '+12 V', expect: '10.8-13.2 V', where: 'Disk port pins 7 and 8; video expansion pin 8', note: '±10%. 0.6 A continuous; 300 mA max on the DB-15.' },
         { rail: '-12 V', expect: '-10.8 to -13.2 V', where: 'Disk port pin 5', note: '±10%. 100 mA max. Also feeds the -5 V rail.' },
         { rail: '-5 V', expect: 'About -5 V', where: 'Derived from -12 V on the board', note: '50 mA max.', verify: true },
       ],
       testPoints: [
-        { tp: 'Master clock', where: 'TMG pin 1', expect: '14.318 MHz' },
-        { tp: '7M', where: 'TMG pin 2', expect: '7.16 MHz' },
+        { tp: 'Master clock', where: 'TMG pin 1', expect: '14.318 MHz',
+          scope: { f: '14.31818 MHz', low: '0 V', high: '4.7 V', shape: 'square', basis: 'capture', source: S_CS7_OSC,
+            note: 'Sams probes the oscillator module output (OS1 pin 3, Sams designator), which feeds TMG pin 1 and GLU pin 1: 4.7 V p-p at 0.1 µs/cm, trace bottom 0 V.' } },
+        { tp: '7M', where: 'TMG pin 2', expect: '7.16 MHz',
+          scope: { f: '7.15909 MHz', low: '0 V', high: '4.7 V', shape: 'square', basis: 'capture', source: S_CS7_TMG, note: 'Sams: 4.7 V p-p at 0.1 µs/cm, trace bottom 0 V.' } },
         { tp: 'Colour reference', where: 'TMG pin 3', expect: '3.58 MHz' },
-        { tp: 'PHI0', where: 'TMG pin 15 / MMU pin 3', expect: '1.023 MHz' },
+        { tp: 'PHI0', where: 'TMG pin 15 / MMU pin 3', expect: '1.023 MHz',
+          scope: { f: '1.0227 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'capture', source: S_CS7_CPU, note: 'Sams probes it at the 65C02 (pin 37): 4 V p-p at 0.5 µs/cm, trace bottom 0 V.' } },
+        { tp: 'VID7M', where: 'TMG pin 13', expect: '7.16 MHz dot-clock enable, or steady LOW',
+          scope: { f: '7.15909 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: S_CS7_TMG, note: 'Sams: 5 V p-p at 0.1 µs/cm, trace bottom 0 V, in the power-up mode.' } },
         { tp: 'Q3', where: 'TMG pin 16', expect: '2.04 MHz asymmetric' },
         { tp: 'Reset', where: 'IOU pin 15 / 6502 pin 40', expect: 'HIGH when running' },
         { tp: 'Composite sync', where: 'IOU pin 39', expect: '15.7 kHz line pulses' },
@@ -2140,6 +2349,28 @@ RCS.add({
       sources: [
         { label: 'Apple IIc Technical Reference Manual, Table 11-4 internal converter specifications, p. 234', url: IIC(261) },
         { label: 'Apple IIc Technical Reference Manual, TMG pinouts, p. 245', url: IIC(272) },
+        S_CS7_TS, S_CS7_OSC, S_CS7_TMG, S_CS7_CPU,
+      ],
+      firstTen: [
+        { step: 1, check: 'Brick off load', where: '2c-power pin 6 to pin 2 (brick plug, unplugged from the IIc)', expect: '+15 V DC nominal; Sams reads 18.2 V off load',
+          ifNot: 'Missing: repair or replace the brick (Sams). Its case is sealed.', source: S_CS7_TS },
+        { step: 2, check: 'Converter outputs', where: 'MMU pin 25 (+5 V); 2c-disk pin 7 (+12 V); 2c-disk pin 5 (-12 V)', expect: '4.75 to 5.25 V; 10.8 to 13.2 V; -10.8 to -13.2 V (Apple). Sams reads 4.9 V, 12 V and -11.3 V',
+          ifNot: 'Brick good but rails wrong: fuse F1 and coil L1, then the converter oscillator, driver and regulator transistors (Sams).', source: S_CS7_TS },
+        { step: 3, check: 'Reset', where: '6502 pin 40', expect: 'LOW then HIGH at power-on; LOW while Control-Reset is held',
+          ifNot: 'Wrong at power-on: the IOU. Not LOW with Control-Reset: the keyboard connector (J9 in Sams) and the two keys.', source: S_CS7_TS },
+        { step: 4, check: 'Master clock', where: 'GLU pin 1; TMG pin 1', expect: '14.31818 MHz', ifNot: 'Missing: the oscillator module (OS1) and the 1 kΩ resistor in pack RP3 (Sams).', source: S_CS7_TS },
+        { step: 5, check: 'TMG outputs', where: 'TMG pin 2 (7M); TMG pin 3 (colour reference); TMG pins 14, 15 (Φ1, Φ0)', expect: '7.159 MHz; 3.5795 MHz; 1.02 MHz', ifNot: 'Any missing with 14M present: the TMG (Sams).', source: S_CS7_TS },
+        { step: 6, check: 'CPU control inputs', where: '6502 pins 2, 4, 6', expect: 'HIGH (RDY, /IRQ, /NMI)', ifNot: 'A LOW line: the parts on that line, then the 65C02 (Sams).', source: S_CS7_TS },
+        { step: 7, check: 'CPU clock', where: '6502 pin 37', expect: '1.023 MHz square, 4 V p-p (Sams photo)',
+          ifNot: 'Clocks and control lines good but still dead: the MON ROM, MMU, IOU, then the RAMs (Sams).', source: S_CS7_TS },
+      ],
+      clocks: [
+        { name: 'Oscillator module', where: 'OS1 (Sams designator), output to GLU pin 1 and TMG pin 1', f: '14.31818 MHz', source: S_CS7_OSC },
+        { name: '7M', where: 'TMG pin 2; IWM pin 24', f: '7.15909 MHz', source: { label: 'Apple IIc Technical Reference Manual, TMG pinouts, p. 245', url: IIC(272) } },
+        { name: 'Colour reference (CREF)', where: 'TMG pin 3', f: '3.579545 MHz', source: { label: 'Apple IIc Technical Reference Manual, TMG pinouts, p. 245', url: IIC(272) } },
+        { name: 'Q3', where: 'TMG pin 16; MMU pin 4; IWM pin 25', f: '2.0454 MHz', note: 'Asymmetric.', source: { label: 'Apple IIc Technical Reference Manual, TMG pinouts, p. 245', url: IIC(272) } },
+        { name: 'Φ0', where: 'TMG pin 15; MMU pin 3; 6502 pin 37', f: '1.0227 MHz', source: S_CS7_TS },
+        { name: 'Φ1', where: 'TMG pin 14', f: '1.0227 MHz', source: S_CS7_TS },
       ],
     },
     ...drivePower,
