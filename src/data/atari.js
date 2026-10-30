@@ -19,6 +19,9 @@ const FSM = AR('atari400800fieldservicemanualmay1983');
 const XLF = AR('atari-800-xl-computer-field-service-manual-rev-01-feb-1984');
 const X6F = AR('Atari600XLComputerFieldServiceManualRev1');
 const SAMS = AR('samscomputerfactstechnicalservicedataatarimodel130xecomputer1986sams');
+const SAMS_400 = AR('SamsComputerfactsAtari400B');
+const SAMS_800 = AR('samscomputerfactstechnicalservicedataatarimodel800computer1984sams');
+const SAMS_XL = AR('atari800xlsamscomputerfactstechnicalservice');
 const TRN = p => `http://www.bitsavers.org/pdf/atari/400_800/CO16555_Atari_Home_Computer_Technical_Reference_Notes_1982.pdf#page=${p}`;
 const FAQ_PINS = 'https://www.atarimania.com/faq-atari-400-800-xl-xe-what-are-the-pinouts-for-the-various-connectors-on-the-atari_16.html';
 const FAQ_PSU = 'https://atarimuseum.ctrl-alt-rees.com/archives/atari-8-bit-faq/faq-doc-42.html';
@@ -26,9 +29,15 @@ const S = {
   fsm: (p, what) => ({ label: `Atari 400/800 Field Service Manual (May 1983), ${what}`, url: FSM(p) }),
   xl: (p, what) => ({ label: `Atari 800XL Field Service Manual Rev. 01 (Feb 1984), ${what}`, url: XLF(p) }),
   x6: (p, what) => ({ label: `Atari 600XL Field Service Manual Rev. 1, ${what}`, url: X6F(p) }),
-  sams: (p, what) => ({ label: `Sams Computerfacts CC16, Atari 130XE (1986), ${what}`, url: SAMS(p) }),
+  sams: (p, what) => ({ label: `Sams Computerfacts CC16, Atari 130XE (1986), ${what}`, url: SAMS(p), sams: true }),
+  s400: (p, what) => ({ label: `Sams Computerfacts CC5, Atari 400 (1984), ${what}`, url: SAMS_400(p), sams: true }),
+  s800: (p, what) => ({ label: `Sams Computerfacts CC7, Atari 800 (1984), ${what}`, url: SAMS_800(p), sams: true }),
+  sxl: (p, what) => ({ label: `Sams Computerfacts CC11, Atari 800XL (1985), ${what}`, url: SAMS_XL(p), sams: true }),
   trn: (p, what) => ({ label: `Atari Home Computer Technical Reference Notes CO16555 (1982), ${what}`, url: TRN(p) }),
   faq: what => ({ label: `Atari 8-Bit FAQ 1.14, connector pinouts (Atarimania), ${what}`, url: FAQ_PINS, verify: true }),
+  pokey: (p, what) => ({ label: `Atari POKEY data sheet C012294 Rev. B (visual6502.org scan), ${what}`, url: `http://visual6502.org/images/C012294_Pokey/pokey.pdf#page=${p}` }),
+  altirra: (p, what) => ({ label: `Altirra Hardware Reference Manual (Avery Lee), ${what}`, url: `https://www.virtualdub.org/downloads/Altirra%20Hardware%20Reference%20Manual.pdf#page=${p}`, verify: true }),
+  chips: what => ({ label: `Atari 8-Bit FAQ 1.11, What are SALLY, ANTIC, CTIA/GTIA/FGTIA, POKEY and FREDDIE? (faqs.org), ${what}`, url: 'http://www.faqs.org/faqs/atari-8-bit/faq/section-12.html', verify: true }),
 };
 const VA_FSM = 'Atari 400/800 Field Service Manual (May 1983)';
 const VA_XL = 'Atari 800XL Field Service Manual Rev. 01 (Feb 1984)';
@@ -96,7 +105,7 @@ const antic = [
   { n: 32, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
   { n: 33, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
   { n: 34, name: 'PHI0', type: 'clock', dir: 'out', desc: 'Phase 0 clock out to the CPU PHI0 input (pin 37).', terms: ['clock'], probe: '1.79 MHz square wave, about 4.4 V high (Sams waveform)' },
-  { n: 35, name: 'FPHI0', type: 'clock', dir: 'in', desc: 'Fast phase 0 clock in, from GTIA pin 29.', terms: ['clock'], probe: '1.79 MHz square wave (NTSC)' },
+  { n: 35, name: 'FPHI0', type: 'clock', dir: 'in', desc: 'Fast phase 0 clock in, from GTIA pin 29. ANTIC divides it by two for PHI0 (pin 34).', terms: ['clock'], probe: '3.58 MHz square wave on NTSC, the colour clock rate (Sams 800, 800XL and 130XE photos), about 4.5 V high' },
   { n: 36, name: '/RST', type: 'ctrl', dir: 'in', desc: 'Reset. LOW resets ANTIC at power-up.', terms: ['reset'], activeLow: true, probe: 'HIGH in a normal run (Sams logic probe H)' },
   { n: 37, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
   { n: 38, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
@@ -134,7 +143,7 @@ const gtia = [
   { n: 26, name: '/HALT', type: 'ctrl', dir: 'in', desc: 'HALT line from ANTIC pin 9.', terms: ['halt'], activeLow: true },
   { n: 27, name: 'Vdd', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+5.0 V (Sams 130XE)' },
   { n: 28, name: 'OSC', type: 'clock', dir: 'in', desc: 'Colour clock oscillator input.', terms: ['clock'], probe: '3.58 MHz on NTSC. Missing = no picture at all' },
-  { n: 29, name: 'FPHI0', type: 'clock', dir: 'out', desc: 'Fast phase 0 clock out to ANTIC pin 35.', terms: ['clock'], probe: '1.79 MHz square wave (NTSC)' },
+  { n: 29, name: 'FPHI0', type: 'clock', dir: 'out', desc: 'Fast phase 0 clock out to ANTIC pin 35.', terms: ['clock'], probe: '3.58 MHz square wave on NTSC, the colour clock rate (Sams 800, 800XL and 130XE photos), about 4.5 V high' },
   { n: 30, name: 'PHI2', type: 'clock', dir: 'in', desc: 'Phase 2 clock in.', terms: ['clock'] },
   { n: 31, name: 'LUM3', type: 'video', dir: 'out', desc: 'GTIA: fourth luminance line. On the CTIA this pin is CS2, a second chip select.', terms: ['luma-chroma'], conflict: 'The 400-800 chip pinout sheet names pins 22-24 LUM1-LUM3 and this pin LUM0; both field service manuals name 22-24 LUM0-LUM2, and the 800XL manual names this pin LUM3.' },
   { n: 32, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select ($D0xx). LOW selects GTIA.', terms: ['cs'], activeLow: true },
@@ -206,6 +215,11 @@ const chipsAtari = {
       S.sams(5, 'schematic, CPU U8 with logic-probe readings'),
     ],
     pins: sally,
+    replacements: [
+      { part: 'C014806 SALLY from another 600XL, 800XL, 65XE, 130XE, XEGS (also in late 400/800 CPU boards, the 5200 and 7800)', kind: 'pin-compatible',
+        note: 'The only drop-in. A stock 6502 or 6502B does not work here: SALLY adds HALT on pin 35 and R/W on pin 36, which a stock 6502 leaves unconnected, and the XL/XE board has none of the four extra chips the 400/800 uses to stop a stock 6502 for ANTIC. A part sold as a standard "6502C" is a 4 MHz 6502, not SALLY.',
+        source: S.chips('6502/SALLY') },
+    ],
   },
   antic: {
     id: 'antic', name: 'ANTIC CO12296 / C021697 display processor', short: 'ANTIC', family: 'Atari custom',
@@ -222,6 +236,14 @@ const chipsAtari = {
       S.sams(3, 'schematic, ANTIC U7 with logic-probe readings'),
     ],
     pins: antic,
+    replacements: [
+      { part: 'CO12296 (400/800/1200XL) or CO21697 (600XL/800XL/XE), NTSC', kind: 'pin-compatible',
+        note: 'Use an NTSC ANTIC with an NTSC GTIA and a 3.58 MHz clock. The 800XL FSM asks for ANTIC Rev. E when the video or ANTIC stress test fails.',
+        source: S.chips('ANTIC part numbers') },
+      { part: 'CO14887 (400/800) or CO21698 (XL/XE), PAL and SECAM', kind: 'pin-compatible',
+        note: 'PAL ANTIC makes 312 lines instead of 262: it only belongs in a PAL board with a PAL GTIA and the PAL clock.',
+        source: S.chips('ANTIC part numbers') },
+    ],
   },
   gtia: {
     id: 'gtia', name: 'CTIA C012295 / GTIA C014805', short: 'GTIA', family: 'Atari custom',
@@ -237,6 +259,14 @@ const chipsAtari = {
       S.sams(3, 'schematic, GTIA U17 with logic-probe readings'),
     ],
     pins: gtia,
+    replacements: [
+      { part: 'CO14805 GTIA (NTSC) for a CO12295 CTIA', kind: 'pin-compatible',
+        note: 'GTIA is backward compatible with CTIA and adds three graphics modes; Atari fitted it to later NTSC 400/800s. Test: POKE 623,64 blackens the screen on a GTIA, stays blue on a CTIA.',
+        source: S.chips('CTIA/GTIA/FGTIA') },
+      { part: 'CO14889 GTIA (PAL), CO20120 FGTIA (SECAM)', kind: 'pin-compatible',
+        note: 'Pair with the PAL ANTIC only. FGTIA shows 8 luminances in GTIA mode 1 instead of 16.',
+        source: S.chips('CTIA/GTIA/FGTIA') },
+    ],
   },
   pokey: {
     id: 'pokey', name: 'POKEY C012294', short: 'POKEY', family: 'Atari custom',
@@ -251,6 +281,14 @@ const chipsAtari = {
       S.xl(16, 'Fig. 1-6, POKEY pin assignments, p. 1-8'),
     ],
     pins: pokey,
+    replacements: [
+      { part: 'C012294 with any maker suffix (-01 AMI, -03 Signetics, -19 National, -22 OKI, -31 IMP)', kind: 'pin-compatible',
+        note: 'One part number in every 8-bit machine and the 5200; a POKEY from a dead 5200 or XE fits.',
+        source: { label: 'Wikipedia, POKEY: part numbers and maker suffixes (cites the Atari 8-Bit FAQ)', url: 'https://en.wikipedia.org/wiki/POKEY', verify: true } },
+      { part: 'PokeyMAX (FPGA)', kind: 'modern',
+        note: 'Open FPGA POKEY by the EclaireXL author; goes in the POKEY socket. Later versions add stereo, SID, PSG and Covox, which need extra wiring. The paddle capacitors stay on the mainboard.',
+        source: { label: '64kib.com, Replacing all the custom chips: PokeyMAX v1 to v4 (maker page)', url: 'https://64kib.com/chip_replacement.html' } },
+    ],
   },
   osrom: {
     id: 'osrom', name: 'OS and floating point ROMs (400/800)', short: 'OS ROM', family: 'Mask ROM',
@@ -272,6 +310,11 @@ const chipsAtari = {
     verifiedAgainst: VA_SAMS + ', parts list and schematic (U6)',
     datasheets: [S.sams(16, 'semiconductor parts list (U6 C061991-29)'), S.sams(5, 'schematic, U6')],
     pins: null,
+    replacements: [
+      { part: 'CO61991 or CO61922 FREDDIE from another XE or late 800XL', kind: 'pin-compatible',
+        note: 'The FAQ lists both numbers for FREDDIE. Sams lists U6 as C061991-29. Check the number on yours before you swap.',
+        source: S.chips('FREDDIE') },
+    ],
   },
   mmu61618: {
     id: 'mmu61618', name: 'MMU C061618 (memory management PLA)', short: 'MMU', family: 'Atari custom (PLA)',
@@ -489,16 +532,6 @@ const atariRails = [
   { rail: '+12 V', expect: '11.5-12.5 V (verify)', where: '78M12 (A201) output; RAM boards', note: 'DRAM supply; also SIO pin 12.' },
   { rail: '-5 V', expect: '-4.5 to -5.5 V (verify)', where: 'Zener CR201 (5.1 V); RAM boards', note: 'DRAM bias. The 4116 needs +12, +5 and -5 V together: lose -5 V and the RAM can die.' },
 ];
-const atariTestPoints = [
-  { tp: 'Colour clock', where: 'GTIA pin 28', expect: '3.58 MHz (NTSC)' },
-  { tp: 'Fast phase 0', where: 'GTIA pin 29', expect: '1.79 MHz' },
-  { tp: 'CPU phase 0 in', where: 'ANTIC pin 34', expect: '1.79 MHz' },
-  { tp: 'CPU clock phi2', where: '6502 pin 39', expect: '1.79 MHz square wave (NTSC)' },
-  { tp: 'CPU reset', where: '6502 pin 40', expect: 'HIGH in a normal run. LOW pulse at power-up.' },
-  { tp: 'ANTIC supply', where: 'ANTIC pin 21', expect: '+5 V' },
-  { tp: 'GTIA supply', where: 'GTIA pin 27', expect: '+5 V' },
-  { tp: 'POKEY supply', where: 'POKEY pin 17', expect: '+5 V' },
-];
 const supply400 = {
   external: true, name: 'Atari 9 V AC power adaptor (CO14319 in the FSM parts list; CO17945 and others fit)',
   output: '9 V AC only. CO14319: 15.3 VA (1.7 A); CA014748 and CA016804: 18 VA (2.0 A); CO17945: 31 VA (3.4 A)',
@@ -516,7 +549,6 @@ const supply400 = {
     { label: 'Computer History Museum 102728460, Atari CO17945 transformer', url: 'https://www.computerhistory.org/collections/catalog/102728460' },
   ],
 };
-const atariPower = { supply: supply400, rails: atariRails, testPoints: atariTestPoints, sources: PSU400_SRC };
 
 const supplyXL = {
   external: true, name: 'Atari 5 V DC power supply CA061982 (600XL/800XL; CO61982/CA024814 per the FAQ)',
@@ -527,6 +559,7 @@ const supplyXL = {
     'Test it under load at the DIN pins: +5 V on 1, 4, 6, return on 3, 5, 7. A 4.7 Ω 5 W resistor draws about 1 A. Healthy: 4.9-5.1 V. Over 5.25 V: do not use it.',
     'Atari also shipped a 1.0 A version (CO70042, for the 600XL, 65XE and XE Game System). Forum users call one epoxy-filled style the "ingot"; treat every potted brick the same way.',
     'A modern regulated 5 V supply of 1.5 A or more with the same DIN-7 wiring is the safe replacement. Wire all three +5 V and all three return pins.',
+    'Ready-made example: the ami64 RetroPower XL/XE supply, regulated +5 V 2.0 A with over-voltage and over-current protection and a DIN-7 plug. Measure any new supply at the plug before first use too.',
   ],
   sources: [
     S.x6(20, 'Power Supply, p. 1-10'),
@@ -534,22 +567,257 @@ const supplyXL = {
     { label: 'Atari 8-Bit FAQ, power supply list (adapter ratings)', url: FAQ_PSU, verify: true },
     { label: 'Classic Computers NZ, Faulty RAM traced to power supply in an Atari 800XL (2010)', url: 'https://classic-computers.org.nz/blog/2010-08-29-restoring-an-atari800XL.htm', verify: true },
     { label: 'Valoroso, Atari 800XL / 1050 shorted power supply (load test)', url: 'https://www.valoroso.it/en/atari-800xl-atari-1050-shorted-power-supply/', verify: true },
+    { label: 'ami64, Atari XL/XE RetroPower PSU (maker page: +5 V 2.0 A, over-voltage protection)', url: 'https://ami64.com/product-page/atari-xl-xe-retropower-psu-oled-digital-uk-eu-au-usa' },
   ],
 };
 const xlRails = [
   { rail: '+5 V', expect: '4.9-5.1 V (±2 %)', where: 'Power DIN pins 1, 4, 6; ANTIC pin 21; GTIA pin 27; POKEY pin 17', note: 'The only rail. The XL/XE has no +12 V or -5 V; the DRAMs run on +5 V.' },
 ];
-const xlTestPoints = [
+/* ---------- test points, waveforms, first ten minutes, clocks (docs/data-schema.md, last section) ----------
+   Sams Computerfacts waveform photos are 7 cm wide with the time per cm and the peak-to-peak reading printed beside
+   each one, and the DC reference at the bottom line (Sams schematic notes). So low = that reference and
+   high = reference + p-p. Frequencies come from the Sams text where it gives one, else from the timing named in the note. */
+const SAMS_NOTE = 'Sams photo settings: ';
+const cap = (src, f, low, high, shape, extra) => ({ f, low, high, shape, basis: 'capture', source: src, ...(extra || {}) });
+const K0_DS = {
+  f: '7.85 kHz', low: '0.4 V', high: '4.3 V', shape: 'square', duty: '50%', basis: 'datasheet',
+  source: S.pokey(10, 'sheet 10, keyboard scan (K0-K5 are a 6-bit counter stepped once per TV line); PDF p. 22, K0-K5 VOH 4.3 V unloaded, VOL 0.4 V'),
+  note: 'K0 is the lowest counter bit, so it flips every scan line (63.7 µs on NTSC, Hardware Manual: 114 machine cycles per line): about 7.85 kHz, 7.78 kHz on PAL. K1 to K5 each run at half the rate of the one before. A line that never moves means a dead POKEY or a scan turned off in SKCTL.',
+};
+const LINE_NOTE = 'One pulse per scan line: 15.7 kHz on NTSC (114 machine cycles of 1.79 MHz, Hardware Manual p. II.22), 15.56 kHz on PAL.';
+
+const tpReset = cpu => ({ tp: 'CPU reset', where: `${cpu} pin 40`, expect: 'HIGH in a normal run. LOW pulse at power-up.' });
+const tpSupplies = [
+  { tp: 'ANTIC supply', where: 'ANTIC pin 21', expect: '+5 V' },
+  { tp: 'GTIA supply', where: 'GTIA pin 27', expect: '+5 V' },
+  { tp: 'POKEY supply', where: 'POKEY pin 17', expect: '+5 V' },
+];
+const tpK0 = scope => ({ tp: 'Keyboard scan K0', where: 'POKEY pin 23', expect: 'Square wave all the time, about 7.85 kHz (NTSC)', scope });
+
+/* 400: Sams CC5, CPU board schematic (PDF p. 40, Sams pp. 28-29); troubleshooting PDF p. 17; service checks PDF p. 3. */
+const S400_SCH = what => S.s400(40, `CPU board schematic pp. 28-29, ${what}`);
+const tp400 = [
+  { tp: 'Colour clock', where: 'GTIA pin 28', expect: '3.58 MHz (NTSC)',
+    scope: cap(S400_SCH('waveform at CTIA A301 pin 28 (4.2 V p-p, 0.5 µs/cm, 0 V reference)'), '3.579545 MHz', '0 V', '4.2 V', 'square',
+      { note: 'Sams prints the crystal X101 as 3.579575 MHz; the NTSC colour subcarrier is 3.579545 MHz. No colour clock = no picture and a dead CPU.' }) },
+  { tp: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', expect: '3.58 MHz on NTSC, the colour clock rate (Sams 800, 800XL and 130XE photos)' },
+  { tp: 'CPU phase 0 in', where: 'ANTIC pin 34 to 6502 pin 37', expect: '1.79 MHz',
+    scope: cap(S400_SCH('waveform at ANTIC A302 pin 34 (5 V p-p, 0.5 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '5 V', 'square',
+      { note: 'Sams: if this is missing check the collector of clock transistor Q104, then CTIA pin 30.' }) },
+  { tp: 'Phase 2 at ANTIC and GTIA', where: 'ANTIC pin 29; GTIA pin 30', expect: '1.79 MHz',
+    scope: cap(S400_SCH('waveform on the phase 2 (A) line to CTIA pin 30 (5 V p-p, 0.5 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '5 V', 'square') },
+  { tp: 'CPU clock phi2', where: '6502 pin 39', expect: '1.79 MHz square wave (NTSC)' },
+  tpReset('6502'),
+  { tp: 'Composite sync', where: 'GTIA pin 25', expect: 'Sync pulses at the line rate; about 4.4 V DC on a meter (Sams)',
+    scope: cap(S400_SCH('waveform at CTIA A301 pin 25 (5.3 V p-p, 20 µs/cm, 0 V)'), '15.7 kHz', '0 V', '5.3 V', 'pulse',
+      { note: LINE_NOTE + ' Mostly HIGH with a short LOW sync pulse. No sync: Sams checks CTIA pin 25, then the sync buffer A111 pins 4 and 5.' }) },
+  tpK0(K0_DS),
+  ...tpSupplies,
+];
+
+/* 800: Sams CC7, CPU board / main board / RF modulator schematic (PDF p. 10, Sams pp. 3 and 42). */
+const S800_SCH = what => S.s800(10, `CPU board schematic pp. 3 and 42, ${what}`);
+const tp800 = [
+  { tp: 'Colour clock', where: 'GTIA pin 28', expect: '3.58 MHz (NTSC)',
+    scope: cap(S800_SCH('waveform at R106, clock transistor Q102 to CTIA A301 pin 28 (4.2 V p-p, 0.5 µs/cm, 0 V)'), '3.579545 MHz', '0 V', '4.2 V', 'square',
+      { note: 'Sams prints X101 as 3.579575 MHz; NTSC is 3.579545 MHz. The 400/800 FSM flowchart asks for 3.58 MHz at R106; if missing, swap X101, Q102 and Q103.' }) },
+  { tp: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', expect: '3.58 MHz on NTSC, the colour clock rate',
+    scope: cap(S800_SCH('waveform on the ANTIC pin 35 line (5 V p-p, 0.5 µs/cm, 0 V)'), '3.579545 MHz', '0 V', '5 V', 'square',
+      { note: 'The photo shows about 12 cycles in 3.5 µs: the full colour clock, not 1.79 MHz. ANTIC halves it for PHI0.' }) },
+  { tp: 'CPU phase 0 in', where: 'ANTIC pin 34 to 6502 pin 37', expect: '1.79 MHz',
+    scope: cap(S800_SCH('waveform at ANTIC A302 pin 34 (5 V p-p, 0.5 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '5 V', 'square') },
+  { tp: 'Phase 2 at ANTIC and GTIA', where: 'ANTIC pin 29; GTIA pin 30', expect: '1.79 MHz',
+    scope: cap(S800_SCH('waveform on the phase 2 (A) line at CTIA pin 30 (5 V p-p, 0.5 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '5 V', 'square') },
+  { tp: 'CPU clock phi2', where: '6502 pin 39', expect: '1.79 MHz square wave (NTSC)' },
+  tpReset('6502'),
+  tpK0(K0_DS),
+  ...tpSupplies,
+];
+
+/* 800XL: Sams CC11, schematic p. 2 (PDF p. 3) and pp. 27-29 (PDF p. 25). */
+const SXL2 = what => S.sxl(3, `schematic p. 2, ${what}`);
+const SXL27 = what => S.sxl(25, `schematic pp. 27-29, ${what}`);
+const tp800xl = [
+  { tp: 'Colour clock', where: 'GTIA pin 28', expect: '3.58 MHz (NTSC)',
+    scope: cap(SXL27('waveform from oscillator Q8 to GTIA U17 pin 28 (4 V p-p, 0.2 µs/cm, 0 V)'), '3.579545 MHz', '0 V', '4 V', 'square',
+      { note: 'Sams: missing, check Q8, Q9 and their parts; off frequency, check crystal Y1. UK PAL boards add Y2 (4.433618 MHz) and U21 here.' }) },
+  { tp: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', expect: '3.58 MHz on NTSC, the colour clock rate',
+    scope: cap(SXL27('waveform on the GTIA pin 29 to ANTIC pin 35 line (4.4 V p-p, 0.2 µs/cm, 0 V)'), '3.579545 MHz', '0 V', '4.4 V', 'square',
+      { note: 'Five to six cycles in the 1.4 µs photo: the colour clock rate, not 1.79 MHz. Sams: missing here with a good pin 28, change GTIA U17.' }) },
+  { tp: 'CPU phase 0 in', where: 'ANTIC pin 34 to 6502C pin 37', expect: '1.79 MHz, about 4.4 V high (Sams)',
+    scope: cap(SXL27('waveform at ANTIC U7 pin 34 (4.2 V p-p, 0.2 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '4.2 V', 'square',
+      { note: 'Sams: missing with a good pin 35 = change ANTIC U7. Rounded rising edges are normal.' }) },
+  { tp: 'CPU clock phi2', where: '6502C pin 39', expect: '1.79 MHz square wave (NTSC)',
+    scope: cap(SXL2('waveform at CPU U8 pin 39 (4 V p-p, 0.2 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '4 V', 'square',
+      { note: 'Sams: pulses at pin 6 of U18 but none at CPU pins 3 and 39 = change the CPU U8.' }) },
+  { tp: 'CPU HALT', where: 'ANTIC pin 9 to 6502C pin 35', expect: 'Pulses while the screen runs; stuck LOW = dead machine',
+    scope: cap(SXL27('waveform on the HALT line at ANTIC U7 pin 9 (5 V p-p, 10 µs/cm, 0 V)'), '15.7 kHz', '0 V', '5 V', 'burst',
+      { note: 'Groups of LOW pulses while ANTIC fetches screen data, repeating each scan line; the pattern changes with the display mode. Flat LOW = ANTIC or a shorted line.' }) },
+  { tp: 'CPU RDY', where: '6502C pin 2', expect: 'HIGH at rest' },
+  { tp: 'NMI', where: 'ANTIC pin 7', expect: 'Pulses' },
+  tpReset('6502C'),
+  { tp: 'Composite sync', where: 'GTIA pin 25', expect: 'Sync pulses at the line rate; about 4.4 V DC on a meter (Sams)',
+    scope: cap(SXL27('waveform at GTIA U17 pin 25 (5 V p-p, 10 µs/cm, 0 V)'), '15.7 kHz', '0 V', '5 V', 'pulse',
+      { note: LINE_NOTE + ' Sams: no sync with this present, check buffer U20, CR4 and R51.' }) },
+  { tp: 'Composite video out', where: 'Monitor jack (DIN-5) pin 4', expect: 'Video, 1.5 V p-p on the Sams photo',
+    scope: cap(SXL27('waveform at J2 pin 4 (1.5 V p-p, 10 µs/cm, 0.6 V reference)'), undefined, '0.6 V', '2.1 V', 'video-line',
+      { period: '63.7 µs', note: 'Sams measured it unloaded on the board; into a 75 Ω monitor expect about half. Missing: Sams works back through L7, Q3 and buffer U20 pin 5 to GTIA and ANTIC.' }) },
+  { tp: 'Luminance out', where: 'Monitor jack (DIN-5) pin 1', expect: 'Luma, 1.6 V p-p on the Sams photo',
+    scope: cap(SXL27('waveform at the J2 pin 1 line (1.6 V p-p, 10 µs/cm, 0.6 V reference)'), undefined, '0.6 V', '2.2 V', 'video-line', { period: '63.7 µs' }) },
+  tpK0(cap(SXL2('waveform at POKEY U22 pin 23 (5 V p-p, 50 µs/cm, 0 V)'), '7.85 kHz', '0 V', '5 V', 'square',
+    { duty: '50%', note: 'Rate from the POKEY data sheet (counter steps once per scan line). Sams shows K1 at 0.1 ms/cm and K2 at 0.2 ms/cm: each half the rate. Sams: dead keyboard with these missing = POKEY U22.' })),
+  { tp: 'Tape data out', where: 'POKEY pin 28', expect: 'FSK tones only while saving to tape',
+    scope: cap(SXL2('waveform on the DATA OUT line from POKEY U22 pin 28, taken while saving a program to tape (5 V p-p, 0.1 ms/cm, 0 V)'), '5.327 kHz', '0 V', '5 V', 'square',
+      { note: 'Cassette data is two tones, 5327 Hz mark and 3995 Hz space (OS User\'s Manual, Technical Reference Notes p. 180). Flat while saving = POKEY U22; Sams then checks SIO pins 1, 2 and 5.' }) },
+  { tp: 'DRAM row strobe', where: '4164 pin 4', expect: 'One /RAS pulse per machine cycle',
+    scope: cap(SXL2('waveform at U30 pin 6, the /RAS line to the RAMs through R107 (4 V p-p, 0.2 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '4 V', 'pulse',
+      { note: 'About 2.5 cycles in the 1.4 µs photo: one row strobe per 1.79 MHz machine cycle. Missing: Sams works back through delay line U29 and U19.' }) },
+  { tp: 'ANTIC supply', where: 'ANTIC pin 21', expect: '+5.0 V' },
+];
+
+/* 130XE: Sams CC16, schematic PDF p. 3 (ANTIC, GTIA, RAM) and p. 5 (CPU, U6). */
+const SXE3 = what => S.sams(3, `schematic, ${what}`);
+const SXE5 = what => S.sams(5, `schematic, ${what}`);
+const tp130xe = [
+  { tp: 'Master clock', where: 'U6 (FREDDIE) input 2, from oscillator Y1', expect: '14.31818 MHz (NTSC); 14.187576 MHz on European boards (Sams)',
+    scope: cap(SXE5('waveform from oscillator Y1 to U6 pin 2 (6.0 V p-p, 0.1 µs/cm, 0 V)'), '14.31818 MHz', '0 V', '6 V', 'square',
+      { note: 'Sams: missing or off frequency, check Y1 (a module or Q4, Q5 and a crystal). FREDDIE pins are not drawn here yet: U6 is a 40-pin part, count from the notch.' }) },
+  { tp: 'Colour clock', where: 'GTIA pin 28', expect: '3.58 MHz (NTSC), from U6 pin 37',
+    scope: cap(SXE3('waveform on the OSC line to GTIA U17 pin 28 (4.8 V p-p, 0.1 µs/cm, 0 V)'), '3.579545 MHz', '0 V', '4.8 V', 'square',
+      { note: 'U6 divides the 14.31818 MHz master by four. Sams: missing here with a good master clock = U6.' }) },
+  { tp: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', expect: '3.58 MHz on NTSC, the colour clock rate',
+    scope: cap(SXE3('waveform on the GTIA pin 29 to ANTIC pin 35 line (4.5 V p-p, 0.1 µs/cm, 0 V)'), '3.579545 MHz', '0 V', '4.5 V', 'square',
+      { note: 'About 2.5 cycles in the 0.7 µs photo: the colour clock rate.' }) },
+  { tp: 'CPU phase 0 in', where: 'ANTIC pin 34 to 6502C pin 37', expect: '1.79 MHz, about 4.4 V high (Sams)',
+    scope: cap(SXE3('waveform at ANTIC U7 pin 34 (4.4 V p-p, 0.2 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '4.4 V', 'square') },
+  { tp: 'CPU phase 1 out', where: '6502C pin 3', expect: '1.79 MHz',
+    scope: cap(SXE5('waveform at CPU U8 pin 3 (4.8 V p-p, 0.2 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '4.8 V', 'square') },
+  { tp: 'CPU clock phi2', where: '6502C pin 39; GTIA pin 30; PIA pin 25', expect: '1.78977 MHz (Sams)',
+    scope: cap(SXE5('waveform on the phase 2 line at U6 pin 5 (5.0 V p-p, 0.2 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '5 V', 'square',
+      { note: 'Sams checks 1.78977 MHz at U6 pin 5, GTIA pin 30 and PIA pin 25. Missing at U6 = U6.' }) },
+  { tp: 'CPU HALT', where: 'ANTIC pin 9 to 6502C pin 35', expect: 'Pulses while the screen runs; stuck LOW = dead machine',
+    scope: cap(SXE3('waveform on the HALT line at ANTIC U7 pin 9 (4.6 V p-p, 10 µs/cm, 0 V)'), '15.7 kHz', '0 V', '4.6 V', 'burst',
+      { note: 'Groups of LOW pulses during screen DMA, repeating each scan line; the pattern changes with the display mode.' }) },
+  { tp: 'CPU RDY', where: '6502C pin 2', expect: 'HIGH at rest' },
+  { tp: 'NMI', where: 'ANTIC pin 7', expect: 'Pulses' },
+  tpReset('6502C'),
+  { tp: 'Composite sync', where: 'GTIA pin 25', expect: 'Sync pulses at the line rate',
+    scope: cap(SXE3('waveform at GTIA U17 pin 25 (5.0 V p-p, 10 µs/cm, 0 V)'), '15.7 kHz', '0 V', '5 V', 'pulse',
+      { note: LINE_NOTE + ' Sams: no sync with this present, check buffer U20, CR4 and R51.' }) },
+  { tp: 'DRAM row strobe', where: '4164 pin 4', expect: 'One /RAS pulse per machine cycle',
+    scope: cap(SXE3('waveform at RAM U9 pin 4 (5.0 V p-p, 0.2 µs/cm, 0 V)'), '1.78977 MHz', '0 V', '5 V', 'pulse') },
+  tpK0(K0_DS),
+  { tp: 'ANTIC supply', where: 'ANTIC pin 21', expect: '+5.0 V' },
+];
+
+const tp600xl = [
   { tp: 'Colour clock', where: 'GTIA pin 28', expect: '3.58 MHz (NTSC)' },
-  { tp: 'Fast phase 0', where: 'GTIA pin 29', expect: '1.79 MHz' },
-  { tp: 'CPU phase 0 in', where: 'ANTIC pin 34', expect: '1.79 MHz, about 4.4 V high (Sams)' },
+  { tp: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', expect: '3.58 MHz on NTSC, the colour clock rate (Sams photos of the 800, 800XL and 130XE)' },
+  { tp: 'CPU phase 0 in', where: 'ANTIC pin 34 to 6502C pin 37', expect: '1.79 MHz' },
   { tp: 'CPU clock phi2', where: '6502C pin 39', expect: '1.79 MHz square wave (NTSC)' },
   { tp: 'CPU HALT', where: '6502C pin 35', expect: 'Pulses while the screen runs; stuck LOW = dead machine' },
   { tp: 'CPU RDY', where: '6502C pin 2', expect: 'HIGH at rest' },
   { tp: 'NMI', where: 'ANTIC pin 7', expect: 'Pulses' },
+  tpReset('6502C'),
+  tpK0(K0_DS),
   { tp: 'ANTIC supply', where: 'ANTIC pin 21', expect: '+5.0 V' },
 ];
-const xlPower = (extraSources) => ({ supply: supplyXL, rails: xlRails, testPoints: xlTestPoints, sources: [S.x6(20, 'Power Supply, p. 1-10'), S.xl(19, 'Fig. 1-8, power supply pin assignments, p. 1-11'), ...extraSources] });
+
+/* first ten minutes */
+const ALT_TIMING = S.altirra(61, '4.2 Display timing, Table 6');
+const ft = (step, check, where, expect, ifNot, source) => ({ step, check, where, expect, ifNot, source });
+const ft400 = [
+  ft(1, 'Adaptor unloaded', 'Power in (9 V AC) pin 1 to pin 2, on the adaptor plug with it unplugged from the console', '10.4 V AC (Sams)', 'Replace the adaptor. It is a plain transformer: low or no AC means an open winding or a broken cord.', S.s400(3, 'Preliminary service checks, Power supply check (A)')),
+  ft(2, 'Rectified supply', 'Regulator A202 (7805) input, console on', '11.8 V DC (Sams)', 'Check the cartridge-door interlock S202, power switch S203, jack J204, bridge diodes CR206-CR209 and C209.', S.s400(17, 'Troubleshooting guide, Power supply')),
+  ft(3, '+5 V logic rail', 'A202 output; 6502 pin 8; POKEY pin 17', '+5.08 V (Sams)', 'Look for a short to ground before you change A202.', S.s400(17, 'Troubleshooting guide, Power supply and CPU operation')),
+  ft(4, '+12 V and -5 V RAM rails', 'Regulator A201 (78M12) output; zener CR201 anode', '+12.25 V and -5.01 V (Sams)', 'Check A201, CR202, CR203 and CR201. Never run 4116 RAM with +12 V present and -5 V missing.', S.fsm(140, 'Symptom checklist, black/grey screen: verify +5 V, -5 V and +12 V, p. 6-1')),
+  ft(5, 'Colour clock', 'GTIA pin 28', '3.58 MHz (3.579545 MHz NTSC)', 'Swap X101, Q103 and Q104 (the oscillator on the motherboard).', S.fsm(114, '400 grey bar troubleshooting: 3.58 MHz at R158, p. 5-16')),
+  ft(6, 'CPU clock', '6502 pin 37', '1.79 MHz phase 0 from ANTIC pin 34', 'Sams: no clock here, check the collector of Q104; good there, check CTIA pin 30 and change the CTIA A301.', S.s400(17, 'Troubleshooting guide, CPU operation')),
+  ft(7, 'CPU running', '6502 pin 9 to pin 25 (address), pin 26 to pin 33 (data)', 'Every line pulsing on a logic probe', 'Check 5.08 V at 6502 pin 8, then change the CPU board, the 16K RAM board, ROMs A103 and A104, buffer A111 and decoders Z103 and Z104 one at a time.', S.s400(3, 'Preliminary service checks, Main board (A)-(C)')),
+];
+const ft800 = [
+  ft(1, 'Adaptor unloaded', 'Power in (9 V AC) pin 1 to pin 2, on the adaptor plug with it unplugged from the console', '10.4 V AC (Sams)', 'Replace the adaptor.', S.s800(3, 'Preliminary service checks, Power supply (A)')),
+  ft(2, 'Rectified supply', 'Diode CR206 cathode (regulator A202 input), console on', '12.5 V DC (Sams)', 'Check the interlock and power switches, jack J206 and the bridge diodes.', S.s800(18, 'Troubleshooting, Power supply')),
+  ft(3, '+5 V logic rail', 'A202 output; 6502 pin 8; POKEY pin 17', '+5.1 V (Sams)', 'Look for a short to ground, then change A202.', S.s800(18, 'Troubleshooting, Power supply')),
+  ft(4, '+12 V and -5 V RAM rails', 'Regulator A201 output; zener CR201 anode', '+11.8 V and -5.0 V (Sams; 24.4 V at the A201 input)', 'Check A201, CR201 and the doubler diodes. Lose -5 V and the 4116 RAMs can die.', S.fsm(140, 'Symptom checklist, black/grey screen: verify +5 V, -5 V and +12 V, p. 6-1')),
+  ft(5, 'Colour clock', 'GTIA pin 28', '3.58 MHz (3.579545 MHz NTSC)', 'Swap X101, Q102 and Q103.', S.fsm(161, '800 any video troubleshooting: 3.58 MHz at R106, p. 7-20')),
+  ft(6, 'CPU clock', '6502 pin 37', '1.79 MHz phase 0 from ANTIC pin 34', 'Check ANTIC pin 35 for the 3.58 MHz fast clock from GTIA pin 29; present, change ANTIC A302.', S.s800(18, 'Troubleshooting, CPU operation')),
+  ft(7, 'CPU running', '6502 pin 9 to pin 25 (address), pin 26 to pin 33 (data)', 'Every line pulsing on a logic probe', 'Check 5.1 V at 6502 pin 8, then the CPU board, the 16K RAM boards and the personality board by substitution.', S.s800(3, 'Preliminary service checks, Main board (A)-(C)')),
+];
+const ftXLbrick = (src) => [
+  ft(1, 'Brick, before it touches the board', 'Power in (+5 V DC) pin 1 to pin 3, on the brick plug, first unloaded, then with a 4.7 Ω 5 W load', '+4.9 to +5.1 V DC both ways (5 V ±2 %, 600XL FSM)', 'Over 5.25 V, or sagging under load: do not plug it in. Use a regulated replacement.', src),
+  ft(2, 'No short on the board', 'Power in (+5 V DC) pin 1 to pin 3, on the computer socket, brick unplugged, power switch on (ohmmeter)', 'Not a dead short', 'Find the short first: Sams says do not plug a new brick into a shorted board.', S.sxl(27, 'Preliminary service checks, Computer dead (A)')),
+];
+const ft800xl = [
+  ...ftXLbrick(S.sxl(27, 'Preliminary service checks, Computer dead (A): 5.0 V from pin 3 to pin 1 of P7')),
+  ft(3, '+5 V on the board', 'ANTIC pin 21; GTIA pin 27; POKEY pin 17; 6502C pin 8', '+5.0 V (Sams)', 'Missing at C2: the power switch S1.', S.sxl(6, 'Troubleshooting, Power supply')),
+  ft(4, 'Reset', '6502C pin 40', 'LOW for a moment at power-on or RESET, then HIGH (4.4 V) and stays HIGH', 'Check the reset circuit: U19 (74LS14) pin 8, C49, CR1, R39, R40.', S.sxl(6, 'Troubleshooting, Microprocessor (CPU) operation')),
+  ft(5, 'Colour clock', 'GTIA pin 28', '3.579545 MHz (NTSC)', 'Missing: Q8, Q9 and their parts. Off frequency: crystal Y1. The FSM lists Y1, Q8, Q9, C109 for a black or grey screen.', S.sxl(7, 'Troubleshooting, Clock and dividers')),
+  ft(6, 'Fast phase 0', 'GTIA pin 29 to ANTIC pin 35', '3.58 MHz present', 'Missing with a good pin 28: change GTIA U17.', S.sxl(7, 'Troubleshooting, Clock and dividers')),
+  ft(7, 'CPU clocks', 'ANTIC pin 34; 6502C pin 3 and pin 39', '1.78977 MHz', 'Missing at ANTIC pin 34: ANTIC U7. Present there but not at 6502C pin 3 and pin 39: U18 pin 6, then the CPU U8.', S.sxl(7, 'Troubleshooting, Clock and dividers')),
+  ft(8, 'CPU running', '6502C pin 9 to pin 25 (address), pin 26 to pin 33 (data)', 'Every line pulsing', 'One stuck: power off, pull the CPU, recheck (address open, data HIGH). Pulses that start and stop: U2, MMU U3, ROMs U4 and U5, then the CPU.', S.sxl(6, 'Troubleshooting, Microprocessor (CPU) operation')),
+];
+const ft130xe = [
+  ...ftXLbrick(S.sams(12, 'Troubleshooting, Power supply: 5.0 V from pin 3 to pin 1 of P7; check J7 for a short')),
+  ft(3, '+5 V on the board', 'ANTIC pin 21; GTIA pin 27; POKEY pin 17; 6502C pin 8', '+5.0 V (Sams)', 'Missing at C2: the power switch S1.', S.sams(12, 'Troubleshooting, Power supply')),
+  ft(4, 'Reset', '6502C pin 40', 'LOW for a moment at power-on or RESET, then HIGH and stays HIGH', 'Check reset IC U19 pin 3, C200, R39 and R40.', S.sams(12, 'Troubleshooting, Microprocessor (CPU) operation')),
+  ft(5, 'Master clock', 'U6 (FREDDIE) input 2', '14.31818 MHz (NTSC)', 'Missing or off frequency: oscillator Y1.', S.sams(13, 'Troubleshooting, Clock and dividers')),
+  ft(6, 'Colour clock', 'GTIA pin 28', '3.579545 MHz, from U6 pin 37', 'Missing with a good master clock: U6.', S.sams(13, 'Troubleshooting, Clock and dividers')),
+  ft(7, 'CPU clock', '6502C pin 39; GTIA pin 30; PIA pin 25', '1.78977 MHz', 'Missing at U6 pin 5: U6. Present at U6 but not at GTIA pin 30: GTIA U17.', S.sams(13, 'Troubleshooting, Clock and dividers')),
+  ft(8, 'CPU running', '6502C pin 9 to pin 25 (address), pin 26 to pin 33 (data)', 'Every line pulsing', 'One stuck: power off, pull the CPU, recheck. Pulses that start and stop: U2, MMU U3, ROMs U4 and U5, then the CPU.', S.sams(12, 'Troubleshooting, Microprocessor (CPU) operation')),
+];
+const ft600xl = [
+  ft(1, 'Brick unloaded, before it touches the board', 'Power in (+5 V DC) pin 1 to pin 3, on the brick plug', '+4.9 to +5.1 V DC (5 V ±2 %)', 'Over 5.25 V: do not plug it in. The potted brick fails high and kills RAM.', S.x6(20, 'Power Supply: +5 V DC ±2 %, 1.5 A max, p. 1-10')),
+  ft(2, 'Brick under load', 'Power in (+5 V DC) pin 1 to pin 3, on the brick plug with a 4.7 Ω 5 W resistor across it', 'About 1 A drawn, still 4.9 to 5.1 V', 'Sagging or rising: replace the brick.', { label: 'Valoroso, Atari 800XL / 1050 shorted power supply (load test)', url: 'https://www.valoroso.it/en/atari-800xl-atari-1050-shorted-power-supply/', verify: true }),
+  ft(3, '+5 V on the board', 'ANTIC pin 21; GTIA pin 27; POKEY pin 17; 6502C pin 8', '+4.9 to +5.1 V', 'Black or grey screen: the FSM says verify +5 V A, B and C on the board first.', S.x6(59, 'Symptom checklist, black/grey screen, p. 3-1')),
+  ft(4, 'Colour clock', 'GTIA pin 28', '3.58 MHz (NTSC)', 'Verify the 3.58 MHz of Y1 (FSM).', S.x6(59, 'Symptom checklist, black/grey screen: verify 3.58 MHz of Y1, p. 3-1')),
+  ft(5, 'Fast phase 0', 'GTIA pin 29 to ANTIC pin 35', '3.58 MHz present', 'Missing with a good pin 28: GTIA.', S.sxl(7, 'Troubleshooting, Clock and dividers (800XL, same chipset)')),
+  ft(6, 'CPU clocks', 'ANTIC pin 34; 6502C pin 39', '1.79 MHz', 'Missing at ANTIC pin 34: ANTIC. CPU test fail in Self-Test: the FSM says verify the 3.58 MHz oscillator.', S.x6(60, 'Symptom checklist, CPU test fail, p. 3-2')),
+  ft(7, 'RAM chip type', '74S32 at U18', 'A 74S32, not a 74LS32', 'RAM test fail: the FSM says the 600XL must have the correct IC at U18 or RAM will fail.', S.x6(60, 'Symptom checklist, RAM test failed, p. 3-2')),
+];
+
+/* clock tree */
+const CLK_LINE = { name: 'Scan line rate', where: 'GTIA pin 25 (composite sync)', ntsc: '15.69975 kHz', pal: '15.55655 kHz', source: ALT_TIMING };
+const CLK_FRAME = { name: 'Frame rate', where: 'GTIA pin 25 (composite sync)', ntsc: '59.92271 Hz', pal: '49.86074 Hz', source: ALT_TIMING };
+const clocks400 = (q, osc) => [
+  { name: 'Crystal', where: 'X101 (motherboard), with ' + osc, ntsc: '3.579545 MHz', source: S.fsm(161, 'flowchart: 3.58 MHz, swap X101, p. 7-20'),
+    note: 'Sams prints 3.579575 MHz; NTSC colour subcarrier is 3.579545 MHz. PAL 400/800 crystal not in the documents read.' },
+  { name: 'Colour clock', where: 'GTIA pin 28', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: q },
+  { name: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: S.s800(10, 'CPU board schematic, ANTIC pin 35 photo (5 V p-p, 0.5 µs/cm)') },
+  { name: 'Phase 0 (CPU clock in)', where: 'ANTIC pin 34 to 6502 pin 37', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: S.altirra(44, '3.3 Cycle timing') },
+  { name: 'Phase 2 (machine clock)', where: '6502 pin 39; ANTIC pin 29; GTIA pin 30; POKEY pin 7', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: S.trn(441, 'Hardware Manual: 114 machine cycles per TV line, 1.79 MHz, p. II.22') },
+  CLK_LINE, CLK_FRAME,
+];
+const clocksXL = (cpuSrc) => [
+  { name: 'Crystal', where: 'Y1 (oscillator Q8, Q9) to GTIA pin 28; UK PAL boards: Y2 with U21', ntsc: '3.579545 MHz', pal: '4.433618 MHz', source: S.sxl(25, 'schematic pp. 27-29, Y1 3.58 MHz; Y2 4.433618 MHz used in United Kingdom models'),
+    note: 'The PAL board divides the 4.433618 MHz Y2 down through U21 (74LS74) to make the 3.546894 MHz colour clock.' },
+  { name: 'Colour clock', where: 'GTIA pin 28', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: S.xl(29, 'Symptom checklist: verify 3.579545 MHz of Y1, p. 3-1') },
+  { name: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: S.sxl(25, 'schematic pp. 27-29, GTIA pin 29 photo (4.4 V p-p, 0.2 µs/cm)') },
+  { name: 'Phase 0 (CPU clock in)', where: 'ANTIC pin 34 to 6502C pin 37', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: cpuSrc },
+  { name: 'Phase 1 and phase 2 out', where: '6502C pin 3 and pin 39; ANTIC pin 29; GTIA pin 30; POKEY pin 7; PIA pin 25', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: S.altirra(44, '3.3 Cycle timing') },
+  CLK_LINE, CLK_FRAME,
+];
+const clocks130xe = [
+  { name: 'Master oscillator', where: 'Y1 to U6 (FREDDIE) input 2', ntsc: '14.31818 MHz', pal: '14.187576 MHz', source: S.sams(5, 'schematic: Y1 14.31818 MHz; for European models Y1 is 14.187576 MHz') },
+  { name: 'Colour clock', where: 'U6 output 37 to GTIA pin 28', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: S.sams(13, 'Troubleshooting, Clock and dividers (3.579545 MHz at U6 pin 37)'), note: 'Master divided by 4.' },
+  { name: 'Fast phase 0', where: 'GTIA pin 29 to ANTIC pin 35', ntsc: '3.579545 MHz', pal: '3.546894 MHz', source: S.sams(3, 'schematic, GTIA pin 29 photo (4.5 V p-p, 0.1 µs/cm)') },
+  { name: 'Phase 0 (CPU clock in)', where: 'ANTIC pin 34 to 6502C pin 37', ntsc: '1.789773 MHz', pal: '1.773447 MHz', source: S.sams(3, 'schematic, ANTIC pin 34 photo (4.4 V p-p, 0.2 µs/cm)'), note: 'Master divided by 8.' },
+  { name: 'Phase 2 (machine clock)', where: '6502C pin 39; GTIA pin 30; PIA pin 25; POKEY pin 7', ntsc: '1.78977 MHz', pal: '1.773447 MHz', source: S.sams(13, 'Troubleshooting, Clock and dividers (1.78977 MHz at U6 pin 5 and GTIA pin 30)') },
+  CLK_LINE, CLK_FRAME,
+];
+
+const SAMS400_RAILS = S.s400(3, 'Preliminary service checks, Power supply check (A)-(F)');
+const rails400 = atariRails.map(r => ({ ...r, note: r.note + ({
+  '+5 V A': ' Sams 400: 5.08 V at A202 pin 3.', '+12 V': ' Sams 400: 12.25 V at A201 pin 3 (23.7 V at its input).', '-5 V': ' Sams 400: -5.01 V at CR201.' }[r.rail] || '') }));
+const rails800 = atariRails.map(r => ({ ...r, note: r.note + ({
+  '+5 V A': ' Sams 800: 5.1 V at A202 pin 3.', '+12 V': ' Sams 800: 11.8 V at A201 pin 3 (24.4 V at its input).', '-5 V': ' Sams 800: -5.0 V at CR201.' }[r.rail] || '') }));
+
+const pw400 = { supply: supply400, rails: rails400, testPoints: tp400, firstTen: ft400, clocks: clocks400(S400_SCH('CTIA pin 28 photo'), 'Q103, Q104'), sources: [...PSU400_SRC, SAMS400_RAILS] };
+const pw800 = { supply: supply400, rails: rails800, testPoints: tp800, firstTen: ft800, clocks: clocks400(S800_SCH('CTIA pin 28 photo'), 'Q102, Q103'), sources: [...PSU400_SRC, S.s800(3, 'Preliminary service checks, Power supply (A)-(F)')] };
+const XL_PSU_SRC = [S.x6(20, 'Power Supply, p. 1-10'), S.xl(19, 'Fig. 1-8, power supply pin assignments, p. 1-11')];
+const pw600xl = { supply: supplyXL, rails: xlRails, testPoints: tp600xl, firstTen: ft600xl, clocks: [{ name: 'Crystal', where: 'Y1', ntsc: '3.58 MHz', source: S.x6(59, 'Symptom checklist: verify 3.58 MHz frequency of Y1, p. 3-1'), note: 'PAL 600XL crystal not in the documents read.' }, ...clocksXL(S.x6(60, 'Symptom checklist, verify 3.58 MHz oscillator, p. 3-2')).slice(1)], sources: [...XL_PSU_SRC, S.x6(71, 'parts list, 5 Volt DC Power Supply CA061982, p. 5-5')] };
+const pw800xl = { supply: supplyXL, rails: xlRails, testPoints: tp800xl, firstTen: ft800xl, clocks: clocksXL(S.sxl(7, 'Troubleshooting, Clock and dividers (1.78977 MHz at ANTIC pin 34)')), sources: [...XL_PSU_SRC, S.xl(42, 'parts list, p. 5-5'), S.sxl(27, 'Preliminary service checks, Computer dead')] };
+const pw130xe = { supply: supplyXL, rails: xlRails, testPoints: tp130xe, firstTen: ft130xe, clocks: clocks130xe, sources: [...XL_PSU_SRC, S.sams(2, 'schematic voltages (+5.0 V)'), S.sams(12, 'Troubleshooting, Power supply')] };
 const atariQuickref = {
   firstLook: [
     'The 400 has a membrane keyboard and one cartridge slot; the 800 has a full keyboard and two slots.',
@@ -716,10 +984,10 @@ const monitor800 = {
   sources: [S.trn(537, 'Hardware Manual App. C, Monitor Jack, p. C-1'), S.fsm(51, 'Fig. 2-8, monitor jack J205 detail, p. 2-13'), S.faq('monitor port')],
 };
 const monitorXL = {
-  id: 'atari-monitor', name: 'Monitor jack (DIN-5)', kind: 'DIN-5 180° female', geo: 'din5-180', verify: true,
-  verifiedAgainst: 'Atari 8-Bit FAQ only (not in the 800XL FSM)',
-  summary: 'Composite video, luminance and audio. Chroma (pin 5) is not connected on most 800XLs. Not in the 800XL field service manual; table from the Atari 8-Bit FAQ.',
-  terms: ['luma-chroma'], pins: monitorPins(true), sources: [S.faq('monitor port')],
+  id: 'atari-monitor', name: 'Monitor jack (DIN-5)', kind: 'DIN-5 180° female', geo: 'din5-180',
+  verifiedAgainst: 'Sams Computerfacts CC11, Atari 800XL, schematic J2; Atari 8-Bit FAQ (not in the 800XL FSM)',
+  summary: 'Composite video, luminance and audio. Chroma (pin 5) is not connected on most 800XLs: the Sams 800XL schematic draws J2 pin 5 NC. Not in the 800XL field service manual.',
+  terms: ['luma-chroma'], pins: monitorPins(true), sources: [S.sxl(25, 'schematic pp. 27-29, J2: 1 comp. lum., 2 ground, 3 audio, 4 comp. video, 5 NC'), S.faq('monitor port')],
 };
 const monitorXE = {
   id: 'atari-monitor', name: 'Monitor jack (DIN-5, J2)', kind: 'DIN-5 180° female', geo: 'din5-180',
@@ -819,10 +1087,7 @@ RCS.add({
   symptoms: { atari400: atariSymptoms, atari800: atariSymptoms, atari600xl: xlSymptoms, atari800xl: xlSymptoms, atari130xe: xlSymptoms },
   connectors: connectorsAtari,
   power: {
-    atari400: atariPower, atari800: atariPower,
-    atari600xl: xlPower([S.x6(71, 'parts list, 5 Volt DC Power Supply CA061982, p. 5-5')]),
-    atari800xl: xlPower([S.xl(42, 'parts list, p. 5-5')]),
-    atari130xe: xlPower([S.sams(2, 'schematic voltages (+5.0 V)')]),
+    atari400: pw400, atari800: pw800, atari600xl: pw600xl, atari800xl: pw800xl, atari130xe: pw130xe,
   },
   quickref: { atari400: atariQuickref, atari800: atariQuickref, atari600xl: xlQuickref, atari800xl: xlQuickref, atari130xe: xeQuickref },
   resources: [
