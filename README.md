@@ -1,143 +1,133 @@
 # Retro Bench
 
-An offline-first web app for the 8-bit repair bench: chip pinouts you can tap, test points and
-rails, connector pinouts, keyboard quirks and BASIC quick reference for the classic home
-computers. Built for an iPad or iPhone propped on the bench, and for the desktop.
+**Offline pinouts, test points, connectors and quick reference for 8-bit computer repair, built to sit on the bench next to the board.**
 
-## Design: Silkscreen
+Open it: **<https://paulczy.com/retro-bench/>**. Add it to your home screen and it works with no network.
 
-The circuit board is the interface. The page is one board: a silkscreen outline with four
-copper-ringed mounting holes on a matte solder mask. Everything is drawn in a board's three
-materials: silkscreen for outlines and type, copper for whatever is live (the selected pad, the
-trace to its detail, links, the primary action as a copper pour), tin for secondary text. The only
-other colours are the pin marks: a filled square for power, a diamond for clock, three bars for
-ground. Nothing moves; transitions only, and none under `prefers-reduced-motion`.
+[![Retro Bench home page: machines drawn as module footprints, grouped by brand](docs/screenshots/readme-hero-home.png)](https://paulczy.com/retro-bench/)
 
-- **Home**: title block, a search field drawn as an edge connector, every machine as a module
-  footprint grouped by brand: solid with copper pads when fitted, dashed and marked `ON PAPER` or
-  `NOT FITTED` otherwise.
-- **Machine**: chips as DIP footprints with their board designators on a copper bus, `J1`–`J4`
-  doors (Pinouts is the copper pour), `TEST POINTS`, `TROUBLESHOOTING`, `FIRST LOOK`.
-- **Chip**: the footprint seen from above, square pad 1, names along the pads. Every pad row is a
-  44 px target at every width; the drawing never scales down. The selected pad turns copper and a
-  chamfered trace runs to the `PIN DETAIL` box; below 768 px the detail is a bottom panel and the
-  trace runs to its copper top edge. `VIEW: TOP / BOTTOM` flips it. Tab reaches every pad, Enter
-  or Space selects. Reconstructed data carries a `CHECK` stamp.
-- **Ports and power**: every connector with a `geo` is drawn the same way: round DIN and mini-DIN with
-  the key at the bottom, D-sub, card edge with its key slots, RCA, F, barrel, TRS, or a custom pad map.
-  Pads are 44 px targets with the pin number inside; tapping a pad or a table row selects it, and a
-  copper trace runs round the outside of the connector to `PIN DETAIL` (on a phone, to the bottom
-  panel). `VIEW: SOCKET / PLUG` mirrors the drawing from looking into the machine's socket to looking
-  at the cable's plug, and the line over the drawing says which gender and which face you are seeing. The
-  power page opens with the supply and draws its connector with what each pad should read. A pin is
-  linkable as `ports?c=<id>&pin=<n>`. Layouts and their sources live in `src/connectors.js`.
-- **Masks**: `MASK: GREEN / BLACK / LIGHT`. Light is bare FR-4 (pale tan, dark silkscreen, deeper
-  copper) for bright benches. The app follows `prefers-color-scheme` until you pick; the pick is
-  kept in `localStorage`.
-- **Keys**: `/` or Ctrl+K opens the finder anywhere (on the search page `/` focuses the field);
-  arrows and Enter move through results; Esc closes the popover, panel or finder.
+## Why
 
-**Waveforms are idealised, never a capture.** A test point or rail with a `scope` block draws a static trace
-on a 10 by 8 graticule (silkscreen hairlines, copper trace), built from its `shape` and labelled `IDEALISED FROM
-CAPTURE` or `IDEALISED FROM DATASHEET`. The scope settings beside it are derived from two sourced numbers, never
-typed in: the period (from `f` or `period`) gives TIME/DIV, the 1-2-5 step whose cycle count across 10 divisions
-is closest to 3, within 1.5 to 5 cycles (no 1-2-5 series can hold every period to 2 to 4 cycles);
-the swing `high - low` gives VOLTS/DIV, the smallest 1-2-5 step of at least swing / 5 (2.5 to 5 divisions tall).
-Coupling is DC with 0 V one division up when the swing fits (AC, with no 0 V marker, when the source gives only a
-peak-to-peak `pp`), probe 10x, trigger on the rising edge (falling for `polarity: 'low'`) at 1.4 V (the TTL
-threshold) for logic swings that cross it, else mid-swing. A square or pulse wave without a sourced `duty` is drawn
-with dashed levels and labelled "duty not in source"; a video line without a sourced `black` level is labelled
-"levels to standard ratio, not to scale". The trace sits on the power page under its row (behind
-a `SCOPE` disclosure on a phone) and in `PIN DETAIL` of every chip pin its `where` names.
+Repairing a Commodore 64 or a BBC Micro means a datasheet in one tab, a service manual PDF in another, a forum post about the power brick in a third, and a meter in your hand. Retro Bench puts the facts a tech reaches for most into one place, sized for an iPad or iPhone propped on the bench: which pin is which, what it should read, where the clock comes from, what fails first, and which part replaces it. Every table links to the document it was checked against.
 
-**Print mode.** Every machine page has a `Print card` button, and the browser's own Print does the same: a
-`@media print` sheet in `src/input.css` swaps the mask tokens for black on white (copper prints black, silkscreen as
-dark grey hairlines), drops the strip, breadcrumb, edge bar, panels and toggles, and prints a card built for paper
-instead of the screen: machine name and designator, the chip footprints with their designators, the rails, the first
-ten minutes (or the generic order of checks), the clock table and every connector as a line of pin numbers and
-names, no drawings. Blocks and table rows never split across a page; the connector list may run on into the next
-column one connector at a time. The largest boards (BBC Master, HERO 1) still fit one Letter page.
+Counted on 30 October 2026: **62 machines across 15 makers** (50 with full data, 6 of them disk drives), **158 chips, 132 drawn pin by pin**, **472 connectors**, **471 test points**, **166 idealised scope traces**, **328 clock rows**, **336 schematic links**, **141 replacement parts** and **86 glossary terms**. The home page shows the live count.
 
-**Bench notes.** Each machine and chip page ends with a notes field kept in `localStorage` only, under
-`rb-note:m:<machine id>` or `rb-note:c:<chip id>` as `{ text, at }`. It saves 600 ms after the last key and at once
-when the field loses focus, the route changes or the page is hidden, and says "Saved on this device only". Typing `/` there
-types a slash rather than opening the finder. `#/notes` lists every note with a link back, a two-tap delete,
-Export (a `.txt` file: one `=== machine c64: Commodore 64 ===` or `=== chip <id>: <name> ===` header per note, a line
-starting `===` or `\` escaped with `\`) and Import of the same format, which merges: new notes are added, different
-text is appended to the existing note. No sync, no account.
+## What it does
 
-Faces are self-hosted in `fonts/`: Barlow Condensed for labels and prose, Share Tech Mono for
-signal names, pin numbers, designators and values (both SIL Open Font License). Tokens, the three
-masks and the silkscreen components live in `src/input.css`; chip footprints and trace routing are SVG
-drawn in `src/app.js`, connector drawings in `src/connectors.js`.
+### Chips, pin by pin
 
-## Status
+Every chip is a DIP footprint seen from above. Tap a pad and a copper trace runs to the pin detail: direction, type, what a working pin reads, and on this machine what frequency or level to expect. Filters pick out power, clock, reset, ground, address, data and control pins. `VIEW: TOP / BOTTOM` flips the chip for probing from the solder side. Pins reconstructed from incomplete sources carry a `CHECK` mark; every chip names the datasheet it was checked against.
 
-Working prototype. 42 machines across ten makers (Commodore, Apple, Atari, Coleco, Sinclair, Timex
-Sinclair, Texas Instruments, Tandy/TRS-80, Heathkit HERO robots, IBM), 94 chips of which 59 have
-full pin tables, 77 glossary terms. Machines marked `ready` have pinouts, quick reference, ports,
-power and test points, and a fault table; `sheet` machines have facts and chip lists from the printed
-cheat sheets; `planned` machines are placeholders. See [docs/mockups](docs/mockups) for the six design
-explorations and `docs/mockups/index.html` for a launcher that shows them at desktop, iPad and iPhone
-sizes. `node scripts/validate-data.mjs` checks every data file.
+![6510 CPU on the Commodore 64, pin 39 selected, copper trace to the pin detail panel showing the expected clock on this machine](docs/screenshots/readme-chip-c64-6510.png)
 
-- **Video signals** (`#/video`, data in `src/data/video.js`): composite levels, NTSC and PAL line and field timing,
-  IBM RGBI, analogue RGB, C64 luma/chroma, RF channels and modulator inputs, drawn as one PAL line on a graticule and
-  tabled with a source on every row (ITU-R BT.470-6 and BT.1700 with SMPTE 170M, the IBM PC Technical Reference,
-  VESA E-EDID, the C64 PRG and service manual, 47 CFR 73.603, the Acorn Electron service manual). Linked from More,
-  search, every power page's Clocks block and every connector with video pins.
-- **Bench notes** (`#/notes`) and the **print card** on every machine page, described under Design.
+### Ports and power supplies
 
-## Run
+Every external port and internal power header is drawn to its real geometry: DIN and mini-DIN with the key at the bottom, D-sub, card edge with its key slots, RCA, barrel, TRS. `VIEW: SOCKET / PLUG` mirrors the drawing between looking into the machine and looking at the cable. The power page opens with the supply block: ratings, what each pin should read, and known failures.
+
+![Commodore 64 power-in DIN-7 drawn as the socket, pin 5 selected with its expected voltage](docs/screenshots/ports-desktop.png)
+
+![ZX Spectrum rear edge connector, 2 by 28, with pin A3 selected](docs/screenshots/review2-spectrum-edge-desktop.png)
+
+### Test points, scope traces and the first ten minutes
+
+Test points carry an idealised waveform drawn from the sourced frequency, levels and shape, on a 10 by 8 graticule. The scope settings beside it (time/div, volts/div, coupling, trigger) are derived from the sourced numbers, never typed in. **No trace is a real capture**; each one is labelled "idealised from datasheet" or "idealised from capture". Below that, every machine gets a clock table (crystal, every derived clock, PAL and NTSC, the pin it appears on) and a **first ten minutes** checklist: ordered checks with expected values, each linked to the pad to probe.
+
+![Scope block with derived settings, the C64 clock table and the start of the first ten minutes checklist](docs/screenshots/features-power-clocks-firstten-desktop.png)
+
+### The rest of the bench
+
+- **Replacement parts** per chip: pin-compatible equivalents, modern drop-ins and adapters, with the differences that bite.
+- **Boards and schematics**: links to board drawings per board revision, with the hosting archive named.
+- **Video signals** (`#/video`): composite levels, NTSC and PAL line and field timing, RGBI, analogue RGB, luma/chroma, RF channels, drawn as one PAL line and tabled with a source on every row.
+- **Quick reference** per machine: keys and quirks, BASIC essentials, memory map.
+- **Glossary** with tap-to-explain: any dotted term anywhere in the app opens its definition in place.
+- **Search** (`/` or Ctrl+K): a chip, a pin like `/RAS` or `pin 40`, a BASIC keyword, a term.
+- **Print card**: one Letter page per machine in black on white, with footprints, rails, first ten minutes, clocks and every connector's pins.
+- **Bench notes** on every machine and chip page, kept in the browser on your device only, with export and import as a text file. No account, no sync.
+- **Three solder masks**: green, black, and light (bare FR-4) for bright benches.
+
+<p>
+<img src="docs/screenshots/live-spectrum-phone.png" alt="ZX Spectrum 48K machine page on a phone" width="30%">
+<img src="docs/screenshots/print-c64-letter.png" alt="Commodore 64 print card on a Letter page" width="66%">
+</p>
+
+## Machines
+
+Status, 30 October 2026. **Full** machines have pinouts, ports, power and test points, quick reference and a fault table. **Sheet** machines have the facts and chip lists from the printed cheat sheets. **Planned** are placeholders.
+
+| Maker | Full | Sheet | Planned |
+|---|---|---|---|
+| Commodore | PET/CBM, VIC-20, 64, 16, Plus/4, 128; drives 1541, 1571, 1581 | | |
+| Apple | II, II Plus, IIe; drives Disk II, DuoDisk, UniDisk 5.25 | IIc | III |
+| Atari | 400, 800, 600XL, 800XL, 130XE | | |
+| Coleco | ColecoVision, ADAM | | |
+| Sinclair | ZX81, ZX Spectrum 48K | ZX80, Spectrum 128, +2, +3 | |
+| Timex Sinclair | TS1000, TS2068 | TS1500 | |
+| Texas Instruments | TI-99/4A | TI-99/4 | |
+| Tandy / TRS-80 | Color Computer 1, 2, 3; MC-10; TRS-80 Model I, III, 4 | | |
+| Heathkit | HERO 1, HERO Jr | | HERO 2000 |
+| IBM | PC 5150, XT 5160 | PCjr 4860, Portable 5155 | Convertible 5140 |
+| Amstrad | CPC 464, 664, 6128 | | |
+| Acorn | BBC Micro Model B, BBC Master 128, Electron | | |
+| Dragon Data | Dragon 32, Dragon 64 | | |
+| MSX | MSX1 (generic), MSX2 (generic) | | |
+| Oric | Oric-1, Atmos | | |
+
+Computers and their drives only; no consoles. What comes next is in [docs/roadmap.md](docs/roadmap.md).
+
+## Install and use offline
+
+Retro Bench is a progressive web app. The first visit caches the whole app (shell, every data file, CSS, fonts, icons); after that it runs with no network. The strip at the top reads `Works offline` when the cache has landed.
+
+- **iPhone and iPad**: open the site in Safari, tap Share, then **Add to Home Screen**. It launches full screen like a native app.
+- **Desktop Chrome or Edge**: tap the copper **Install** link in the strip, or the browser's install icon in the address bar.
+- **Android**: open **More** and tap **Install**, or use Chrome's menu, Add to Home screen.
+- **Any browser**: just bookmark it. The cache still works.
+
+When a new version is deployed, an open page shows `Updated, reload`. Nothing phones home; bench notes never leave the device.
+
+## Run it locally
 
 ```bash
+git clone https://github.com/paulczy/retro-bench.git
+cd retro-bench
 npm install
-npm run build        # src/input.css → dist/app.css
+npm run build        # Tailwind (src/input.css → dist/app.css), then the service-worker precache list
 ```
 
-Open `index.html`. Hash routing needs no server, and every URL is relative, so it also runs from
-`file://` or under a sub-path such as `/retro-bench/`. `npm run watch` rebuilds on change.
+Then open `index.html`, or serve the folder (`python -m http.server 8000` and visit `http://localhost:8000/`). Hash routing needs no server and every URL is relative, so it also runs from `file://` or under a sub-path. `npm run watch` rebuilds the CSS on change.
 
-## Install and offline
+Plain HTML, vanilla JavaScript and Tailwind CSS v4. No framework, no bundler, no CDN. The data files load as `<script>` tags.
 
-Served over http(s), `sw.js` precaches the whole app (shell, every `src/data/*.js`, CSS, fonts,
-icons, manifest) on first visit; after that it runs with no network. The strip reads `Caching…`
-until the precache lands, then `Works offline`, or `Installed` when launched from the home screen.
-Chrome, Edge and Android show a copper `Install` in the strip; on iPad and iPhone use Safari's
-Share, then Add to Home Screen (the More page says so). When a new deploy activates, an open page
-shows `Updated, reload`. From `file://` no worker is registered; nothing is needed.
+## Build and deploy
 
-`npm run build` runs Tailwind and then `scripts/build-sw-manifest.mjs`, which reads every local
-`href`/`src` in `index.html`, the icons in `manifest.webmanifest` and the fonts in `fonts/`,
-and writes that list plus a content hash into `sw.js`. Assets are cache-first; anything else
-on the origin is network-first with a cache fallback. A new hash means a new cache; the old one
-is dropped on activate. Icons are drawn by `scripts/make-icons.mjs`
-(`npm i --no-save @resvg/resvg-js && npm run icons`); the PNGs are committed.
+`npm run build` runs Tailwind and then `scripts/build-sw-manifest.mjs`, which reads every local asset in `index.html`, the manifest and `fonts/`, and writes that list plus a content hash into `sw.js`. A new hash means a new cache; the old one is dropped when the new worker activates.
 
-## Deploy
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml) builds and publishes to GitHub Pages on every push to `main`. One-time setup on a fork: Settings, Pages, Source: GitHub Actions. The app runs from any static host; nothing is server-side.
 
-`.github/workflows/pages.yml` builds and publishes to GitHub Pages on every push to `main`:
-<https://paulczy.github.io/retro-bench/>. One-time setup: Settings → Pages → Source: GitHub
-Actions.
+## Data and sources
 
-## Layout
+All content lives in `src/data/`, one file per maker, in the shape described in [docs/data-schema.md](docs/data-schema.md). The rules:
 
-- `index.html`, `src/app.js`, `src/input.css`, `fonts/`, `dist/` — the app. `src/data/` is the
-  content, one file per brand (see `docs/data-schema.md`).
-- `docs/mockups/` — design rounds A–F on a shared data model, each self-contained.
-- `docs/brief-round-1.md`, `docs/brief-round-2.md` — what the designs were built against.
-- `docs/design-notes/` — notes from the ledger pass that preceded Silkscreen.
+- **Every table links to its source.** Chip tables name the datasheet or service manual they were checked against. Connectors, rails, test points, clocks, first-ten steps and replacement rows each carry a link a human can open. The **Sources and credits** page in the app lists every cited document by host.
+- **Nothing is invented.** A fact that could not be checked is left out or marked `verify: true`, which the app shows as `CHECK`. Where two sources disagree, the primary one wins and the other is recorded as a conflict on the pin.
+- **Sams Computerfacts is secondary.** Sams folders supply measured voltages and waveform photos, but Sams redrew the schematics with its own part numbers. Every block that cites Sams says so.
+- **Scope traces are idealised** from sourced numbers and labelled as such. They are never presented as real captures.
 
-## Data accuracy
+`node scripts/validate-data.mjs` checks every data file: shapes, cross-references, pin counts against the package, unknown chips and machines, and source conflicts. Run it after every edit; fix every FAIL. The per-maker verification logs are in [docs/verification/](docs/verification/).
 
-Pin tables follow the published technical manuals as transcribed on the
-[retro-computer-cheetsheets](https://github.com/paulczy/retro-computer-cheetsheets) sheets.
-Anything reconstructed from incomplete sources carries `verify: true` and is marked in the UI.
-Check against a datasheet before powering anything up. Corrections are welcome as issues or
-pull requests.
+### Contributing a correction
+
+Found a wrong pin, a missing port, a better source? [Open an issue](https://github.com/paulczy/retro-bench/issues) with the machine, the chip or connector, the pin, and a link to the document that shows the right value. Pull requests are welcome too: edit the maker's file in `src/data/`, link the source, run the validator, and say in the PR what you checked it against.
+
+## Credits
+
+Retro Bench is a reading of other people's work: the chip makers' datasheets, the manufacturers' manuals and the archives that keep them online. The app's credits page thanks them in full; in short: zimmers.net (Bo Zimmerman), Bitsavers (Al Kossow), the Internet Archive, minuszerodegrees.net (modem7), the Apple II Documentation Project, the Color Computer Archive, World of Spectrum, timexsinclair.com, AtariArchives.org and AtariAge, WHTech, C64-Wiki, Ray Carlsen, Howard W. Sams & Co., and Wikimedia Commons for connector standards.
+
+Pin tables started from the [retro-computer-cheetsheets](https://github.com/paulczy/retro-computer-cheetsheets) sheets and were then verified against the published manuals. Type is Barlow Condensed and Share Tech Mono (SIL Open Font License), self-hosted.
+
+Check against a datasheet before powering anything up. This is a reference, not a guarantee.
 
 ## Licence
 
-Code is MIT ([LICENSE](LICENSE)). The reference data in `src/data/` and the mockups' shared
-data is CC BY 4.0 ([LICENSE-DATA](LICENSE-DATA)), the same terms as the cheat sheets. Product
-names and trademarks belong to their owners.
+Code is MIT ([LICENSE](LICENSE)). The reference data in `src/data/` is CC BY 4.0 ([LICENSE-DATA](LICENSE-DATA)). Product names and trademarks belong to their owners.

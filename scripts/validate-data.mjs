@@ -16,6 +16,11 @@ for (const f of order) {
   try { new Function('window', 'RCS', fs.readFileSync(file, 'utf8'))(window, window.RCS); }
   catch (e) { console.error(`FAIL ${f}.js does not load: ${e.message}`); process.exit(1); }
 }
+/* The browser loads every data file as a classic <script>: they share one global lexical scope, so two files that
+   both declare the same top-level const/let/class make the second file throw and its brand vanish. Check that here
+   by compiling all files as one body; files that wrap themselves in (() => { ... })() cannot collide. */
+try { new Function('window', 'RCS', order.filter(f => fs.existsSync(path.join(dir, f + '.js'))).map(f => fs.readFileSync(path.join(dir, f + '.js'), 'utf8')).join(String.fromCharCode(59, 10))); }
+catch (e) { console.error(`FAIL data files collide when loaded together as in the browser: ${e.message}. Wrap the file body in (() => { ... })();`); process.exit(1); }
 const R = window.RCS;
 const errors = [], warns = [];
 const err = (f, m) => errors.push(`${f}: ${m}`);
