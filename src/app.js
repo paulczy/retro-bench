@@ -447,7 +447,7 @@ function buildIndex() {
     const m = D.machines[mid]; if (!m || !pw) continue;
     for (const c of arr(pw.clocks)) if (c && c.name) ix.push({ group: 'Clocks', title: c.name, tag: clockFreqs(c), sub: `${m.name}${c.where ? ': ' + c.where : ''}`, keys: `clock ${clockFreqs(c)} ${c.where || ''}`, href: `${mPath(m)}/power?at=clocks`, des: mDes(m) });
   }
-  ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' },
+  ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' }, { group: 'Pages', title: 'About', sub: 'Version, repository, licence', href: '#/about' },
     { group: 'Pages', title: 'Video signals', sub: 'Composite levels, PAL and NTSC timing, RGBI, RGB, luma/chroma, RF', keys: 'video composite sync porch burst pal ntsc rgbi cga mda rgb luma chroma s-video rf modulator channel ire', href: '#/video' },
     { group: 'Pages', title: 'Bench notes', sub: 'Your notes, kept on this device', keys: 'notes export import', href: '#/notes' });
   INDEX = ix;
@@ -682,6 +682,7 @@ function render() {
   else if (!a) html = viewHome();
   else if (a === 'search') { ctx.crumbs = [['Search']]; html = viewSearch(r.q.q || ''); }
   else if (a === 'resources') { ctx.crumbs = [['Resources']]; html = viewResources(); }
+  else if (a === 'about') { ctx.crumbs = [['About']]; html = viewAbout(); }
   else if (a === 'credits') { ctx.crumbs = [['Sources and credits']]; html = viewCredits(); }
   else if (a === 'glossary') { ctx.crumbs = [['Glossary']]; html = viewGlossary(r.q.term); }
   else if (a === 'more') { ctx.crumbs = [['More']]; html = viewMore(); }
@@ -757,7 +758,7 @@ function renderTrace() {
   tr.hidden = false;
   tr.innerHTML = parts.map((p, i) => (i ? '<span class="seg" aria-hidden="true"></span>' : '') + (p[1] ? `<a href="${p[1]}">${esc(p[0])}</a>` : `<span class="here" aria-current="page">${esc(p[0])}</span>`)).join('');
 }
-const MORE_PAGES = ['more', 'glossary', 'resources', 'credits', 'video', 'notes'];
+const MORE_PAGES = ['more', 'glossary', 'resources', 'credits', 'video', 'notes', 'about'];
 function renderEdgebar() {
   const [a, , c] = state.ctx.route.segs, m = currentMachine();
   const f = (href, label, on, off) => `<a href="${href}" class="${on ? 'on' : ''}${off ? ' off' : ''}"${on ? ' aria-current="page"' : ''}${off ? ' aria-disabled="true" tabindex="-1"' : ''}><span class="fg" aria-hidden="true"></span>${label}</a>`;
@@ -1149,6 +1150,27 @@ function allSources() {
   if (D.video) push(D.video.sources, 'video signals');
   return out;
 }
+/* build stamp from src/version.js (scripts/version.mjs): v0.0.<YYDDD>.<rev> on the Pages build, "dev" locally */
+const REPO = 'https://github.com/paulczy/retro-bench';
+const rbVersion = () => Object.assign({ v: 'dev', built: '', commit: '' }, window.RB_VERSION || {});
+function viewAbout() {
+  const V = rbVersion(), built = V.built ? new Date(V.built) : null;
+  const ext = (href, text) => `<a class="lnk" href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
+  return head('', 'About Retro Bench', 'An offline reference for repairing 8-bit computers: chip and port pinouts, power supplies, test points, clocks and quick reference, built to sit on the bench next to the board.') + `
+    <section class="blk"><span class="lbl">Version</span>
+      <dl class="kv mt-0"><dt>Version</dt><dd class="mono">${esc(V.v)}</dd>
+        ${built && !isNaN(built) ? `<dt>Built</dt><dd>${esc(built.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }))}</dd>` : ''}
+        ${V.commit ? `<dt>Commit</dt><dd class="mono">${ext(`${REPO}/commit/${V.commit}`, V.commit.slice(0, 7))}</dd>` : ''}
+        <dt>Scheme</dt><dd>v0.0.&lt;YYDDD&gt;.&lt;rev&gt;: the Julian date of the build (two-digit year and day of the year, US Central time) and the count of that day's commits.</dd></dl>
+    </section>
+    <section class="blk"><span class="lbl">Source</span>
+      <dl class="kv mt-0"><dt>Repository</dt><dd>${ext(REPO, 'github.com/paulczy/retro-bench')}</dd>
+        <dt>Changes</dt><dd>${ext(`${REPO}/commits/main`, 'Commit history')}</dd>
+        <dt>Report</dt><dd>${ext(`${REPO}/issues`, 'Open an issue')}: a wrong pin, a missing source, a bug.</dd>
+        <dt>Licence</dt><dd>Code ${ext(`${REPO}/blob/main/LICENSE`, 'MIT')}. Data ${ext(`${REPO}/blob/main/LICENSE-DATA`, 'CC BY 4.0')}.</dd>
+        <dt>Credits</dt><dd><a class="lnk" href="#/credits">Every archive and document the data comes from</a></dd></dl>
+    </section>`;
+}
 function viewCredits() {
   const all = allSources(), byHost = new Map();
   for (const s of all) { const h = hostOf(s.url); if (!h) continue; if (!byHost.has(h)) byHost.set(h, new Map()); const m = byHost.get(h); if (!m.has(s.url)) m.set(s.url, s); }
@@ -1165,7 +1187,7 @@ function viewMore() {
   const m = mask(), nNotes = noteKeys().filter(k => noteGet(k)).length, pm = currentMachine();
   return head('', 'More', '') + `
     <section class="blk"><span class="lbl">Reference</span>
-      <div class="legend"><div class="k"><a class="lnk" href="#/glossary">GLOSSARY</a></div><div class="v">Every term, with the long definition</div><div class="k"><a class="lnk" href="#/resources">RESOURCES</a></div><div class="v">Archives and communities, by brand</div><div class="k"><a class="lnk" href="#/credits">CREDITS</a></div><div class="v">Every archive and document the data was checked against</div><div class="k"><a class="lnk" href="#/video">VIDEO SIGNALS</a></div><div class="v">Composite levels, PAL and NTSC sync timing, RGBI, analogue RGB, luma/chroma, RF channels</div></div>
+      <div class="legend"><div class="k"><a class="lnk" href="#/glossary">GLOSSARY</a></div><div class="v">Every term, with the long definition</div><div class="k"><a class="lnk" href="#/resources">RESOURCES</a></div><div class="v">Archives and communities, by brand</div><div class="k"><a class="lnk" href="#/about">ABOUT</a></div><div class="v">Version ${esc(rbVersion().v)}, source code and licence</div><div class="k"><a class="lnk" href="#/credits">CREDITS</a></div><div class="v">Every archive and document the data was checked against</div><div class="k"><a class="lnk" href="#/video">VIDEO SIGNALS</a></div><div class="v">Composite levels, PAL and NTSC sync timing, RGBI, analogue RGB, luma/chroma, RF channels</div></div>
     </section>
     <section class="blk"><span class="lbl">On the bench</span>
       <div class="legend"><div class="k"><a class="lnk" href="#/notes">NOTES</a> <span class="tin mono sm">${nNotes}</span></div><div class="v">Your bench notes from machine and chip pages, kept on this device only. Export and import as a text file.</div><div class="k"><a class="lnk" href="${pm ? mPath(pm) : '#/'}">PRINT</a></div><div class="v">On a machine page, <span class="mono">Print card</span> (or the browser's Print) gives one page in black on white: the chip footprints with designators, rails, the first ten minutes or the order of checks, clocks and every connector's pin numbers.${pm ? ` Last machine: ${esc(pm.name)}.` : ''}</div></div>
