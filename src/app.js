@@ -217,7 +217,7 @@ function buildIndex() {
       for (const p of realPins(c)) ix.push({ group: 'Connectors', title: `${c.name} pin ${p.n}  ${p.name || ''}`, sub: `${m.name}: ${p.desc || c.kind || ''}`, keys: `pin ${p.n} ${p.name || ''} ${String(p.name || '').replace('/', '')}`, href: `${href}&pin=${encodeURIComponent(p.n)}`, des: `J${i + 1}.${p.n}`, mono: true });
     });
   }
-  ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' });
+  ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' });
   INDEX = ix;
 }
 const GROUP_ORDER = ['Machines', 'Chips', 'Pins', 'BASIC', 'Keys', 'Memory', 'Glossary', 'Connectors', 'Pages'];
@@ -362,6 +362,7 @@ function render() {
   else if (!a) html = viewHome();
   else if (a === 'search') { ctx.crumbs = [['Search']]; html = viewSearch(r.q.q || ''); }
   else if (a === 'resources') { ctx.crumbs = [['Resources']]; html = viewResources(); }
+  else if (a === 'credits') { ctx.crumbs = [['Sources and credits']]; html = viewCredits(); }
   else if (a === 'glossary') { ctx.crumbs = [['Glossary']]; html = viewGlossary(r.q.term); }
   else if (a === 'more') { ctx.crumbs = [['More']]; html = viewMore(); }
   else {
@@ -435,11 +436,11 @@ function renderEdgebar() {
   const [a, , c] = state.ctx.route.segs, m = currentMachine();
   const f = (href, label, on, off) => `<a href="${href}" class="${on ? 'on' : ''}${off ? ' off' : ''}"${on ? ' aria-current="page"' : ''}${off ? ' aria-disabled="true" tabindex="-1"' : ''}><span class="fg" aria-hidden="true"></span>${label}</a>`;
   $('#edgebar').innerHTML =
-    f('#/', 'Home', !a || (!['search', 'more', 'glossary', 'resources'].includes(a) && !['pinouts', 'chip', 'quickref'].includes(c))) +
+    f('#/', 'Home', !a || (!['search', 'more', 'glossary', 'resources', 'credits'].includes(a) && !['pinouts', 'chip', 'quickref'].includes(c))) +
     f(m ? `${mPath(m)}/pinouts` : '#/', 'Chips', c === 'pinouts' || c === 'chip', !m || !chipsOf(m).length) +
     f(m ? `${mPath(m)}/quickref` : '#/', 'Ref', c === 'quickref', !m || !dataFor(D.quickref, m).data) +
     f('#/search', 'Search', a === 'search') +
-    f('#/more', 'More', ['more', 'glossary', 'resources'].includes(a));
+    f('#/more', 'More', ['more', 'glossary', 'resources', 'credits'].includes(a));
 }
 
 /* ---------- views ---------- */
@@ -469,7 +470,7 @@ function viewHome() {
         <div class="fp-grid">${ms.length ? ms.map(m => machineFootprint(m, false)).join('') : vacantFootprint()}</div>
         ${br.blurb ? `<p class="note">${esc(br.blurb)}</p>` : ''}</section>`;
     }).join('')}
-    <p class="note mt-5.5">Solid footprints are fitted with full pinouts. Dashed footprints are on paper only: the cheat sheet exists and is not in the app yet.</p>`;
+    <p class="note mt-5.5">Solid footprints are fitted with full pinouts. Dashed footprints are on paper only: the cheat sheet exists and is not in the app yet. Every table links to the document it was checked against; the archives are thanked on the <a class="lnk" href="#/credits">credits page</a>.</p>`;
 }
 
 function viewBrand(br) {
@@ -514,7 +515,21 @@ function viewMachine(m) {
     <section class="blk" id="faults"><span class="lbl">Troubleshooting</span>
       ${sy.data && arr(sy.data).length ? sy.data.map(s => `<div class="symrow"><div><div class="s">${esc(s.symptom)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</div><div class="u">${arr(s.suspects).map(id => { const c = D.chips[id]; if (!c) return ''; const l = [boardDes(c, m), c.short].filter(Boolean).join(' '); return c.pins && fits(m, id) ? `<a href="${chipPath(m, c)}">${esc(l)}</a>` : `<span title="Pinout not captured">${esc(l)}</span>`; }).join('')}</div></div>`).join('') + sharedNote(sy.shared)
         : `<p class="note mt-0">No symptom table yet for this machine.</p>`}
-    </section>`;
+    </section>
+    ${boardsBlock(m)}`;
+}
+/* links to the board drawings an archive holds for this machine, grouped by board assembly */
+const SCH_KIND = { schematic: 'Schematic', layout: 'Board layout', manual: 'Service manual', parts: 'Parts list' };
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+function boardsBlock(m) {
+  const list = arr(D.schematics[m.id]);
+  if (!list.length) return '';
+  const boards = [...new Set(list.map(s => s.board))];
+  return `<section class="blk" id="boards"><span class="lbl"><span class="d">PCB</span>Boards and schematics</span>
+    <div class="legend tri">${boards.map(b => { const rows = list.filter(s => s.board === b); const first = rows[0];
+      return `<div class="k">${esc(b)}</div><div class="v">${first.rev || first.years ? `<b>${esc([first.rev, first.years].filter(Boolean).join(', '))}</b>` : ''}${rows.filter(s => s.note).map(s => `<br><span class="sm">${esc(s.note)}</span>`).join('')}</div>
+        <div class="v3"><ul class="ds">${rows.map(s => `<li><a class="lnk" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(SCH_KIND[s.kind] || s.kind)}${s.label ? `: ${esc(s.label)}` : ''}</a>${s.verify ? chk() : ''} <span class="tin sm mono">${esc(s.host || hostOf(s.url))}</span></li>`).join('')}</ul></div>`; }).join('')}</div>
+    <p class="note">Links open the archive that holds the drawing; nothing is copied into the app. Check the assembly number printed on your board against the list.</p></section>`;
 }
 
 const HEAT_ORDER = { hot: 0, warm: 1, cool: 2 };
@@ -734,13 +749,36 @@ const resRow = r => `<a class="row" href="${esc(r.url)}" target="_blank" rel="no
 const viewResources = () => head('', 'Resources', 'Archives, datasheet libraries and communities. Links open in a new tab.') +
   `<section class="blk res"><span class="lbl">General</span>${arr(D.resources.general).map(resRow).join('')}</section>` +
   D.brands.filter(b => arr(D.resources[b.id]).length).map(b => `<section class="blk res"><span class="lbl">${esc(b.name)}</span>${D.resources[b.id].map(resRow).join('')}</section>`).join('');
+/* every document the data cites, for the credits page */
+function allSources() {
+  const out = [];
+  const push = (list, from) => arr(list).forEach(d => d && d.url && out.push({ label: d.label || d.name || d.url, url: d.url, from }));
+  const mn = mid => (D.machines[mid] ? D.machines[mid].name : mid);
+  for (const [mid, list] of Object.entries(D.connectors)) for (const c of arr(list)) push(c.sources, `${mn(mid)}, ${c.name}`);
+  for (const [mid, pw] of Object.entries(D.power)) { push(pw.sources, `${mn(mid)}, power`); push(pw.supply && pw.supply.sources, `${mn(mid)}, supply`); }
+  for (const [mid, q] of Object.entries(D.quickref)) push(q.sources, `${mn(mid)}, quick reference`);
+  for (const c of Object.values(D.chips)) push(c.datasheets, c.name);
+  for (const [mid, list] of Object.entries(D.schematics)) for (const s of arr(list)) push([{ label: `${s.board}: ${s.label}`, url: s.url }], `${mn(mid)}, board`);
+  for (const list of Object.values(D.resources)) push(list, 'resources');
+  return out;
+}
+function viewCredits() {
+  const all = allSources(), byHost = new Map();
+  for (const s of all) { const h = hostOf(s.url); if (!h) continue; if (!byHost.has(h)) byHost.set(h, new Map()); const m = byHost.get(h); if (!m.has(s.url)) m.set(s.url, s); }
+  const hosts = [...byHost.entries()].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0]));
+  const docs = hosts.reduce((n, [, m]) => n + m.size, 0);
+  return head('', 'Sources and credits', `Retro Bench is a reading of other people's work: the chip makers' datasheets, the manufacturers' manuals and the archives that keep them online. Every table links to the document it was checked against. ${docs} documents are cited across ${hosts.length} sites. Data is CC BY 4.0, code MIT.`) + `
+    <section class="blk res"><span class="lbl">With thanks to</span>${D.credits.map(resRow).join('')}</section>
+    <section class="blk gl"><span class="lbl">Every document cited</span>${hosts.map(([h, m]) => `<details><summary><span class="t">${esc(h)}</span><span class="s tin">${m.size} document${m.size === 1 ? '' : 's'}</span></summary><ul class="ds">${[...m.values()].map(s => `<li><a class="lnk" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(s.label)}</a> <span class="tin sm">${esc(s.from)}</span></li>`).join('')}</ul></details>`).join('')}</section>
+    <section class="blk"><span class="lbl">Corrections</span><p class="desc">If you hold the rights to something linked here and want it credited differently or removed, or you find an error, open an issue at <a class="lnk" href="https://github.com/paulczy/retro-bench/issues" target="_blank" rel="noopener">github.com/paulczy/retro-bench</a>.</p></section>`;
+}
 const viewGlossary = focus => head('', 'Glossary', `${Object.keys(D.terms).length} terms used across the pinouts. Anywhere else in the app a dotted word opens the same definition in place.`) +
   `<section class="blk gl"><span class="lbl">Legend</span>${Object.entries(D.terms).map(([id, t]) => `<details id="term-${id}" class="${focus === id ? 'hi' : ''}"${focus === id ? ' open' : ''}><summary><span class="t">${esc(t.term)}</span><span class="s">${esc(t.short)}</span></summary><div class="long">${esc(t.long)}</div></details>`).join('')}</section>`;
 function viewMore() {
   const m = mask();
   return head('', 'More', '') + `
     <section class="blk"><span class="lbl">Reference</span>
-      <div class="legend"><div class="k"><a class="lnk" href="#/glossary">GLOSSARY</a></div><div class="v">Every term, with the long definition</div><div class="k"><a class="lnk" href="#/resources">RESOURCES</a></div><div class="v">Archives and communities, by brand</div></div>
+      <div class="legend"><div class="k"><a class="lnk" href="#/glossary">GLOSSARY</a></div><div class="v">Every term, with the long definition</div><div class="k"><a class="lnk" href="#/resources">RESOURCES</a></div><div class="v">Archives and communities, by brand</div><div class="k"><a class="lnk" href="#/credits">CREDITS</a></div><div class="v">Every archive and document the data was checked against</div></div>
     </section>
     <section class="blk"><span class="lbl">Solder mask</span>
       <div class="jumpers mt-0" role="radiogroup" aria-label="Solder mask">${MASKS.map(k => `<a href="#/more" role="radio" aria-checked="${m === k}" data-act="set-mask" data-mask="${k}" class="${m === k ? 'on' : ''}">${k === 'light' ? 'Light (bare FR-4)' : k}</a>`).join('')}</div>

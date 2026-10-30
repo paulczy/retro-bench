@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.join(root, 'src', 'data');
-const order = ['core', 'commodore', 'apple', 'atari', 'coleco', 'sinclair', 'timex', 'ti', 'tandy', 'heathkit', 'ibm'];
+const order = ['core', 'commodore', 'apple', 'atari', 'coleco', 'sinclair', 'timex', 'ti', 'tandy', 'heathkit', 'ibm', 'schematics'];
 const only = process.argv.slice(2);
 
 const window = {};
@@ -118,6 +118,15 @@ for (const [mid, q] of Object.entries(R.quickref)) {
   if (q.basic) for (const k of ['dialect', 'essentials', 'groups', 'quirks']) if (!q.basic[k]) err(`quickref ${mid}`, `basic missing ${k}`);
 }
 
+const SCH_KINDS = new Set(['schematic', 'layout', 'manual', 'parts']);
+for (const [mid, list] of Object.entries(R.schematics || {})) {
+  if (!R.machines[mid]) err('schematics', `unknown machine ${mid}`);
+  for (const s of list) {
+    if (!s.board || !s.kind || !s.label || !/^https?:\/\//.test(s.url || '')) err(`schematics ${mid}`, `entry needs board, kind, label and http url: ${JSON.stringify(s).slice(0, 90)}`);
+    if (!SCH_KINDS.has(s.kind)) err(`schematics ${mid}`, `kind ${s.kind} (schematic, layout, manual, parts)`);
+  }
+}
+for (const c of R.credits || []) if (!c.name || !c.url || !c.what) err('credits', `entry needs name, url, what: ${JSON.stringify(c).slice(0, 90)}`);
 const counts = R.brands.map(b => `${b.id} ${b.machines.length}m/${Object.values(R.chips).filter(c => c.machines.some(m => R.machines[m]?.brand === b.id) && c.pins).length}c`).join(' · ');
 console.log(`machines ${Object.keys(R.machines).length} · chips ${Object.keys(R.chips).length} (${Object.values(R.chips).filter(c => c.pins).length} with pins) · terms ${Object.keys(R.terms).length}`);
 console.log(counts);

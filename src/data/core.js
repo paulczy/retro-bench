@@ -280,5 +280,9 @@ window.RCS = (() => {
       if (loc) (c.location = c.location || {})[m.id] = loc;
     }
   };
+  /* Board drawings and credits live in src/data/schematics.js: links only, keyed by machine id. */
+  R.schematics = {}; R.credits = [];
+  R.addSchematics = by => { for (const [mid, list] of Object.entries(by || {})) R.schematics[mid] = [...(R.schematics[mid] || []), ...list]; };
+  R.addCredits = list => R.credits.push(...(list || []));
   return R;
 })();

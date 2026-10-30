@@ -170,3 +170,20 @@ name and function in a source you link; set `verifiedAgainst` on the chip or con
 title. A pin that a source contradicts is corrected, and the old value, new value and source go in
 `docs/verification/<brand>.md`. A pin no source covers keeps `verify: true` and is listed there too.
 `conflict: 'text'` on a pin records a disagreement between two sources that you could not settle.
+
+## Schematics and credits
+
+`src/data/schematics.js` holds links to board drawings, keyed by machine id, and the credits list. Links only:
+no drawing is copied into the app.
+```js
+RCS.addSchematics({ c64: [
+  { board: 'Assy 250407', rev: 'Rev A to C', years: '1982-83', kind: 'schematic',
+    label: 'Commodore schematic 251469', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/c64/250407-left.gif',
+    host: 'zimmers.net', note: 'Five-pin video DIN, no chroma/luma separation.' } ] });
+```
+- One entry per document. `board` is the assembly number printed on the PCB (or the maker's board name when
+  there is none); the app groups rows by it. `kind` is `schematic`, `layout` (parts placement or silkscreen
+  drawing), `manual` (service manual covering that board) or `parts`.
+- `rev` and `years` describe the board, `note` says how to recognise it or what differs. `verify: true` when the
+  assembly-to-document match is not confirmed.
+- Credits: `RCS.addCredits([{ name, url, what }])`: the archive or person, and what of theirs we used.
