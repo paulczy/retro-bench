@@ -28,6 +28,22 @@ const FD179X = n => `https://bitsavers.org/components/westernDigital/FD179X-02_D
 const MOT79 = n => `https://bitsavers.org/components/motorola/_dataBooks/1979_Motorola_Memory_Data_Book.pdf#page=${n}`;
 const INTEL78 = n => `https://bitsavers.org/components/intel/_dataBooks/1978_Intel_Component_Data_Catalog.pdf#page=${n}`;
 const L2MAN = 'https://archive.org/details/Level_II_BASIC_Reference_Manual_1979_Radio_Shack';
+/* Sams Computerfacts folders (features 1 to 6, docs/verification/tandy-features.md). archive.org leaf n = PDF page - 1. */
+const IAD = 'https://archive.org/details';
+const SAMS = (id, folder) => (what, p) => ({ label: `Sams ${folder}, ${what}, PDF p. ${p}`, url: `${IAD}/${id}/page/n${p - 1}`, sams: true });
+const S13 = SAMS('Sams_Computerfacts_Color_Computer_1986_Howard_Sams', 'CC13 Color Computer (26-3002)');
+const S15 = SAMS('Sams_Computerfacts_Color_Computer_2_1986_Howard_Sams', 'CC15 Color Computer 2 (26-3134/3136)');
+const SM1 = SAMS('Sams_ComputerFacts_Model_I_1985_Howard_Sams', 'CSCS3 TRS-80 Model I');
+const SM3S = SAMS('sams-computerfacts-trs-80-model-iii-1985-howard-sams', 'CSCS5 TRS-80 Model III');
+const SM4 = SAMS('Sams_Computerfacts_for_Model_4_Gate_Array_1986_Sams', 'CSCS13 TRS-80 Model 4 Gate Array');
+const DS6847T1 = n => `${DS}/MC6847T1%20MOS%20Video%20Display%20Generator%20(Motorola).pdf#page=${n}`;
+const HD63X09 = n => `${DS}/HD63x09E%20CMOS%20MPU%20(Hitachi).pdf#page=${n}`;
+const HD6309TRG = n => `${ARC}/Microprocessors/HD6309/HD63B09EP%20Technical%20Reference%20Guide.pdf#page=${n}`;
+const Z80PS = n => `https://www.zilog.com/docs/z80/ps0178.pdf#page=${n}`;
+const WD279X = `${IAD}/wd279x-6a91f82a09428057655792/page/n0`;
+const WD177X = `${IAD}/Western_Digital_Corporation_WD177X-00_Floppy_Disk_Formatter_Controller_undated/page/n0`;
+const T80_DOUBLER = 'https://www.trs-80.org/percom-doubler.html';
+const COCOPEDIA_GIME = 'https://www.cocopedia.com/wiki/index.php/GIME';
 const M4OM = 'https://archive.org/details/Model_4_Disk_System_Owners_Manual_1983_Tandy_a';
 const T80_EI = 'https://www.trs-80.org/radio-shack-expansion-interface.html';
 const T80_KB = 'https://www.trs-80.org/model-1-keybounce.html';
@@ -119,8 +135,8 @@ const m1CassPins = [
 ];
 /* Model I / EI power DIN (TRH schematic J1; EI schematic sheet 1 J9). */
 const m1PowerPins = [
-  { n: 1, name: '14 V AC', type: 'power', desc: 'One end of the centre-tapped 14 V AC, 1 A winding. To bridge CR8 for the +5 V and -5 V supplies.', expect: 'About 17 V AC to pin 3' },
-  { n: 2, name: '+19.8 V DC', type: 'power', desc: 'Unregulated DC from the second winding (rectified inside the adapter), about 350 mA. Raw supply for the +12 V regulator.', expect: 'About +20 V DC to pin 4' },
+  { n: 1, name: '14 V AC', type: 'power', desc: 'One end of the centre-tapped 14 V AC, 1 A winding. To bridge CR8 for the +5 V and -5 V supplies.', expect: 'About 17 V AC to pin 3', conflict: 'Sams CSCS3 (PDF p. 18) reads 18.5 V AC across J1A pins 1 and 3 with the adapter unplugged from the board; the Tandy handbook says about 17 V AC.' },
+  { n: 2, name: '+19.8 V DC', type: 'power', desc: 'Unregulated DC from the second winding (rectified inside the adapter), about 350 mA. Raw supply for the +12 V regulator.', expect: 'About +20 V DC to pin 4', conflict: 'Sams CSCS3 (PDF p. 18) reads 23.6 V DC from pin 2 to pin 4 with the adapter unplugged from the board; the Tandy handbook gives 19.8 V DC.' },
   { n: 3, name: '14 V AC', type: 'power', desc: 'Other end of the 14 V AC winding.', expect: 'About 17 V AC to pin 1' },
   { n: 4, name: 'GND', type: 'ground', desc: 'Common: the centre taps and the DC return.', expect: '0 V' },
   { n: 5, name: 'NC', type: 'nc', desc: 'No connection drawn on the schematic.' },
@@ -329,7 +345,7 @@ RCS.add({
     coco3: { pia6821: 'IC5 ($FF00, keyboard) / IC4 ($FF20, sound, cassette, RS-232)' },
     model1: { cpuz80: 'Z40', dram4116: 'Z13-Z20 (4096 DRAM in 4K units)' },
     model3: { cpuz80: 'U77', dram4116: 'U7-U14 ($4000-$7FFF), U25-U32 ($8000-$BFFF), U43-U50 ($C000-$FFFF)', sram2114: 'U81, U82 (video RAM)', rom2364: 'U104 (ROM A, MCM68A364)', rom2332: 'U105 (ROM B)', rom2316: 'U106 (ROM C) and U36 (character generator MCM68A316E)' },
-    model4: { cpuz80: 'U57 (1983 board)', dram4116: 'U77-U84 (16K version)', dram4164: 'U85-U92 (MCM6665, 64K version; 128K adds a second row)', rom2364: 'U68 (MCM68A364)', rom2332: 'U69 (MCM68A332)', rom2316: 'U70 (MCM68A316 ROM C) and U23 (MCM68A316E character generator)' },
+    model4: { cpuz80: 'U57 (1983 board); U1 (gate-array board, Sams CSCS13)', dram4116: 'U77-U84 (16K version)', dram4164: 'U85-U92 (MCM6665, 64K version; 128K adds a second row)', rom2364: 'U68 (MCM68A364)', rom2332: 'U69 (MCM68A332)', rom2316: 'U70 (MCM68A316 ROM C) and U23 (MCM68A316E character generator)' },
   },
   chips: {
     cpu6809e: {
@@ -343,6 +359,11 @@ RCS.add({
       datasheets: [
         { label: 'Motorola MC6809E HMOS 8-bit microprocessor data sheet, Pin Assignment, p. 1', url: DS6809E(1) },
         { label: 'Color Computer 2 Service Manual, Figure 4-2 MC6809E Pin Assignments, p. 23', url: SM2(29) },
+      ],
+      replacements: [
+        { part: 'MC68A09E', kind: 'pin-compatible', note: '1.5 MHz grade of the same chip. Fine for the CoCo 1, 2 and the CoCo 3 at 0.89 MHz; not rated for CoCo 3 double speed (1.78 MHz).', source: { label: 'Motorola MC6809E data sheet, DC Electrical Characteristics, Frequency of Operation, p. 2', url: DS6809E(2) } },
+        { part: 'MC68B09E', kind: 'pin-compatible', note: '2.0 MHz grade. The one to fit in a CoCo 3 that runs double speed (POKE 65497,0); the plain MC6809E is rated 1.0 MHz.', source: { label: 'Motorola MC6809E data sheet, DC Electrical Characteristics, Frequency of Operation, p. 2', url: DS6809E(2) } },
+        { part: 'Hitachi HD63B09E / HD63C09E (6309)', kind: 'pin-compatible', note: 'CMOS, object-code compatible, 2 or 3 MHz, same pinout. Trap: it traps illegal opcodes through the $FFF0 vector, so 6809 software that uses undocumented opcodes (for example $10 $20 as LBRA) crashes; the guide warns that a machine whose ROM holds $0000 in that vector may need a new ROM. Native mode needs 6309-aware software.', source: { label: 'HD63B09EP Technical Reference Guide, Error Trapping', url: HD6309TRG(13) } },
       ],
       pins: [
         { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
@@ -400,6 +421,10 @@ RCS.add({
         { label: 'Motorola MC6847 video display generator data sheet, Pin Assignment, p. 1', url: DS6847(1) },
         { label: 'Motorola MC6847 data sheet, signal description, pp. 12-13', url: DS6847(12) },
       ],
+      replacements: [
+        { part: 'MC6847P from another CoCo or MC-10', kind: 'pin-compatible', note: 'The only drop-in. Read the part number on the board first: a board built for the MC6847T1 takes only a T1.', source: { label: 'Motorola MC6847 data sheet, Pin Assignment, p. 1', url: DS6847(1) } },
+        { part: 'MC6847T1', kind: 'adapter', note: 'Not interchangeable with the 6847. The T1 adds true lowercase and a different pinout: DA0 is the only address line left, the rest became an 8-bit I/O port with enables, and it works only with the SN74LS783 (MC6883) or SN74LS785 SAM. Fit it only on a board built for it.', source: { label: 'Motorola MC6847T1 Advance Information, features and pin assignment, p. 1', url: DS6847T1(1) } },
+      ],
       pins: [
         { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
         { n: 2, name: 'DD6', type: 'data', dir: 'in', desc: 'Data bus bit 6 from screen RAM.' },
@@ -454,6 +479,10 @@ RCS.add({
       datasheets: [
         { label: 'Motorola SN74LS783/MC6883 synchronous address multiplexer data sheet, Pin Assignment, p. 5-323', url: DS6883(1) },
         { label: 'Motorola MC6883 data sheet, Pin Description Table, p. 5-326', url: DS6883(4) },
+      ],
+      replacements: [
+        { part: 'SN74LS783', kind: 'pin-compatible', note: 'The same part under its second-source number; Motorola publishes them on one data sheet.', source: { label: 'Motorola SN74LS783/MC6883 data sheet, Pin Assignment, p. 5-323', url: DS6883(1) } },
+        { part: 'SN74LS785', kind: 'pin-compatible', verify: true, note: 'The later SAM, paired with the MC6847T1 on the last CoCo 2 boards. The T1 data sheet names both SAMs; the differences between the 783 and 785 are not in hand, so fit the type the board was built with.', source: { label: 'Motorola MC6847T1 Advance Information (compatible with the SN74LS783 and SN74LS785), p. 1', url: DS6847T1(1) } },
       ],
       pins: [
         { n: 1, name: 'A11', type: 'addr', dir: 'in', desc: 'CPU address bit 11 in.', terms: ['tristate'] },
@@ -510,6 +539,9 @@ RCS.add({
         { label: 'Color Computer 3 Service Manual, IC6 TCC1014 pin diagram and block diagram, p. 96', url: SM3(96) },
         { label: 'Color Computer 3 Service Manual, 5.3 TCC1014 theory of operation, p. 36', url: SM3(36) },
         { label: 'Color Computer 3 Revised Schematic (Ty Sopko), U6 TCC1014', url: SOPKO },
+      ],
+      replacements: [
+        { part: 'TCC1014 GIME from another CoCo 3', kind: 'pin-compatible', verify: true, note: 'Tandy custom part with no second source or new replacement. Two production versions exist, the 1986 GIME with known bugs and the revised 1987 GIME; software that relies on either one behaves differently.', source: { label: 'CoCopedia, GIME (known versions)', url: COCOPEDIA_GIME } },
       ],
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
@@ -585,6 +617,9 @@ RCS.add({
         { label: 'MC-10 Schematic D-11531, U1 MC6803', url: SCH10 },
         { label: 'MC-10 Service Manual, CPU-6803 and Reset Circuit, p. 12', url: SM10(12) },
       ],
+      replacements: [
+        { part: 'HD6803P (Hitachi)', kind: 'pin-compatible', note: 'Tandy lists it as the alternative to the MC6803G for U1. No other part is listed.', source: { label: 'MC-10 Service Manual, parts list, Integrated Circuits (U1 MC6803G or HD6803P), p. 27', url: SM10(27) } },
+      ],
       pins: [
         { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
         { n: 2, name: 'XTAL1', type: 'clock', dir: 'in', desc: 'Crystal pin 1 of the on-chip oscillator.', terms: ['clock'] },
@@ -640,6 +675,9 @@ RCS.add({
         { label: 'Intel 2102A/2102AL 1K x 1 static RAM data sheet, pin configuration and truth table (1978 Component Data Catalog)', url: INTEL78(62) },
         { label: 'TRS-80 Technical Reference Handbook, Video RAMs, p. 34', url: TRH(35) },
       ],
+      replacements: [
+        { part: '2102A, 2102AL (any speed grade)', kind: 'pin-compatible', note: 'Same 16-pin 1K × 1 part. The board fits 2102AN-4L (low power, 450 ns); every 2102A and 2102AL grade is 450 ns or faster. The L parts run cooler (174 mW against up to 342 mW).', source: { label: 'Intel 2102A/2102AL data sheet, selection table (1978 Component Data Catalog)', url: INTEL78(62) } },
+      ],
       pins: [
         { n: 1, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6.' },
         { n: 2, name: 'A5', type: 'addr', dir: 'in', desc: 'Address bit 5.' },
@@ -670,6 +708,9 @@ RCS.add({
       datasheets: [
         { label: 'Motorola MCM6670/MCM6674 128 × 7 × 5 character generator, pin assignment and block diagram, p. 2-112 (1979 Memory Data Book)', url: MOT79(129) },
         { label: 'TRS-80 Technical Reference Handbook, Character Generator, p. 36', url: TRH(37) },
+      ],
+      replacements: [
+        { part: 'MCM6674', kind: 'pin-compatible', verify: true, note: 'The preprogrammed version of the MCM6670, same 18-pin package and pinout. Its character set is Motorola\'s standard pattern; whether it matches the Model I characters is not in hand: compare on screen.', source: { label: 'Motorola MCM6670/MCM6674 data sheet, p. 2-112 (1979 Memory Data Book)', url: MOT79(129) } },
       ],
       pins: [
         ...[6, 5, 4, 3, 2, 1, 0].map((b, i) => ({ n: i + 1, name: `A${b}`, type: 'addr', dir: 'in', desc: `Character code bit ${b}, from the video data latch Z28.` })),
@@ -707,6 +748,10 @@ RCS.add({
         { label: 'Western Digital FD1771-01 data sheet, pin connections, p. 1', url: WD1771(1) },
         { label: 'Western Digital FD1771-01 data sheet, pin outs (functions), pp. 2-3', url: WD1771(2) },
         { label: 'Expansion Interface Service Manual, schematic sheet 3 (Z34 FD1771B-01, J5)', url: EISM(21) },
+      ],
+      replacements: [
+        { part: 'FD1771A-01 or FD1771B-01', kind: 'pin-compatible', note: 'The same controller in a ceramic (A) or plastic (B) package. It needs all three rails: -5 V on pin 1 and +12 V on pin 40.', source: { label: 'Western Digital FD1771-01 data sheet, package outlines (FD1771A ceramic, FD1771B plastic)', url: WD1771(20) } },
+        { part: 'Percom Doubler (with the original 1771)', kind: 'adapter', note: 'Plugs into the 1771 socket in the Expansion Interface, with the 1771 moved onto it, and adds double density. No soldering; needs a doubler-aware DOS (DBLDOS, later most DOSes).', source: { label: 'trs-80.org, Percom Doubler', url: T80_DOUBLER } },
       ],
       pins: [
         { n: 1, name: 'VBB', type: 'power', dir: '-', desc: '-5 V substrate supply.', probe: '-4.75 to -5.25 V' },
@@ -756,6 +801,12 @@ RCS.add({
         { label: 'Western Digital FD179X-02 data sheet (May 1980), pin connections, p. 1', url: FD179X(1) },
         { label: 'Western Digital FD179X-02 data sheet, pin outs, pp. 2-4', url: FD179X(2) },
         { label: 'Model III Technical Reference Manual, Floppy Disk Interface (clock and 1793), pp. 46-47', url: M3TRM(57) },
+      ],
+      replacements: [
+        { part: 'FD1797', kind: 'pin-compatible', verify: true, note: 'True data bus like the 1793, but pin 25 is the side-select output instead of RG. Drops in only if the board leaves pin 25 unused or wants side select.', source: { label: 'Western Digital FD179X-02 data sheet, family characteristics and pin connections, p. 1', url: FD179X(1) } },
+        { part: 'FD1791 / FD1795', kind: 'adapter', note: 'Same pinout but an inverted data bus: in a 1793 socket every byte reads inverted. Needs inverting buffers on DAL0-DAL7.', source: { label: 'Western Digital FD179X-02 data sheet, family characteristics (inverted vs true data bus), p. 1', url: FD179X(1) } },
+        { part: 'WD2793', kind: 'adapter', note: 'Software compatible, true bus, single +5 V, on-chip PLL data separator and write precompensation. A few pins differ from the 1793, so it needs an adapter or rewiring.', source: { label: 'Western Digital WD279X-02 data sheet, features and description, p. 1', url: WD279X } },
+        { part: 'WD1773', kind: 'adapter', note: '28-pin single +5 V part with a built-in digital data separator; software compatible with the 1793. Needs an adapter board to sit in a 40-pin 1793 socket.', source: { label: 'Western Digital WD177X-00 data sheet, features and description, p. 1', url: WD177X } },
       ],
       pins: [
         { n: 1, name: 'NC', type: 'nc', dir: '-', desc: 'Internally tied to a back-bias generator. Must be left open.' },
@@ -928,15 +979,16 @@ RCS.add({
         verifiedAgainst: 'Color Computer Technical Reference Manual, System Power Supply, pp. 33-34, and schematic sheet 3',
         summary: 'Four leads from the transformer board: the two ends of the 33.5 V AC winding (E1, E2), the rectified 16.3 V winding for the +5 V regulator (E3) and ground (E4). The drawing numbers the lugs 1 to 4 for E1 to E4; their physical order is not drawn in the manual. The AC line goes in at E6 (neutral), E7 (hot) and E5 or E8 (ground).',
         pins: [
-          { n: 1, name: 'E1', type: 'power', desc: 'One end of the 33.5 V AC centre-tapped winding (0.35 A). To bridge CR11 through the power switch.', expect: '33.5 V AC to E2; about 16.7 V AC to ground' },
+          { n: 1, name: 'E1', type: 'power', desc: 'One end of the 33.5 V AC centre-tapped winding (0.35 A). To bridge CR11 through the power switch.', expect: '33.5 V AC to E2; about 16.7 V AC to ground', conflict: 'Sams CC13 (PDF p. 17) asks for 36 V AC from pin 1 to pin 2 of connector E; the Tandy manual gives a 33.5 V AC winding.' },
           { n: 2, name: 'E2', type: 'power', desc: 'Other end of the 33.5 V AC winding.', expect: '33.5 V AC to E1' },
-          { n: 3, name: 'E3', type: 'power', desc: 'Full-wave rectified 16.3 V winding (CR12, CR13), 1 A. Raw supply for the +5 V regulator and C10.', expect: 'Raw DC with 120 Hz ripple (not stated in the manual)' },
+          { n: 3, name: 'E3', type: 'power', desc: 'Full-wave rectified 16.3 V winding (CR12, CR13), 1 A. Raw supply for the +5 V regulator and C10.', expect: 'About 11 V DC to ground (Sams CC13); 120 Hz ripple' },
           { n: 4, name: 'E4', type: 'ground', desc: 'Ground. Both centre taps.', expect: '0 V' },
         ],
         sources: [
           { label: 'Color Computer Technical Reference Manual, System Power Supply, pp. 33-34', url: TRM(40) },
           { label: 'Color Computer Technical Reference Manual, schematic sheet 3 (power supply), p. 69', url: TRM(76) },
           { label: 'Color Computer Technical Bulletin CC:2, AC line cord termination', url: TB(3) },
+          S13('Troubleshooting, Power Supply (connector E readings)', 17),
         ],
       },
     ],
@@ -1224,6 +1276,7 @@ RCS.add({
           { label: 'TRS-80 Technical Reference Handbook, System Power Supply and AC Adapter, p. 52', url: TRH(53) },
           { label: 'TRS-80 Technical Reference Handbook, +5 Volt Supply (J1 pins 1 and 3), p. 54', url: TRH(55) },
           { label: 'TRS-80 Technical Reference Handbook, schematic sheet 2 (J1, CR8, S1)', url: TRH(115) },
+          SM1('Troubleshooting, Power Supply (J1A readings)', 18),
         ],
       },
       {
@@ -1528,11 +1581,49 @@ RCS.add({
         { rail: '-5 V', expect: 'About -5 V', where: 'TP11; 4116 pin 1', note: '79L05 U19, 100 µA. RAM VBB on 4116 boards. Lose -5 V and the RAM fails first; check C18.' },
       ],
       testPoints: [
-        { tp: 'Crystal', where: 'SAM pin 5', expect: '14.31818 MHz at the crystal' },
-        { tp: 'E clock', where: '6809E pin 34', expect: '0.89 MHz square wave' },
-        { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead' },
-        { tp: 'VDG clock', where: 'VDG pin 33', expect: '3.579545 MHz from SAM pin 7' },
-        { tp: 'CPU reset', where: '6809E pin 37', expect: 'HIGH once started' },
+        { tp: 'Crystal', where: 'SAM pin 5', expect: '14.31818 MHz at the crystal, about 2 V p-p',
+          scope: { f: '14.31818 MHz', low: '0.6 V', high: '2.6 V', shape: 'sine', basis: 'capture', source: S13('schematic waveform at SAM pin 5 (crystal X1)', 11),
+            note: 'Sams reads 2 V p-p sitting on 0.6 V at OSCin. No swing: X1, C51, trimmer C4, R43, then the SAM (Sams troubleshooting).' } },
+        { tp: 'E clock', where: '6809E pin 34; SAM pin 14', expect: '0.894886 MHz square wave, 0 to 5 V',
+          scope: { f: '0.894886 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: S13('schematic waveform at SAM pins 13 and 14 (Q, E)', 11),
+            note: 'Sams probed E and Q at the SAM: 5 V p-p from 0 V. Missing at the SAM with the crystal running: the SAM, or C73, C75 shorted.' } },
+        { tp: 'Q clock', where: '6809E pin 35; SAM pin 13', expect: 'Same rate as E, a quarter cycle ahead',
+          scope: { f: '0.894886 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: S13('schematic waveform at SAM pins 13 and 14 (Q, E)', 11),
+            note: 'Same photo as E. Q leads E by a quarter cycle.' } },
+        { tp: 'VDG clock', where: 'VDG pin 33', expect: '3.579545 MHz from SAM pin 7',
+          scope: { f: '3.579545 MHz', low: '0.6 V', high: '3.1 V', shape: 'square', basis: 'capture', source: S13('schematic waveform at VDG pin 33 (VDG CLK)', 32),
+            note: 'Sams reads 2.5 V p-p on 0.6 V at the VDG, after R17 and C53; at SAM pin 7 it reads 3.3 V p-p on 0.4 V. Rounded edges are normal. Missing: the SAM.' } },
+        { tp: 'Horizontal sync', where: 'VDG pin 38; SAM pin 9', expect: 'LOW-going pulse every 63.5 µs',
+          scope: { period: '63.5 µs', low: '0 V', high: '5 V', shape: 'pulse', basis: 'capture', source: S13('schematic waveform at SAM pin 9 (HS)', 11),
+            note: 'Sams: 5 V p-p from 0 V at 20 µs/cm. Line period from the CoCo 2 service manual PIA table (63.5 µs). The SAM times DRAM refresh from HS.' } },
+        { tp: 'Field sync', where: 'VDG pin 37', expect: 'LOW-going pulse at 60 Hz',
+          scope: { f: '60 Hz', low: '0 V', high: '5 V', shape: 'pulse', basis: 'capture', source: S13('schematic waveform at VDG pin 37 (FS)', 32),
+            note: 'Sams: 5 V p-p from 0 V at 5 ms/cm. FS feeds the keyboard PIA CB1, the 60 Hz interrupt.' } },
+        { tp: 'CPU reset', where: '6809E pin 37', expect: 'LOW at power-on, then HIGH; LOW while RESET is held' },
+      ],
+      firstTen: [
+        { step: 1, check: 'Transformer secondary', where: 'Transformer board to main board (E1 to E4) pin 1 to pin 2', expect: '33.5 V AC (Tandy); Sams reads 36 V AC',
+          ifNot: 'Check fuse F1 (0.7 A) and the T1 windings. A blown fuse: look for shorts at U17, U18, U19 and Q2 before fitting a new one.', source: S13('Troubleshooting, Power Supply', 17) },
+        { step: 2, check: 'Raw DC for +5 V', where: 'Transformer board to main board (E1 to E4) pin 3 to pin 4', expect: 'About 11 V DC',
+          ifNot: 'Check the 19 V AC winding of T1 and diodes CR12, CR13.', source: S13('Troubleshooting, Power Supply', 17) },
+        { step: 3, check: '+5 V on the board', where: 'TP12; 6809E pin 7; SAM pin 40', expect: '4.75 to 5.25 V, no cartridge or I/O attached',
+          ifNot: 'Check 5.2 V at the Q2 collector, the 723 (U13) and Q2, Q3, then the 5 V adjust R60. CR17 clamps +5 V if the regulator fails high.', source: S13('Troubleshooting, Power Supply', 17) },
+        { step: 4, check: '+12 V and -12 V', where: 'Cartridge slot (Program Pak) pin 2; pin 1', expect: '+11.9 V and -12.1 V (Sams, at the U17 and U18 outputs)',
+          ifNot: '+12 V: CR11, CR14, C7, U17 (78M12). -12 V: CR11, CR15, C9, C17, U18 (79M12).', source: S13('Troubleshooting, Power Supply', 17) },
+        { step: 5, check: '-5 V for the 4116s', where: 'TP11; 4116 pin 1', expect: '-5.0 V',
+          ifNot: 'R67, C18 and U19 (79L05). C18 was fitted backwards on some D and E boards (Technical Bulletin CC:3). Lose -5 V and the RAM fails.', source: S13('Troubleshooting, Power Supply', 17) },
+        { step: 6, check: 'CPU reset', where: '6809E pin 37', expect: 'LOW at power-on, then HIGH; LOW while RESET is held',
+          ifNot: 'Power-on reset wrong: C1, CR1, CR2, CR3, R2. Only the button fails: S1, C40, CR1, CR3, R1.', source: S13('Troubleshooting, Microprocessor (CPU) Operation', 17) },
+        { step: 7, check: 'Crystal, E and Q', where: 'SAM pin 5; 6809E pins 34, 35', expect: '14.31818 MHz at the crystal; 0.894886 MHz E and Q at the CPU',
+          ifNot: 'No crystal swing: X1, C51, trimmer C4, R43, SAM. Crystal running but no E or Q at SAM pins 14, 13: the SAM, C73, C75.', source: S13('Troubleshooting, Microprocessor (CPU) Operation', 17) },
+        { step: 8, check: 'Bus float test', where: 'Jumper 6809E pin 40 (/HALT) to ground', expect: 'Address pins 8 to 23 read open on a logic probe; data pins 24, 25, 27, 28 LOW and 26, 29, 30, 31 HIGH',
+          ifNot: 'A line that reads HIGH or LOW: check the chips on that line. Remove the jumper afterwards.', source: S13('Troubleshooting, Microprocessor (CPU) Operation', 17) },
+      ],
+      clocks: [
+        { name: 'Crystal X1', where: 'SAM pin 5', f: '14.31818 MHz', source: S13('schematic, crystal X1', 11) },
+        { name: 'VDG clock (colour reference)', where: 'SAM pin 7 to VDG pin 33', f: '3.579545 MHz', source: S13('Troubleshooting, Color', 18) },
+        { name: 'E (CPU clock)', where: 'SAM pin 14 to 6809E pin 34', f: '0.894886 MHz', source: S13('Troubleshooting, Microprocessor (CPU) Operation', 17) },
+        { name: 'Q', where: 'SAM pin 13 to 6809E pin 35', f: '0.894886 MHz', source: S13('Troubleshooting, Microprocessor (CPU) Operation', 17) },
       ],
       sources: [
         { label: 'Color Computer Technical Reference Manual, System Power Supply, pp. 33-34', url: TRM(40) },
@@ -1562,11 +1653,51 @@ RCS.add({
         { rail: 'Raw negative', expect: 'Negative DC', where: 'SALT pin 15', note: 'Unregulated, from CR1 and CR2. The SALT regulates it to -5 V for the RS-232 output only.' },
       ],
       testPoints: [
-        { tp: 'Crystal', where: 'SAM pin 5', expect: '14.31818 MHz at the crystal' },
-        { tp: 'E clock', where: '6809E pin 34', expect: '0.89 MHz square wave' },
-        { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead' },
-        { tp: 'VDG clock', where: 'VDG pin 33', expect: '3.579545 MHz from SAM pin 7' },
+        { tp: 'Crystal oscillator', where: 'SAM pin 6', expect: '14.31818 MHz, about 2.6 V p-p (OSCout side of X1)',
+          scope: { f: '14.31818 MHz', low: '0.6 V', high: '3.2 V', shape: 'sine', basis: 'capture', source: S15('schematic waveform at SAM pin 6 (OSCout)', 11),
+            note: 'Sams reads 2.6 V p-p on 0.6 V. No swing: X1, C43, C44, R15, trimmer TC1, then the SAM (Sams troubleshooting).' } },
+        { tp: 'E clock', where: '6809E pin 34; SAM pin 14', expect: '0.894886 MHz square wave; HIGH at least 4 V',
+          scope: { f: '0.894886 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: S15('schematic waveform at SAM pins 13 and 14 (Q, E)', 11),
+            note: 'Sams: 5.0 V p-p from 0 V. Tandy: E needs a HIGH of at least 4 V; a shorted filter capacitor on the line (C37 on E, C38 on Q in the Sams drawing) cuts the swing.' } },
+        { tp: 'Q clock', where: '6809E pin 35; SAM pin 13', expect: 'Same rate as E, a quarter cycle ahead',
+          scope: { f: '0.894886 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: S15('schematic waveform at SAM pins 13 and 14 (Q, E)', 11),
+            note: 'Same photo as E. Q leads E by a quarter cycle (Tandy Figure 5-4).' } },
+        { tp: 'VDG clock', where: 'VDG pin 33; SAM pin 7', expect: '3.579545 MHz, about 4 V p-p',
+          scope: { f: '3.579545 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'capture', source: S15('schematic waveform at SAM pin 7 (V CLK)', 11),
+            note: 'Sams reads 4.0 V p-p from 0 V at both ends. The VDG-side photo (PDF p. 13) is labelled 20 µs/cm but shows five cycles in 7 cm, so it is 0.2 µs/cm as at the SAM. Missing at the VDG: the SAM.' } },
+        { tp: 'Horizontal sync', where: 'VDG pin 38; SAM pin 9', expect: 'LOW-going pulse every 63.5 µs',
+          scope: { period: '63.5 µs', low: '0 V', high: '4.8 V', shape: 'pulse', basis: 'capture', source: S15('schematic waveform at SAM pin 9 (HS)', 11),
+            note: 'Sams: 4.8 V p-p from 0 V at 20 µs/cm. Line period from the Tandy service manual PIA table (63.5 µs). The SAM times DRAM refresh from HS.' } },
+        { tp: 'Field sync', where: 'VDG pin 37', expect: 'LOW-going pulse at 60 Hz',
+          scope: { f: '60 Hz', low: '0 V', high: '5 V', shape: 'pulse', basis: 'capture', source: S15('schematic waveform at VDG pin 37 (FS)', 13),
+            note: 'Sams: 5.0 V p-p from 0 V at 5 ms/cm. FS feeds the keyboard PIA CB1, the 60 Hz interrupt (Tandy service manual).' } },
+        { tp: 'Chroma bias', where: 'VDG pin 9', expect: 'Steady DC between 0 and 2 V, usually 0.75 to 1 V (Tandy). Sources disagree: Sams reads 1.5 V; the 6847 data sheet gives 0.3 × Vcc (1.35 to 1.65 V).' },
         { tp: 'SAM supply', where: 'SAM pin 40', expect: '+4.75 to +5.25 V' },
+      ],
+      firstTen: [
+        { step: 1, check: '+5 V on the board', where: 'SAM pin 40; 6809E pin 7', expect: '4.75 to 5.25 V with no cartridge or I/O attached',
+          ifNot: 'Measure the Q1 collector. Under 7.5 V: check about 17.5 V AC across the rectifier anodes, SW1 and T1. Over 7.5 V with 0.2 V or more across R2: foldback, look for a short (C5, C6, C11 or a chip). About 1 V across R2: R2 open.', source: S15('Troubleshooting, Power Supply', 17) },
+        { step: 2, check: 'Ripple on +5 V', where: 'SAM pin 40', expect: 'Under 0.4 V p-p',
+          ifNot: '60 Hz ripple: an open rectifier diode; the computer may run without a cartridge while Q1 overheats. 120 Hz: C2. 150 to 200 Hz: C5, C11 or the SALT.', source: S15('Troubleshooting, Power Supply', 17) },
+        { step: 3, check: 'Negative raw rail', where: 'SALT terminal 15 (U1 on 26-3026, IC1 on 26-3134)', expect: 'About -10 V DC',
+          ifNot: 'The two negative-side rectifiers (CR1, CR2; D1, D2 on 26-3134) and C1. Only the RS-232 output uses it.', source: S15('Troubleshooting, Power Supply', 17) },
+        { step: 4, check: 'CPU reset', where: '6809E pin 37', expect: 'LOW at power-on, then HIGH; LOW while RESET is held',
+          ifNot: 'Power-on reset wrong: C48, D10, D11, D12, R20. Only the button fails: SW2, C58, R22, D11, D12 (Sams designators).', source: S15('Troubleshooting, Microprocessor Operation', 17) },
+        { step: 5, check: 'Crystal oscillator', where: 'SAM pin 6', expect: '14.31818 MHz, about 2.6 V p-p',
+          ifNot: 'X1, C43, C44, R15 and trimmer TC1, then the SAM.', source: S15('Troubleshooting, Microprocessor Operation', 17) },
+        { step: 6, check: 'E and Q', where: '6809E pins 34, 35; SAM pins 14, 13', expect: '0.89 MHz, Q a quarter cycle ahead of E; E HIGH at least 4 V',
+          ifNot: 'Either missing: the CPU will not run; both come from the SAM. Low swing: a shorted filter capacitor or a load on the line (PIAs, cartridge slot).', source: { label: 'Color Computer 2 Service Manual (26-3026), 5.4.2.1 E and Q, p. 78', url: SM2(74) } },
+        { step: 7, check: 'Interrupt and halt lines', where: '6809E pins 2, 3, 4, 40', expect: 'NMI, FIRQ, HALT HIGH; IRQ (pin 3) a short LOW pulse about every 16 ms (60 Hz)',
+          ifNot: 'A line stuck LOW: replace the CPU; if it stays LOW, find what pulls it. IRQ stuck LOW: the keyboard PIA or the address decoding.', source: { label: 'Color Computer 2 Service Manual (26-3026), 5.4.2.2 Interrupt/Halt/Reset, p. 78', url: SM2(74) } },
+        { step: 8, check: 'Device selects', where: 'SAM pins 27, 26, 25', expect: 'Activity on S0, S1 and S2',
+          ifNot: 'No activity: the SAM (substitute). Activity but no ROM or PIA enable: the decoder and NAND gate after the SAM. Data lines start, then stop: RAM, ROM or expansion ROM.', source: S15('Troubleshooting (continued), Microprocessor Operation', 18) },
+      ],
+      clocks: [
+        { name: 'Crystal X1 (Y1 on 26-3026)', where: 'SAM pins 5, 6', f: '14.31818 MHz', source: { label: 'Color Computer 2 Service Manual (26-3026), SAM description, p. 30', url: SM2(36) } },
+        { name: 'VDG clock (colour reference)', where: 'SAM pin 7 to VDG pin 33', f: '3.579545 MHz', source: { label: 'Color Computer 2 Service Manual (26-3026), SAM description, p. 30', url: SM2(36) } },
+        { name: 'E (CPU clock)', where: 'SAM pin 14 to 6809E pin 34', f: '0.894886 MHz', source: S15('Troubleshooting, Microprocessor Operation', 17) },
+        { name: 'Q', where: 'SAM pin 13 to 6809E pin 35', f: '0.894886 MHz', source: S15('Troubleshooting, Microprocessor Operation', 17) },
+        { name: 'Field sync (IRQ source)', where: 'VDG pin 37', f: '60 Hz', source: { label: 'Color Computer 2 Service Manual (26-3026), PIA description, p. 38', url: SM2(44) } },
       ],
       sources: [
         { label: 'Color Computer 2 Service Manual, 4.10 SALT Circuitry, pp. 44-46', url: SM2(50) },
@@ -1599,10 +1730,36 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'Crystal', where: 'GIME pin 2', expect: '28.63636 MHz crystal X1' },
-        { tp: 'E and Q clocks', where: 'GIME pins 6, 7 (TP2, TP3)', expect: '0.89 MHz, or 1.79 MHz in double speed' },
+        { tp: 'E and Q clocks', where: 'GIME pins 6, 7 (TP2, TP3)', expect: '0.89 MHz, or 1.78 MHz in double speed',
+          scope: { f: '0.89 MHz', low: '0.4 V', high: '4.25 V', shape: 'square', basis: 'datasheet', source: { label: 'Motorola MC6809E data sheet, DC Electrical Characteristics (E and Q input levels), p. 2', url: DS6809E(2) },
+            note: 'Levels are what the 6809E needs on E (LOW under 0.4 V, HIGH over Vcc - 0.75 V); Q needs only under 0.6 V and over 2.0 V. Frequency from the service manual cartridge table (0.89 or 1.78 MHz). Tandy Waveform 7 (service manual p. 66) shows E and Q at 2 V/div, 0.2 µs/div.' } },
         { tp: 'RAM strobes', where: 'GIME pins 4, 5 (TP4, TP5)', expect: '/RAS and /CAS pulsing' },
         { tp: 'Reset', where: 'GIME pin 9', expect: 'HIGH once started' },
         { tp: 'HALT, NMI, FIRQ', where: '6809E pins 40, 2, 4', expect: 'Normally HIGH' },
+      ],
+      firstTen: [
+        { step: 1, check: 'Transformer secondary', where: 'Transformer to main board (CN7) pin 1 to pin 3', expect: '16.2 V AC (NTSC); 18.52 V AC on PAL units',
+          ifNot: 'T1, the power switch or the mains lead.', source: { label: 'Color Computer 3 Service Manual, 5.13 Power Transformer, p. 52', url: SM3(52) } },
+        { step: 2, check: '+5 V', where: 'TP1; GIME pin 35; 6809E pin 7', expect: '4.75 to 5.25 V, ripple under 400 mV',
+          ifNot: 'Follow the Power Supply Check flowchart: the SALT (IC8) folds back on a short (it senses R19, 0.1 Ω); check Q1 and IC8, then look for a shorted part.', source: { label: 'Color Computer 3 Service Manual, 6.10 Power Supply Check (NTSC), p. 58', url: SM3(58) } },
+        { step: 3, check: 'Negative raw rail', where: 'SALT IC8 terminal 15', expect: 'At least -10 V DC',
+          ifNot: 'Check the AC at the D3 and D4 cathodes.', source: { label: 'Color Computer 3 Service Manual, 6.10 Power Supply Check (NTSC), p. 58', url: SM3(58) } },
+        { step: 4, check: '+8 V modulator supply', where: 'IC36 (78L08) output', expect: '7.6 to 8.4 V',
+          ifNot: 'IC36 input should be 16 to 24 V with no more than 3 V ripple; low input means D13, D14 or C62.', source: { label: 'Color Computer 3 Service Manual, 6.10 Power Supply Check (NTSC), p. 58', url: SM3(58) } },
+        { step: 5, check: 'Oscillator', where: 'GIME pins 2, 3', expect: '28.63636 MHz at X1',
+          ifNot: 'X1 and its load capacitors, then the GIME (IC6).', source: { label: 'Color Computer 3 Service Manual, 6.4 Processing Problem (check OSC circuit), p. 56', url: SM3(56) } },
+        { step: 6, check: 'E and Q', where: 'GIME pins 6, 7 (TP2, TP3)', expect: '0.89 MHz, Q ahead of E (Waveform 7)',
+          ifNot: 'Missing with the oscillator running: the GIME. Low swing: a load on the line (CPU, PIAs, cartridge).', source: { label: 'Color Computer 3 Service Manual, 6.4 Processing Problem, p. 56', url: SM3(56) } },
+        { step: 7, check: 'RAM strobes and write enables', where: 'GIME pins 4, 5, 10, 11', expect: '/RAS (TP4) and /CAS (TP5) pulsing (Waveforms 8, 9); /WE0, /WE1 active',
+          ifNot: 'The GIME, or a shorted line to the RAM.', source: { label: 'Color Computer 3 Service Manual, 6.4 Processing Problem, p. 56', url: SM3(56) } },
+        { step: 8, check: 'HALT, NMI, FIRQ', where: '6809E pins 40, 2, 4', expect: 'HIGH',
+          ifNot: 'A line held LOW stops the CPU: remove any cartridge, then trace what pulls it. Then check S0 to S2 and the address decoder IC9.', source: { label: 'Color Computer 3 Service Manual, 6.4 Processing Problem, p. 56', url: SM3(56) } },
+      ],
+      clocks: [
+        { name: 'Crystal X1', where: 'GIME pins 2, 3', f: '28.63636 MHz', source: { label: 'Color Computer 3 Revised Schematic (Ty Sopko), X1', url: SOPKO } },
+        { name: 'E (CPU clock)', where: 'GIME pin 6 to 6809E pin 34', f: '0.89 MHz', source: { label: 'Color Computer 3 Service Manual, Table 3 Cartridge Connector Signals (E, Q), p. 51', url: SM3(51) } },
+        { name: 'E, double speed', where: 'GIME pin 6 to 6809E pin 34', f: '1.78 MHz', source: { label: 'Color Computer 3 Service Manual, Table 3 Cartridge Connector Signals (E, Q), p. 51', url: SM3(51) } },
+        { name: 'Q', where: 'GIME pin 7 to 6809E pin 35', f: '0.89 MHz', source: { label: 'Color Computer 3 Service Manual, Table 3 Cartridge Connector Signals (E, Q), p. 51', url: SM3(51) } },
       ],
       sources: [
         { label: 'Color Computer 3 Service Manual, 6.4 Processing Problem, p. 56', url: SM3(56) },
@@ -1640,6 +1797,29 @@ RCS.add({
         { tp: '6803 reset', where: '6803 pin 6', expect: 'LOW for a few ms at power-up, then HIGH' },
         { tp: 'VDG clock', where: 'VDG pin 33', expect: '3.579545 MHz' },
       ],
+      firstTen: [
+        { step: 1, check: 'Short on +5 V', where: '7805 (U17) output to ground, adapter unplugged', expect: 'Not a short (well above 0 Ω)',
+          ifNot: 'Zero ohms: a short to ground on the +5 V side; find it before powering up.', source: { label: 'MC-10 Service Manual, Troubleshooting, Power Supply, p. 23', url: SM10(23) } },
+        { step: 2, check: 'Adapter AC', where: 'Power in (J3) pin 1 to pin 2', expect: '8 V AC (more unloaded)',
+          ifNot: 'The adapter or its lead. It must be an 8 V AC adapter, not DC.', source: { label: 'MC-10 Service Manual, Troubleshooting, Power Supply, p. 23', url: SM10(23) } },
+        { step: 3, check: 'Raw DC at the regulator', where: '7805 (U17) input', expect: 'About 10 V DC, full-wave rectified',
+          ifNot: 'Bridge D1, C1 or C5; or a short in U15, U16 or U17.', source: { label: 'MC-10 Service Manual, Troubleshooting, Power Supply, p. 23', url: SM10(23) } },
+        { step: 4, check: '+5 V', where: '6803 pin 7; VDG pin 17', expect: 'Within 10 % of 5 V',
+          ifNot: 'Input good but no +5 V: the 7805.', source: { label: 'MC-10 Service Manual, Troubleshooting, p. 22', url: SM10(22) } },
+        { step: 5, check: 'Clock from the modulator', where: '6803 pin 3', expect: '3.579545 MHz',
+          ifNot: 'Check the modulator: +5 V on the MC1372 and the parts on its oscillator (R1, C2, C3, X1).', source: { label: 'MC-10 Service Manual, Troubleshooting, Modulator, p. 23', url: SM10(23) } },
+        { step: 6, check: 'CPU reset', where: '6803 pin 6', expect: 'LOW for a few ms at power-up, then HIGH',
+          ifNot: 'The reset parts: switch S1, D9, R24, C8 and the U12 buffer gates (the 6803 reset input has no hysteresis).', source: { label: 'MC-10 Service Manual, CPU-6803 and Reset Circuit, p. 12', url: SM10(12) } },
+        { step: 7, check: 'E clock', where: '6803 pin 40; I/O expansion edge pin 28', expect: '0.89 MHz (3.579545 MHz / 4)',
+          ifNot: 'Clock in good but no E: the 6803.', source: { label: 'MC-10 Service Manual, CPU-6803, p. 12', url: SM10(12) } },
+        { step: 8, check: 'Address and data activity', where: 'I/O expansion edge pins 3, 4, 5, 6, 7, 8, 9, 10', expect: 'Activity on every data line after RESET (shields off)',
+          ifNot: 'No activity: an input holding the 6803, or the 6803. Activity but garbage on screen: memory, a buffer, or a short on the bus.', source: { label: 'MC-10 Service Manual, Troubleshooting, p. 22', url: SM10(22) } },
+      ],
+      clocks: [
+        { name: 'Modulator oscillator', where: '6803 pin 3', f: '3.579545 MHz', source: { label: 'MC-10 Service Manual, CPU-6803, p. 12', url: SM10(12) } },
+        { name: 'E (CPU clock)', where: '6803 pin 40', f: '0.89 MHz', source: { label: 'MC-10 Service Manual, CPU-6803, p. 12', url: SM10(12) } },
+        { name: 'VDG clock', where: 'VDG pin 33', f: '3.579545 MHz', source: { label: 'MC-10 Service Manual, Troubleshooting, Video Interface, p. 22', url: SM10(22) } },
+      ],
       sources: [
         { label: 'MC-10 Service Manual, CPU-6803 and Reset Circuit, p. 12', url: SM10(12) },
         { label: 'MC-10 Service Manual, Power Supply, p. 17', url: SM10(17) },
@@ -1672,11 +1852,40 @@ RCS.add({
         { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '4116 pin 1; CR2 anode', note: 'RAM VBB from zener CR2 (1N5231) and R19. Lose it and the RAM fails first.' },
       ],
       testPoints: [
-        { tp: 'Master oscillator', where: 'Z42 pin 6', expect: '10.6445 MHz (crystal Y1, buffered by Z42)' },
-        { tp: 'CPU clock', where: 'Z80A pin 6', expect: 'About 1.774 MHz' },
+        { tp: 'Master oscillator', where: 'Z42-6 (oscillator buffer, the TRH measuring point)', expect: '10.6445 MHz (crystal Y1, buffered by Z42)',
+          scope: { f: '10.6445 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SM1('schematic waveform at Z42-6 (oscillator buffer)', 13),
+            note: 'Sams: 5 V p-p from 0 V at 0.2 µs/cm. Do not probe Z42-5: the handbook says test-equipment loading upsets the oscillator there. Off frequency: Y1, C43; dead: Y1, C43, R46, R52, Z42.' } },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: 'About 1.774 MHz (10.6445 MHz / 6)',
+          scope: { f: '1.774 MHz', low: '-1 V', high: '5 V', shape: 'square', basis: 'capture', source: SM1('schematic waveform at Z40 pin 6 (CPU CLK)', 13),
+            note: 'Sams: 6 V p-p from -1 V at 0.2 µs/cm; R64 pulls the Z72 buffer output up to a full swing. The divide-by-6 output at Z56-8 into Z72-12 reads 4.2 V p-p from 0 V.' } },
         { tp: 'CPU reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-up or while RESET is held, then HIGH' },
-        { tp: 'Vertical sync', where: 'Z32 pin 11', expect: '60.00 Hz (VDRV)' },
+        { tp: 'Vertical sync', where: 'Z32-11 (VDRV)', expect: '60.00 Hz (VDRV)' },
         { tp: 'EI FDC clock', where: '1771 pin 24', expect: '1 MHz square wave' },
+      ],
+      firstTen: [
+        { step: 1, check: 'Adapter AC, unplugged from the computer', where: 'Power in (J1, POWER) pin 1 to pin 3', expect: 'About 17 V AC (Tandy); Sams reads 18.5 V AC',
+          ifNot: 'Nothing: the cable, DIN plug or the adapter fuse link; replace the adapter. A blown link usually means shorted diodes in CR8 on the board: check before fitting a new adapter.', source: SM1('Troubleshooting, Power Supply', 18) },
+        { step: 2, check: 'Adapter DC, unplugged', where: 'Power in (J1, POWER) pin 2 to pin 4', expect: 'About +20 V DC (Tandy 19.8 V); Sams reads 23.6 V',
+          ifNot: 'Replace the adapter. With the Expansion Interface, test its own adapter on J9 too.', source: SM1('Troubleshooting, Power Supply', 18) },
+        { step: 3, check: '+12 V (set first)', where: '4116 pin 8; top of R18', expect: '11.4 to 12.6 V',
+          ifNot: 'Adjust R10. Missing: Q6 and the 723 Z2. The +5 V regulator runs from the +12 V side and will not work without it.', source: { label: 'TRS-80 Technical Reference Handbook, Power Supply Checks and Adjustments, p. 60', url: TRH(61) } },
+        { step: 4, check: '+5 V', where: 'Z80A pin 11; left side of R4', expect: '4.75 to 5.25 V',
+          ifNot: 'Adjust R5. Missing: Q4, Q3, Q5 and the 723 Z1 (pins 2 to 7, 10, 11, 13).', source: { label: 'TRS-80 Technical Reference Handbook, Power Supply Checks and Adjustments, p. 60', url: TRH(61) } },
+        { step: 5, check: '-5 V', where: '4116 pin 1; CR2 anode', expect: '-4.75 to -5.25 V',
+          ifNot: 'R19, zener CR2, or a short to ground. Lose it and the 4116s fail.', source: SM1('Troubleshooting, Power Supply', 18) },
+        { step: 6, check: 'Master oscillator', where: 'Z42-6 (oscillator buffer)', expect: '10.6445 MHz',
+          ifNot: 'Off frequency: Y1, C43. Dead: Y1, C43, R46, R52, then Z42.', source: SM1('Troubleshooting, CPU Clock and Divider', 18) },
+        { step: 7, check: 'CPU clock', where: 'Z80A pin 6', expect: 'About 1.774 MHz',
+          ifNot: 'Check Z56-8 (divide by 6). Wrong there: Z56-6 must be LOW (R67, Z42), then Z56. Good at Z56 but not at the CPU: R64 and buffer Z72.', source: SM1('Troubleshooting, CPU Clock and Divider', 18) },
+        { step: 8, check: 'CPU reset', where: 'Z80A pin 26', expect: 'LOW for about 0.1 s at power-on, then HIGH',
+          ifNot: 'C42, R47, then Z52 and Z53. Pin 25 (/BUSRQ) held LOW disables the buses: R58 or a short.', source: SM1('Troubleshooting, Microprocessor (CPU) Operation', 18) },
+      ],
+      clocks: [
+        { name: 'Crystal Y1 (master oscillator)', where: 'Z42-6', f: '10.6445 MHz', source: { label: 'TRS-80 Technical Reference Handbook, System Clock, p. 14', url: TRH(15) } },
+        { name: 'CPU clock (÷6, Z56)', where: 'Z80A pin 6', f: '1.774 MHz', source: { label: 'TRS-80 Technical Reference Handbook, CPU Timing, p. 14', url: TRH(15) } },
+        { name: 'Horizontal reference (HDRV)', where: 'Z50-11', f: '15.836 kHz', source: { label: 'TRS-80 Technical Reference Handbook, video divider chain frequency table, p. 69', url: TRH(70) } },
+        { name: 'Vertical reference (VDRV)', where: 'Z32-11', f: '60.00 Hz', source: { label: 'TRS-80 Technical Reference Handbook, video divider chain frequency table, p. 69', url: TRH(70) } },
+        { name: 'EI disk controller clock', where: '1771 pin 24', f: '1 MHz', source: { label: 'Expansion Interface Service Manual, Floppy Disk Interface (1 MHz FDC clock), p. 5', url: EISM(5) } },
       ],
       sources: [
         { label: 'TRS-80 Technical Reference Handbook, System Power Supply, pp. 52-54', url: TRH(53) },
@@ -1713,11 +1922,46 @@ RCS.add({
         { rail: '-5 V', expect: 'About -5 V', where: '4116 pin 1; MC7905C output', note: 'RAM VBB. Lose it and the 4116s fail.' },
       ],
       testPoints: [
-        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '2.02752 MHz, 40 % HIGH (10.1376 MHz / 5)' },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '2.02752 MHz, 40 % HIGH (10.1376 MHz / 5)',
+          scope: { f: '2.02752 MHz', low: '-0.5 V', high: '5.5 V', shape: 'square', basis: 'capture', source: SM3S('schematic waveform at PCLOCK (U74-8 to the CPU)', 19),
+            note: 'Sams: 6 V p-p from -0.5 V at 0.2 µs/cm. Missing: U74-11 should carry 2.02752 MHz from the divide-by-5 U62; see the clock and divider checks.' } },
         { tp: 'CPU reset', where: 'Z80A pin 26', expect: 'HIGH once running' },
-        { tp: 'Video oscillator', where: 'Y1', expect: '10.1376 MHz' },
+        { tp: 'Video oscillator', where: 'Y1; buffered at U2-10', expect: '10.1376 MHz',
+          scope: { f: '10.1376 MHz', low: '0 V', high: '3.2 V', shape: 'square', basis: 'capture', source: SM3S('schematic waveform at the CLOCK line after U2-10', 20),
+            note: 'Sams: 3.2 V p-p from 0 V at 0.5 µs/cm, taken at the R67 and C123 node after the U2 buffer. Off frequency or dead: C1, C120, C122, Y1 and U2.' } },
         { tp: 'FDC clock', where: '1793 pin 24', expect: '1 MHz square wave' },
-        { tp: 'Horizontal rate', where: 'HSYNC to the monitor (J101 pin 6)', expect: '15.840 kHz, active HIGH, about 8 µs' },
+        { tp: 'Horizontal rate', where: 'Monitor board input (J101) from CPU board J5 pin 6; U23-13 (HSYNC)', expect: '15.840 kHz, active HIGH, about 8 µs',
+          scope: { f: '15.84 kHz', low: '-0.5 V', high: '4.5 V', shape: 'pulse', basis: 'capture', source: SM3S('schematic waveform at U23-13 (HSYNC)', 20),
+            note: 'Sams: 5 V p-p from -0.5 V at 20 µs/cm. No horizontal sync: U23-13, then U23-2, C59, R10; then U39 pins 1, 2 (U21, U56, U38).' } },
+        { tp: 'Vertical sync', where: 'U23-12 (VSYNC)', expect: '60 Hz (50 Hz with the 50 Hz jumper)',
+          scope: { f: '60 Hz', low: '0 V', high: '3 V', shape: 'pulse', basis: 'capture', source: SM3S('schematic waveform at U23-12 (VSYNC)', 20),
+            note: 'Sams: 3 V p-p from 0 V at 5 ms/cm. Missing: U23-10, C58, R14, U23; then U39 pins 12, 13 (U1, U2, U20, U21, U22).' } },
+      ],
+      firstTen: [
+        { step: 1, check: 'Fuse resistor', where: 'R25 (2 Ω) on the supply board, mains off', expect: 'Intact, about 2 Ω',
+          ifNot: 'Do not just replace it: find why it opened. Check DB1, Q2 and D3 for shorts, then the output rectifiers and capacitors with the loads off.', source: { label: 'Model III Service Manual, Power Supply Troubleshooting, pp. 67-69', url: M3SVC(74) } },
+        { step: 2, check: 'Supply starts on a variac', where: 'Main supply outputs (SK2, SK3, SK4) pin 4 to pin 3', expect: 'Starts at 40 to 60 V AC in and regulates by 95 V AC; use an isolation transformer and the minimum loads (0.45 A on +5 V, 0.3 A on +12 V)',
+          ifNot: 'B+ at R9 should be 120 to 140 V DC with 95 V AC in. Low: DB1, the line choke, SW1.', source: { label: 'Model III Service Manual, Power Supply Troubleshooting, pp. 67-69', url: M3SVC(74) } },
+        { step: 3, check: '+5 V', where: 'Main supply outputs (SK2, SK3, SK4) pin 4 to pin 3; Z80A pin 11', expect: '4.75 to 5.25 V, under 50 mV ripple',
+          ifNot: 'Not regulated: regulator IC1 and Q3, the T1 windings. Missing: D5, D6, L5, C12, C13, C17.', source: SM3S('Troubleshooting, Power Supply', 28) },
+        { step: 4, check: '+12 V and -12 V', where: 'Main supply outputs (SK2, SK3, SK4) pin 2 to pin 3; pin 1 to pin 3', expect: '+11.40 to +12.60 V; -11.0 to -15.0 V (Sams reads 12.0 V and -12.8 V)',
+          ifNot: '+12 V missing: D4, L4, C11, C15, T2 pins 7 to 9. -12 V missing: D7, L6, C14, C16, T2 pins 6 to 8.', source: SM3S('Troubleshooting, Power Supply', 28) },
+        { step: 5, check: '-5 V for the 4116s', where: '4116 pin 1', expect: 'About -5 V (MC7905C from -12 V)',
+          ifNot: 'The MC7905C or the -12 V input. Lose -5 V and the 4116s fail.', source: { label: 'Model III Technical Reference Manual, RAM (-5 V from MC7905C), p. 13', url: M3TRM(24) } },
+        { step: 6, check: 'CPU reset', where: 'Z80A pin 26', expect: 'LOW for about 0.1 s at power-on, then HIGH',
+          ifNot: 'Button only: SW66, C114, R15, P6 pins 19 and 20. Power-on too: R7, CR10, C54, C115, then U15.', source: SM3S('Troubleshooting, Microprocessor Operation', 28) },
+        { step: 7, check: 'Oscillator', where: 'Y1 at U2-8', expect: '10.1376 MHz',
+          ifNot: 'C1, C120, C122, Y1, U2. Then U3 pins 3 and 5 (C107, C123, U2, U3).', source: SM3S('Troubleshooting, Clock and Dividers', 29) },
+        { step: 8, check: 'CPU clock', where: 'Z80A pin 6', expect: '2.02752 MHz',
+          ifNot: 'Check U74-11. Off or missing: U62-2 must be LOW (R61, U87), then C110, C137, R66, U62. Good at U74-11 but not U74-8: C80, R17, R18, R24, Q1, U74.', source: SM3S('Troubleshooting, Clock and Dividers', 29) },
+      ],
+      clocks: [
+        { name: 'Crystal Y1 (main oscillator)', where: 'Y1 at U2-8', f: '10.1376 MHz', source: { label: 'Model III Technical Reference Manual, Main oscillator and divider chain, p. 16', url: M3TRM(27) } },
+        { name: 'CPU clock (÷5, U62)', where: 'Z80A pin 6', f: '2.02752 MHz', source: { label: 'Model III Technical Reference Manual, Processor, p. 13', url: M3TRM(24) } },
+        { name: 'Horizontal drive (HDRV)', where: 'U23-13 (HSYNC)', f: '15.840 kHz', source: { label: 'Model III Technical Reference Manual, Main oscillator and divider chain, p. 16', url: M3TRM(27) } },
+        { name: 'Vertical drive (VDRV)', where: 'U23-12 (VSYNC)', pal: '50 Hz', ntsc: '60 Hz', source: { label: 'Model III Technical Reference Manual, divider chain (modulo 22 for 60 Hz, 26 for 50 Hz, by jumper), p. 16', url: M3TRM(27) } },
+        { name: 'Disk controller clock', where: '1793 pin 24', f: '1 MHz', source: { label: 'Model III Technical Reference Manual, Floppy Disk Interface clock generation, p. 46', url: M3TRM(57) } },
+        { name: 'RS-232 baud clock', where: 'RS-232 board BRG clock input', f: '5.0688 MHz', source: { label: 'Model III Technical Reference Manual, RS-232C board (5.0688 MHz from the CPU board), p. 57', url: M3TRM(68) } },
       ],
       sources: [
         { label: 'Model III Technical Reference Manual, Processor and Video Sync, p. 13', url: M3TRM(24) },
@@ -1751,11 +1995,45 @@ RCS.add({
         { rail: '-12 V', expect: '-11.40 to -12.60 V', where: 'TB2 pin 4', note: 'RS-232.' },
       ],
       testPoints: [
-        { tp: 'Master oscillator', where: 'Y1', expect: '20.2752 MHz' },
+        { tp: 'Master oscillator', where: 'Y1; U9-1 on the gate-array board', expect: '20.2752 MHz',
+          scope: { f: '20.2752 MHz', low: '0 V', high: '6 V', shape: 'square', basis: 'capture', source: SM4('schematic waveform at timing array U9-1 (Y1)', 16),
+            note: 'Gate-array board. Sams: 6 V p-p from 0 V at 0.1 µs/cm. Off frequency or dead: C2, C20, R14, Y1 and the timing array U9.' } },
         { tp: '80 × 24 video oscillator', where: 'Y2', expect: '12.672 MHz' },
-        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '2.02752 MHz, or 4.05504 MHz in fast mode' },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '2.02752 MHz, or 4.05504 MHz in fast mode',
+          scope: { f: '4.05504 MHz', low: '0.45 V', high: '4.4 V', shape: 'square', basis: 'datasheet', source: { label: 'Zilog PS0178 Z80 CPU Product Specification, DC Characteristics (Z8400 NMOS), clock input levels, p. 33', url: Z80PS(33) },
+            note: 'Levels are the Z80 clock input limits (LOW under 0.45 V, HIGH over Vcc - 0.6 V), not a capture. Frequency from the Model 4 technical reference (2.02752 or 4.05504 MHz); 2.02752 MHz in Model III mode. Sams shows PCLK at U9-13 on the gate-array board at 5 V p-p.' } },
         { tp: 'CPU reset', where: 'Z80A pin 26', expect: 'HIGH once running' },
-        { tp: 'RS-232 clock', where: 'Baud rate generator clock input', expect: '5.0688 MHz' },
+        { tp: 'RS-232 clock', where: 'RS232CLK, U9-22 on the gate-array board', expect: '5.0688 MHz',
+          scope: { f: '5.0688 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SM4('schematic waveform at timing array U9-22 (RS232CLK)', 16),
+            note: 'Sams: 5.0 V p-p from 0 V at 0.1 µs/cm. Frequency from the Model 4/4P technical reference.' } },
+      ],
+      firstTen: [
+        { step: 1, check: '+5 V', where: '65 W supply output (TB2, Astec AA12090) pin 10 to pin 1; Z80A pin 11', expect: '5.00 to 5.25 V, under 50 mV ripple',
+          ifNot: 'Low: the voltage selection jumper first, then trim R27, R28. B+ at the end of R14 nearest the transformer is 260 to 270 V DC with 95 V AC in. Test through an isolation transformer and a variac, loaded: 1.35 A minimum on +5 V.', source: { label: 'Model 4 Technical Reference Manual (1983), 6.2 Power Supply #8790043 (Astec AA12090) and Table 6-2, pp. 112-114', url: M4TRM(128) } },
+        { step: 2, check: '+12 V', where: '65 W supply output (TB2, Astec AA12090) pin 2 to pin 1; pin 5 to pin 1', expect: '11.40 to 12.60 V on both',
+          ifNot: 'Outputs running away: SCR1 crowbars +12 V; if it does not fire within limits, check Z1 and SCR1. On the supply Sams draws for gate-array units: pin 2 missing, CR8 and L4; pin 5 missing, CR6, L2, C23, C18.', source: { label: 'Model 4 Technical Reference Manual (1983), Pin Assignments and Tables 6-1, 6-2, p. 114', url: M4TRM(130) } },
+        { step: 3, check: '-12 V', where: '65 W supply output (TB2, Astec AA12090) pin 4 to pin 1', expect: '-11.40 to -12.60 V',
+          ifNot: 'On the supply Sams draws for gate-array units: CR7, C19 and regulator VR3.', source: SM4('Troubleshooting, Power Supply', 44) },
+        { step: 4, check: 'CPU reset', where: 'Z80A pin 26', expect: 'LOW for about 0.1 s at power-on, then HIGH',
+          ifNot: 'Button only: RL1, C22, C25, R61. Power-on too: R66, C70, then U41 and U63 (gate-array board).', source: SM4('Troubleshooting, Microprocessor (CPU) Operation', 44) },
+        { step: 5, check: 'Master oscillator', where: 'Y1; U9-1 on the gate-array board', expect: '20.2752 MHz',
+          ifNot: 'C2, C20, R14, Y1 and the timing array U9.', source: SM4('Troubleshooting, Clock and Dividers', 45) },
+        { step: 6, check: 'CPU clock', where: 'Z80A pin 6', expect: '2.02752 MHz, or 4.05504 MHz in fast mode',
+          ifNot: 'Missing: go back to the oscillator and U9.', source: SM4('Troubleshooting, Microprocessor (CPU) Operation', 44) },
+        { step: 7, check: 'Wait and bus request', where: 'Z80A pins 17, 24, 25', expect: 'HIGH',
+          ifNot: 'Find what holds the line LOW.', source: SM4('Troubleshooting, Microprocessor (CPU) Operation', 44) },
+        { step: 8, check: 'Data bus activity', where: 'Z80A pins 7, 8, 9, 10, 12, 13, 14, 15', expect: 'Pulses right after power-on',
+          ifNot: 'Pulses start, then stop: the ROMs (U4, U29) and RAM (U85 to U92) on the gate-array board. Holding RESET, every address and data pin should read open; a pin reading HIGH or LOW points at a chip on that line.', source: SM4('Troubleshooting, Microprocessor (CPU) Operation', 44) },
+      ],
+      clocks: [
+        { name: 'Crystal Y1 (main)', where: 'Y1', f: '20.2752 MHz', source: { label: 'Model 4 Technical Reference Manual (1983), 3.1.2 CPU and Timing, p. 15', url: M4TRM(31) } },
+        { name: 'Crystal Y2 (80 × 24 video)', where: 'Y2', f: '12.672 MHz', source: { label: 'Model 4 Technical Reference Manual (1983), 3.1.2 CPU and Timing, p. 15', url: M4TRM(31) } },
+        { name: 'CPU clock, Model III mode', where: 'Z80A pin 6', f: '2.02752 MHz', source: { label: 'Model 4 Technical Reference Manual (1983), 3.1.2 CPU and Timing, p. 15', url: M4TRM(31) } },
+        { name: 'CPU clock, fast mode', where: 'Z80A pin 6', f: '4.05504 MHz', source: { label: 'Model 4 Technical Reference Manual (1983), 3.1.2 CPU and Timing, p. 15', url: M4TRM(31) } },
+        { name: 'Dot clock, 64 × 16', where: 'PAL U4 to shift register U11', f: '10.1376 MHz', source: { label: 'Model 4 Technical Reference Manual (1983), video circuit (shift clock), p. 21', url: M4TRM(37) } },
+        { name: 'Dot clock, 80 × 24', where: 'PAL U4 to shift register U11', f: '12.672 MHz', source: { label: 'Model 4 Technical Reference Manual (1983), video circuit (shift clock), p. 21', url: M4TRM(37) } },
+        { name: 'Real-time clock interrupt', where: 'From VSYNC', f: '30 Hz', source: { label: 'Model 4 Technical Reference Manual (1983), 3.1.9 Real Time Clock (30 Hz at 2 MHz, 60 Hz at 4 MHz), p. 21', url: M4TRM(37) } },
+        { name: 'RS-232 baud clock', where: 'Baud rate generator clock input', f: '5.0688 MHz', source: { label: 'Model 4/4P Technical Reference Manual, RS-232C circuit (5.0688 MHz), p. 51', url: M4PTRM(57) } },
       ],
       sources: [
         { label: 'Model 4 Technical Reference Manual (1983), 3.1.2 CPU and Timing, p. 15', url: M4TRM(31) },
