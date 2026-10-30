@@ -15,6 +15,7 @@ const TH2 = f => `https://archive.org/download/MSX-MSX2TechnicalHandbook/${f}`;
 const th2 = (label, f) => ({ label: `MSX2 Technical Handbook (ASCII, transcription on archive.org), ${label}`, url: TH2(f) });
 const AYDM = (label, page) => ({ label: `General Instrument AY-3-8910/8912 Programmable Sound Generator Data Manual (reprint), ${label}`, url: `https://cdn.hackaday.io/files/1689687229126912/AY-3-8910-manual.pdf#page=${page}` });
 const YM2149 = (label, page) => ({ label: `Yamaha YM2149 SSG data sheet (catalog LSI-2121492, 1992), ${label}`, url: `https://bitsavers.org/components/yamaha/YM2149_199209.pdf#page=${page}` });
+const V9958DB = { label: 'Yamaha V9958 MSX-Video Technical Data Book (Dec 1988), 4 Pin layout and functions, pp. 3-4 (vgamuseum.info scan)', url: 'https://vgamuseum.info/images/doc/yamaha/v9958.pdf#page=7' };
 const TMS = { label: 'TMS9918A/9928A/9929A Video Display Processors Data Manual (TI, 1982), 3.7 terminal assignments', url: 'https://ftp.whtech.com/datasheets%20and%20manuals/Datasheets%20-%20TI/9918a28a29a.pdf#page=52' };
 const W = p => `https://www.msx.org/wiki/${p}`;
 const W_GP = { label: 'MSX Resource Center wiki, General Purpose port (second source)', url: W('General_Purpose_port') };
@@ -148,6 +149,11 @@ const ay8910 = {
   machines: ['msx1', 'msx2'], location: { msx1: 'Varies by maker; AY-3-8910 or Yamaha YM2149, or inside an MSX-Engine on late boards', msx2: 'Discrete AY-3-8910 / YM2149 on early MSX2; inside the S3527 or S1985 MSX-Engine on most' },
   summary: 'On the MSX it sits at I/O $A0 (address latch), $A1 (data write) and $A2 (data read), clocked at 1.7897725 MHz (half the CPU clock). Port A is input: bits 0-5 read the selected joystick port (directions and triggers), bit 6 the keyboard layout jumper (Japanese machines), bit 7 the cassette input. Port B is output: trigger and pin 8 outputs, bit 6 selects joystick port 1 or 2, bit 7 the Kana LED. So a dead PSG means no sound, no joysticks and no tape loading. The YM2149 is a drop-in: pin 26 is SEL there (pull-up; open = same as the AY), and its DAC is louder. The 28-pin AY-3-8912 (timex.js) is the same chip without port B.',
   fails: ['No sound', 'Joysticks dead on both ports', 'Tape will not load (CMTIN is read through port A bit 7)', 'One voice missing or distorted'],
+  replacements: [
+    { part: 'Yamaha YM2149 (SSG)', kind: 'pin-compatible',
+      note: 'Drop-in. Pin 26 is SEL on the YM2149: HIGH or open (internal pull-up) uses the clock as is, LOW divides it by 2, so leave it open or HIGH; on the AY it is TEST 2. The YM2149 has a 5-bit envelope and DAC (32 steps), so volume and envelope curves sound smoother and the output is louder than a GI part.',
+      source: YM2149('pin description 5. SEL ("full pin compatibility with the AY-3-8910 ... when this pin is not connected"), and features (5-bit envelope and D/A), p. 1-3', 3) },
+  ],
   heat: 'warm', verifiedAgainst: 'GI AY-3-8910/8912 Data Manual, Fig. 4 pin assignments and sec. 2.3 pin functions; YM2149 data sheet pin layout; MSX Technical Data Book 1.3.6 and 1.7.12',
   datasheets: [AYDM('Fig. 4 AY-3-8910 pin assignments, p. 10', 10), AYDM('sec. 2.3 pin functions, p. 11-13', 11), YM2149('pin layout and pin description, p. 1-2', 1), tdb('1.7.12 PSG Bit Assignments, p. 44', 47), tdb('1.3.6 Sound (clock 1.7897725 MHz), p. 14', 17)],
   pins: [
@@ -200,6 +206,11 @@ const vdp9938 = {
   machines: ['msx2'], location: { msx2: 'Varies by maker; 64-pin shrink DIP (SDIP, 1.778 mm pitch), usually beside the VRAM' },
   summary: 'Runs from a 21.47727 MHz crystal on XTAL1/XTAL2 and hands the Z80 its clock on CPUCLK (crystal / 6 = 3.58 MHz), so a dead V9938 or crystal can stop the whole machine, not just the picture. Ports $98 (VRAM), $99 (registers), $9A (palette), $9B (register pointer). Up to 128 KB VRAM on /CAS0 and /CAS1 (/CASX for 64 KB expansion VRAM), with 16K x 1, 16K x 4, 64K x 1 or 64K x 4 DRAM. Linear R, G, B and composite VIDEO out on pins 21-24 through external buffers. Unlike the TMS9918A, bit 0 of each bus is the LSB (CD0, RD0, AD0). Pin spacing is 1.778 mm: an ordinary 0.1 in socket will not fit.',
   fails: ['No picture and no boot (the Z80 clock comes from CPUCLK)', 'Garbled screen or wrong colours (VRAM, palette)', 'Picture but no sync on RGB', 'Works in SCREEN 0-4, fails in SCREEN 5-8 (upper VRAM)'],
+  replacements: [
+    { part: 'Yamaha V9958 (MSX2+ VDP)', kind: 'pin-compatible',
+      note: 'Same 64-pin SDIP and software compatible, but not a drop-in. Pin 21 becomes VDD/DAC (+5 V in), where the V9938 has composite VIDEO out: the V9958 has no composite output, so a board that takes video from pin 21 loses it and the DAC is unpowered until pin 21 gets +5 V. Pin 4 (/VDS on the V9938) becomes the /VRESET input and /VDS moves onto pin 8 with CPUCLK; pins 26 and 27 (/LPS, /LPD) become /WAIT out and /HRESET in. Upgrades rewire those pins.',
+      source: V9958DB },
+  ],
   heat: 'warm', verifiedAgainst: 'Yamaha V9938 MSX-Video Technical Data Book (Aug 1985), Part 2 sec. 2 Pin assignments and functions, p. 114-115',
   datasheets: [v99('Part 2 sec. 2 pin assignments and functions, p. 114', 127), v99('Part 2 sec. 2 pin functions (cont.), p. 115', 128), v99('Part 2 sec. 1-4 MSX-Video circuit example (21.47727 MHz crystal, 128 KB VRAM), p. 113', 126), th2('ch. 1 sec. 2 MSX2 VRAM and VDP', 'th-1.txt')],
   pins: [
@@ -355,6 +366,69 @@ const supply = (mid, extraNotes = []) => ({
   sources: S_CART
 });
 
+
+/* ---------- feature sources: scope blocks, first ten minutes, clocks, replacements ---------- */
+const Z80PS = { label: 'Zilog Z80 CPU Product Specification 03-0027-02 (Mar 1978), D.C. characteristics: clock input LOW max 0.45 V, HIGH min VCC - 0.6 V, p. 8', url: 'http://www.bitsavers.org/components/zilog/z80/03-0027-02_Z80_CPU_Product_Specification_Mar78.pdf#page=8' };
+const AY_DC = AYDM('7.3 DC characteristics (inputs: logic 0 max 0.6 V, logic 1 min 2.4 V) and 7.4 AC characteristics (clock 1-2 MHz, duty 25-75%), p. 53-54', 53);
+const F9P = label => ({ label: `Sony HB-F9P/F9S Service Manual (MSX2, PAL), ${label}`, url: `${AO}sonyhbf9psm/page/n16` });
+const VG20 = (label, pdfPage) => ({ label: `Philips VG-8020 Service Manual (MSX1, PAL), ${label}`, url: `${AO}philipsvg8020sm/page/n${pdfPage - 1}` });
+const HB101 = { label: 'Sony HB-101P/201P Service Manual (MSX1, PAL), 6-1 Clock frequency adjustment: IC6 (CPU) pin 6 = 3.562500 MHz, p. 6-1', url: `${AO}sonyhb101sm/page/n59` };
+const VG35 = { label: 'Philips VG8230/8235 Repair Method (MSX2, PAL), 13. ERR 990: interrupt period 20 ± 2 ms; 14. ERR 999: interrupt stuck LOW, pp. 21-22', url: 'https://archive.org/download/vg8235sm/Vg8235RepairMethod-Part1.pdf#page=20' };
+const TMS_OSC = { label: 'TMS9918A/9928A/9929A Video Display Processors Data Manual (TI, 1982), 3.6 Oscillator and clock generation (10.738635 MHz; GROMCLK = crystal / 24), p. 3-8', url: 'https://ftp.whtech.com/datasheets%20and%20manuals/Datasheets%20-%20TI/9918a28a29a.pdf#page=51' };
+const CART_P = tdb('1.5.4 Cartridge Power Capacity, p. 34', 37);
+
+const msxFirst = mid => mid === 'msx1' ? [
+  { step: 1, check: '+5 V at a cartridge slot (no cartridge fitted)', where: 'Cartridge slot pin 45 and pin 47, to pin 41', expect: '+4.75 to +5.25 V DC',
+    ifNot: 'The supply: regulator, filter capacitors, fuse. Where the supply has a trimmer, set it as the maker says (Philips VG-8020: VR1 on the supply board for 5 V across C3).', source: CART_P },
+  { step: 2, check: '+12 V and -12 V at the slot', where: 'Cartridge slot pin 48 and pin 50, to pin 43', expect: '+11.4 to +12.6 V on pin 48; -11.4 to -12.6 V on pin 50',
+    ifNot: 'The supply\'s ±12 V windings or regulators. Boards with 4116 VRAM also make -5 V from -12 V: lose it and the VRAM fails.', source: CART_P },
+  { step: 3, check: '+5 V at the main chips', where: 'Z80A pin 11; TMS9918A pin 33; AY-3-8910 pin 40', expect: '+4.75 to +5.25 V',
+    ifNot: 'A break between the supply and the chip, or a chip pulling the rail down: feel for a hot one.', source: TMS },
+  { step: 4, check: 'Reset released', where: 'Z80A pin 26; Cartridge slot pin 15', expect: 'LOW for a moment at power-on, then HIGH',
+    ifNot: 'Stuck LOW: the reset circuit or a cartridge holding /RESET. Never HIGH: the reset capacitor or button.', source: tdb('1.5.2 Cartridge Bus, /RESET, p. 32-33', 35) },
+  { step: 5, check: 'CPU clock', where: 'Z80A pin 6; Cartridge slot pin 42', expect: '3.579545 MHz (the Sony HB-101P, a PAL board, runs 3.5625 MHz)',
+    ifNot: 'Find where this board makes it: a 14.31818 MHz crystal / 4 on the Philips VG-8020, the VDP crystal on others, TMS9918A pin 38 on some NTSC boards. Check that oscillator first.', source: tdb('1.3.1 LSIs: CPU clock 3.579545 MHz, p. 10', 13) },
+  { step: 6, check: 'VDP crystal and GROMCLK', where: 'TMS9918A pin 39 and pin 40; TMS9918A pin 37', expect: '10.738635 MHz at the crystal (10.6875 MHz on PAL Philips and Sony boards); crystal / 24 at pin 37 (447.4 kHz; 445.32 kHz on the VG-8020)',
+    ifNot: 'No oscillation: the crystal, its trimmer (TC1 on the VG-8020) or the VDP. Philips sets the VDP clock with a frequency meter on U30 pin 37 through a 10:1 probe.', source: VG20('Adjustments: VDP clock frequency 445.32 kHz at U30 pin 37, p. 2', 2) },
+  { step: 7, check: 'Frame interrupt', where: 'TMS9918A pin 16', expect: 'A LOW pulse every frame: 60 Hz NTSC, 50 Hz PAL',
+    ifNot: 'No /INT: the VDP is dead or not set up, and the keyboard (scanned in the interrupt) is dead too.', source: tdb('1.3.3 Interrupts (VDP interrupt, mode 1), p. 11', 14) },
+  { step: 8, check: 'PSG clock', where: 'AY-3-8910 pin 22', expect: '1.7897725 MHz (half the CPU clock)',
+    ifNot: 'No clock: no sound, no joysticks and no tape. Trace it back to the divider; if present, check AY-3-8910 pin 23 (/RESET) HIGH.', source: tdb('1.3.6 Sound (clock 1.7897725 MHz), p. 14', 17) },
+] : [
+  { step: 1, check: '+5 V at a cartridge slot (no cartridge fitted)', where: 'Cartridge slot pin 45 and pin 47, to pin 41', expect: '+4.75 to +5.25 V DC',
+    ifNot: 'The supply: regulator, filter capacitors, fuse.', source: CART_P },
+  { step: 2, check: '+12 V and -12 V at the slot', where: 'Cartridge slot pin 48 and pin 50, to pin 43', expect: '+11.4 to +12.6 V on pin 48; -11.4 to -12.6 V on pin 50',
+    ifNot: 'The supply\'s ±12 V windings or regulators.', source: CART_P },
+  { step: 3, check: '+5 V at the VDP and CPU', where: 'V9938 pin 58; Z80A pin 11', expect: '+4.75 to +5.25 V',
+    ifNot: 'A break between the supply and the chip, or a chip pulling the rail down.', source: v99('Part 2 pin functions (VDD pin 58), p. 115', 128) },
+  { step: 4, check: 'VDP crystal', where: 'V9938 pin 63 and pin 64', expect: '21.47727 MHz (21.4697 MHz on the PAL Sony HB-F9P); about 3.4 V p-p sine at pin 63',
+    ifNot: 'The crystal or its trimmer, then the V9938. Nothing else runs without it: the CPU clock comes from the VDP.', source: F9P('CPU section schematic, waveforms at IC8 V9938 pins 63 (XTAL1), 8 (CPUCLK) and 25 (/INT), p. 16') },
+  { step: 5, check: 'CPU clock from the VDP', where: 'V9938 pin 8 to Z80A pin 6', expect: '3.579545 MHz (crystal / 6): 4.7 V p-p, 280 ns period on the HB-F9P',
+    ifNot: 'Crystal running but no CPUCLK: the V9938. CPUCLK present but not at the Z80: the track or a buffer between them.', source: F9P('CPU section schematic, CPUCLK waveform at IC8 pin 8 (4.7 V p-p, 280 ns), p. 16') },
+  { step: 6, check: 'Reset released', where: 'V9938 pin 9; Z80A pin 26', expect: 'LOW for a moment at power-on, then HIGH',
+    ifNot: 'Stuck LOW: the reset circuit, or a cartridge holding /RESET. The V9938 is held in reset with the CPU.', source: v99('Part 2 pin functions (/RESET), p. 115', 128) },
+  { step: 7, check: 'Frame interrupt', where: 'V9938 pin 25', expect: 'LOW pulses every 20 ms on PAL machines (16.7 ms NTSC)',
+    ifNot: 'Stuck LOW (Philips ERR 999) or off by more than ±2 ms (ERR 990): the V9938, the interrupt line to the Z80, or a cartridge holding /INT.', source: VG35 },
+  { step: 8, check: 'PSG clock (discrete PSG boards)', where: 'AY-3-8910 pin 22', expect: '1.7897725 MHz (half the CPU clock)',
+    ifNot: 'On MSX-Engine boards the PSG is inside the S3527 or S1985: check that chip\'s supply and clock instead.', source: tdb('1.3.6 Sound (clock 1.7897725 MHz), p. 14', 17) },
+];
+
+const msxClocks = mid => mid === 'msx1' ? [
+  { name: 'VDP crystal (TMS9918A, NTSC)', where: 'TMS9918A pin 39 to pin 40', ntsc: '10.738635 MHz', source: TMS_OSC },
+  { name: 'VDP crystal (TMS9929A boards)', where: 'TMS9918A pin 39 to pin 40', pal: '10.6875 MHz (Philips VG-8020 X1, Sony HB-101P); other PAL makers may differ', source: VG20('Parts list: X1 10.6875 MHz, X2 14.31818 MHz, p. 7', 7) },
+  { name: 'GROMCLK (crystal / 24)', where: 'TMS9918A pin 37', ntsc: '447.4 kHz', pal: '445.32 kHz (VG-8020 adjustment value)', source: VG20('Adjustments: VDP clock frequency 445.32 kHz at U30 pin 37, p. 2', 2) },
+  { name: 'CPU clock', where: 'Z80A pin 6; Cartridge slot pin 42', ntsc: '3.579545 MHz', pal: '3.579545 MHz (VG-8020: 14.31818 MHz / 4)', source: tdb('1.3.1 LSIs: CPU clock 3.579545 MHz (NTSC colour subcarrier), p. 10', 13) },
+  { name: 'CPU clock, Sony HB-101P', where: 'Z80A pin 6', pal: '3.5625 MHz', source: HB101 },
+  { name: 'PSG clock (CPU / 2)', where: 'AY-3-8910 pin 22', ntsc: '1.7897725 MHz', pal: '1.7897725 MHz', source: tdb('1.3.6 Sound (clock 1.7897725 MHz, 1/2 CPU clock), p. 14', 17) },
+  { name: 'Frame interrupt', where: 'TMS9918A pin 16', ntsc: '59.9 Hz', pal: '50.2 Hz', source: { label: 'TMS9918A/9928A/9929A Data Manual, 3.6.2 (262 lines, about 60 frames/s; TMS9929A 313 lines, about 50), p. 3-8', url: TMS_OSC.url } },
+] : [
+  { name: 'VDP crystal', where: 'V9938 pin 63 to pin 64', ntsc: '21.47727 MHz', pal: '21.4697 MHz (Sony HB-F9P schematic)', source: F9P('CPU section schematic, XTAL1 waveform "3.4 Vp-p 21.4697 MHz", X2, p. 16') },
+  { name: 'CPU clock (crystal / 6)', where: 'V9938 pin 8 to Z80A pin 6', ntsc: '3.579545 MHz', pal: '3.5783 MHz (21.4697 MHz / 6, derived)', source: v99('Part 2 pin functions (CPUCLK = XTAL / 6), p. 115', 128) },
+  { name: 'Dot clocks (open drain)', where: 'V9938 pin 2; V9938 pin 3', ntsc: '10.74 MHz / 5.37 MHz', source: v99('Part 2 pin functions (DHCLK, DLCLK), p. 115', 128) },
+  { name: 'PSG clock (CPU / 2)', where: 'AY-3-8910 pin 22', ntsc: '1.7897725 MHz', source: tdb('1.3.6 Sound (clock 1.7897725 MHz), p. 14', 17) },
+  { name: 'Frame interrupt', where: 'V9938 pin 25', ntsc: '60 Hz', pal: '50 Hz (20 ± 2 ms, Philips VG8235 repair method)', source: VG35 },
+];
+
 const S_POWER = [tdb('1.3.1 LSIs (CPU clock 3.579545 MHz), p. 10', 13), tdb('1.5.4 Cartridge Power Capacity, p. 34', 37), TMS];
 
 RCS.add({
@@ -416,6 +490,7 @@ RCS.add({
   power: {
     msx1: {
       supply: supply('msx1', ['Boards with 4116 VRAM also need -5 V, made on the board from -12 V; if it is lost the VRAM can fail.']),
+      firstTen: msxFirst('msx1'), clocks: msxClocks('msx1'),
       rails: [
         { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; TMS9918A pin 33; AY-3-8910 pin 40; 8255A pin 26; cartridge pins 45 and 47', note: 'The logic supply; the standard allows 300 mA per cartridge slot.' },
         { rail: '+12 V', expect: '11.4-12.6 V', where: 'Cartridge pin 48', note: '50 mA for cartridges; also the 4116 VRAM Vdd (pin 8) on boards that use them.' },
@@ -425,10 +500,14 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'VDP crystal', where: 'TMS9918A pin 39; TMS9918A pin 40', expect: '10.738635 MHz' },
-        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '3.579545 MHz' },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '3.579545 MHz',
+          scope: { f: '3.579545 MHz', low: '0.45 V', high: '4.4 V', shape: 'square', basis: 'datasheet', source: Z80PS,
+            note: 'Idealised from the Z80 clock-input limits (LOW below 0.45 V, HIGH above VCC - 0.6 V), not a capture. The rate is the standard\'s (Technical Data Book 1.3.1); some PAL boards differ (Sony HB-101P: 3.5625 MHz). A Z80 clock that only reaches TTL levels can still run some Z80s, but it is out of spec.' } },
         { tp: 'CPU clock from the VDP (TMS9918A boards)', where: 'TMS9918A pin 38', expect: '3.579545 MHz (crystal / 3); the 9928A and 9929A have R-Y here, so PAL boards make the CPU clock elsewhere', verify: true },
         { tp: 'Cartridge clock', where: 'Cartridge pin 42', expect: '3.579545 MHz' },
-        { tp: 'PSG clock', where: 'AY-3-8910 pin 22', expect: '1.7897725 MHz' },
+        { tp: 'PSG clock', where: 'AY-3-8910 pin 22', expect: '1.7897725 MHz',
+          scope: { f: '1.7897725 MHz', low: '0.6 V', high: '2.4 V', shape: 'square', basis: 'datasheet', source: AY_DC,
+            note: 'Idealised from the PSG input limits, not a capture. The data manual allows 1-2 MHz and a 25-75% duty, so the exact shape depends on the board\'s divider. Rate: half the CPU clock (Technical Data Book 1.3.6).' } },
         { tp: 'Frame interrupt', where: 'TMS9918A pin 16', expect: 'LOW pulse every frame: 60 Hz (NTSC) or 50 Hz (PAL)' },
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
       ],
@@ -436,6 +515,7 @@ RCS.add({
     },
     msx2: {
       supply: supply('msx2'),
+      firstTen: msxFirst('msx2'), clocks: msxClocks('msx2'),
       rails: [
         { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; V9938 pin 58; cartridge pins 45 and 47', note: 'The logic supply.' },
         { rail: '+12 V', expect: '11.4-12.6 V', where: 'Cartridge pin 48', note: '50 mA for cartridges.' },
@@ -443,10 +523,16 @@ RCS.add({
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; V9938 pin 1; V9938 pin 20; cartridge pins 41 and 43', note: 'V9938 pin 20 is the DAC ground.' }
       ],
       testPoints: [
-        { tp: 'VDP crystal', where: 'V9938 pin 63; V9938 pin 64', expect: '21.47727 MHz' },
-        { tp: 'CPU clock', where: 'V9938 pin 8; Z80A pin 6', expect: '3.579545 MHz (crystal / 6)' },
+        { tp: 'VDP crystal', where: 'V9938 pin 63; V9938 pin 64', expect: '21.47727 MHz',
+          scope: { f: '21.4697 MHz', low: '0.3 V', high: '3.7 V', shape: 'sine', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 63 (XTAL1): 3.4 V p-p, 21.4697 MHz; 2.0 V DC marked at the pin, p. 16'),
+            note: 'Sony prints 3.4 V p-p and 21.4697 MHz on its PAL HB-F9P, with 2.0 V DC at the pin; the levels here centre the swing on that 2.0 V. The V9938 data book gives 21.47727 MHz. A 10:1 probe on the crystal pulls it slightly.' } },
+        { tp: 'CPU clock', where: 'V9938 pin 8; Z80A pin 6', expect: '3.579545 MHz (crystal / 6)',
+          scope: { period: '280 ns', low: '0 V', high: '4.7 V', shape: 'square', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 8 (CPUCLK): 4.7 V p-p, 280 ns, p. 16'),
+            note: 'Sony prints 4.7 V p-p and a 280 ns period; the trace assumes the swing starts at 0 V. Sony draws it with rounded tops. No CPUCLK with the crystal running: the V9938.' } },
         { tp: 'Dot clocks', where: 'V9938 pin 2; V9938 pin 3', expect: '10.74 MHz / 5.37 MHz (open drain)' },
-        { tp: 'Frame interrupt', where: 'V9938 pin 25', expect: 'LOW pulse every frame: 60 Hz (NTSC) or 50 Hz (PAL)' },
+        { tp: 'Frame interrupt', where: 'V9938 pin 25', expect: 'LOW pulse every frame: 60 Hz (NTSC) or 50 Hz (PAL)',
+          scope: { period: '20 ms', low: '0 V', high: '4.8 V', shape: 'pulse', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 25 (/INT): 4.8 V p-p, 20 ms, p. 16'),
+            note: 'Sony prints 4.8 V p-p, 20 ms (a PAL machine; 16.7 ms on NTSC). The pulses go LOW from a HIGH line; the trace assumes 0 V at the bottom. Philips flags a period outside 20 ± 2 ms as ERR 990 and a line stuck LOW as ERR 999.' } },
         { tp: 'Reset', where: 'V9938 pin 9; Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
       ],
       sources: [v99('Part 2 pin functions, p. 115', 128), v99('MSX-Video circuit example, p. 113', 126), tdb('1.5.4 Cartridge Power Capacity, p. 34', 37)]

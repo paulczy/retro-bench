@@ -144,6 +144,39 @@ const SAIO = atm('ch. 11 Input/Output, p. 223-225', 228);
 const VF1 = 'Oric-1 48K circuit diagram issue 7 (SK1, SK2, SK3, PL1, PL2, PL3); Oric Owner issue 5 circuit diagram';
 const VFA = 'Oric Atmos manual, Appendix 11 ATMOS I/O Connections, p. 284-285';
 
+/* ---------- feature sources: scope block, first ten minutes, clocks, replacements ---------- */
+const CHK1 = { label: 'Mike Brown, Oric/Atmos Mainboard Repair Checksheet v1.0, 2: Verify power supply (225 ohm rail, 9 V centre positive, 4.95-5.05 V, 7905), p. 1', url: SIG + 'repairguide/OricRepairChecklist1-00.pdf#page=1' };
+const CHK3 = { label: 'Mike Brown, Oric/Atmos Mainboard Repair Checksheet v1.0, 3: Verify clocks and 4: system bus (SYNC), p. 3', url: SIG + 'repairguide/OricRepairChecklist1-00.pdf#page=3' };
+const ULAG4 = { label: 'Mike Brown, The Oric-1/Atmos Unofficial ULA Guide v1.02, Operation: 12 MHz in on pin 7, / 2 dot clock, / 6 to 1 MHz on pin 14 (asymmetric), 64 µs lines, p. 4', url: SIG + 'ula1/OricAtmosUnofficialULAGuide-1.02.pdf#page=4' };
+const ULAG5 = { label: 'Mike Brown, The Oric-1/Atmos Unofficial ULA Guide v1.02, vertical count: 312 lines (50 Hz) or 260 lines (60 Hz), p. 5', url: SIG + 'ula1/OricAtmosUnofficialULAGuide-1.02.pdf#page=5' };
+const MOS6500 = { label: 'MOS 6500 Microprocessors data sheet (Nov 1985), electrical characteristics: 6502 clock input (Φ0) HIGH min VSS + 2.4 V, LOW max VSS + 0.4 V, p. 3', url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=3' };
+const firstTen = [
+  { step: 1, check: 'Adapter polarity and voltage, before it goes near the board (the 7905 trap)', where: '9 V DC power socket pin 1 to pin 2', expect: 'Centre (pin 1) positive, about 9 V DC to the sleeve; more unloaded. Never 12 V.',
+    ifNot: 'Do not plug it in. The 7905 sits in the negative leg: board 0 V is its output, not the jack sleeve. Never tie the adapter negative, a bench-supply negative or a scope ground clip on the sleeve to board 0 V, and never use a centre-negative adapter (there is no protection diode).', source: CHK1 },
+  { step: 2, check: 'Rail resistance, unpowered, ULA and ROM out of their sockets', where: '6502 pin 8 to pin 21', expect: 'About 225 Ω from +5 V to 0 V; under 50 Ω is a short',
+    ifNot: 'Do not power it. Check C8 by the jack, then cut the 0 V feeds to the DRAMs, CPU, VIA and AY in turn as the checklist shows (a bad 4164 draws over 100 mA at pin 16).', source: CHK1 },
+  { step: 3, check: '+5 V from a current-limited 9 V supply (700 mA limit)', where: '6502 pin 8 to pin 21', expect: '+4.95 to +5.05 V; under 600 mA once the ULA is back in',
+    ifNot: 'C8 first, then lift the 7905 OUT leg: +5 V must appear between OUT and COM, or the 7905 is bad (unbolt it to change it).', source: CHK1 },
+  { step: 4, check: '12 MHz master clock', where: 'ULA pin 7', expect: '12 MHz from IC21 pin 2',
+    ifNot: 'XT1, IC21, or the ULA loading the line: cut the track to tell which. Fit modification 63b (220 Ω in the feed, 560 Ω pull-up on ULA pin 7) if start-up is erratic.', source: CHK3 },
+  { step: 5, check: '1 MHz CPU clock from the ULA', where: 'ULA pin 14 to 6502 pin 37', expect: '1 MHz (asymmetric)',
+    ifNot: 'With 12 MHz present: the ULA, or the 6502 loading the line. Cut the track and see which side loses the clock.', source: CHK3 },
+  { step: 6, check: 'Φ1 and Φ2 out of the 6502', where: '6502 pin 3 to AY-3-8912 pin 15; 6502 pin 39 to VIA pin 25', expect: '1 MHz on both',
+    ifNot: 'Pin 37 good but nothing here: the 6502. A shorted AY or VIA can pull its clock down: cut and retest.', source: CHK3 },
+  { step: 7, check: 'CPU fetching opcodes (ROM, or the diagnostic ROM, fitted)', where: '6502 pin 7', expect: 'Regular SYNC pulses',
+    ifNot: 'No SYNC: the CPU, the ROM, or a stuck address or data line (the service manual pp. 35-37, per the checklist). The diagnostic ROM narrows it down.', source: CHK3 },
+];
+const clocks = [
+  { name: 'Master crystal XT1 (PAL machine; the ULA also has a 60 Hz mode)', where: 'ULA pin 7 (fed from IC21)', f: '12 MHz', source: CHK3 },
+  { name: 'Dot clock (12 MHz / 2, inside the ULA)', where: 'ULA (internal)', f: '6 MHz', source: ULAG4 },
+  { name: 'CPU clock (12 MHz / 12, asymmetric)', where: 'ULA pin 14 to 6502 pin 37', f: '1 MHz', source: ULAG4 },
+  { name: 'Φ1, to the sound chip', where: '6502 pin 3 to AY-3-8912 pin 15', f: '1 MHz', source: CHK3 },
+  { name: 'Φ2, to the VIA', where: '6502 pin 39 to VIA pin 25', f: '1 MHz', source: CHK3 },
+  { name: 'Line rate (64 µs lines)', where: 'ULA pin 16', f: '15.625 kHz', source: ULAG4 },
+  { name: 'Frame rate', where: 'ULA pin 16', f: '50 Hz (312 lines; 60 Hz mode: 260 lines)', source: ULAG5 },
+  { name: 'Colour crystal XT2 (TV colour circuit)', where: 'XT2 and IC25', f: '8.86 MHz', source: CHK3 },
+];
+
 /* ---------- power ---------- */
 const supplyNotes = [
   'Unregulated 9 V DC adapter; the Oric-1 schematic rates the input "9V 600mA". The board draws under 600 mA with everything fitted (repair checklist).',
@@ -161,7 +194,9 @@ const rails = [
 ];
 const testPoints = [
   { tp: 'Master clock', where: 'ULA pin 7', expect: '12 MHz (XT1 with IC21 inverters; source IC21 pin 2)' },
-  { tp: 'CPU clock from the ULA', where: 'ULA pin 14', expect: '1 MHz, asymmetric; arrives at 6502 pin 37' },
+  { tp: 'CPU clock from the ULA', where: 'ULA pin 14', expect: '1 MHz, asymmetric; arrives at 6502 pin 37',
+    scope: { f: '1 MHz', low: '0.4 V', high: '2.4 V', shape: 'square', basis: 'datasheet', source: MOS6500,
+      note: 'Idealised from the 6502 clock-input limits, not a capture: no Oric service-manual waveform was available. Rate 12 MHz / 12 (ULA guide, p. 4). The real clock is asymmetric, the ULA taking more than half of each cycle (why a 2 MHz 6502A is fitted); the guide gives no duty, so none is drawn.' } },
   { tp: 'Phase 1 to the sound chip', where: '6502 pin 3', expect: '1 MHz; arrives at AY-3-8912 pin 15' },
   { tp: 'Phase 2 to the VIA', where: '6502 pin 39', expect: '1 MHz; arrives at VIA pin 25 and expansion pin 3' },
   { tp: 'Opcode fetch', where: '6502 pin 7', expect: 'SYNC pulses from power-on; none = CPU not running' },
@@ -257,6 +292,11 @@ RCS.add({
       machines: ['oric1', 'atmos'], location: { oric1: 'IC7', atmos: 'IC7 (same numbering per the Oric/Atmos checklist; verify)' },
       summary: 'The Oric\'s custom chip. It takes 12 MHz on pin 7, gives the 6502 its 1 MHz clock on pin 14, decodes A8-A15 into /ROMSEL ($C000-$FFFF unless /MAP is low) and /I/O ($0300-$03FF), and shares the DRAM between the CPU and the video on alternate half-cycles through the external 74LS257 mux. It only reads the data bus, never drives it. RAS, CAS and the DRAM write are active high here and inverted by IC21 before the 4164s. No official datasheet exists; the pinout here is read from the Oric schematic and the diagnostic guides.',
       fails: ['Black screen with power present (no 1 MHz CPU clock)', 'Garbage or fixed pattern (DRAM timing)', 'No RGB or wrong colours', 'Intermittent start-up (see modification 63b: 220 ohm in the 12 MHz feed, 560 ohm pull-up on pin 7)'],
+      replacements: [
+        { part: 'HCS 10017 (new old stock)', kind: 'pin-compatible', verify: true,
+          note: 'The only replacement found: original HCS 10017 ULAs sold as new old stock. The listing names the Atmos and the Pravetz 8D clone, not the Oric-1 (same ULA number on the Oric-1 schematic), and gives no test details. No modern CPLD or FPGA socket replacement was found; the Oric FPGA cores re-create the whole machine, not the chip.',
+          source: { label: 'Tindie, retro_devices: 1 pc. new genuine HCS 10017 DIP40 ULA for Oric Atmos and clones like Pravetz 8D', url: 'https://www.tindie.com/products/retro_devices/1-pc-new-genuine-hcs-10017-dip40-ula-for-oric/' } },
+      ],
       heat: 'warm', verifiedAgainst: 'Oric-1 48K circuit diagram issue 7 and the Oric Owner issue 5 circuit diagram (IC7 HCS10017); Mike Brown Unofficial ULA Guide and Diagnostic ROM guide; Defence Force wiki ULA pinout',
       datasheets: [SCH1, OO5, W_ULA, ULAG, DIAG, CHK],
       pins: [
@@ -352,11 +392,11 @@ RCS.add({
   power: {
     oric1: {
       supply: { external: true, name: 'Oric 9 V DC adapter (unregulated)', output: '9 V DC unregulated, 600 mA (schematic rating)', connector: 'oric1-power', notes: supplyNotes, sources: supplySrc },
-      rails, testPoints, sources: [SCH1, SCH2, CHK, DIAG]
+      rails, testPoints, firstTen, clocks, sources: [SCH1, SCH2, CHK, DIAG]
     },
     atmos: {
       supply: { external: true, name: 'Oric Atmos 9 V DC adapter (unregulated)', output: '9 V DC unregulated (current rating not given in the Atmos manual; the Oric-1 schematic gives 600 mA)', connector: 'atmos-power', notes: supplyNotes, sources: [atm('ch. 1 Getting the ATMOS together, p. 3', 8), ...supplySrc] },
-      rails, testPoints, sources: [CHK, DIAG, SCH1]
+      rails, testPoints, firstTen, clocks, sources: [CHK, DIAG, SCH1]
     }
   },
   quickref: {

@@ -21,6 +21,19 @@ const ITD = n => `https://archive.worldofdragon.org/browse/downloads/Books/Insid
 const WIKI = t => `https://archive.worldofdragon.org/index.php?title=${t}`;
 const MEMDB = n => `https://bitsavers.org/components/motorola/_dataBooks/1981_82_Motorola_Memory_Databook.pdf#page=${n}`;
 const CMOSDB = n => `https://bitsavers.org/components/motorola/_dataBooks/1978_Motorola_CMOS_Data_Book.pdf#page=${n}`;
+/* Feature data (scope, firstTen, clocks, replacements): Motorola data sheets on colorcomputerarchive.com, the SGS HCF4529B sheet, forum and store pages. */
+const CCA = 'https://colorcomputerarchive.com/repo/Documents/Datasheets';
+const SAMDS = (n, label) => ({ label: `SN74LS783/MC6883 SAM data sheet (Motorola), ${label}`, url: `${CCA}/MC6883%20Synchronous%20Address%20Multiplexer%20(Motorola).pdf#page=${n}` });
+const CPUDS = (n, label) => ({ label: `Motorola MC6809E data sheet, ${label}`, url: `${CCA}/MC6809E%20HMOS%208%20Bit%20Microprocessor%20(Motorola).pdf#page=${n}` });
+const SAM_EQ = SAMDS(2, 'DC characteristics: E and Q outputs VOL 0.5 V max, VOH VCC - 0.75 V min, p. 5-324');
+const SAM_VCLK = SAMDS(2, 'DC characteristics: VClk output VOL 0.6 V max, other outputs VOH 2.7 V min, p. 5-324');
+const XTAL_NOTE = 'The rate is the 14.218 MHz crystal (Dragon 64 CD41505 sheet 2, XL3); the Dragon 32 SA2120 sheet marks XL2 14.32 MHz, which would give 0.895 MHz E and 3.58 MHz VClk. Read the can before trusting either.';
+const eScope = () => ({ f: '0.888625 MHz', low: '0.5 V', high: '4.25 V', shape: 'square', basis: 'datasheet', source: SAM_EQ,
+  note: `Idealised from the SAM output limits at 5 V, not a capture: no Dragon service document prints a waveform. The 6809E needs E below 0.4 V and above VCC - 0.75 V (MC6809E data sheet, DC characteristics, p. 2). E = crystal / 16. ${XTAL_NOTE}` });
+const qScope = () => ({ f: '0.888625 MHz', low: '0.5 V', high: '4.25 V', shape: 'square', basis: 'datasheet', source: SAM_EQ,
+  note: `Idealised from the SAM output limits. Q rises a quarter cycle before E (MC6809E bus timing, tEQ1 200 ns min, p. 3); the 6809E reads Q as HIGH above 2.0 V and LOW below 0.6 V. ${XTAL_NOTE}` });
+const vclkScope = () => ({ f: '3.5545 MHz', low: '0.6 V', high: '2.7 V', shape: 'square', basis: 'datasheet', source: SAM_VCLK,
+  note: `Idealised from the SAM output limits. The SAM pin table (p. 5-326) gives VClk as a square wave at crystal / 4. ${XTAL_NOTE}` });
 
 /* Pad layouts for 'custom' drawings, 0-100 box looking into the connector. */
 const rowPads = ns => ns.map((n, i) => ({ n, x: Math.round(8 + i * (84 / Math.max(1, ns.length - 1))), y: 50 }));
@@ -379,6 +392,48 @@ const groups = d64 => [
   { group: 'Functions', items: ['ABS SGN INT FIX', 'SQR SIN COS TAN ATN EXP LOG', 'RND(n)', 'PEEK(a) MEM VARPTR', 'LEN LEFT$ RIGHT$ MID$ INSTR', 'STR$ VAL ASC CHR$ HEX$ STRING$', 'INKEY$', 'JOYSTK(n)', 'TIMER', 'POS(n)'] },
 ];
 
+/* ---------- first ten minutes and clock tree (docs/data-schema.md, last section) ---------- */
+const SVC_A = { label: 'Dragon Data Service Information RWEW/RA/0082a, A. No picture or sound: transformer, PSU board (PL10, voltages, diodes), RESET, IC15', url: SVC(3) };
+const SVC_P = { label: 'Dragon Data Service Information RWEW/KA/0081a, Faults during program operation (IC15, IC17, IC18, IC19, RAM lines)', url: SVC(2) };
+const PSU_WIKI = { label: 'The Dragon Archive wiki, PSU Pictures: transformer labels (8-8.5 V 1.5 A; 28 V CT 0.25 A)', url: WIKI('PSU_Pictures') };
+const firstTen = d64 => [
+  { step: 1, check: 'Transformer winding A, pack plugged in, computer switched off', where: 'Power pack socket (PL9) pin 1 to pin 2', expect: '8-8.5 V AC (a little more unloaded; SW1 is after the socket)',
+    ifNot: 'The pack or its lead: it holds only a transformer, no rectifier. Service sheet step 1, "check transformer".', source: PSU_WIKI },
+  { step: 2, check: 'Transformer winding B', where: 'Power pack socket (PL9) pin 3 to pin 4; pin 5 to pin 4', expect: 'About 14 V AC each (28 V AC from pin 3 to pin 5)',
+    ifNot: `The pack or its lead. Without winding B there is no +12 V and no ${d64 ? '-12 V' : '-5 V'}.`, source: PSU_WIKI },
+  { step: 3, check: '+5 V from the LM309 (REG1), switched on', where: 'PSU board to CPU board (PL10 / PL6) pin 2 to pin 4', expect: '+4.75 to +5.25 V DC',
+    ifNot: d64 ? 'PL10 seated, the 1N5401 bridge, C6 and C9 (4700 µF), then the LM309. Service sheet: check PL10, test voltages, check diodes.' : 'PL10 seated, the bridge D1, D2, D5, D6 (1N4003), C6 (4700 µF), then the LM309. Service sheet: check PL10, test voltages, check diodes.',
+    source: d64 ? { label: 'Dragon 64 power supply CD41519 (REG1 LM309, bridge, PL10)', url: D64PSU } : { label: 'Dragon 32 PSU diagram SA2121 (REG1 LM309 +5 V 1400 mA, D1-D8, PL10)', url: D32PSU } },
+  { step: 4, check: d64 ? '+12 V (LM7812) and -12 V (LM7912)' : '+12 V (LM7812) and -5 V (LM7905)', where: 'PSU board to CPU board (PL10 / PL6) pin 1 and pin 3, each to pin 4',
+    expect: d64 ? '+11.4 to +12.6 V on pin 1; -11.4 to -12.6 V on pin 3' : '+11.4 to +12.6 V on pin 1; -4.75 to -5.25 V on pin 3',
+    ifNot: d64 ? 'The regulator, or its raw supply from the 1N4002s and C5. -12 V feeds the RS-232 drivers and the 79L05 that makes -5 V on the CPU board.' : 'The regulator, or its raw +18 V / -18 V from D3, D4, D7, D8. -5 V pulled towards 0 V is usually a shorted 4116: the LM7905 gives only 50 mA.',
+    source: d64 ? { label: 'Dragon 64 power supply CD41519 (LM7812, LM7912, PL10 pin 3 -12 V)', url: D64PSU } : { label: 'Dragon 32 PSU diagram SA2121 (REG2 LM7812 250 mA, REG3 LM7905 50 mA)', url: D32PSU } },
+  d64
+    ? { step: 5, check: '+5 V at the CPU, SAM and RAM', where: '6809E pin 7; SAM pin 40; 4164 pin 8', expect: '+4.75 to +5.25 V',
+        ifNot: 'A break between PL6 and the chip, or a chip pulling the rail down (feel for a hot one). The 4164s run on +5 V only.', source: { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (CPU, SAM, 4164 supply)', url: D64CPU } }
+    : { step: 5, check: 'The three rails at the 4116 RAM, and +5 V at the CPU', where: '4116 pin 9; 4116 pin 8; 4116 pin 1; 6809E pin 7', expect: '+5 V on pin 9, +12 V on pin 8, -5 V on pin 1; +5 V on the 6809E',
+        ifNot: 'A break between PL6 and the RAM. Lose -5 V and the 4116s fail first.', source: { label: 'The Dragon Archive wiki, Dragon 32 - 64K Upgrade (4116 pins 1, 8, 9)', url: WIKI('Dragon_32_-_64K_Upgrade') } },
+  { step: 6, check: 'Reset', where: '6809E pin 37', expect: 'LOW while RESET is held, HIGH within a moment of release',
+    ifNot: 'The RESET button, C23 (1 µF) or R15 (100 kΩ). Service sheet step 3, "check RESET button operation".', source: SVC_A },
+  { step: 7, check: 'Master crystal at the SAM', where: 'SAM pin 5 and pin 6', expect: d64 ? '14.218 MHz (XL3)' : '14.218 MHz (XL2; the SA2120 sheet marks 14.32 MHz)',
+    ifNot: `The crystal and its trimmer, then ${d64 ? 'the SAM (IC39)' : 'IC15 (SAM): service sheet steps 4 and 5, reseat IC15, then replace it'}.`,
+    source: d64 ? { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (XL3 14.218 MHz)', url: D64CPU } : SVC_A },
+  { step: 8, check: 'E and Q at the CPU', where: '6809E pin 34; 6809E pin 35', expect: 'About 0.89 MHz square waves, Q a quarter cycle ahead of E',
+    ifNot: d64 ? 'No E or Q with the crystal running: the SAM (IC39). Clocks good but no boot: CPU IC38, then ROMs IC34 and IC37, then the 4164 bank (the Dragon 32 service order).' : 'No E or Q with the crystal running: IC15 (SAM). Clocks good but no boot: the service sheet order IC15, IC17, IC18 (ROMs), IC19 (CPU), then the RAM lines.',
+    source: SVC_P },
+];
+const clocks = d64 => [
+  { name: `Master crystal ${d64 ? 'XL3' : 'XL2'} (PAL only: ${d64 ? 'the NTSC Tano Dragon 64 is not on these sheets' : 'there is no NTSC Dragon 32'})`, where: 'SAM pin 5 and pin 6',
+    f: d64 ? '14.218 MHz' : '14.218 MHz (the SA2120 sheet marks 14.32 MHz)', verify: !d64,
+    source: { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (XL3 14.218 MHz); the Dragon 32 SA2120 sheet 1 marks XL2 14.32 MHz', url: D64CPU } },
+  { name: 'VDG clock (crystal / 4)', where: 'SAM pin 7 to VDG pin 33', f: '3.5545 MHz', source: SAMDS(4, 'pin description table: VClk = crystal / 4 (3.579545 MHz from 14.31818 MHz), p. 5-326') },
+  { name: 'E, CPU clock (crystal / 16)', where: 'SAM pin 14 to 6809E pin 34', f: '0.888625 MHz', source: SAMDS(4, 'pin description table: E and Q, the MC6809E clocks, 90 degrees apart, p. 5-326') },
+  { name: 'Q, quadrature clock', where: 'SAM pin 13 to 6809E pin 35', f: '0.888625 MHz', source: CPUDS(3, 'bus timing, Q leads E (tEQ1), p. 3') },
+  ...(d64 ? [] : [{ name: 'PAL colour subcarrier', where: 'LM1889 colour encoder (IC9)', f: '4.433619 MHz', source: { label: 'Dragon 32 circuit diagram SA2120 sheet 3 (LM1889, 4.433619 MHz)', url: D32VID } }]),
+  { name: 'Field sync (/FS)', where: 'VDG pin 37', f: '50 Hz', source: { label: 'Inside the Dragon, Appendix 7, PIA summary (CB1 field sync every 20 ms), pp. 343-344', url: ITD(350) } },
+  ...(d64 ? [{ name: 'ACIA baud-rate crystal', where: '6551 pin 6', f: '1.8432 MHz', source: { label: 'Dragon 64 CD41505 sheet 3 (6551, 1.8432 MHz crystal)', url: D64VID } }] : []),
+];
+
 RCS.add({
   brand: {
     id: 'dragon',
@@ -447,6 +502,11 @@ RCS.add({
       machines: ['dragon32'],
       summary: 'Two 24-pin 8 KB mask ROMs hold the Dragon\'s BASIC, selected by the SAM device-select decode through the 74LS138 (IC33). The pinout is not the 2764 EPROM pinout: an adapter is needed to replace one with an EPROM. Dragon Data\'s service sheet lists IC17 and IC18 for "garbage on screen" and faults during program operation. Which chip holds $8000 and which $A000 is not marked on the SA2120 sheet.',
       fails: ['No boot or garbage on screen', 'BASIC crashes on particular commands', 'Garbage that RESET cures (IC17 per the service sheet)'],
+      replacements: [
+        { part: '2764 (to 27512) EPROM on a 2364 adapter', kind: 'adapter', verify: true,
+          note: 'The MCM68A364 pinout is the MOS 2364 pinout pin for pin (A12 on pin 21, chip select on pin 20; Motorola data sheet p. 2-191), so a 24-to-28-pin 2364 adapter fits. The Dragon drives pin 20 active LOW, as the EPROM /CE wants. One EPROM per 8 KB chip; tie the spare high-address pads. Not tried in a Dragon here: check the height under the keyboard.',
+          source: { label: 'RETRO Innovations 2364 Adapter (go4retro store): MOS 2364 / Motorola 68764 pinout to a JEDEC 2764-27512 EPROM', url: 'https://store.go4retro.com/2364-adapter/' } },
+      ],
       heat: 'cool',
       verifiedAgainst: 'Motorola MCM68A364 data sheet DS9805, Pin Assignment, p. 2-191 (1981-82 Motorola Memory Data Book); Dragon 32 SA2120 sheet 1 (IC17, IC18)',
       datasheets: [
@@ -479,6 +539,11 @@ RCS.add({
       machines: ['dragon64'],
       summary: 'Two 28-pin 16 KB mask ROMs. PB2 of the $FF20 PIA (ROMSEL) picks ROM 1 (HIGH, default) or ROM 2 (LOW). EXEC copies ROM 2 into RAM at $C000–$FEFF and switches the SAM to map type 1. A Dragon 64 that boots but will not enter 64K mode points at ROM 2, PB2 or the upper RAM. Pin table not captured yet: no HN613128P data sheet was found.',
       fails: ['No boot (ROM 1)', 'EXEC does not reach 64K mode (ROM 2, PB2 select or RAM)'],
+      replacements: [
+        { part: '27128 EPROM', kind: 'pin-compatible', verify: true,
+          note: 'A Dragon 200 (the Dragon 64 board) shipped with 27128 EPROMs in these sockets, per the forum thread. A 27256 worked only after its pin 27 (A14) was tied to 0 V with a piggy-back socket and the image written to both halves; the thread also notes pin 1 (Vpp) must sit at +5 V. No HN613128P data sheet was found to confirm the mask ROM pinout.',
+          source: { label: 'The Dragon Archive forum, "Eprom incompatibility?" (Dragon 200 with 27128 EPROMs; 27256 with A14 grounded), Nov 2020', url: 'https://archive.worldofdragon.org/phpBB3/viewtopic.php?p=23580' } },
+      ],
       heat: 'cool',
       verify: true,
       datasheets: [
@@ -493,6 +558,11 @@ RCS.add({
       machines: ['dragon32', 'dragon64'],
       summary: 'Two 4-to-1 analogue switches sharing the select lines A and B (PIA0 CA2 and CB2). The X half picks one of four joystick pots for the comparator; the Y half picks the sound source (DAC, cassette, cartridge, unused) and is enabled by PIA1 CB2. Dragon Data lists it first for joystick, cassette and no-sound faults. CMOS: handle it with static care.',
       fails: ['No sound on the TV', 'Joystick axes dead, stuck at 0 or 63, or swapped', 'Cassette audio not heard'],
+      replacements: [
+        { part: 'HCF4529B (SGS-Thomson)', kind: 'pin-compatible',
+          note: 'Same pin connections, strobes and truth table as the MC14529B (dual 4-channel or single 8-channel, 3-state outputs). Also out of production: new old stock only. CMOS: static care.',
+          source: { label: 'SGS-Thomson HCC/HCF4529B data sheet (Sep 1988), pin connections and truth table, p. 1 (Aalborg University component library copy)', url: 'https://www.komponenten.es.aau.dk/fileadmin/komponenten/Data_Sheet/4000/4529.pdf.pdf#page=1' } },
+      ],
       heat: 'cool',
       verifiedAgainst: 'Motorola MC14529B data sheet, block diagram and truth table, p. 7-457 (1978 Motorola CMOS Data Book); Dragon wiring from SA2120 sheet 2 (IC20) and Inside the Dragon pp. 208-209, 221',
       datasheets: [
@@ -567,6 +637,8 @@ RCS.add({
           { label: 'The Dragon Archive wiki, Dragon 32 - 64K Upgrade (R. W. Hall, 4116 rails and jumpers)', url: WIKI('Dragon_32_-_64K_Upgrade') },
         ],
       },
+      firstTen: firstTen(false),
+      clocks: clocks(false),
       rails: [
         { rail: '+5 V', expect: '4.75–5.25 V', where: '6809E pin 7; SAM pin 40; 4116 pin 9', note: 'LM309, 1.4 A maximum. The sheet gives the nominal only; the range is the usual ±5 %.' },
         { rail: '+12 V', expect: '11.4–12.6 V', where: '4116 pin 8; cartridge pin 1', note: 'LM7812, 250 mA. RAM VDD, the relay and the cartridge.' },
@@ -575,9 +647,9 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'Master crystal', where: 'SAM pin 5', expect: '14.218 MHz (XL2; the SA2120 sheet marks it 14.32 MHz)', verify: true },
-        { tp: 'E clock', where: '6809E pin 34', expect: 'About 0.89 MHz (crystal ÷ 16)' },
-        { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead' },
-        { tp: 'VDG clock', where: 'VDG pin 33', expect: 'Crystal ÷ 4 from SAM pin 7, about 3.55 MHz' },
+        { tp: 'E clock', where: '6809E pin 34', expect: 'About 0.89 MHz (crystal ÷ 16)', scope: eScope() },
+        { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead', scope: qScope() },
+        { tp: 'VDG clock', where: 'VDG pin 33', expect: 'Crystal ÷ 4 from SAM pin 7, about 3.55 MHz', scope: vclkScope() },
         { tp: 'Horizontal sync', where: 'VDG pin 38', expect: 'Pulses every 63.5 µs (to PIA0 CA1)' },
         { tp: 'Field sync', where: 'VDG pin 37', expect: '50 Hz (to PIA0 CB1)' },
         { tp: 'CPU reset', where: '6809E pin 37', expect: 'HIGH once running; LOW while RESET is held (C23 1 µF, R15 100 kΩ)' },
@@ -611,6 +683,8 @@ RCS.add({
           { label: 'The Dragon Archive wiki, Dragon 32 - 64K Upgrade (128-cycle refresh 4164)', url: WIKI('Dragon_32_-_64K_Upgrade') },
         ],
       },
+      firstTen: firstTen(true),
+      clocks: clocks(true),
       rails: [
         { rail: '+5 V', expect: '4.75–5.25 V', where: '6809E pin 7; SAM pin 40; 4164 pin 8; 6551 pin 15', note: 'LM309 on the PSU board.' },
         { rail: '+12 V', expect: '11.4–12.6 V', where: 'cartridge pin 1; PL8 pin 3 (through 4.7 kΩ)', note: 'LM7812. RS-232 drivers, relay, cartridge.' },
@@ -619,9 +693,9 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'Master crystal', where: 'SAM pin 5', expect: '14.218 MHz (XL3)' },
-        { tp: 'E clock', where: '6809E pin 34', expect: 'About 0.89 MHz' },
-        { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead' },
-        { tp: 'VDG clock', where: 'VDG pin 33', expect: 'Crystal ÷ 4 from SAM pin 7, about 3.55 MHz' },
+        { tp: 'E clock', where: '6809E pin 34', expect: 'About 0.89 MHz', scope: eScope() },
+        { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead', scope: qScope() },
+        { tp: 'VDG clock', where: 'VDG pin 33', expect: 'Crystal ÷ 4 from SAM pin 7, about 3.55 MHz', scope: vclkScope() },
         { tp: 'ACIA crystal', where: '6551 pin 6', expect: '1.8432 MHz' },
         { tp: 'ROM select', where: '6821 PIA pin 12', expect: 'HIGH in 32K mode, LOW in 64K mode (IC8, PB2)' },
         { tp: 'CPU reset', where: '6809E pin 37', expect: 'HIGH once running' },
