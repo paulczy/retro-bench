@@ -14,7 +14,8 @@
 - Shared chips listed by designator only: cpu6502 IC3, rom23256 IC2, dram4164 IC4-IC7. Their Electron pin use (6502 pins 1, 8, 21, 34, 37, 40; ROM 14, 20, 22, 28; 4164 3, 4, 8, 15, 16) matches the existing tables.
 
 ## Changes
-- New machine `electron` (status ready), chips, chipLocations, symptoms, 8 connectors, power with supply, quickref, resources. Brand blurb now names the Electron. No BBC entries changed.
+- New machine `electron` (status ready), chips, chipLocations, symptoms, 8 connectors, power with supply, quickref, resources. Brand blurb now names the Electron.
+- Shareable-chip pass (coordinator request): pin `desc` and `probe` text made generic on `fdc1770` (also fitted in the Commodore 1571/1581), `saa5050`, `fdc8271`, `adc7002`, `adlc6854`, `dram4816` and the new `ttl7404`, `ttl74169`, `ttl7474`, `ttl7486`, `lm324`; `role` made generic on the same chips. The board wiring, designators and probe values that were in the pins (Master SM 7.8 /CS, CLK and DRQ probes; SAA5050 BBC tie-offs and TR6 source; 7002 clock, VREF, port pins, /CS and /EOC routing; ADLC Econet wiring; 4816 Model B bank wiring) moved word for word into each chip's `summary`. Electron TTL wiring moved into the summaries, and two Electron test points were added (LM324 pin 7, 74LS86 pin 11). Pin names, numbers, types and directions are unchanged. The custom Acorn parts (VIDPROC, SERPROC, 65SC12, Master gate arrays, Electron ULA) keep board-specific pin text because no other brand can fit them.
 
 ## Conflicts
 - None in pin tables. Note: the brief expected an on-board 7805; the SM PSU board diagram shows a bridge rectifier and a transistor switching regulator with transformer T1 (no 7805). The data follows the diagram.
