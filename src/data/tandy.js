@@ -1,4 +1,4 @@
-/* Retro Bench data: Tandy / TRS-80. Color Computer 1, 2, 3, MC-10. Pins and ports checked against the Tandy Color Computer Technical Reference Manual, the CoCo 2, CoCo 3 and MC-10 service manuals and schematics, and the Motorola MC6809E, MC6847 and MC6883 data sheets; see docs/verification/tandy.md. Unsourced items carry verify. */
+/* Retro Bench data: Tandy / TRS-80. Color Computer 1, 2, 3, MC-10; TRS-80 Model I, III, 4 (sources in the TRS-80 block below). Pins and ports checked against the Tandy Color Computer Technical Reference Manual, the CoCo 2, CoCo 3 and MC-10 service manuals and schematics, and the Motorola MC6809E, MC6847 and MC6883 data sheets; see docs/verification/tandy.md. Unsourced items carry verify. */
 (() => {
 const ARC = 'https://colorcomputerarchive.com/repo/Documents';
 const HW = `${ARC}/Manuals/Hardware`;
@@ -14,6 +14,120 @@ const SCH10 = `${MC10}/MC-10%20Schematic/MC-10%20Schematic%20(Tandy).pdf`;
 const DS6809E = n => `${DS}/MC6809E%20HMOS%208%20Bit%20Microprocessor%20(Motorola).pdf#page=${n}`;
 const DS6847 = n => `${DS}/MC6847%20MOS%20Video%20Display%20Generator%20(Motorola).pdf#page=${n}`;
 const DS6883 = n => `${DS}/MC6883%20Synchronous%20Address%20Multiplexer%20(Motorola).pdf#page=${n}`;
+/* TRS-80 Model I, III and 4 sources. archive.org page anchors are PDF pages. */
+const IA = 'https://archive.org/download';
+const TRH = n => `${IA}/TRS-80_Micro_Computer_Technical_Reference_Handbook_2nd_Edition_1982_Radio_Shack/TRS-80_Micro_Computer_Technical_Reference_Handbook_2nd_Edition_1982_Radio_Shack.pdf#page=${n}`;
+const EISM = n => `${IA}/Expansion_Interface_Service_Manual_19xx_Radio_Shack/Expansion_Interface_Service_Manual_19xx_Radio_Shack.pdf#page=${n}`;
+const M3TRM = n => `${IA}/Model_III_Technical_Reference_Manual_1981_Tandy/Model_III_Technical_Reference_Manual_1981_Tandy.pdf#page=${n}`;
+const M3SVC = n => `${IA}/Model_III_Microcomputer_Service_Manual_19xx_Tandy/Model_III_Microcomputer_Service_Manual_19xx_Tandy.pdf#page=${n}`;
+const SAMS3 = n => `${IA}/Sams_Computerfacts_TRS-80_Model_III_1985_Howard_Sams/Sams_Computerfacts_TRS-80_Model_III_1985_Howard_Sams.pdf#page=${n}`;
+const M4TRM = n => `${IA}/model-4-technical-reference-manual/Model%204%20Technical%20Reference%20Manual%20(1983)(Tandy%20Corporation)(pdf).pdf#page=${n}`;
+const M4PTRM = n => `${IA}/Model_4_and_4P_Technical_Reference_Manual_1984_Tandy_Corporation/Model_4_and_4P_Technical_Reference_Manual_1984_Tandy_Corporation.pdf#page=${n}`;
+const WD1771 = n => `${IA}/Western_Digital_1771-01_Data_Sheets_19xx_Western_Digital/Western_Digital_1771-01_Data_Sheets_19xx_Western_Digital.pdf#page=${n}`;
+const FD179X = n => `https://bitsavers.org/components/westernDigital/FD179X-02_Data_Sheet_May1980.pdf#page=${n}`;
+const MOT79 = n => `https://bitsavers.org/components/motorola/_dataBooks/1979_Motorola_Memory_Data_Book.pdf#page=${n}`;
+const INTEL78 = n => `https://bitsavers.org/components/intel/_dataBooks/1978_Intel_Component_Data_Catalog.pdf#page=${n}`;
+const L2MAN = 'https://archive.org/details/Level_II_BASIC_Reference_Manual_1979_Radio_Shack';
+const M4OM = 'https://archive.org/details/Model_4_Disk_System_Owners_Manual_1983_Tandy_a';
+const T80_EI = 'https://www.trs-80.org/radio-shack-expansion-interface.html';
+const T80_KB = 'https://www.trs-80.org/model-1-keybounce.html';
+const T80_GOLD = 'https://www.trs-80.org/gold-plug-80.html';
+
+/* Model I 40-pin expansion edge (TRH Figure 22). The EI's J2 input and J3 screen-printer bus use the same numbering. */
+const M1BUS = [
+  ['RAS*', 'ctrl', 'Row address strobe out, for 16-pin dynamic RAM in the Expansion Interface.'],
+  ['SYSRES*', 'ctrl', 'System reset out. LOW at power-up and while RESET is held.', 'HIGH when running'],
+  ['CAS*', 'ctrl', 'Column address strobe out, for 16-pin dynamic RAM.'],
+  ['A10', 'addr'], ['A12', 'addr'], ['A13', 'addr'], ['A15', 'addr'],
+  ['GND', 'ground', 'Signal ground.', '0 V'],
+  ['A11', 'addr'], ['A14', 'addr'], ['A8', 'addr'],
+  ['OUT*', 'ctrl', 'Peripheral (port) write strobe.'],
+  ['WR*', 'ctrl', 'Memory write strobe.'],
+  ['INTAK*', 'ctrl', 'Interrupt acknowledge out. LOW when the CPU takes an interrupt.'],
+  ['RD*', 'ctrl', 'Memory read strobe.'],
+  ['MUX', 'ctrl', 'Row/column address multiplexer control for 16-pin dynamic RAM.'],
+  ['A9', 'addr'], ['D4', 'data'],
+  ['IN*', 'ctrl', 'Peripheral (port) read strobe.'],
+  ['D7', 'data'],
+  ['INT*', 'ctrl', 'Maskable interrupt input (mode 1, to $0038). The EI clock and disk controller drive it.'],
+  ['D1', 'data'],
+  ['TEST*', 'ctrl', 'Input. LOW tri-states A0-A15, D0-D7, WR*, RD*, IN*, OUT*, RAS*, CAS* and MUX. Factory test only.'],
+  ['D6', 'data'], ['A0', 'addr'], ['D3', 'data'], ['A1', 'addr'], ['D5', 'data'],
+  ['GND', 'ground', 'Signal ground.', '0 V'],
+  ['D0', 'data'], ['A4', 'addr'], ['D2', 'data'],
+  ['WAIT*', 'ctrl', 'Processor wait input, for slow memory.'],
+  ['A3', 'addr'], ['A5', 'addr'], ['A7', 'addr'],
+  ['GND', 'ground', 'Signal ground.', '0 V'],
+  ['A6', 'addr'],
+  ['+5V / GND', 'power', '+5 V out (limited current) on early units. Level II machines were modified to ground this pin.', '0 V on Level II units; +5 V on early units'],
+  ['A2', 'addr'],
+].map(([name, type, desc, expect], i) => ({ n: i + 1, name, type,
+  desc: desc || (type === 'addr' ? `Address output ${name}. Drives one TTL load.` : `Bidirectional data bus ${name}. Use tri-state buffers.`), ...(expect ? { expect } : {}) }));
+
+/* Shugart-style 34-pin disk edge, odd pins ground. */
+const diskPins = evens => Array.from({ length: 34 }, (_, i) => {
+  const n = i + 1;
+  if (n % 2) return { n, name: 'GND', type: 'ground', desc: 'Ground (all odd pins).', expect: '0 V' };
+  const e = evens[n];
+  return e ? { n, name: e[0], type: 'ctrl', desc: e[1] } : { n, name: 'NC', type: 'nc', desc: 'Not connected.' };
+});
+
+/* Model III / 4 50-pin I/O bus: odd pins carry signals, every even pin is ground. */
+const IOBUS_ODD = { 1: ['XDB0', 'data'], 3: ['XDB1', 'data'], 5: ['XDB2', 'data'], 7: ['XDB3', 'data'], 9: ['XDB4', 'data'], 11: ['XDB5', 'data'], 13: ['XDB6', 'data'], 15: ['XDB7', 'data'],
+  17: ['XA0', 'addr'], 19: ['XA1', 'addr'], 21: ['XA2', 'addr'], 23: ['XA3', 'addr'], 25: ['XA4', 'addr'], 27: ['XA5', 'addr'], 29: ['XA6', 'addr'], 31: ['XA7', 'addr'],
+  33: ['XIN*', 'ctrl', 'Buffered IN* (input cycle, gated with IORQ).'], 35: ['XOUT*', 'ctrl', 'Buffered OUT* (output cycle, gated with IORQ).'], 37: ['XRESET*', 'ctrl', 'System reset.'],
+  39: ['IOBUSINT*', 'ctrl', 'Interrupt input from a bus device. Enabled by port E0H bit 3.'],
+  41: ['IOBUSWAIT*', 'ctrl', 'Wait input. Hold it no more than 500 µs at 25 % duty: DRAM refresh stops during waits.'],
+  43: ['EXTIOSEL*', 'ctrl', 'Input. The device pulls it LOW on an IN from its port so the CPU reads the bus data lines.'],
+  45: ['NC', 'nc', 'Not connected.'], 47: ['XM1*', 'ctrl', 'Buffered Z80 M1*.'], 49: ['XIORQ*', 'ctrl', 'Buffered Z80 IORQ*.'] };
+const IOBUS = Array.from({ length: 50 }, (_, i) => {
+  const n = i + 1;
+  if (!(n % 2)) return { n, name: 'GND', type: 'ground', desc: 'Ground (every even pin).', expect: '0 V' };
+  const [name, type, desc] = IOBUS_ODD[n];
+  return { n, name, type, desc: desc || (type === 'data' ? `Buffered data bit ${name.slice(3)}. Live only when port ECH bit 4 (ENEXTIO) is set.` : `Buffered port address bit ${name.slice(2)}. Live only when ENEXTIO is set.`) };
+});
+
+/* Model III 34-pin printer edge (Model III CPU schematic, Figure 12). Unlisted pins are ground. */
+const PRN = {
+  1: ['STROBE*', 'ctrl', 'Data strobe to the printer from one-shot U93. Pulses LOW after each write to port F8H.', 'Pulses LOW once per character'],
+  3: ['DATA 0', 'data'], 5: ['DATA 1', 'data'], 7: ['DATA 2', 'data'], 9: ['DATA 3', 'data'], 11: ['DATA 4', 'data'], 13: ['DATA 5', 'data'], 15: ['DATA 6', 'data'], 17: ['DATA 7', 'data'],
+  19: ['STATUS IN', 'io', 'Spare input to the status buffer U95. Read on port F8H; bit position not traced.'],
+  21: ['BUSY', 'io', 'Printer busy, HIGH = busy. Port F8H bit 7. 4.7 kΩ pull-up.'],
+  23: ['OUTPAPER', 'io', 'Paper out, HIGH = out. Port F8H bit 6.'],
+  25: ['UNIT SELECT', 'io', 'Printer selected, HIGH = selected. Port F8H bit 5. 4.7 kΩ pull-up.'],
+  26: ['NC', 'nc', 'Not connected.'],
+  28: ['FAULT', 'io', 'Printer fault. Port F8H bit 4. 4.7 kΩ pull-up.'],
+  29: ['STATUS IN', 'io', 'Spare status input to U95 through ferrite bead FB2.'],
+  30: ['STATUS IN', 'io', 'Spare status input to U95 through ferrite bead FB1.'],
+  31: ['NC', 'nc', 'Not connected.'],
+  32: ['STATUS IN', 'io', 'Spare status input to U95 through ferrite bead FB3.'],
+  33: ['NC', 'nc', 'Not connected.'],
+};
+const PRNPINS = Array.from({ length: 34 }, (_, i) => {
+  const n = i + 1, p = PRN[n];
+  if (!p) return { n, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' };
+  return { n, name: p[0], type: p[1], desc: p[2] || `Printer data bit ${p[0].slice(5)}, latched by U94 on a write to port F8H.`, ...(p[3] ? { expect: p[3] } : {}) };
+});
+
+/* Model I cassette DIN (TRH schematic sheet 2, J3); the EI's J6/J7 outputs and J8 input use the same pins. */
+const m1CassPins = [
+  { n: 1, name: 'REM', type: 'ctrl', desc: 'Motor relay K1 contact, to the recorder REM jack. Pins 1 and 3 close when the motor is on.', expect: 'Shorted to pin 3 with the motor on' },
+  { n: 2, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+  { n: 3, name: 'REM', type: 'ctrl', desc: 'Other side of the K1 contact. Zeners CR9 and CR10 clamp spikes across pins 1 and 3.', expect: 'Open with the motor off' },
+  { n: 4, name: 'CASSIN', type: 'audio', desc: 'From the recorder EAR jack to the LM3900 (Z4) filter and level detector.', expect: 'Tape audio, AC' },
+  { n: 5, name: 'CASSOUT', type: 'audio', desc: 'To the recorder AUX input. A stepped "sine" from latch Z59 through R53-R56.', expect: 'Steps of 0, 0.46 and 0.85 V while saving' },
+];
+/* Model I / EI power DIN (TRH schematic J1; EI schematic sheet 1 J9). */
+const m1PowerPins = [
+  { n: 1, name: '14 V AC', type: 'power', desc: 'One end of the centre-tapped 14 V AC, 1 A winding. To bridge CR8 for the +5 V and -5 V supplies.', expect: 'About 17 V AC to pin 3' },
+  { n: 2, name: '+19.8 V DC', type: 'power', desc: 'Unregulated DC from the second winding (rectified inside the adapter), about 350 mA. Raw supply for the +12 V regulator.', expect: 'About +20 V DC to pin 4' },
+  { n: 3, name: '14 V AC', type: 'power', desc: 'Other end of the 14 V AC winding.', expect: 'About 17 V AC to pin 1' },
+  { n: 4, name: 'GND', type: 'ground', desc: 'Common: the centre taps and the DC return.', expect: '0 V' },
+  { n: 5, name: 'NC', type: 'nc', desc: 'No connection drawn on the schematic.' },
+];
+const ROW4 = [1, 2, 3, 4].map((n, i) => ({ n, x: 20 + i * 20, y: 50 }));
+const ROW10 = Array.from({ length: 10 }, (_, i) => ({ n: i + 1, x: 5 + i * 10, y: 50 }));
+const ROW13 = Array.from({ length: 13 }, (_, i) => ({ n: i + 1, x: 4 + i * 7.6, y: 50 }));
 
 /* Pad layouts for 'custom' drawings, 0-100 box looking into the connector. */
 const rowPads = ns => ns.map((n, i) => ({ n, x: Math.round(14 + i * (72 / Math.max(1, ns.length - 1))), y: 50 }));
@@ -93,7 +207,7 @@ RCS.add({
   brand: {
     id: 'tandy',
     name: 'Tandy / TRS-80',
-    blurb: 'Color Computer 1, 2, 3 and MC-10. 6809E, 6847 VDG, 6883 SAM, 6803.',
+    blurb: 'Color Computer 1, 2, 3 and MC-10 (6809E, 6847 VDG, 6883 SAM, 6803); TRS-80 Model I, III and 4 (Z80).',
   },
   machines: {
     coco1: {
@@ -109,7 +223,7 @@ RCS.add({
       video: 'MC6847 VDG: 32 × 16 text, PMODE hi-res, 9 colours',
       sound: '6-bit DAC and single-bit sound via the $FF20 PIA (U4)',
       os: 'Color BASIC (E and D layers add Extended and Disk)',
-      chips: ['cpu6809e', 'vdg6847', 'sam6883', 'pia6821', 'dram4116', 'rom-color-basic'],
+      chips: ['cpu6809e', 'vdg6847', 'sam6883', 'pia6821', 'dram4116', 'rom-color-basic', 'mux14529'],
       tagline: 'The 6809E with a 6847 VDG, 6883 SAM and two 6821 PIAs.',
     },
     coco2: {
@@ -160,11 +274,62 @@ RCS.add({
       chips: ['cpu6803', 'vdg6847', 'rom-micro-basic'],
       tagline: 'Micro Color BASIC in 4 KB.',
     },
+    model1: {
+      id: 'model1',
+      brand: 'tandy',
+      name: 'TRS-80 Model I',
+      aka: 'TRS-80 Micro Computer (Level I or Level II BASIC), with the Expansion Interface 26-1140/1/2',
+      year: 1977,
+      status: 'ready',
+      cpu: 'Z80 @ 1.774 MHz (10.6445 MHz crystal / 6)',
+      ram: '4 or 16 KB in the keyboard unit (4096 or 4116 DRAM); up to 32 KB more in the Expansion Interface',
+      rom: 'Level I BASIC 4 KB or Level II BASIC 12 KB',
+      video: '64 × 16 or 32 × 16 text, 128 × 48 block graphics; seven 2102 video RAMs, MCM6670 character generator',
+      sound: 'None built in (programs toggle the cassette output)',
+      os: 'Level II BASIC; TRSDOS with the Expansion Interface and disks',
+      chips: ['cpuz80', 'dram4116', 'sram2102', 'cg-mcm6670', 'rom-trs80-model1', 'fdc1771'],
+      tagline: 'Keyboard unit with an external supply and monitor; the Expansion Interface adds RAM, disk, printer and a clock.',
+    },
+    model3: {
+      id: 'model3',
+      brand: 'tandy',
+      name: 'TRS-80 Model III',
+      aka: 'Model III (26-1061, 26-1063)',
+      year: 1980,
+      status: 'ready',
+      cpu: 'Z80 @ 2.02752 MHz (10.1376 MHz / 5)',
+      ram: '4, 16 or 48 KB (4116 DRAM)',
+      rom: '14 KB Model III BASIC (8 + 4 + 2 KB ROMs)',
+      video: '64 × 16 or 32 × 16 text, 128 × 48 graphics; 1 KB of 2114 video RAM; built-in 12-inch monitor',
+      sound: 'None built in',
+      os: 'Model III BASIC (Level II compatible); TRSDOS 1.3 with disks',
+      chips: ['cpuz80', 'dram4116', 'sram2114', 'rom2364', 'rom2332', 'rom2316', 'fdc1793'],
+      tagline: 'Model I compatible all-in-one with internal switching supply, monitor and up to two drives.',
+    },
+    model4: {
+      id: 'model4',
+      brand: 'tandy',
+      name: 'TRS-80 Model 4',
+      aka: 'Model 4 (26-1067/8/9), Model 4P portable and Model 4D; later units use the gate-array board',
+      year: 1983,
+      status: 'ready',
+      cpu: 'Z80A @ 2.02752 or 4.05504 MHz',
+      ram: '16, 64 or 128 KB (4116, or 6665 64K DRAM)',
+      rom: '14 KB Model III ROM set (Model III mode only)',
+      video: '64 × 16 and 80 × 24 text from a 68045 CRTC and 2 KB video RAM; optional 640 × 240 graphics board',
+      sound: 'Optional one-bit sound board (port 90H), standard on the disk models',
+      os: 'TRSDOS 6 with BASIC (Model 4 mode); Model III BASIC and TRSDOS 1.3 (Model III mode)',
+      chips: ['cpuz80', 'dram4116', 'dram4164', 'rom2364', 'rom2332', 'rom2316', 'crtc68045', 'fdc1793', 'ga-model4'],
+      tagline: 'A Model III with a 4 MHz Z80A, 80 × 24 video, 128 KB and TRSDOS 6.',
+    },
   },
   chipLocations: {
-    coco1: { pia6821: 'U8 ($FF00, keyboard) / U4 ($FF20, sound, cassette, RS-232)', dram4116: 'U20-U27' },
+    coco1: { pia6821: 'U8 ($FF00, keyboard) / U4 ($FF20, sound, cassette, RS-232)', dram4116: 'U20-U27', mux14529: 'U9' },
     coco2: { pia6821: 'U7 ($FF00, keyboard) / U2 ($FF20, sound, cassette, RS-232)' },
     coco3: { pia6821: 'IC5 ($FF00, keyboard) / IC4 ($FF20, sound, cassette, RS-232)' },
+    model1: { cpuz80: 'Z40', dram4116: 'Z13-Z20 (4096 DRAM in 4K units)' },
+    model3: { cpuz80: 'U77', dram4116: 'U7-U14 ($4000-$7FFF), U25-U32 ($8000-$BFFF), U43-U50 ($C000-$FFFF)', sram2114: 'U81, U82 (video RAM)', rom2364: 'U104 (ROM A, MCM68A364)', rom2332: 'U105 (ROM B)', rom2316: 'U106 (ROM C) and U36 (character generator MCM68A316E)' },
+    model4: { cpuz80: 'U57 (1983 board)', dram4116: 'U77-U84 (16K version)', dram4164: 'U85-U92 (MCM6665, 64K version; 128K adds a second row)', rom2364: 'U68 (MCM68A364)', rom2332: 'U69 (MCM68A332)', rom2316: 'U70 (MCM68A316 ROM C) and U23 (MCM68A316E character generator)' },
   },
   chips: {
     cpu6809e: {
@@ -295,7 +460,7 @@ RCS.add({
         { n: 2, name: 'A10', type: 'addr', dir: 'in', desc: 'CPU address bit 10 in.', terms: ['tristate'] },
         { n: 3, name: 'A9', type: 'addr', dir: 'in', desc: 'CPU address bit 9 in.', terms: ['tristate'] },
         { n: 4, name: 'A8', type: 'addr', dir: 'in', desc: 'CPU address bit 8 in.', terms: ['tristate'] },
-        { n: 5, name: 'OSCin', type: 'clock', dir: 'in', desc: '14.31818 MHz crystal with a 2.5-30 pF trimmer to ground.', terms: ['clock'], probe: '14.31818 MHz at the crystal. No crystal, no clocks.' },
+        { n: 5, name: 'OSCin', type: 'clock', dir: 'in', desc: 'Crystal input: 14.31818 MHz on the CoCo, with a 2.5-30 pF trimmer to ground. The Dragon uses a different crystal.', terms: ['clock'], probe: '14.31818 MHz at the crystal on the CoCo. No crystal, no clocks.' },
         { n: 6, name: 'OSCout', type: 'clock', dir: 'out', desc: 'Crystal output, through 1.5 kΩ to the crystal.', terms: ['clock'] },
         { n: 7, name: 'VClk', type: 'clock', dir: 'out', desc: 'VDG clock out, 3.579545 MHz, to VDG pin 33. Pulled LOW, it resets the SAM.', terms: ['clock'], probe: '3.579545 MHz square wave.' },
         { n: 8, name: 'DA0', type: 'addr', dir: 'in', desc: 'Display address bit 0 from the VDG. Clocks the SAM internal video address counter.' },
@@ -463,6 +628,194 @@ RCS.add({
         { n: 40, name: 'E', type: 'clock', dir: 'out', desc: 'Enable clock out, 0.89 MHz (input clock / 4). The bus timing clock.', terms: ['clock'], probe: 'Square wave at about 0.89 MHz. No clock, no boot.' },
       ],
     },
+    sram2102: {
+      id: 'sram2102', name: '2102 static RAM 1K x 1', short: '2102', family: 'Static RAM (NMOS)',
+      role: 'Model I video RAM: seven 2102AN-4L hold the 1 KB screen at $3C00-$3FFF.', pkg: 'DIP-16',
+      machines: ['model1'], location: { model1: 'Z45-Z48, Z61-Z63' },
+      summary: '1024 × 1 static RAM on +5 V alone, no refresh. The Model I fits seven: six hold character bits 0 to 5 and the seventh holds bit 7, the graphics flag. Bit 6 is made by NOR gate Z30 from bits 5 and 7, which is why a stock Model I has no lowercase. A bad chip puts the same wrong dot pattern or character in many screen positions, or a bit that never changes.',
+      fails: ['Wrong or garbled characters in many positions', 'Graphics blocks where letters should be', 'One bit stuck on the whole screen'],
+      heat: 'cool',
+      verifiedAgainst: 'Intel 2102A/2102AL data sheet, pin configuration (1978 Intel Component Data Catalog, p. 3-36); TRS-80 Technical Reference Handbook, Video RAMs, p. 34, and schematic sheet 2',
+      datasheets: [
+        { label: 'Intel 2102A/2102AL 1K x 1 static RAM data sheet, pin configuration and truth table (1978 Component Data Catalog)', url: INTEL78(62) },
+        { label: 'TRS-80 Technical Reference Handbook, Video RAMs, p. 34', url: TRH(35) },
+      ],
+      pins: [
+        { n: 1, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6.' },
+        { n: 2, name: 'A5', type: 'addr', dir: 'in', desc: 'Address bit 5.' },
+        { n: 3, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write. HIGH reads, LOW writes DATA IN while /CE is LOW. VWR* from the video multiplexer on the Model I.', terms: ['rw'], probe: 'HIGH while the divider chain scans; pulses LOW on CPU writes to $3C00-$3FFF.' },
+        { n: 4, name: 'A1', type: 'addr', dir: 'in', desc: 'Address bit 1.' },
+        { n: 5, name: 'A2', type: 'addr', dir: 'in', desc: 'Address bit 2.' },
+        { n: 6, name: 'A3', type: 'addr', dir: 'in', desc: 'Address bit 3.' },
+        { n: 7, name: 'A4', type: 'addr', dir: 'in', desc: 'Address bit 4.' },
+        { n: 8, name: 'A0', type: 'addr', dir: 'in', desc: 'Address bit 0.' },
+        { n: 9, name: 'GND', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
+        { n: 10, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+4.75 to +5.25 V' },
+        { n: 11, name: 'DATA IN', type: 'data', dir: 'in', desc: 'Data input.' },
+        { n: 12, name: 'DATA OUT', type: 'data', dir: 'out', desc: 'Data output, same polarity as the input. High impedance when /CE is HIGH.', terms: ['tristate'] },
+        { n: 13, name: '/CE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip enable. LOW selects the chip.', terms: ['cs', 'active-low'] },
+        { n: 14, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9.' },
+        { n: 15, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bit 8.' },
+        { n: 16, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bit 7.' },
+      ],
+    },
+    'cg-mcm6670': {
+      id: 'cg-mcm6670', name: 'MCM6670P character generator (128 × 7 × 5)', short: 'MCM6670', family: 'Motorola NMOS mask ROM',
+      role: 'Model I alphanumeric character generator: 5 × 7 dot rows for the 64 or 128 character codes.', pkg: 'DIP-18',
+      machines: ['model1'], location: { model1: 'Z29' },
+      summary: 'Horizontal-scan character generator: a 7-bit character code on A0-A6 and a 3-bit row select on RS1-RS3 give five dots on D0-D4. On the Model I the latched codes from Z28 drive pins 1 to 7 and the line counter L1, L2, L4 drives the row select. A dead or wrong part gives the right screen layout with garbage shapes in every character; graphics blocks (from Z8) still look right.',
+      fails: ['Every character the wrong shape', 'Missing dot rows or columns in all characters', 'Graphics fine but text wrong'],
+      heat: 'cool',
+      verifiedAgainst: 'Motorola MCM6670/MCM6674 data sheet, pin assignment, p. 2-112 (1979 Motorola Memory Data Book); TRS-80 Technical Reference Handbook, Character Generator, pp. 34-36',
+      datasheets: [
+        { label: 'Motorola MCM6670/MCM6674 128 × 7 × 5 character generator, pin assignment and block diagram, p. 2-112 (1979 Memory Data Book)', url: MOT79(129) },
+        { label: 'TRS-80 Technical Reference Handbook, Character Generator, p. 36', url: TRH(37) },
+      ],
+      pins: [
+        ...[6, 5, 4, 3, 2, 1, 0].map((b, i) => ({ n: i + 1, name: `A${b}`, type: 'addr', dir: 'in', desc: `Character code bit ${b}, from the video data latch Z28.` })),
+        { n: 8, name: 'RS3', type: 'addr', dir: 'in', desc: 'Row select bit 3 (most significant). Picks which of the 7 dot rows is output.' },
+        { n: 9, name: 'Gnd', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
+        { n: 10, name: 'RS2', type: 'addr', dir: 'in', desc: 'Row select bit 2.' },
+        { n: 11, name: 'RS1', type: 'addr', dir: 'in', desc: 'Row select bit 1 (least significant).' },
+        ...[0, 1, 2, 3, 4].map(b => ({ n: 12 + b, name: `D${b}`, type: 'video', dir: 'out', desc: `Dot output ${b} to the shift register.` })),
+        { n: 17, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select, active LOW.', terms: ['cs'] },
+        { n: 18, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V ±10 %.', terms: ['vcc'], probe: '+4.75 to +5.25 V' },
+      ],
+    },
+    'rom-trs80-model1': {
+      id: 'rom-trs80-model1', name: 'Model I BASIC ROM set (Level I / Level II)', short: 'Model I ROMs', family: 'Mask ROM and EPROM (several vendors)',
+      role: 'Level I BASIC (4 KB in two 2 KB parts at Z33, Z34) or Level II BASIC (12 KB on a ROM board under the CPU board).', pkg: 'DIP-24',
+      machines: ['model1'], location: { model1: 'Z33, Z34 (Level I); ROM board Z1-Z3 with decoder Z4 (Level II)' },
+      summary: 'Radio Shack used three ROM types in production: Intel 2616-type EPROMs, National MM2316 mask ROMs and later parts, each with different board wiring for the chip selects (etch cuts and jumpers on the A and D boards). Intel ROM A must go in Z33 and ROM B in Z34; National parts may swap. Level II adds a ROM board stuck to the etched side of the CPU board, with three 4 KB ROMs and a decoder, cabled into the empty Level I sockets and to A11-A13 and ROM*. Because the pinout and chip-select wiring vary by board revision, no single pin table is given; check the board version against the Handbook first.',
+      fails: ['No READY prompt or MEMORY SIZE? question', 'Garbage on the screen at power-up', 'Random crashes in BASIC'],
+      verify: true,
+      datasheets: [
+        { label: 'TRS-80 Technical Reference Handbook, Level II ROMs, p. 55', url: TRH(56) },
+        { label: 'TRS-80 Technical Reference Handbook, BASIC I ROMs (Intel and National types), pp. 100-102', url: TRH(101) },
+      ],
+      pins: null,
+    },
+    fdc1771: {
+      id: 'fdc1771', name: 'WD FD1771B-01 floppy disk formatter/controller', short: '1771', family: 'Western Digital NMOS (three-rail)',
+      role: 'Single-density disk controller in the Model I Expansion Interface, at $37EC-$37EF.', pkg: 'DIP-40',
+      machines: ['model1'], location: { model1: 'Z34 in the Expansion Interface' },
+      summary: 'Single-density (FM) controller with an inverted data bus and three supplies: -5 V (pin 1), +5 V (pin 21) and +12 V (pin 40). In the Expansion Interface it runs from a 1 MHz clock (4 MHz crystal divided by 4) and the CPU polls it: DRQ (pin 38), TG43 and PH3 are not connected. Its registers sit at $37EC (command/status), $37ED (track), $37EE (sector) and $37EF (data). Lose -5 V or +12 V and it dies; check all three rails before swapping it.',
+      fails: ['Disk drive never selects or seeks', 'Every read fails with a disk error', 'Writes fail or corrupt the disk'],
+      heat: 'warm',
+      verifiedAgainst: 'Western Digital FD1771-01 data sheet, pin connections p. 1 and pin descriptions pp. 2-3; Expansion Interface Service Manual (26-1140), Floppy Disk Interface p. 5 and schematic sheet 3',
+      datasheets: [
+        { label: 'Western Digital FD1771-01 data sheet, pin connections, p. 1', url: WD1771(1) },
+        { label: 'Western Digital FD1771-01 data sheet, pin outs (functions), pp. 2-3', url: WD1771(2) },
+        { label: 'Expansion Interface Service Manual, schematic sheet 3 (Z34 FD1771B-01, J5)', url: EISM(21) },
+      ],
+      pins: [
+        { n: 1, name: 'VBB', type: 'power', dir: '-', desc: '-5 V substrate supply.', probe: '-4.75 to -5.25 V' },
+        { n: 2, name: '/WE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Write enable. LOW gates the DAL into the selected register while /CS is LOW.', terms: ['active-low'] },
+        { n: 3, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select. LOW enables communication with the CPU.', terms: ['cs'] },
+        { n: 4, name: '/RE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Read enable. LOW puts the selected register on the DAL while /CS is LOW.', terms: ['active-low'] },
+        { n: 5, name: 'A0', type: 'addr', dir: 'in', desc: 'Register select bit 0. A1 A0: 00 status/command, 01 track, 10 sector, 11 data.' },
+        { n: 6, name: 'A1', type: 'addr', dir: 'in', desc: 'Register select bit 1.' },
+        ...[0, 1, 2, 3, 4, 5, 6, 7].map(b => ({ n: 7 + b, name: `/DAL${b}`, type: 'data', dir: 'bidir', activeLow: true, desc: `Data access line ${b}. Inverted bidirectional bus; buffered by Z33, Z37, Z38 in the EI.`, terms: ['tristate'] })),
+        { n: 15, name: 'PH1/STEP', type: 'ctrl', dir: 'out', desc: 'Step pulse (4 µs HIGH per step) when /3PM is HIGH; phase 1 of a three-phase motor otherwise.', probe: 'Pulses during a seek or restore.' },
+        { n: 16, name: 'PH2/DIRC', type: 'ctrl', dir: 'out', desc: 'Direction: HIGH steps in, LOW steps out (step/direction mode); phase 2 otherwise.' },
+        { n: 17, name: 'PH3', type: 'ctrl', dir: 'out', desc: 'Phase 3 of a three-phase motor. Not connected in the EI.' },
+        { n: 18, name: '/3PM', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Three-phase motor select. LOW selects three-phase outputs; HIGH selects step and direction (as wired in the EI).' },
+        { n: 19, name: '/MR', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Master reset. LOW resets the chip and loads 03H into the command register; a restore runs when it goes HIGH.', terms: ['reset'] },
+        { n: 20, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
+        { n: 21, name: 'VCC', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+4.75 to +5.25 V' },
+        { n: 22, name: '/TEST', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Factory test input. Tie to +5 V or leave open.' },
+        { n: 23, name: 'HLT', type: 'ctrl', dir: 'in', desc: 'Head load timing. Sampled 10 ms after head load; HIGH means the head is engaged.' },
+        { n: 24, name: 'CLK', type: 'clock', dir: 'in', desc: 'Clock. The data sheet calls for 2 MHz; the EI feeds 1 MHz from the divide-by-4 counter (Z27, Z28) for 5.25-inch drives.', terms: ['clock'], probe: '1 MHz square wave in the EI. No clock, no disk.' },
+        { n: 25, name: '/XTDS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'External data separation. LOW selects an external separator; HIGH or open uses the internal one.' },
+        { n: 26, name: 'FDCLOCK', type: 'clock', dir: 'in', desc: 'Externally separated clock when /XTDS is LOW; tie HIGH otherwise.' },
+        { n: 27, name: 'FDDATA', type: 'data', dir: 'in', desc: 'Raw read data from the drive (internal separator), or separated data. From READ DATA* through an inverter in the EI.' },
+        { n: 28, name: 'HLD', type: 'ctrl', dir: 'out', desc: 'Head load output. Not connected in the EI.' },
+        { n: 29, name: 'TG43', type: 'ctrl', dir: 'out', desc: 'Track greater than 43 (tracks 44-76). Not connected in the EI.' },
+        { n: 30, name: 'WG', type: 'ctrl', dir: 'out', desc: 'Write gate. HIGH while writing. To WRITE GATE* (J5 pin 24) through a 7438 driver.' },
+        { n: 31, name: 'WD', type: 'data', dir: 'out', desc: 'Write data: clock and data pulses of 500 ns. To WRITE DATA* (J5 pin 22).' },
+        { n: 32, name: 'READY', type: 'ctrl', dir: 'in', desc: 'Drive ready. Sampled HIGH before reads and writes; appears inverted as status bit 7.' },
+        { n: 33, name: '/WF', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Write fault from the drive. LOW while WG is HIGH ends the write command.' },
+        { n: 34, name: '/TR00', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Track 00. LOW when the head is over track 0. From J5 pin 26.' },
+        { n: 35, name: '/IP', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Index pulse, LOW for at least 10 µs at the index hole. From J5 pin 8.', probe: 'A pulse every 200 ms (300 rpm) with a disk turning.' },
+        { n: 36, name: '/WPRT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Write protect. LOW ends a write and sets the write-protect status bit. From J5 pin 28.' },
+        { n: 37, name: '/DINT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Disk initialization. Sampled on Write Track; LOW ends the command and sets write-protect status.' },
+        { n: 38, name: 'DRQ', type: 'ctrl', dir: 'out', desc: 'Data request, open drain (10 kΩ pull-up). Not connected in the EI: software polls the status register.', terms: ['open-drain'] },
+        { n: 39, name: 'INTRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt request, open drain. Set at the end of a command; reset by reading status. Feeds the EI interrupt latch read at $37E0.', terms: ['open-drain', 'irq'] },
+        { n: 40, name: 'VDD', type: 'power', dir: '-', desc: '+12 V.', probe: '+11.4 to +12.6 V' },
+      ],
+    },
+    fdc1793: {
+      id: 'fdc1793', name: 'WD FD1793 floppy disk formatter/controller', short: '1793', family: 'Western Digital NMOS FD179X (+5 V and +12 V)',
+      role: 'Single and double density disk controller on the Model III and Model 4 FDC boards, ports F0H-F3H.', pkg: 'DIP-40',
+      machines: ['model3', 'model4'], location: { model3: 'U7 on the FDC board (Sams)', model4: 'U6 on FDC board 8858160' },
+      summary: 'FM and MFM controller with a true (non-inverted) data bus; the 1791 is the same chip with an inverted bus. It needs +5 V (pin 21) and +12 V (pin 40). On the Model III and 4 FDC boards it is clocked at 1 MHz, uses a WD1691 for write precompensation and data separation and a WD2143 clock generator, and drives the CPU through the NMI logic. Its registers are ports F0H (command/status), F1H (track), F2H (sector) and F3H (data).',
+      fails: ['Disk drive never seeks or boots', 'Every read gives a CRC or not-found error', 'Writes fail', 'Machine hangs in a disk wait state'],
+      heat: 'warm',
+      verifiedAgainst: 'Western Digital FD179X-02 data sheet (May 1980), pin connections p. 1 and pin outs pp. 2-4; Model III Technical Reference Manual, Floppy Disk Interface, pp. 45-47',
+      datasheets: [
+        { label: 'Western Digital FD179X-02 data sheet (May 1980), pin connections, p. 1', url: FD179X(1) },
+        { label: 'Western Digital FD179X-02 data sheet, pin outs, pp. 2-4', url: FD179X(2) },
+        { label: 'Model III Technical Reference Manual, Floppy Disk Interface (clock and 1793), pp. 46-47', url: M3TRM(57) },
+      ],
+      pins: [
+        { n: 1, name: 'NC', type: 'nc', dir: '-', desc: 'Internally tied to a back-bias generator. Must be left open.' },
+        { n: 2, name: '/WE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Write enable. LOW gates the DAL into the selected register while /CS is LOW.', terms: ['active-low'] },
+        { n: 3, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select. LOW enables communication with the CPU.', terms: ['cs'] },
+        { n: 4, name: '/RE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Read enable. LOW puts the selected register on the DAL while /CS is LOW.', terms: ['active-low'] },
+        { n: 5, name: 'A0', type: 'addr', dir: 'in', desc: 'Register select bit 0. A1 A0: 00 status/command, 01 track, 10 sector, 11 data.' },
+        { n: 6, name: 'A1', type: 'addr', dir: 'in', desc: 'Register select bit 1.' },
+        ...[0, 1, 2, 3, 4, 5, 6, 7].map(b => ({ n: 7 + b, name: `DAL${b}`, type: 'data', dir: 'bidir', desc: `Data access line ${b}. True (non-inverted) on the 1793.`, terms: ['tristate'] })),
+        { n: 15, name: 'STEP', type: 'ctrl', dir: 'out', desc: 'Step output: one pulse per step.', probe: 'Pulses during a seek or restore.' },
+        { n: 16, name: 'DIRC', type: 'ctrl', dir: 'out', desc: 'Direction: HIGH steps in, LOW steps out.' },
+        { n: 17, name: 'EARLY', type: 'ctrl', dir: 'out', desc: 'HIGH: shift the current write pulse early (precompensation).' },
+        { n: 18, name: 'LATE', type: 'ctrl', dir: 'out', desc: 'HIGH: shift the current write pulse late (precompensation).' },
+        { n: 19, name: '/MR', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Master reset. LOW loads 03H into the command register; a restore runs when it goes HIGH and the sector register becomes 01H.', terms: ['reset'] },
+        { n: 20, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
+        { n: 21, name: 'VCC', type: 'power', dir: '-', desc: '+5 V ±5 %.', terms: ['vcc'], probe: '+4.75 to +5.25 V' },
+        { n: 22, name: '/TEST', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Test input. Tie to +5 V or leave open except with voice-coil drives.' },
+        { n: 23, name: 'HLT', type: 'ctrl', dir: 'in', desc: 'Head load timing. HIGH means the head is engaged.' },
+        { n: 24, name: 'CLK', type: 'clock', dir: 'in', desc: 'Free-running clock: 2 MHz for 8-inch drives, 1 MHz for mini drives. The Model III FDC board divides a 4 MHz crystal to 1 MHz at U24 pin 8.', terms: ['clock'], probe: '1 MHz square wave. No clock, no disk.' },
+        { n: 25, name: 'RG', type: 'ctrl', dir: 'out', desc: 'Read gate (1791/1793): HIGH when a field of zeros or ones is found, for data separator sync. (SSO side select on the 1795/1797.)' },
+        { n: 26, name: 'RCLK', type: 'clock', dir: 'in', desc: 'Read clock from the data separator (WD1691 on the Model III board). Phase matters, polarity does not.' },
+        { n: 27, name: '/RAW READ', type: 'data', dir: 'in', activeLow: true, desc: 'Raw read data from the drive: one negative pulse per flux transition.' },
+        { n: 28, name: 'HLD', type: 'ctrl', dir: 'out', desc: 'Head load. Controls loading of the head against the disk.' },
+        { n: 29, name: 'TG43', type: 'ctrl', dir: 'out', desc: 'Track greater than 43. Valid only during read and write commands.' },
+        { n: 30, name: 'WG', type: 'ctrl', dir: 'out', desc: 'Write gate. Goes valid before writing.' },
+        { n: 31, name: 'WD', type: 'data', dir: 'out', desc: 'Write data: a 250 ns (MFM) or 500 ns (FM) pulse per flux transition.' },
+        { n: 32, name: 'READY', type: 'ctrl', dir: 'in', desc: 'Drive ready. Must be HIGH for reads and writes; appears inverted as status bit 7. Type I commands ignore it.' },
+        { n: 33, name: '/WF/VFOE', type: 'ctrl', dir: 'bidir', activeLow: true, desc: 'Write fault input while WG = 1 (LOW ends the write); VFO enable output while WG = 0, LOW during reads once the head has settled.' },
+        { n: 34, name: '/TR00', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Track 00. LOW when the head is over track 0.' },
+        { n: 35, name: '/IP', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Index pulse from the drive.', probe: 'A pulse every 200 ms (300 rpm) with a disk turning.' },
+        { n: 36, name: '/WPRT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Write protect. Sampled on a write command; LOW ends it and sets the write-protect status bit.' },
+        { n: 37, name: '/DDEN', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Double density select. LOW = MFM, HIGH = FM. Port F4H bit 7 on the Model III/4.' },
+        { n: 38, name: 'DRQ', type: 'ctrl', dir: 'out', desc: 'Data request, open drain (10 kΩ pull-up): the data register is full on a read or empty on a write. Routed to NMI on the Model III/4.', terms: ['open-drain'] },
+        { n: 39, name: 'INTRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt request, open drain. Set at the end of any command; reset by reading status or writing a command.', terms: ['open-drain', 'irq'] },
+        { n: 40, name: 'VDD', type: 'power', dir: '-', desc: '+12 V ±5 %.', probe: '+11.4 to +12.6 V' },
+      ],
+    },
+    crtc68045: {
+      id: 'crtc68045', name: 'SY68045 CRT controller', short: '68045', family: 'Synertek / Motorola NMOS CRTC',
+      role: 'Model 4 video timing and screen addressing for the 64 × 16 and 80 × 24 modes. Ports 88H-8BH.', pkg: 'DIP-40',
+      machines: ['model4'], location: { model4: 'U47 (60 Hz SY68045; 50 Hz units use a different part number)' },
+      summary: 'The 68045 makes the horizontal and vertical timing and the video RAM addresses for the 2 KB screen; the CPU reaches the same RAM through multiplexers U33-U35. It is a 6845-family CRTC, but no 68045 data sheet was opened, so no pin table is given. A dead CRTC gives no sync and no picture, while the computer may still run from disk.',
+      fails: ['No picture or rolling picture', 'Wrong screen size in one mode only', '80 × 24 mode garbled'],
+      verify: true,
+      datasheets: [{ label: 'Model 4 Technical Reference Manual (1983), 3.1.8 Video, p. 19', url: M4TRM(35) }],
+      pins: null,
+    },
+    'ga-model4': {
+      id: 'ga-model4', name: 'Model 4 gate arrays (gate-array board)', short: 'Model 4 GAs', family: 'Tandy custom gate arrays',
+      role: 'On the later gate-array Model 4 board they replace the PALs and much of the TTL: timing (GA 4.1), FDC support (GA 4.4), RS-232 and interrupts (GA 4.5) and a video gate array.', pkg: 'Gate arrays (several packages)',
+      machines: ['model4'], location: { model4: 'Gate-array board: GA 4.1 timing U9, GA 4.4 FDC U76, GA 4.5 RS-232/interrupts U82, video gate array U17' },
+      summary: 'The gate-array Model 4 board (described in the Model 4/4P Technical Reference Manual) folds the clocks, decoding, FDC support and the RS-232 UART support into Tandy gate arrays. GA 4.1 makes the 20.2752 MHz master timing, PCLK for the Z80 and the RS-232 clock; GA 4.4 with a 16 MHz oscillator handles the FDC timing and drive select; GA 4.5 holds the RS-232 interrupt mask and status registers. No pinouts are published, so these are summaries only. The original 1983 board uses PALs (U3, U4, U58, U59) instead.',
+      fails: ['Dead machine with no CPU clock (GA 4.1)', 'Disk errors on every drive (GA 4.4)', 'RS-232 dead or interrupts wrong (GA 4.5)'],
+      verify: true,
+      datasheets: [
+        { label: 'Model 4/4P Technical Reference Manual, 2.1 Model 4 Gate Array Theory of Operation, p. 21', url: M4PTRM(27) },
+        { label: 'Model 4/4P Technical Reference Manual, Model 4 Gate Array I/O pin assignments, p. 53', url: M4PTRM(59) },
+      ],
+      pins: null,
+    },
   },
   symptoms: {
     coco1: [
@@ -491,6 +844,34 @@ RCS.add({
       { symptom: 'No or bad video', suspects: ['vdg6847'], note: 'The 6847 and its MC1372 modulator are the usual suspects. Check the 6847 clock.' },
       { symptom: 'Bad keys', suspects: ['cpu6803'], note: 'The keyboard matrix and the 6803 port lines P10 to P17.' },
       { symptom: 'Garbled characters', suspects: ['vdg6847'], note: 'The 6847 or its shared VRAM.' },
+    ],
+    model1: [
+      { symptom: 'MEMORY SIZE? never appears, garbage, or RAM errors', suspects: ['dram4116', 'cpuz80', 'rom-trs80-model1'], note: 'Check all three RAM rails first: -5 V at the CR2 anode, +12 V at the top of R18, +5 V at R4. Look for RAMs not seated or bent pins, then check RAS, CAS and MUX at the RAMs. After a 4K to 16K change, check that DIP shunt Z3 matches the RAM fitted. Swap the eight RAMs as a set, then put the originals back one at a time (Handbook p. 67).' },
+      { symptom: 'Supply dead or crashes: a shorted RAM pulls down a rail', suspects: ['dram4116'], note: 'Pull all RAMs and retest the supplies; refit one at a time until the rail collapses. CR1, a 6.2 V zener, crowbars +5 V if +12 V shorts to it. A dead +12 V bus: check that the heat sink of the pass transistor has not turned and shorted its leads.' },
+      { symptom: 'Lockups, spontaneous reboots and crashes with the Expansion Interface', suspects: [], note: 'All CPU signals run over a short unshielded ribbon cable to tin-plated card edges that oxidise. Clean both edges and the cable sockets, reseat, and keep the cable short. Early EIs needed a buffered cable or the DIN cable modification; the redesigned EI sold from January 1980 does not, and a buffered cable should not be used with it (trs-80.org). Hold BREAK while pressing RESET with the EI attached.' },
+      { symptom: 'Keys repeat or double (keybounce)', suspects: [], note: 'Dirt in the two-piece key contacts makes the Level II ROM read one press as several. Clean the contacts; KBFIX (Radio Shack) adds software debounce, and the last Level II ROM (version 1.3) has debounce built in. Sticking keycaps and a broken keyboard interconnect cable are also common (Handbook p. 67).' },
+      { symptom: 'Key appears after the prompt by itself, or the keyboard is dead', suspects: [], note: 'A character after the > prompt is a shorted key or PCB run in the matrix. A completely dead keyboard: no power, a broken interconnect cable, or the address decoder not giving KYBD*.' },
+      { symptom: 'Garbled characters, graphics where letters should be', suspects: ['sram2102', 'cg-mcm6670'], note: 'A character wrong in many positions is a video RAM bit (Z45-Z48, Z61-Z63). Every character the wrong shape is the MCM6670 (Z29) or latch Z28. Lowercase never shows on a stock Model I: there are only seven video RAMs.' },
+      { symptom: 'Random faults in clocks, video timing or decoding (74LS TTL)', suspects: [], note: 'The keyboard unit is about 80 TTL and MOS chips with no custom parts, so many faults are a single 74LS gate, counter or buffer. Use the Handbook divider-chain frequency table (10.6445 MHz master, 1.774 MHz CPU clock) and a good-in, bad-out sweep along the signal; cut a run to tell a dead output from a shorted input before replacing a chip.' },
+      { symptom: 'Cassette will not load (CLOAD)', suspects: [], note: 'Check K1 clicks and closes pins 1 and 3 of the cassette DIN, the tape level at pin 4 (Z4 LM3900 filter and detector), and the recorder volume. Plugging the power DIN into the cassette jack by mistake is easy; the power jack is the one closest to the power switch.' },
+    ],
+    model3: [
+      { symptom: 'Computer dead', suspects: [], note: 'Check 120 V AC at SK1 of the main supply, then +5 V at pin 4, +12 V at pin 2 and -12 V at pin 1 of SK2. Missing: check fuse resistor R25 and bridge DB1 for shorts. If R25 is good, unplug SK2-SK4 and reconnect one at a time to find the load that shuts the supply down (Sams).' },
+      { symptom: 'Supply smokes, smells or trips the breaker at switch-on', suspects: [], note: 'The line-side metallized-paper filter capacitors (2200 pF and 0.1 µF, 250 V AC) are the RIFA type that cracks and burns with age; replace them with X2/Y2 film parts before powering up an untested unit (community repair advice, not in the Tandy manual).' },
+      { symptom: 'No boot, no prompt', suspects: ['cpuz80', 'rom2364', 'rom2332', 'rom2316', 'dram4116'], note: 'Substitute the CPU (U77), ROMs (U104-U106), RAMs (U7-U14) and data bus buffer (U90) (Sams). Check the 2.02752 MHz clock at the Z80 pin 6 and the -5 V for the 4116s from the MC7905C.' },
+      { symptom: 'No video (computer runs)', suspects: [], note: 'Check J5 on the CPU board and J101 on the monitor board, then fuse F101 (2 A) on the monitor board. The monitor needs +12 V DC at about 1 A on J101 pin 7.' },
+      { symptom: 'Wrong characters on the screen', suspects: ['rom2316', 'sram2114'], note: 'Substitute the character generator U36 (MCM68A316E), video RAMs U81, U82 and latch U68 or buffer U67 (Sams).' },
+      { symptom: 'Picture too big, small or unstable', suspects: [], note: 'Check vertical size, width and the hold adjustments on the RCA monitor board, then the 50/60 Hz display jumpers on the CPU board (Model III TRM, Adjustments and Jumper Positions).' },
+      { symptom: 'Disk drives dead or erratic', suspects: ['fdc1793'], note: 'Dead: check +12 V at pin 2 and +5 V at pin 4 of SK2 on the disk supply. Erratic: reseat J7 on the CPU board and J2-J4 on the FDC board. No read or write: substitute the FDC (U7), WD1691 (U11), WD2143 (U13) and data buffer U2 (Sams).' },
+      { symptom: 'RS-232 board dead', suspects: [], note: 'The optional RS-232 board uses a TR1602B UART and a BR1941 baud rate generator clocked at 5.0688 MHz from the CPU board, with +12 V and -12 V from the internal supply (no DC-DC converter). Check both rails and the 5.0688 MHz clock first; ports E8H-EBH.' },
+    ],
+    model4: [
+      { symptom: 'Computer dead (65 W Astec supply)', suspects: [], note: 'Unplug the load. Check the fuse, bridge DB1, power transistor Q2 and catch diode D3 for shorts. With 95 V AC in, B+ at the end of R14 nearest the transformer should be 260-270 V DC. A short on +12 V also checks crowbar SCR1 (Model 4 TRM 6.2.4).' },
+      { symptom: 'All supply outputs low', suspects: [], note: 'Check the voltage selection jumper on the 65 W supply. It regulates from +5 V and +12 V (V3); trim with R27 and R28 (Model 4 TRM 6.2.5).' },
+      { symptom: 'Supply smokes or trips at switch-on', suspects: [], note: 'As on the Model III: the line filter capacitors of these Astec supplies are the RIFA metallized-paper type that cracks with age; replace before first power-up (community repair advice).' },
+      { symptom: 'No boot in either mode', suspects: ['cpuz80', 'rom2364', 'dram4164'], note: 'Check the 20.2752 MHz oscillator Y1/Q1 and the CPU clock at the Z80 pin 6 (2.03 or 4.06 MHz). Model III mode needs the ROMs U68-U70; Model 4 mode needs the disk and the 64K or 128K RAM (6665).' },
+      { symptom: 'No picture or wrong screen size', suspects: ['crtc68045'], note: 'The 68045 CRTC (U47) makes the sync; 80 × 24 mode uses the 12.672 MHz oscillator Y2/Q2. Then check the monitor cable, +12 V and fuse F101 on the RCA monitor board.' },
+      { symptom: 'Disk errors', suspects: ['fdc1793', 'ga-model4'], note: 'On the 1983 board the FDC is a separate board with a 1793; on the gate-array board GA 4.4 (U76) and its 16 MHz oscillator do the timing. Check +12 V to the drives and the 1 MHz FDC clock.' },
     ],
   },
   connectors: {
@@ -795,6 +1176,328 @@ RCS.add({
         ],
       },
     ],
+    model1: [
+      {
+        id: 'model1-exp', name: 'Expansion port (rear edge of the CPU board)', kind: '40-pin PCB edge (20 + 20), mates with AMP 88103-1', geo: 'edge-20x20-odd-even', gender: 'male',
+        verifiedAgainst: 'TRS-80 Technical Reference Handbook (2nd ed.), Pin Connections for Expansion-Port Edge Card and Figure 22, p. 91',
+        summary: 'The whole Z80 bus plus RAS*, CAS* and MUX for the Expansion Interface RAM. Viewed from the rear of the keyboard unit (Figure 22) the odd pins 1 to 39 run left to right on the upper row and the even pins 2 to 40 below. Every output drives only one TTL load; use buffers. Pin 39 is +5 V on early units and ground on Level II units. The tin-plated edge oxidises: clean it before chasing EI crashes.',
+        pins: M1BUS,
+        sources: [
+          { label: 'TRS-80 Technical Reference Handbook, Pin Connections for Expansion-Port Edge Card, Figure 22, p. 91', url: TRH(92) },
+          { label: 'TRS-80 Technical Reference Handbook, Explanation of Expansion Port Signals, pp. 90-92', url: TRH(91) },
+          { label: 'trs-80.org, Gold Plug 80 (tin-plated Model I edge connectors oxidise; second source)', url: T80_GOLD },
+        ],
+      },
+      {
+        id: 'model1-cassette', name: 'Cassette (J3, TAPE)', kind: '5-pin DIN socket (180°)', geo: 'din5-180',
+        verifiedAgainst: 'TRS-80 Technical Reference Handbook, schematic sheet 2 (J3 front view) and Cassette Motor Control / Audio Output / Audio Input, pp. 45-48',
+        summary: 'Relay contacts for the recorder motor on pins 1 and 3, tape in on 4, tape out on 5. The schematic draws J3 from the front with standard DIN numbering. The power DIN is the same size and sits next to it: plug power into J1, the jack closest to the power switch.',
+        pins: m1CassPins,
+        sources: [
+          { label: 'TRS-80 Technical Reference Handbook, schematic sheet 2 (J3 cassette I/O, K1)', url: TRH(115) },
+          { label: 'TRS-80 Technical Reference Handbook, Cassette Motor Control and Audio Output, pp. 45-46', url: TRH(46) },
+          { label: 'TRS-80 Technical Reference Handbook, Cassette Audio Input, p. 48', url: TRH(49) },
+        ],
+      },
+      {
+        id: 'model1-video', name: 'Video to the monitor (J2)', kind: '5-pin DIN socket (180°)', geo: 'din5-180',
+        verifiedAgainst: 'TRS-80 Technical Reference Handbook, schematic sheet 2 (J2 front view) and Video Mixing, p. 42',
+        summary: 'Composite video for the Radio Shack monitor, buffered by Q1 to drive 75 Ω. Pin 1 carries +5 V from the board; pins 2 and 3 are not connected on the schematic.',
+        pins: [
+          { n: 1, name: '+5 V', type: 'power', desc: '+5 V from the logic supply (Q2 emitter node on the schematic).', expect: '+4.75 to +5.25 V' },
+          { n: 2, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 3, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 4, name: 'VIDEO', type: 'video', desc: 'Composite video from the Q1 (MPS3904) emitter follower, for a 75 Ω cable.', expect: 'About 1.8 V p-p composite, sync tip to white (Figure 9B)' },
+          { n: 5, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+        ],
+        sources: [
+          { label: 'TRS-80 Technical Reference Handbook, schematic sheet 2 (J2, Q1, Q2)', url: TRH(115) },
+          { label: 'TRS-80 Technical Reference Handbook, Video Mixing and Figure 9B, pp. 42-43', url: TRH(43) },
+        ],
+      },
+      {
+        id: 'model1-power', name: 'Power in (J1, POWER)', kind: '5-pin DIN socket (180°), from the external TRS-80 power supply', geo: 'din5-180',
+        verifiedAgainst: 'TRS-80 Technical Reference Handbook, System Power Supply, p. 52, and schematic sheet 2 (J1 front view)',
+        summary: 'The adapter sends AC and raw DC, not regulated rails: about 17 V AC from the 14 V centre-tapped winding on pins 1 and 3, and about 19.8 V DC on pin 2, with the common on pin 4. The board makes +5 V, +12 V and -5 V itself. J1 is the DIN closest to the power switch; the cassette DIN beside it is the same size.',
+        pins: m1PowerPins,
+        sources: [
+          { label: 'TRS-80 Technical Reference Handbook, System Power Supply and AC Adapter, p. 52', url: TRH(53) },
+          { label: 'TRS-80 Technical Reference Handbook, +5 Volt Supply (J1 pins 1 and 3), p. 54', url: TRH(55) },
+          { label: 'TRS-80 Technical Reference Handbook, schematic sheet 2 (J1, CR8, S1)', url: TRH(115) },
+        ],
+      },
+      {
+        id: 'ei-bus', name: 'Expansion Interface: CPU input (J2) and screen printer bus (J3)', kind: '40-pin PCB edges on the EI, same numbering as the keyboard unit', geo: 'edge-20x20-odd-even', gender: 'male', verify: true,
+        verifiedAgainst: 'Expansion Interface Service Manual (26-1140), schematic sheet 3 (P/O J2, J3)',
+        summary: 'The short ribbon cable from the keyboard unit plugs into J2; J3 passes the same 40 signals on for the screen printer or other devices. The EI schematic lists the same pin numbers as the keyboard unit edge, and the EI drives INT* (pin 21) from its 25 ms clock and the FDC. The row layout is taken from the keyboard unit (Figure 22); the EI manual does not draw it (verify).',
+        pins: M1BUS,
+        sources: [
+          { label: 'Expansion Interface Service Manual, schematic sheet 3 (J2 TRS-80 interface bus, J3 screen printer bus)', url: EISM(21) },
+          { label: 'Expansion Interface Service Manual, Real-Time Clock (INT at J2 pin 21), p. 5', url: EISM(5) },
+          { label: 'trs-80.org, The Radio Shack Expansion Interface (cable history; second source)', url: T80_EI },
+        ],
+      },
+      {
+        id: 'ei-printer', name: 'Expansion Interface: line printer (J4)', kind: '34-pin PCB edge (17 + 17), cable 600091 to a 36-pin printer plug', geo: 'edge-17x17-odd-even', gender: 'male',
+        verifiedAgainst: 'Expansion Interface Service Manual, Line Printer Interface p. 4 and schematic sheet 2 (J4 line printer bus)',
+        summary: 'A latched 8-bit output and a 4-bit status input, both at memory address $37E8. Write the character to $37E8; read $37E8 for BUSY (bit 7), OUT OF PAPER (bit 6), UNIT SELECT (bit 5) and FAULT (bit 4). The strobe is a 1.5 µs LOW pulse. Data 4 is printed as pin 8 on the schematic but sits at 9 in the odd-numbered data run. The row layout (odd pins one side, even the other) is the usual 34-pin numbering, not drawn in the manual.',
+        pins: Array.from({ length: 34 }, (_, i) => {
+          const n = i + 1;
+          const m = { 1: ['DATA STROBE*', 'ctrl', 'Strobe to the printer from one-shot Z29: a 1.5 µs LOW pulse after each write to $37E8.'],
+            3: ['DATA 1', 'data', 'Data bit 0 (D0), latched by Z44/Z45.'], 5: ['DATA 2', 'data', 'Data bit 1.'], 7: ['DATA 3', 'data', 'Data bit 2.'], 9: ['DATA 4', 'data', 'Data bit 3. Printed as "8" on the schematic.'],
+            11: ['DATA 5', 'data', 'Data bit 4.'], 13: ['DATA 6', 'data', 'Data bit 5.'], 15: ['DATA 7', 'data', 'Data bit 6.'], 17: ['DATA 8', 'data', 'Data bit 7.'],
+            19: ['NC', 'nc', 'Not connected.'], 21: ['BUSY', 'io', 'Printer busy, read as bit 7 of $37E8 through Z46. HIGH = busy.'], 23: ['OUTPAPER', 'io', 'Paper empty, bit 6 of $37E8.'],
+            25: ['UNIT SELECT', 'io', 'Unit select, bit 5 of $37E8. 4.7 kΩ pull-up.'], 26: ['PRIME', 'ctrl', 'Labelled PRIME on the schematic; no driver drawn.'], 28: ['FAULT', 'io', 'Fault, bit 4 of $37E8. 4.7 kΩ pull-up.'],
+            29: ['NC', 'nc', 'Not connected.'], 30: ['NC', 'nc', 'Not connected.'], 32: ['NC', 'nc', 'Not connected.'] }[n];
+          return m ? { n, name: m[0], type: m[1], desc: m[2] } : { n, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' };
+        }),
+        sources: [
+          { label: 'Expansion Interface Service Manual, Line Printer Interface, p. 4', url: EISM(4) },
+          { label: 'Expansion Interface Service Manual, schematic sheet 2 (J4 line printer bus)', url: EISM(19) },
+        ],
+      },
+      {
+        id: 'ei-disk', name: 'Expansion Interface: floppy disk bus (J5)', kind: '34-pin PCB edge (17 + 17), Shugart SA400 bus', geo: 'edge-17x17-odd-even', gender: 'male',
+        verifiedAgainst: 'Expansion Interface Service Manual, Floppy Disk Interface p. 5 and schematic sheet 3 (J5 Shugart floppy disk bus)',
+        summary: 'Up to four single-density drives on one daisy-chained cable, driven by 7438 open-collector buffers from the FD1771 and the drive-select latch at $37E0. The inputs have 150 Ω terminations to +5 V on the EI. MOTOR ON (pin 16) drops two or three seconds after the last drive select unless it is re-selected. Note drive select 4 on pin 32, not 6. All odd pins are ground.',
+        pins: diskPins({
+          8: ['INDEX PULSE*', 'Index pulse from the drive to the 1771 /IP. 150 Ω pull-up.'],
+          10: ['DS1*', 'Drive select 1.'], 12: ['DS2*', 'Drive select 2.'], 14: ['DS3*', 'Drive select 3.'],
+          16: ['MOTOR ON*', 'Motor on for all drives, from the Z29 time-out one-shot.'],
+          18: ['DIRECTION SEL*', 'Step direction.'], 20: ['STEP*', 'Step pulse.'],
+          22: ['WRITE DATA*', 'Write data from the 1771.'], 24: ['WRITE GATE*', 'Write gate.'],
+          26: ['TRACK ZERO*', 'Track 00 from the drive. 150 Ω pull-up.'], 28: ['WRITE PROTECT*', 'Write protect from the drive. 150 Ω pull-up.'],
+          30: ['READ DATA*', 'Raw read data from the drive. 150 Ω pull-up.'], 32: ['DS4*', 'Drive select 4.'],
+        }),
+        sources: [
+          { label: 'Expansion Interface Service Manual, Floppy Disk Interface, p. 5', url: EISM(5) },
+          { label: 'Expansion Interface Service Manual, schematic sheet 3 (J5)', url: EISM(21) },
+        ],
+      },
+      {
+        id: 'ei-cassette', name: 'Expansion Interface: cassette 0 and 1 outputs (J6, J7) and input from the TRS-80 (J8)', kind: 'Three 5-pin DIN sockets (180°)', geo: 'din5-180',
+        verifiedAgainst: 'Expansion Interface Service Manual, Dual Cassette Port p. 4 and schematic sheet 2 (J6, J7, J8 front views, K1)',
+        summary: 'The keyboard unit cassette cable plugs into J8. Relay K1 (four-pole double-throw) switches pins 1, 3, 4 and 5 to cassette 0 (J6, relay off) or cassette 1 (J7, relay on); pin 2 is common ground. Write $37E4 with D0 = 0 for cassette 0, D0 = 1 for cassette 1. All three use the keyboard unit pinout below.',
+        pins: m1CassPins,
+        sources: [
+          { label: 'Expansion Interface Service Manual, Dual Cassette Port, p. 4', url: EISM(4) },
+          { label: 'Expansion Interface Service Manual, schematic sheet 2 (J6, J7, J8, K1)', url: EISM(19) },
+        ],
+      },
+      {
+        id: 'ei-power', name: 'Expansion Interface: power in (J9)', kind: '5-pin DIN socket (180°), from its own TRS-80 power supply', geo: 'din5-180',
+        verifiedAgainst: 'Expansion Interface Service Manual, System Power Supply (J9), pp. 6-7, and schematic sheet 1 (J9 front view)',
+        summary: 'Same adapter and same pinout as the keyboard unit J1: about 17 V AC on pins 1 and 3 to bridge CR4, raw DC on pin 2 to the +12 V regulator, common on pin 4. The EI has its own +12 V, +5 V and -5 V regulators (Z51, Z50 and CR1). J9 is the jack closest to the large heat sink; do not plug it into a cassette jack.',
+        pins: m1PowerPins,
+        sources: [
+          { label: 'Expansion Interface Service Manual, AC Adapter and System Power Supply, pp. 6-7', url: EISM(6) },
+          { label: 'Expansion Interface Service Manual, Power Supply Checks and Adjustments (J9), p. 8', url: EISM(8) },
+          { label: 'Expansion Interface Service Manual, schematic sheet 1 (J9, CR4, S1)', url: EISM(18) },
+        ],
+      },
+    ],
+    model3: [
+      {
+        id: 'm3-iobus', name: 'I/O bus (J2, underside)', kind: '50-pin PCB edge (25 + 25)', geo: 'edge-25x25-odd-even', gender: 'male',
+        verifiedAgainst: 'Model III Technical Reference Manual, CPU schematic Figure 13 (I/O Bus section, J2) and Model III I/O Bus, p. 19',
+        summary: 'Port I/O only: buffered data, A0-A7 and the IN, OUT, M1, IORQ and reset lines, all disabled until software sets port ECH bit 4 (ENEXTIO). Odd pins carry the signals and every even pin is ground. Ports 80H-FFH are reserved for the system. The row layout (odd on one side) is the usual numbering; the manual lists the pins but does not draw the rows.',
+        pins: IOBUS,
+        sources: [
+          { label: 'Model III Technical Reference Manual, Figure 13 CPU schematic, I/O Bus section (J2)', url: M3TRM(51) },
+          { label: 'Model III Technical Reference Manual, Model III I/O Bus, p. 19', url: M3TRM(30) },
+          { label: 'Model 4/4P Technical Reference Manual, Model 4 Gate Array I/O pin assignments (same 50-pin bus), p. 53', url: M4PTRM(59) },
+        ],
+      },
+      {
+        id: 'm3-printer', name: 'Printer port (card edge)', kind: '34-pin PCB edge (17 + 17)', geo: 'edge-17x17-odd-even', gender: 'male',
+        verifiedAgainst: 'Model III Technical Reference Manual, Figure 12 CPU schematic, Line Printer and Real Time Clock section',
+        summary: 'Parallel printer at port F8H (and memory $37E8-$37E9 for Model I software). Write the character to F8H; U94 latches it and one-shot U93 strobes pin 1. Read F8H for BUSY (bit 7), OUTPAPER (6), UNIT SELECT (5) and FAULT (4). The row layout is the usual odd/even numbering, not drawn in the manual.',
+        pins: PRNPINS,
+        sources: [
+          { label: 'Model III Technical Reference Manual, Figure 12 Line Printer and Real Time Clock schematic', url: M3TRM(50) },
+          { label: 'Model III Technical Reference Manual, I/O Port Description (port F8H), p. 15', url: M3TRM(26) },
+        ],
+      },
+      {
+        id: 'm3-cassette', name: 'Cassette (rear DIN, from header J3)', kind: '5-pin DIN socket (180°)', geo: 'din5-180', verify: true,
+        verifiedAgainst: 'Model III Technical Reference Manual, Figure 11 CPU schematic, Cassette Interface section (J3)',
+        summary: 'Same pinout as the Model I: relay contacts on 1 and 3, ground on 2, tape in on 4, tape out on 5. The schematic numbers the CPU-board header J3 that feeds the rear DIN; the DIN is assumed to be wired pin for pin (verify). 500 baud levels: 00H gives 0.4 V, 01H 0.8 V, 02H 0 V; 1500 baud is a square wave of 1320-2680 Hz.',
+        pins: [
+          { n: 1, name: 'REM', type: 'ctrl', desc: 'Motor relay K1 contact. Pins 1 and 3 close with port ECH bit 1 set.', expect: 'Shorted to pin 3 with the motor on' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 3, name: 'REM', type: 'ctrl', desc: 'Other side of the K1 contact (zeners CR1, CR2 across).', expect: 'Open with the motor off' },
+          { n: 4, name: 'CASSIN', type: 'audio', desc: 'Tape in, to the 500 baud filter (MC1741, MC1458) and the 1500 baud zero-crossing detector (U96).', expect: 'Tape audio, AC' },
+          { n: 5, name: 'CASSOUT', type: 'audio', desc: 'Tape out from the D0/D1 latch and resistor ladder.', expect: '0, 0.4 or 0.8 V steps while saving' },
+        ],
+        sources: [
+          { label: 'Model III Technical Reference Manual, Figure 11 Cassette Interface schematic (J3)', url: M3TRM(49) },
+          { label: 'Model III Technical Reference Manual, Cassette Interface, pp. 17-18', url: M3TRM(28) },
+        ],
+      },
+      {
+        id: 'm3-rs232', name: 'RS-232C (P1 on the optional RS-232 board)', kind: 'DB-25', geo: 'db25', gender: 'female', verify: true,
+        verifiedAgainst: 'Model III Technical Reference Manual, RS-232C Pin-Out Description, p. 58',
+        summary: 'TR1602B UART with a BR1941 baud rate generator (50 to 19,200 baud) on ports E8H-EBH. The computer is the terminal side (TD out on pin 2). Unlike the Model I board there is no COM/TERM switch to swap pins 2 and 3 and no sense switches. The manual does not state the socket gender; female is assumed (verify). Pins not listed are not connected.',
+        pins: [
+          { n: 1, name: 'PGND', type: 'ground', desc: 'Protective ground.', expect: '0 V' },
+          { n: 2, name: 'TD', type: 'serial', desc: 'Transmit data out.' },
+          { n: 3, name: 'RD', type: 'serial', desc: 'Receive data in. Its level can be read on port E8H bit 0.' },
+          { n: 4, name: 'RTS', type: 'serial', desc: 'Request to send out. Port EAH bit 0.' },
+          { n: 5, name: 'CTS', type: 'serial', desc: 'Clear to send in. Port E8H bit 7.' },
+          { n: 6, name: 'DSR', type: 'serial', desc: 'Data set ready in. Port E8H bit 6.' },
+          { n: 7, name: 'SGND', type: 'ground', desc: 'Signal ground.', expect: '0 V' },
+          { n: 8, name: 'CD', type: 'serial', desc: 'Carrier detect in. Port E8H bit 5.' },
+          { n: 20, name: 'DTR', type: 'serial', desc: 'Data terminal ready out. Port EAH bit 1.' },
+          { n: 22, name: 'RI', type: 'serial', desc: 'Ring indicate in. Port E8H bit 4.' },
+        ],
+        sources: [
+          { label: 'Model III Technical Reference Manual, RS-232C Technical Description and Pin-Out, pp. 57-58', url: M3TRM(69) },
+          { label: 'Model III Technical Reference Manual, RS-232C Port and Bit Assignments, p. 59', url: M3TRM(70) },
+        ],
+      },
+      {
+        id: 'm3-psu', name: 'Main supply outputs (SK2, SK3, SK4)', kind: 'Locking 4-pin PCB headers on the power supply board', geo: 'custom', pads: ROW4, outline: ROW_OUTLINE, gender: 'male',
+        verifiedAgainst: 'Model III Service Manual, Power Supply Functional Specifications, p. 67; Sams Computerfacts Model III, Service Checks',
+        summary: 'Three identical 4-pin output headers feed the CPU board, the disk and RS-232 boards. Only +5 V is regulated; +12 V and -12 V are extra windings that track it. Line input is the 2-pin header SK1 (pin 1 neutral, pin 2 live). Unplug SK2-SK4 one at a time to find a board that shuts the supply down. Pin order 1-4 is from the manual; the drawing assumes a straight row.',
+        pins: [
+          { n: 1, name: '-12 V', type: 'power', desc: '-12 V output, 0.1 A maximum. For RS-232 and the MC7905C that makes -5 V for the 4116 RAM.', expect: '-11.0 to -15.0 V' },
+          { n: 2, name: '+12 V', type: 'power', desc: '+12 V output, 2.02 A maximum. Monitor, disk drives, 4116 RAM.', expect: '+11.40 to +12.60 V' },
+          { n: 3, name: 'COM', type: 'ground', desc: 'Common (ground).', expect: '0 V' },
+          { n: 4, name: '+5 V', type: 'power', desc: '+5 V output, 2.5 A maximum. The regulated rail.', expect: '+4.75 to +5.25 V, under 50 mV ripple' },
+        ],
+        sources: [
+          { label: 'Model III Service Manual, Power Supply Functional Specifications (SK1-SK4 pinout), p. 67', url: M3SVC(74) },
+          { label: 'Model III Service Manual, Table 1 Load Board Values and Table 2 Voltage and Ripple, pp. 68-69', url: M3SVC(75) },
+          { label: 'Sams Computerfacts TRS-80 Model III, Preliminary Service Checks (SK2 voltages)', url: SAMS3(3) },
+        ],
+      },
+      {
+        id: 'm3-crt', name: 'Monitor board input (J101) from CPU board J5', kind: '10-position edge on the RCA video monitor board (position 5 keyed)', geo: 'custom', pads: ROW10.filter(p => p.n !== 5), outline: 'M2 36 H98 V64 H2 Z', gender: 'male',
+        verifiedAgainst: 'Model III Technical Reference Manual, Section VII Video Monitor: Functional Specifications p. 75 and Figure 3 schematic p. 79',
+        summary: 'Separate TTL video and sync plus +12 V for the 12-inch RCA monitor (KTR-131). The monitor draws +12 V DC at about 1 A through fuse F101 (2 A). No video: reseat J5 on the CPU board and J101 here, then check F101. There is high voltage on the CRT anode even with power off; discharge it first. Position 5 has no contact on the drawing.',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 2, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 4, name: 'E304', type: 'video', desc: 'Runs to E304 on the CRT circuit (drawing zone 9A); function not labelled on the schematic.', verify: true },
+          { n: 6, name: 'HSYNC', type: 'video', desc: 'Horizontal drive, through C702 to sync transistor Q701.', expect: 'TTL, positive pulses 4-25 µs, 15.6 kHz' },
+          { n: 7, name: '+12 V', type: 'power', desc: '+12 V DC for the monitor, through fuse F101 (2 A).', expect: '+12 V DC at about 1 A' },
+          { n: 8, name: 'VIDEO', type: 'video', desc: 'Video input to amplifier Q302. Positive = white.', expect: 'TTL, 4 V ±1.5 V' },
+          { n: 9, name: 'VSYNC', type: 'video', desc: 'Vertical drive to sync amplifier Q601.', expect: 'TTL, negative pulses 100-1400 µs, 50/60 Hz' },
+          { n: 10, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+        ],
+        sources: [
+          { label: 'Model III Technical Reference Manual, Video Monitor Functional Specifications, p. 75', url: M3TRM(86) },
+          { label: 'Model III Technical Reference Manual, Figure 3 Video Monitor Assembly schematic (edge connector), p. 79', url: M3TRM(90) },
+          { label: 'Sams Computerfacts TRS-80 Model III, Service Checks, Video Display (J5, J101, F101)', url: SAMS3(3) },
+        ],
+      },
+    ],
+    model4: [
+      {
+        id: 'm4-iobus', name: 'I/O bus (J2 on the 1983 board; J4 on the gate-array board)', kind: '50-pin PCB edge (25 + 25)', geo: 'edge-25x25-odd-even', gender: 'male',
+        verifiedAgainst: 'Model 4/4P Technical Reference Manual, Model 4 Gate Array I/O Pin Assignments (J4), p. 53; Model 4 Technical Reference Manual (1983), 3.1.12 I/O Connectors',
+        summary: 'Same 50-pin bus as the Model III: odd pins signals, even pins ground, enabled by port ECH bit 4. The gate-array table names the lines XD0-XD7 and XA0-XA7; its label for pin 43 wraps onto 44 in the scan, which shifts the last few labels by one line, but the odd/even pattern and the Model III schematic agree. The row layout is the usual numbering, not drawn in the manual.',
+        pins: IOBUS,
+        sources: [
+          { label: 'Model 4/4P Technical Reference Manual, Model 4 Gate Array I/O pin assignments (J4), p. 53', url: M4PTRM(59) },
+          { label: 'Model 4 Technical Reference Manual (1983), 3.1.12 I/O Connectors (J2), p. 21', url: M4TRM(37) },
+          { label: 'Model 4/4P Technical Reference Manual, 1.2 Model 4 I/O Bus, p. 14', url: M4PTRM(20) },
+        ],
+      },
+      {
+        id: 'm4-printer', name: 'Printer port (card edge)', kind: '34-pin PCB edge (17 + 17)', geo: 'edge-17x17-odd-even', gender: 'male', verify: true,
+        verifiedAgainst: 'Model 4 Technical Reference Manual (1983), 3.1.11 Printer Circuitry and the Model 4 Port Bit Map (port F8H)',
+        summary: 'Port F8H-FBH: write the character (latched by U66, strobed by one-shot U65); read BUSY, PAPER, SELECT and FAULT on bits 7-4, as on the Model III. The pin table is the Model III schematic; the Model 4 schematic was not checked pin by pin (verify).',
+        pins: PRNPINS,
+        sources: [
+          { label: 'Model 4 Technical Reference Manual (1983), 3.1.11 Printer Circuitry, p. 21', url: M4TRM(37) },
+          { label: 'Model 4 Technical Reference Manual (1983), Model 4 Port Bit Map, p. 18', url: M4TRM(34) },
+          { label: 'Model III Technical Reference Manual, Figure 12 Line Printer schematic (pin table)', url: M3TRM(50) },
+        ],
+      },
+      {
+        id: 'm4-cassette', name: 'Cassette (rear DIN)', kind: '5-pin DIN socket (180°)', geo: 'din5-180', verify: true,
+        verifiedAgainst: 'Model 4 Technical Reference Manual (1983), 3.1.10 Cassette Circuitry',
+        summary: 'Model III compatible 500 and 1500 baud cassette. Port FFH bits 0-1 drive the output; port ECH bit 1 sets latch U42, which turns on Q4 and relay K1 for the motor. The pinout is taken from the Model III schematic (verify on the Model 4).',
+        pins: [
+          { n: 1, name: 'REM', type: 'ctrl', desc: 'Motor relay K1 contact; closes with port ECH bit 1 set.', expect: 'Shorted to pin 3 with the motor on' },
+          { n: 2, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 3, name: 'REM', type: 'ctrl', desc: 'Other side of the K1 contact.', expect: 'Open with the motor off' },
+          { n: 4, name: 'CASSIN', type: 'audio', desc: 'Tape in, to the 500 baud amplifier (U43, U28) and the 1500 baud comparator (U15).', expect: 'Tape audio, AC' },
+          { n: 5, name: 'CASSOUT', type: 'audio', desc: 'Tape out: latch U27 bits D0, D1 through a resistor ladder.', expect: 'Three DC steps while saving at 500 baud' },
+        ],
+        sources: [
+          { label: 'Model 4 Technical Reference Manual (1983), 3.1.10 Cassette Circuitry, p. 21', url: M4TRM(37) },
+          { label: 'Model III Technical Reference Manual, Figure 11 Cassette Interface schematic (pin table)', url: M3TRM(49) },
+        ],
+      },
+      {
+        id: 'm4-rs232', name: 'RS-232C (DB-25, J3 on the gate-array board)', kind: 'DB-25', geo: 'db25', gender: 'female', verify: true,
+        verifiedAgainst: 'Model 4/4P Technical Reference Manual, RS-232C Pinout Listing p. 51 and Model 4 Gate Array I/O Pin Assignments (J3), p. 53',
+        summary: 'TR1865 UART and a baud rate generator fed 5.0688 MHz, on ports E8H-EBH, with interrupts through GA 4.5. Adds secondary RTS on pin 19 to the Model III list. The manual does not state the socket gender; female is assumed (verify). Pins not listed are not connected.',
+        pins: [
+          { n: 1, name: 'PGND', type: 'ground', desc: 'Protective ground.', expect: '0 V' },
+          { n: 2, name: 'TD', type: 'serial', desc: 'Transmit data out.' },
+          { n: 3, name: 'RD', type: 'serial', desc: 'Receive data in.' },
+          { n: 4, name: 'RTS', type: 'serial', desc: 'Request to send out.' },
+          { n: 5, name: 'CTS', type: 'serial', desc: 'Clear to send in.' },
+          { n: 6, name: 'DSR', type: 'serial', desc: 'Data set ready in.' },
+          { n: 7, name: 'SGND', type: 'ground', desc: 'Signal ground.', expect: '0 V' },
+          { n: 8, name: 'CD', type: 'serial', desc: 'Carrier detect in.' },
+          { n: 19, name: 'SRTS', type: 'serial', desc: 'Secondary request to send out.' },
+          { n: 20, name: 'DTR', type: 'serial', desc: 'Data terminal ready out.' },
+          { n: 22, name: 'RI', type: 'serial', desc: 'Ring indicate in.' },
+        ],
+        sources: [
+          { label: 'Model 4/4P Technical Reference Manual, RS-232C Circuit and Pinout Listing, p. 51', url: M4PTRM(57) },
+          { label: 'Model 4/4P Technical Reference Manual, Model 4 Gate Array I/O pin assignments (J3), p. 53', url: M4PTRM(59) },
+        ],
+      },
+      {
+        id: 'm4-psu', name: '65 W supply output (TB2, Astec AA12090)', kind: '13-pin locking header (Molex 5265-12 housing), pin 3 keyed', geo: 'custom', pads: ROW13.filter(p => p.n !== 3), outline: 'M1 38 H99 V62 H1 Z', gender: 'male',
+        verifiedAgainst: 'Model 4 Technical Reference Manual (1983), 6.2 Power Supply #8790043, Pin Assignments and Tables 6-1, 6-2, p. 114',
+        summary: 'The 65 W Astec AA12090 (Tandy 8790043) has two +12 V outputs: V2 for the logic and V3 for the drives and monitor. AC enters on TB1 (pin 1 line, pin 2 neutral). Some Model 4s use the 38 W Astec AA11320 (Tandy 8790021) or a Tandy-built 65 W supply (8790049) instead; their connectors are not tabled here. Pin 3 is the key.',
+        pins: [
+          { n: 1, name: 'COM', type: 'ground', desc: 'Common.', expect: '0 V' },
+          { n: 2, name: '+12 V (V2)', type: 'power', desc: '+12 V V2 output, 0.4 A minimum to 2.1 A maximum load.', expect: '+11.40 to +12.60 V' },
+          { n: 4, name: '-12 V (V4)', type: 'power', desc: '-12 V V4 output, up to 0.1 A.', expect: '-11.40 to -12.60 V' },
+          { n: 5, name: '+12 V (V3)', type: 'power', desc: '+12 V V3 output, 0.6 A minimum to 1.5 A maximum. Regulated with +5 V.', expect: '+11.40 to +12.60 V' },
+          { n: 6, name: '+12 V (V3)', type: 'power', desc: '+12 V V3 output (second pin).', expect: '+11.40 to +12.60 V' },
+          { n: 7, name: '+12 V (V3)', type: 'power', desc: '+12 V V3 output (third pin).', expect: '+11.40 to +12.60 V' },
+          { n: 8, name: '+5 V (V1)', type: 'power', desc: '+5 V V1 output, 1.35 A minimum to 4.0 A maximum. The main regulated rail.', expect: '+5.00 to +5.25 V, under 50 mV ripple' },
+          { n: 9, name: '+5 V (V1)', type: 'power', desc: '+5 V V1 output (second pin).', expect: '+5.00 to +5.25 V' },
+          { n: 10, name: '+5 V (V1)', type: 'power', desc: '+5 V V1 output (third pin).', expect: '+5.00 to +5.25 V' },
+          { n: 11, name: 'COM', type: 'ground', desc: 'Common.', expect: '0 V' },
+          { n: 12, name: 'COM', type: 'ground', desc: 'Common.', expect: '0 V' },
+          { n: 13, name: 'COM', type: 'ground', desc: 'Common.', expect: '0 V' },
+        ],
+        sources: [
+          { label: 'Model 4 Technical Reference Manual (1983), 6.2.7 Performance Test, Pin Assignments, Tables 6-1 and 6-2, p. 114', url: M4TRM(130) },
+          { label: 'Model 4 Technical Reference Manual (1983), 6.2.4-6.2.6 No Output, Low Outputs, Crowbar, pp. 112-113', url: M4TRM(128) },
+        ],
+      },
+      {
+        id: 'm4-crt', name: 'Monitor board input (RCA video monitor #8492002)', kind: '10-position edge on the RCA monitor board (position 5 keyed)', geo: 'custom', pads: ROW10.filter(p => p.n !== 5), outline: 'M2 36 H98 V64 H2 Z', gender: 'male', verify: true,
+        verifiedAgainst: 'Model 4 Technical Reference Manual (1983), 7.1 Video Monitor #8492002 (RCA KTR131), Functional Specifications p. 145; pin table from the Model III monitor schematic',
+        summary: 'The Model 4 RCA monitor is the same KTR-131 family board as the Model III, with the same +12 V 1 A input and TTL sync and video. The pin table is the Model III schematic (verify against schematic 8000187). Units with the TCE monitor (8790607) were not checked.',
+        pins: [
+          { n: 1, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 2, name: 'NC', type: 'nc', desc: 'Not connected.' },
+          { n: 3, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+          { n: 4, name: 'E304', type: 'video', desc: 'To E304 on the CRT circuit; function not labelled.', verify: true },
+          { n: 6, name: 'HSYNC', type: 'video', desc: 'Horizontal drive.', expect: 'TTL, positive pulses 4-25 µs' },
+          { n: 7, name: '+12 V', type: 'power', desc: '+12 V DC through fuse F101.', expect: '+12 V DC at about 1 A' },
+          { n: 8, name: 'VIDEO', type: 'video', desc: 'Video in, positive white.', expect: 'TTL, 4 V ±1.5 V' },
+          { n: 9, name: 'VSYNC', type: 'video', desc: 'Vertical drive.', expect: 'TTL, negative pulses 100-1400 µs' },
+          { n: 10, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
+        ],
+        sources: [
+          { label: 'Model 4 Technical Reference Manual (1983), 7.1.1 Video Monitor Functional Specifications, p. 145', url: M4TRM(161) },
+          { label: 'Model III Technical Reference Manual, Figure 3 Video Monitor schematic (pin table)', url: M3TRM(90) },
+        ],
+      },
+    ],
   },
   power: {
     coco1: {
@@ -941,6 +1644,123 @@ RCS.add({
         { label: 'MC-10 Service Manual, CPU-6803 and Reset Circuit, p. 12', url: SM10(12) },
         { label: 'MC-10 Service Manual, Power Supply, p. 17', url: SM10(17) },
         { label: 'MC-10 Schematic D-11531', url: SCH10 },
+      ],
+    },
+    model1: {
+      supply: {
+        external: true,
+        name: 'TRS-80 Power Supply (UL "AC adapter" with one primary and two secondaries)',
+        output: '14 V AC centre-tapped at 1 A (about 17 V AC at J1 pins 1-3) and 19.8 V DC at about 350 mA (rectified inside the adapter)',
+        connector: 'model1-power',
+        notes: [
+          'The adapter makes no regulated rails. The board regulates +5 V (723 Z1 with pass transistors; about 1.2 A, current limit near 1.8 A), +12 V (723 Z2 with Q6; about 350 mA, limit about 480 mA) and -5 V (zener CR2 from CR8; about 1 mA).',
+          'Primary 120 V AC (105-135 V). A wire fuse in the primary is not replaceable: when it opens, or the wires break at the DIN plug, replace the adapter. A blown fuse link usually means shorted diodes in CR8 on the board; check before fitting a new adapter.',
+          'Set +12 V first (R10, top of R18, 11.4-12.6 V): the +5 V regulator is powered from the +12 V side and will not work without it. Then +5 V (R5, left side of R4, 4.75-5.25 V). -5 V has no adjustment.',
+          'The Expansion Interface needs a second, identical adapter on its J9. The EI case has a compartment that holds both adapters: check both adapters, not only the one feeding the computer (trs-80.org).',
+          'Bench test: measure J1 with the DIN unplugged from the computer. Expect about 17 V AC across pins 1 and 3 and about 20 V DC from pin 2 to pin 4.',
+        ],
+        sources: [
+          { label: 'TRS-80 Technical Reference Handbook, System Power Supply and AC Adapter, pp. 52-54', url: TRH(53) },
+          { label: 'TRS-80 Technical Reference Handbook, Power Supply Checks and Adjustments, p. 60', url: TRH(61) },
+          { label: 'TRS-80 Technical Reference Handbook, power supply troubleshooting (AC adapter), p. 75', url: TRH(76) },
+          { label: 'trs-80.org, The Radio Shack Expansion Interface (power supply compartment; second source)', url: T80_EI },
+        ],
+      },
+      rails: [
+        { rail: '+5 V', expect: '4.75-5.25 V', where: 'Z80A pin 11; left side of R4', note: 'Logic. Adjust R5. CR1 (6.2 V zener) crowbars it if +12 V shorts into it.' },
+        { rail: '+12 V', expect: '11.4-12.6 V', where: '4116 pin 8; top of R18', note: 'RAM VDD. Adjust R10 first.' },
+        { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '4116 pin 1; CR2 anode', note: 'RAM VBB from zener CR2 (1N5231) and R19. Lose it and the RAM fails first.' },
+      ],
+      testPoints: [
+        { tp: 'Master oscillator', where: 'Z42 pin 6', expect: '10.6445 MHz (crystal Y1, buffered by Z42)' },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: 'About 1.774 MHz' },
+        { tp: 'CPU reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-up or while RESET is held, then HIGH' },
+        { tp: 'Vertical sync', where: 'Z32 pin 11', expect: '60.00 Hz (VDRV)' },
+        { tp: 'EI FDC clock', where: '1771 pin 24', expect: '1 MHz square wave' },
+      ],
+      sources: [
+        { label: 'TRS-80 Technical Reference Handbook, System Power Supply, pp. 52-54', url: TRH(53) },
+        { label: 'TRS-80 Technical Reference Handbook, CPU clock and reset, p. 14', url: TRH(15) },
+        { label: 'TRS-80 Technical Reference Handbook, video divider chain frequency table, p. 69', url: TRH(70) },
+        { label: 'Expansion Interface Service Manual, Floppy Disk Interface (1 MHz FDC clock), p. 5', url: EISM(5) },
+      ],
+    },
+    model3: {
+      supply: {
+        external: false,
+        name: 'Main switching supply (40 W flyback, on its own board) plus an optional identical disk-drive supply',
+        output: '+5 V 2.5 A, +12 V 2.02 A, -12 V 0.1 A (maximum loads)',
+        connector: 'm3-psu',
+        notes: [
+          'A 20 kHz flyback converter off a 165 V DC bus. Only +5 V is regulated; +12 V and -12 V are stacked windings that track it. Overvoltage on +5 V fires SCR1, which shorts the +12 V output; a short on any output makes it fold back and shut down.',
+          'Disk-drive units have a second supply of the same type on the disk bracket for the drives and FDC board. Check SK2 pin 2 (+12 V) and pin 4 (+5 V) on each.',
+          'No output: check fuse resistor R25 (2 Ω) and do not replace it until you find why it opened. Check DB1, Q2 and D3 for shorts, then output rectifiers and capacitors with the loads off. With 95 V AC in, B+ at R9 should be 120-140 V DC (service manual).',
+          'Test on a load, not open: minimum 0.45 A on +5 V and 0.3 A on +12 V. Bring it up slowly on a variac through an isolation transformer; it should start at 40-60 V AC and regulate by 95 V AC.',
+          'The line filter capacitors (2200 pF and 0.1 µF, 250 V AC, metallized paper) are the RIFA type that cracks and smokes with age: replace them with X2/Y2 film parts before the first power-up (community repair advice).',
+          'The -5 V for the 4116 RAM is made on the CPU board by an MC7905C from -12 V.',
+        ],
+        sources: [
+          { label: 'Model III Service Manual, Power Supply Functional Specifications and Troubleshooting, pp. 67-69', url: M3SVC(74) },
+          { label: 'Model III Technical Reference Manual, Power Supply Theory of Operation, p. 69', url: M3TRM(80) },
+          { label: 'Model III Technical Reference Manual, Power Supply Component Values, p. 70', url: M3TRM(81) },
+          { label: 'Model III Technical Reference Manual, RAM (-5 V from MC7905C), p. 13', url: M3TRM(24) },
+        ],
+      },
+      rails: [
+        { rail: '+5 V', expect: '4.75-5.25 V, under 50 mV ripple', where: 'Z80A pin 11; SK2 pin 4', note: 'The regulated output.' },
+        { rail: '+12 V', expect: '11.40-12.60 V, under 150 mV ripple', where: '4116 pin 8; SK2 pin 2', note: 'Monitor, drives, RAM.' },
+        { rail: '-12 V', expect: '-11.0 to -15.0 V', where: 'SK2 pin 1', note: 'RS-232 and the MC7905C input.' },
+        { rail: '-5 V', expect: 'About -5 V', where: '4116 pin 1; MC7905C output', note: 'RAM VBB. Lose it and the 4116s fail.' },
+      ],
+      testPoints: [
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '2.02752 MHz, 40 % HIGH (10.1376 MHz / 5)' },
+        { tp: 'CPU reset', where: 'Z80A pin 26', expect: 'HIGH once running' },
+        { tp: 'Video oscillator', where: 'Y1', expect: '10.1376 MHz' },
+        { tp: 'FDC clock', where: '1793 pin 24', expect: '1 MHz square wave' },
+        { tp: 'Horizontal rate', where: 'HSYNC to the monitor (J101 pin 6)', expect: '15.840 kHz, active HIGH, about 8 µs' },
+      ],
+      sources: [
+        { label: 'Model III Technical Reference Manual, Processor and Video Sync, p. 13', url: M3TRM(24) },
+        { label: 'Model III Technical Reference Manual, Floppy Disk Interface clock generation, p. 46', url: M3TRM(57) },
+        { label: 'Model III Service Manual, Table 2 Voltage and Ripple Specification, p. 69', url: M3SVC(76) },
+      ],
+    },
+    model4: {
+      supply: {
+        external: false,
+        name: 'Internal switching supply: Astec AA12090 65 W (Tandy 8790043), Astec AA11320 38 W (8790021) or Tandy 65 W (8790049)',
+        output: '65 W: +5 V 4.0 A, +12 V (V2) 2.1 A, +12 V (V3) 1.5 A, -12 V 0.1 A (maximum loads)',
+        connector: 'm4-psu',
+        notes: [
+          'The 38 W Astec AA11320 is the Model III design: flyback at about 20 kHz off 165 V DC, +5 V regulated, +12 V and -12 V tracking, SCR crowbar on +12 V, fuse resistor R25.',
+          'The 65 W Astec AA12090 regulates from +5 V and +12 V (V3). B+ at the end of R14 nearest the transformer is 260-270 V DC with 95 V AC in. Low outputs: check the voltage selection jumper first, then trim with R27 and R28.',
+          'Crowbar: SCR1 shorts +12 V when the outputs run away; if it will not fire within limits, check Z1 and SCR1.',
+          'Test through an isolation transformer (at least 500 VA) and a variac, loaded to the minimums in Table 6-1 (1.35 A on +5 V). It should start at 40-60 V AC and regulate by 90 V AC.',
+          'The Astec line filter capacitors are the RIFA metallized-paper type that cracks and smokes; replace before first power-up (community repair advice).',
+        ],
+        sources: [
+          { label: 'Model 4 Technical Reference Manual (1983), 6.1 Power Supply #8790021 38 W (Astec AA11320), p. 109', url: M4TRM(125) },
+          { label: 'Model 4 Technical Reference Manual (1983), 6.2 Power Supply #8790043 65 W (Astec AA12090), pp. 112-114', url: M4TRM(128) },
+          { label: 'Model 4 Technical Reference Manual (1983), Pin Assignments and Tables 6-1, 6-2, p. 114', url: M4TRM(130) },
+        ],
+      },
+      rails: [
+        { rail: '+5 V', expect: '5.00-5.25 V, under 50 mV ripple', where: 'Z80A pin 11; TB2 pins 8-10', note: 'V1, the main logic rail.' },
+        { rail: '+12 V (V2)', expect: '11.40-12.60 V', where: 'TB2 pin 2', note: 'Logic +12 V.' },
+        { rail: '+12 V (V3)', expect: '11.40-12.60 V', where: 'TB2 pins 5-7', note: 'Drives and monitor.' },
+        { rail: '-12 V', expect: '-11.40 to -12.60 V', where: 'TB2 pin 4', note: 'RS-232.' },
+      ],
+      testPoints: [
+        { tp: 'Master oscillator', where: 'Y1', expect: '20.2752 MHz' },
+        { tp: '80 × 24 video oscillator', where: 'Y2', expect: '12.672 MHz' },
+        { tp: 'CPU clock', where: 'Z80A pin 6', expect: '2.02752 MHz, or 4.05504 MHz in fast mode' },
+        { tp: 'CPU reset', where: 'Z80A pin 26', expect: 'HIGH once running' },
+        { tp: 'RS-232 clock', where: 'Baud rate generator clock input', expect: '5.0688 MHz' },
+      ],
+      sources: [
+        { label: 'Model 4 Technical Reference Manual (1983), 3.1.2 CPU and Timing, p. 15', url: M4TRM(31) },
+        { label: 'Model 4/4P Technical Reference Manual, RS-232C circuit (5.0688 MHz), p. 51', url: M4PTRM(57) },
+        { label: 'Model 4 Technical Reference Manual (1983), Table 6-2 Voltage and Ripple Specifications, p. 114', url: M4TRM(130) },
       ],
     },
   },
@@ -1187,6 +2007,192 @@ RCS.add({
         { range: '$E000–$FFFF', what: 'Micro Color BASIC ROM, 8 KB', verify: true },
       ],
     },
+    model1: {
+      sources: [
+        { label: 'Level II BASIC Reference Manual (Radio Shack, 1979), Special Function Keys and Reset, pp. 1-1 to 1-2', url: L2MAN },
+        { label: 'TRS-80 Technical Reference Handbook, The Memory Map, pp. 12-13', url: TRH(13) },
+        { label: 'Expansion Interface Service Manual, Address Decoder Tables 1 and 2, p. 3', url: EISM(3) },
+      ],
+      firstLook: [
+        'Power DIN into J1, the jack next to the power switch. The cassette DIN beside it is the same size.',
+        'No MEMORY SIZE?: check +5 V, +12 V and -5 V first, then the RAMs and their seating.',
+        'With the Expansion Interface attached, hold BREAK while pressing RESET.',
+        'Crashes with the EI: clean the edge connectors and reseat the short cable before swapping chips.',
+        'Keys repeat: dirty contacts; the last Level II ROM and KBFIX add debounce.',
+        'No lowercase on a stock machine: seven video RAMs, not eight.',
+      ],
+      keys: [
+        { keys: 'BREAK', does: 'Stop a running program; CONT resumes.' },
+        { keys: 'SHIFT + @', does: 'Pause execution or a LIST; any key resumes.' },
+        { keys: 'CLEAR', does: 'Clear the screen and return to 64 characters per line.' },
+        { keys: '← (left arrow)', does: 'Backspace and delete the last character.' },
+        { keys: 'SHIFT + ←', does: 'Delete the line being typed.' },
+        { keys: '→ (right arrow)', does: 'Tab to the next stop (0, 8, 16 ... 56).' },
+        { keys: 'SHIFT + →', does: '32 characters per line.' },
+        { keys: '↓ (down arrow)', does: 'Line feed within a logical line.' },
+        { keys: 'RESET (rear, left, by the expansion edge)', does: 'Back to MEMORY SIZE?; the program is lost.' },
+      ],
+      basic: {
+        dialect: 'Level II BASIC (Microsoft, 12 KB ROM)',
+        essentials: [
+          { cmd: 'CLOAD / CSAVE "A"', does: 'Load or save a program on tape (one-letter name).' },
+          { cmd: 'CLOAD? "A"', does: 'Verify tape against memory.' },
+          { cmd: 'SYSTEM', does: 'Monitor mode: load a machine-code tape, then /addr to run.' },
+          { cmd: 'LIST a-b / RUN / NEW', does: 'List a range, run, erase.' },
+          { cmd: 'AUTO s,i / EDIT n / DELETE a-b', does: 'Auto line numbers, edit a line, delete lines.' },
+          { cmd: 'CLEAR n', does: 'Reserve n bytes for strings (50 at power-up).' },
+          { cmd: 'PRINT @ p, ...', does: 'Print at screen position 0-1023.' },
+          { cmd: 'SET(x,y) / RESET(x,y) / POINT(x,y)', does: 'Block graphics, x 0-127, y 0-47.' },
+          { cmd: 'PEEK / POKE', does: 'Read and write memory (video at 15360).' },
+          { cmd: 'INP(p) / OUT p,v', does: 'Port I/O; port 255 is the cassette.' },
+          { cmd: 'MEM', does: 'Free memory in bytes.' },
+          { cmd: 'TRON / TROFF', does: 'Line-number trace.' },
+        ],
+        groups: [
+          { group: 'Program', items: ['RUN', 'LIST', 'NEW', 'AUTO', 'EDIT', 'DELETE', 'CONT', 'STOP / END', 'TRON / TROFF', 'CLEAR n'] },
+          { group: 'Statements', items: ['PRINT, PRINT USING, PRINT @', 'INPUT', 'LET', 'REM', 'GOTO / GOSUB / RETURN', 'ON n GOTO / GOSUB', 'FOR / NEXT / STEP', 'IF / THEN / ELSE', 'DATA / READ / RESTORE', 'DIM', 'DEFINT / DEFSNG / DEFDBL / DEFSTR', 'ON ERROR GOTO / RESUME', 'RANDOM'] },
+          { group: 'Graphics and screen', items: ['CLS', 'SET / RESET / POINT', 'PRINT @', 'CHR$(23) for 32 columns'] },
+          { group: 'Tape', items: ['CLOAD', 'CSAVE', 'CLOAD?', 'SYSTEM', 'PRINT #-1 / INPUT #-1'] },
+          { group: 'Functions', items: ['ABS INT FIX SGN SQR', 'SIN COS TAN ATN EXP LOG', 'RND', 'LEN LEFT$ RIGHT$ MID$ STRING$', 'STR$ VAL ASC CHR$', 'INKEY$', 'PEEK INP MEM FRE', 'VARPTR USR'] },
+        ],
+        quirks: [
+          'Reset returns to MEMORY SIZE? and loses the program.',
+          'A syntax error drops into the line editor; type Q to quit it.',
+          'Shifted @ is not the same character as @ even though it looks the same.',
+          'Cassette names are one letter. Lock-ups while loading: RESET gets you out.',
+        ],
+      },
+      memory: [
+        { range: '$0000-$2FFF', what: 'Level II BASIC ROM, 12 KB (Level I: $0000-$0FFF)' },
+        { range: '$37E0', what: 'EI: read interrupt latch / write drive select' },
+        { range: '$37E4', what: 'EI: write cassette 0/1 select' },
+        { range: '$37E8', what: 'EI: printer data (write) and status (read)' },
+        { range: '$37EC-$37EF', what: 'EI: FD1771 command/status, track, sector, data' },
+        { range: '$3800-$38FF', what: 'Keyboard matrix: address bits A0-A7 select rows, data bits read keys' },
+        { range: '$3801 / $3802 / $3804 / $3808', what: 'Keyboard rows @A-G, H-O, P-W, X-Z', verify: true },
+        { range: '$3810 / $3820 / $3840 / $3880', what: 'Keyboard rows 0-7, 8-/, ENTER CLEAR BREAK arrows SPACE, SHIFT', verify: true },
+        { range: '$3C00-$3FFF', what: 'Video RAM, 64 × 16 (1 KB)' },
+        { range: '$4000-$7FFF', what: 'RAM in the keyboard unit (16 KB). Level I BASIC uses $4000-$41FF.' },
+        { range: '$8000-$BFFF', what: 'EI RAM, first 16 KB (the 32K select)' },
+        { range: '$C000-$FFFF', what: 'EI RAM, second 16 KB (the 48K select)' },
+      ],
+    },
+    model3: {
+      sources: [
+        { label: 'Model III Technical Reference Manual, Memory Map, I/O Port Description and Port Bits, pp. 14-22', url: M3TRM(25) },
+        { label: 'Level II BASIC Reference Manual (Model III BASIC is Level II compatible), Special Function Keys, p. 1-2', url: L2MAN },
+      ],
+      firstLook: [
+        'Dead: SK1 120 V AC in, then SK2 +5 V pin 4, +12 V pin 2, -12 V pin 1.',
+        'Before first power-up of an unknown unit, replace the RIFA line filter capacitors in the supply.',
+        'No video but the drives run: J5 on the CPU board, J101 and fuse F101 on the monitor board.',
+        'Wrong characters: character generator U36 and video RAM U81, U82.',
+        'Cassette and printer are on the CPU board; disk and RS-232 are option boards on the same chassis.',
+      ],
+      keys: [
+        { keys: 'BREAK', does: 'Stop a running program; CONT resumes.' },
+        { keys: 'SHIFT + @', does: 'Pause; any key resumes.' },
+        { keys: 'CLEAR', does: 'Clear the screen.' },
+        { keys: '← / SHIFT + ←', does: 'Backspace / delete the line being typed.' },
+        { keys: 'SHIFT + 0', does: 'Toggle lowercase / uppercase.', verify: true },
+        { keys: 'RESET (orange, right of the keyboard)', does: 'Reboot. Hold BREAK while pressing it to get ROM BASIC instead of booting the disk.', verify: true },
+      ],
+      basic: {
+        dialect: 'Model III BASIC (Level II compatible, 14 KB ROM); TRSDOS 1.3 with disks',
+        essentials: [
+          { cmd: 'CLOAD / CSAVE "A"', does: 'Tape load and save; 500 or 1500 baud.' },
+          { cmd: 'SYSTEM', does: 'Load a machine-code tape.' },
+          { cmd: 'PRINT @ p', does: 'Print at 0-1023.' },
+          { cmd: 'SET / RESET / POINT', does: 'Block graphics, 128 × 48.' },
+          { cmd: 'OUT 236,n', does: 'Port ECH: motor, 32/64 columns, alternate character set, I/O bus enable.' },
+          { cmd: 'INP(255)', does: 'Port FFH: cassette bits and mode bits.' },
+          { cmd: 'DIR / FREE', does: 'TRSDOS 1.3: list files, free space.', verify: true },
+          { cmd: 'FORMAT / BACKUP', does: 'TRSDOS 1.3: format a disk, copy a disk.', verify: true },
+          { cmd: 'BASIC', does: 'TRSDOS 1.3: start Disk BASIC.', verify: true },
+        ],
+        groups: [
+          { group: 'As Level II', items: ['All Level II statements and functions', 'AUTO EDIT DELETE TRON', 'PRINT USING', 'ON ERROR GOTO'] },
+          { group: 'Ports', items: ['FFH cassette and mode', 'F8H printer', 'F0H-F3H FDC', 'F4H drive select and density', 'ECH mode register / RTC clear', 'E8H-EBH RS-232', 'E4H NMI mask and status', 'E0H interrupt mask and status'] },
+        ],
+        quirks: [
+          'Ports 80H-FFH are reserved for the system; the I/O bus is off until port ECH bit 4 is set.',
+          'The printer can be read as memory $37E8 or as port F8H, for Model I software.',
+          'Real-time clock interrupts at 30 Hz (60 Hz units) or 25 Hz (50 Hz units); read port ECH to clear.',
+        ],
+      },
+      memory: [
+        { range: '$0000-$1FFF', what: 'ROM A, 8 KB (U104)' },
+        { range: '$2000-$2FFF', what: 'ROM B, 4 KB (U105)' },
+        { range: '$3000-$37FF', what: 'ROM C, 2 KB (U106) less $37E8-$37E9' },
+        { range: '$37E8-$37E9', what: 'Printer status' },
+        { range: '$3800-$3BFF', what: 'Keyboard matrix' },
+        { range: '$3C00-$3FFF', what: 'Video RAM, 1 KB (U81, U82)' },
+        { range: '$4000-$7FFF', what: 'RAM, 16 KB (U7-U14)' },
+        { range: '$8000-$FFFF', what: 'RAM, 32 KB more on 48 KB units (U25-U32, U43-U50)' },
+      ],
+    },
+    model4: {
+      sources: [
+        { label: 'Model 4 Technical Reference Manual (1983), port map, port bit map and memory maps I-IV, pp. 15-19', url: M4TRM(31) },
+        { label: 'Model 4 Disk System Owner\'s Manual (1983): BASIC special keys, function keys, keyboard code map', url: M4OM },
+      ],
+      firstLook: [
+        'Two machines in one: Model III mode (ROM BASIC, memory map I) and Model 4 mode (TRSDOS 6 from disk, no ROM in the map).',
+        'Dead: check the supply on a load first (65 W Astec TB2 pins 8-10 for +5 V), and replace the RIFA line capacitors.',
+        'No picture: the 68045 CRTC (U47), the 20.2752 and 12.672 MHz oscillators, then the monitor fuse F101.',
+        'Check which board you have: the 1983 PAL board (CPU 8858090) or the later gate-array board.',
+        '4 MHz mode is port ECH bit 6; the real-time clock then runs at 60 Hz instead of 30 Hz.',
+      ],
+      keys: [
+        { keys: 'BREAK', does: 'Stop a program or abort a command (code 80H).' },
+        { keys: 'SHIFT + @', does: 'Pause execution; any key except BREAK continues.' },
+        { keys: 'CAPS', does: 'Switch between uppercase only and upper and lower case.' },
+        { keys: 'CTRL + A to Z', does: 'Control codes 01H-1AH (keyboard code map).' },
+        { keys: 'F1 / F2 / F3', does: 'Function keys, codes 81H, 82H, 83H (CLEAR + CTRL + A/B/C give the same).' },
+        { keys: 'CLEAR + key', does: 'Second-level keys. In COMM, CLEAR + number keys select devices and actions.' },
+        { keys: 'SHIFT + ←', does: 'Delete the line being typed.' },
+      ],
+      basic: {
+        dialect: 'TRSDOS 6 BASIC (Model 4 mode); Model III BASIC in ROM (Model III mode)',
+        essentials: [
+          { cmd: 'BASIC', does: 'TRSDOS 6: start BASIC.' },
+          { cmd: 'DIR :0', does: 'TRSDOS 6: list the files on drive 0.' },
+          { cmd: 'FREE', does: 'TRSDOS 6: free space on each drive.' },
+          { cmd: 'FORMAT :1 / BACKUP :0 :1', does: 'TRSDOS 6: format a disk, duplicate a disk.' },
+          { cmd: 'COPY a b / REMOVE f / RENAME a b', does: 'TRSDOS 6 file commands.' },
+          { cmd: 'SETCOM', does: 'TRSDOS 6: set the RS-232 baud rate and format.' },
+          { cmd: 'LOAD "f" / SAVE "f" / RUN "f"', does: 'BASIC: disk program files.' },
+          { cmd: 'SYSTEM', does: 'BASIC: return to TRSDOS.' },
+          { cmd: 'RENUM / MERGE / CHAIN', does: 'BASIC: renumber, merge and chain programs.' },
+          { cmd: 'OPEN / FIELD / GET / PUT', does: 'BASIC: random-access files.' },
+          { cmd: 'WHILE / WEND', does: 'BASIC: loop.' },
+          { cmd: 'SOUND t,d', does: 'BASIC: tone on the sound board.', verify: true },
+        ],
+        groups: [
+          { group: 'TRSDOS 6 commands', items: ['DIR', 'FREE', 'FORMAT', 'BACKUP', 'COPY', 'REMOVE', 'RENAME', 'LIST', 'DATE / TIME', 'DEVICE', 'SETCOM', 'SPOOL', 'ROUTE / LINK / FILTER', 'SYSTEM', 'BOOT'] },
+          { group: 'BASIC program', items: ['AUTO', 'EDIT', 'DELETE', 'RENUM', 'MERGE', 'CHAIN / COMMON', 'TRON / TROFF', 'ON ERROR GOTO / RESUME / ERR / ERL'] },
+          { group: 'BASIC files', items: ['OPEN', 'CLOSE', 'FIELD', 'LSET / RSET', 'GET / PUT', 'MKI$ / CVI', 'LINE INPUT #', 'PRINT #'] },
+          { group: 'Ports', items: ['FCH-FFH cassette', 'F8H printer', 'F0H-F3H FDC', 'F4H drive select', 'ECH mode (fast, enable I/O, alternate set)', 'E8H-EBH RS-232', 'E0H interrupts', '90H sound', '88H-8BH CRTC', '84H-87H options (memory map, 80/64, page)'] },
+        ],
+        quirks: [
+          'Model 4 mode has no BASIC in ROM: no disk, no BASIC.',
+          'In Model III mode the Model 4 is a Model III: same ROMs, map and ports.',
+          '80 × 24 needs the 2 KB video RAM page and the 12.672 MHz clock.',
+          'BREAK is code 80H and the function keys 81H-83H in TRSDOS 6.',
+        ],
+      },
+      memory: [
+        { range: '$0000-$37FF', what: 'Map I (Model III mode): ROM A 8 KB, ROM B 4 KB, ROM C 2 KB (U68-U70)' },
+        { range: '$37E8-$37E9', what: 'Map I: printer status' },
+        { range: '$3800-$3BFF', what: 'Map I and II: keyboard' },
+        { range: '$3C00-$3FFF', what: 'Map I and II: video RAM (page bit selects 1 KB of 2 KB)' },
+        { range: '$4000-$FFFF', what: 'Map I: RAM (16 or 48 KB)' },
+        { range: '$0000-$7FFF', what: 'Map III and IV: RAM (32 KB bank)' },
+        { range: '$F400-$F7FF', what: 'Map III (TRSDOS 6): keyboard' },
+        { range: '$F800-$FFFF', what: 'Map III (TRSDOS 6): video RAM, 2 KB' },
+        { range: '$8000-$FFFF', what: 'Map IV: all RAM (second 32 KB bank)' },
+      ],
+    },
   },
   resources: [
     { name: 'Color Computer Technical Reference Manual (Tandy, 26-3193)', url: TRM(1), what: 'CoCo 1 theory of operation, cartridge and RS-232 pinouts, power supply and schematic sheets 1 to 3.' },
@@ -1197,6 +2203,17 @@ RCS.add({
     { name: 'MC-10 Service Manual (26-3011)', url: SM10(1), what: 'MC-10 theory, I/O and serial pinouts, power supply and troubleshooting.' },
     { name: 'MC-10 Schematic (D-11531)', url: SCH10, what: 'Full MC-10 schematic on one sheet.' },
     { name: 'TRS-80 Color Computer Archive, hardware manuals', url: `${HW}/`, what: 'Every CoCo and MC-10 manual, schematic and data sheet in one place.' },
+    { name: 'TRS-80 Micro Computer Technical Reference Handbook, 2nd ed. (Radio Shack, 1982)', url: TRH(1), what: 'Model I theory, power supply, expansion port pinout, troubleshooting, parts list and master schematic.' },
+    { name: 'TRS-80 Expansion Interface Service Manual (26-1140)', url: EISM(1), what: 'EI address decoding, printer, disk, cassette switching, power supply, schematics and the FD1771 data sheet.' },
+    { name: 'TRS-80 Model III Technical Reference Manual (26-2109)', url: M3TRM(1), what: 'Model III CPU board, FDC and RS-232 boards, power supply, video monitor and schematics.' },
+    { name: 'TRS-80 Model III Service Manual', url: M3SVC(1), what: 'Model III theory plus power supply troubleshooting, load tables and the SK1-SK4 pinout.' },
+    { name: 'Sams Computerfacts: TRS-80 Model III (1985)', url: SAMS3(1), what: 'Service checks, part designators, voltages and redrawn schematics. A redraw: check against Tandy where they differ.' },
+    { name: 'TRS-80 Model 4 Technical Reference Manual (1983)', url: M4TRM(1), what: 'Model 4 PAL board theory, port and memory maps, FDC boards, the three power supplies and the RCA monitor.' },
+    { name: 'TRS-80 Model 4/4P Technical Reference Manual (1985)', url: M4PTRM(1), what: 'Gate-array Model 4 and Model 4P theory, I/O pin assignments and TRSDOS 6 technical data.' },
+    { name: 'Western Digital FD179X-02 data sheet (May 1980)', url: FD179X(1), what: 'FD1791/1793 pinout and commands (Model III and 4 FDC).' },
+    { name: 'Level II BASIC Reference Manual (Radio Shack, 1979)', url: L2MAN, what: 'Level II BASIC keys and statements; Model III BASIC is compatible.' },
+    { name: 'Model 4 Disk System Owner\'s Manual (Tandy, 1983)', url: M4OM, what: 'TRSDOS 6 commands, BASIC and the keyboard code map.' },
+    { name: 'trs-80.org (Matthew Reed)', url: T80_EI, what: 'History and known problems of the Model I Expansion Interface, keybounce and related add-ons.' },
   ],
 });
 })();
