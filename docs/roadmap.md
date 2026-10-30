@@ -65,3 +65,5 @@ and 8 last. Cross-model review and a push to GitHub Pages after each group.
 - ti.js `vdp9918` pins 35, 36, 38: the ColecoVision Technical Manual confirms B-Y, Y, R-Y (coleco.js cites it); clear their `verify` with that source.
 - heathkit.js `rom2764` pin 26 is NC on a 2764, A13 only on the 27128 (sent to the Heathkit agent).
 - Connector-pin `conflict` entries are not reported by the validator; add a WARN so they show up in reviews.
+- Schematic links top-up for machines added after the first pass: dragon64, the 1541/1571/1581 and Apple drives, electron, msx, trs80 models, oric.
+- atari.js `dram4464` has no pins; the BBC Master service manual confirms 5 /RAS, 16 /CAS, 9 +5 V, 18 0 V (acorn.md). Fill from the 4464 datasheet.
