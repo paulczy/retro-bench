@@ -527,8 +527,8 @@ function boardsBlock(m) {
   const boards = [...new Set(list.map(s => s.board))];
   return `<section class="blk" id="boards"><span class="lbl"><span class="d">PCB</span>Boards and schematics</span>
     <div class="legend tri">${boards.map(b => { const rows = list.filter(s => s.board === b); const first = rows[0];
-      return `<div class="k">${esc(b)}</div><div class="v">${first.rev || first.years ? `<b>${esc([first.rev, first.years].filter(Boolean).join(', '))}</b>` : ''}${rows.filter(s => s.note).map(s => `<br><span class="sm">${esc(s.note)}</span>`).join('')}</div>
-        <div class="v3"><ul class="ds">${rows.map(s => `<li><a class="lnk" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(SCH_KIND[s.kind] || s.kind)}${s.label ? `: ${esc(s.label)}` : ''}</a>${s.verify ? chk() : ''} <span class="tin sm mono">${esc(s.host || hostOf(s.url))}</span></li>`).join('')}</ul></div>`; }).join('')}</div>
+      return `<div class="k">${esc(b)}</div><div class="v">${first.rev || first.years ? `<b>${esc([first.rev, first.years].filter(Boolean).join(', '))}</b>` : ''}${first.note ? `<br><span class="sm">${esc(first.note)}</span>` : ''}</div>
+        <div class="v3"><ul class="ds">${rows.map((s, i) => `<li><a class="lnk" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(SCH_KIND[s.kind] || s.kind)}${s.label ? `: ${esc(s.label)}` : ''}</a>${s.verify ? chk() : ''} <span class="tin sm mono">${esc(s.host || hostOf(s.url))}</span>${i && s.note ? `<br><span class="tin sm">${esc(s.note)}</span>` : ''}</li>`).join('')}</ul></div>`; }).join('')}</div>
     <p class="note">Links open the archive that holds the drawing; nothing is copied into the app. Check the assembly number printed on your board against the list.</p></section>`;
 }
 

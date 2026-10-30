@@ -13,7 +13,7 @@ RCS.addCredits([
   { name: 'AtariArchives.org and AtariAge', url: 'https://www.atariarchives.org/', what: 'Atari field service manuals, De Re Atari and chip documentation.' },
   { name: 'WHTech', url: 'https://www.whtech.com/', what: 'TI-99/4A technical data and schematics.' },
   { name: 'C64-Wiki', url: 'https://www.c64-wiki.com/', what: 'Connector drawings used to cross-check DIN pin positions.' },
-  { name: 'Ray Carlsen', url: 'http://personalpages.tds.net/~rcarlsen/', what: 'Commodore repair notes and power supply guidance.' },
+  { name: 'Ray Carlsen', url: 'https://portcommodore.com/rcarlsen/', what: 'Commodore repair notes and power supply guidance.' },
   { name: 'Howard W. Sams & Co., Computerfacts', url: 'https://archive.org/search?query=Sams+Computerfacts', what: 'Measured voltages and waveforms. Sams redrew the schematics with its own part numbers; where Sams and the maker disagree, the maker\'s document is used and the conflict is noted.' },
   { name: 'Wikipedia and Wikimedia Commons', url: 'https://en.wikipedia.org/wiki/DIN_connector', what: 'Connector standards: DIN, mini-DIN and D-sub pin positions.' },
   { name: 'The chip makers', url: 'http://www.bitsavers.org/components/', what: 'MOS Technology and Commodore Semiconductor, Motorola, Intel, Zilog, Texas Instruments, General Instrument, Rockwell, Synertek, Western Design Center. Every pin table is theirs; we only drew it.' },
