@@ -194,6 +194,7 @@ const CBM264_TESTPOINTS = [
   { tp: 'Video', where: 'TED pin 23 LUM', expect: '~1 V p-p with sync' },
   { tp: 'TED temperature', where: 'TED body', expect: 'Hot to touch is normal; fit a heatsink' },
 ];
+const CBM264_TP = scope => CBM264_TESTPOINTS.map(t => (t.where === 'TED pin 14' ? { ...t, scope } : t));
 /* Disk drives (1541, 1571, 1581): shared source links and pad helpers. */
 const CBMD_Z = 'http://www.zimmers.net/anonftp/pub/cbm/schematics/drives/new';
 const CBMD_SM41 = p => `${CBMD_Z}/1541/1540-1541_Disk_Drive_Service_Manual_314002-01_(1985_Nov).pdf#page=${p}`;
@@ -215,6 +216,39 @@ const CBMD_SRC = {
   rc41: { label: 'Ray Carlsen, 1541 Diagnostics (fix1541.txt)', url: `${CBMD_RC}/1541/fix1541.txt` },
   rc41ii: { label: 'Ray Carlsen, 1541-II Diagnostics and Repair (1541-II.txt)', url: `${CBMD_RC}/1541/1541-II/1541-II.txt` },
   rc81: { label: 'Ray Carlsen, 1581 Disk Drive Diagnostics (1581.txt)', url: `${CBMD_RC}/1581/1581.txt` },
+};
+/* Feature data (test-point waveforms, first ten minutes, clocks): shared sources.
+   Sams Computerfacts folders on archive.org; Sams redraws the boards and its part numbers are its own. n = PDF page - 1. */
+const SAMS = (id, label, page) => ({ label: `${label}, PDF p. ${page}`, url: `https://archive.org/details/${id}/page/n${page - 1}`, sams: true });
+const SAMS_CC17 = (what, p) => SAMS('sams-computerfacts-cc17-c64-1984-version', `Sams CC17 C64 (1984 version), ${what}`, p);
+const SAMS_CC18 = (what, p) => SAMS('SAMS_Computerfacts_CC18_C128', `Sams CC18 C128, ${what}`, p);
+const SAMS_CC8 = (what, p) => SAMS('SAMS_Computerfacts_CC8_Commodore_16', `Sams CC8 Commodore 16, ${what}`, p);
+const SAMS_CC9 = (what, p) => SAMS('SAMS_Computerfacts_Commodore_Plus_4_1985-01_Howard_W_Sams_Co_CC9', `Sams CC9 Plus/4, ${what}`, p);
+const SAMS_CD4 = (what, p) => SAMS('sams-computerfacts-cd4-1541', `Sams CD4 VIC-1541/1541, ${what}`, p);
+const SAMS_CD12 = (what, p) => SAMS('SAMS_Computerfacts_CD12_1571', `Sams CD12 1571, ${what}`, p);
+const SAMS_CD22 = (what, p) => SAMS('SAMS_Computerfacts_CD22_1581', `Sams CD22 1581, ${what}`, p);
+const CBMF = {
+  c64sm: (p, what) => ({ label: `C64/C64C Service Manual 314001-03, ${what}, PDF p. ${p}`, url: `http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/c64/servicemanuals/C64-C64C_Service_Manual_314001-03_(1992_Mar).pdf#page=${p}` }),
+  c64c: { label: 'C64C schematic 250469 rev. A (zimmers.net PDF), notes 3 and 4: Y1 and dot clock for NTSC and PAL; 8701 pins 6, 8, 13, 14', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/c64/250469-rev.A.pdf' },
+  bauer: { label: 'Christian Bauer, The MOS 6567/6569 video controller (VIC-II), 2.3 pins ΦIN and Φ0', url: 'http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt' },
+  ted: (p, what) => ({ label: `TED System Hardware Manual, ${what}, PDF p. ${p}`, url: `http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/Plus_4_Technical_Docs.pdf#page=${p}` }),
+  c16sm: (p, what) => ({ label: `C16 Service Manual 314001-03, ${what}, PDF p. ${p}`, url: `http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/C16_Service_Manual_314001-03_(1984_Oct).pdf#page=${p}` }),
+  vic20e: { label: 'VIC-20 schematic, Version E (zimmers.net PDF): Y1 14.31818 MHz', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/vic20/VIC-20%20Schematic%20-Version%20E.pdf' },
+  vic20sch2: { label: 'VIC-20 schematic 324001 sheet 2 (J1, F1, CR4, LM323)', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/vic20/324001-02b.gif' },
+  pet1: { label: 'Dynamic PET logic diagram 320349 sheet 1: C4 6502 (CLK1 on pin 37), A2 LM555 power-up reset', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/pet/2001N/320349-1.gif' },
+  pet6: { label: 'Dynamic PET logic diagram 320349 sheet 6, master timing: Y1 16 MHz, TP9, G5 74191 (CLK8 pin 3, CLK1 pin 7)', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/pet/2001N/320349-6.gif' },
+  pet9: { label: 'Dynamic PET logic diagram 320349 sheet 9, voltage regulator', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/pet/2001N/320349-9.gif' },
+  petfaq: { label: 'PET FAQ in Ray Carlsen\'s PET folder (petfaq.html): fuse and chip reseating', url: 'https://portcommodore.com/rcarlsen/cbm/PET/petfaq.html' },
+  rc64blank: { label: 'Ray Carlsen, C64 Blank Screen (c64blank.txt)', url: `${CBMD_RC}/c64/c64blank.txt` },
+  rc64ps: { label: 'Ray Carlsen, All About the Commodore Power Supply (CBM PS.txt)', url: `${CBMD_RC}/c64/C64%20PS/CBM%20PS.txt` },
+  rc64c: { label: 'Ray Carlsen, C64C chips vs common symptoms (c64c-ic.txt)', url: `${CBMD_RC}/c64/c64c-ic.txt` },
+  rc8580: { label: 'Ray Carlsen, 8580 to 6581 (8580 to 6581.txt)', url: `${CBMD_RC}/c64/8580%20to%206581.txt` },
+  rcsid: { label: 'Ray Carlsen, SID replacements (SID replacements.txt)', url: `${CBMD_RC}/SID%20%26%20mods/SID%20replacements.txt` },
+  rcsubs: { label: 'Ray Carlsen, VIC and CPU substitutions in the C64C board 250469', url: `${CBMD_RC}/C64C%20VIC%20%26%20CPU%20subs/CPU%20%26%20VIC%20subs.txt` },
+  rc128: { label: 'Ray Carlsen, C128 chips vs symptoms (c128-ic.txt)', url: `${CBMD_RC}/c128/c128-ic.txt` },
+  rcplus4: { label: 'Ray Carlsen, Plus/4 notes (plus4.txt)', url: `${CBMD_RC}/plus4/plus4.txt` },
+  rcvic20: { label: 'Ray Carlsen, VIC-20 Diagnostics and Repair (vic20.txt)', url: `${CBMD_RC}/vic20/vic20.txt` },
+  wiki: (page, what) => ({ label: `C64-Wiki: ${what}`, url: `https://www.c64-wiki.com/wiki/${page}` }),
 };
 /* Serial bus pair: two identical 6-pin DIN sockets wired in parallel, female on the drive. */
 const CBMD_IEC = (id, where, extra, sources) => ({
@@ -406,6 +440,9 @@ RCS.add({
       },
       summary: 'HMOS 6510 variant running at 0.89 MHz (TED busy) / 1.76 MHz (dual-speed). Has a 7-bit on-chip I/O port (P0-P4, P6, P7) that drives the Datasette and IEC serial bus. GATE IN holds R/W off until /RAS. The 8501 is identical. No /NMI pin.',
       fails: ['Dead machine, no boot', 'Black screen with power present'],
+      replacements: [
+        { part: '8501', kind: 'pin-compatible', note: 'Later HMOS version fitted at the same position (U2 on the Plus/4); Carlsen lists the part as 7501/8501.', source: CBMF.rcplus4 },
+      ],
       heat: 'warm',
       verifiedAgainst: 'MOS 7501 data sheet (prelim. 4/81); TED System Hardware Manual (Plus/4 Technical Docs, zimmers.net) 5.2; Commodore C16 Service Manual PN 314001-03 (Oct 1984) schematic 251788',
       datasheets: [
@@ -470,6 +507,9 @@ RCS.add({
       },
       summary: 'The heart of the 264 series: 121-colour video, 2-voice sound, DRAM controller (/RAS, /CAS, MUX), ROM chip-selects (a simple MMU), timers and keyboard scan (K0-K7). Runs hot and is the number one failure. The only source of replacements is another 264-series board, so socket it and fit a heatsink.',
       fails: ['No picture or garbled picture', 'No sound', 'Dead machine', 'Dead keyboard (shared with 6529)'],
+      replacements: [
+        { part: '8360', kind: 'pin-compatible', note: 'Functionally the same TED in HMOS-2; most machines have the 8360. Both run hot: fit a heat sink.', source: CBMF.wiki('TED', 'TED (7360 HMOS-1, 8360 HMOS-2)') },
+      ],
       heat: 'hot',
       verifiedAgainst: 'TED System Hardware Manual (Plus/4 Technical Docs, zimmers.net) 4.3.1; Commodore C16 Service Manual PN 314001-03 (Oct 1984) p. 11',
       datasheets: [
@@ -626,6 +666,9 @@ RCS.add({
       location: { plus4: 'U11-U18', c64: 'U9-U12, U21-U24', c128: 'U38-U53', apple2e: 'RAM row' },
       summary: 'One bit wide, 64K deep. Eight of them make 64 KB. The video chip (TED, VIC-II) generates /RAS, /CAS and MUX and supplies refresh. A 41256 substitutes if pins 1 and 16 are linked. Single +5 V supply (unlike the 4116).',
       fails: ['Garbled or checkerboard screen', 'Will not boot', 'Random crashes', 'One stuck bit in every byte'],
+      replacements: [
+        { part: 'HM4864, MT4264, TMS4164 and other 4164s', kind: 'pin-compatible', note: 'All fitted side by side in the same C64 (Sams draws HM4864-3, MT4264-20 and TMS4164-15 in one bank). To find a dead one, piggyback a known-good chip on each in turn (Carlsen).', source: SAMS_CC17('schematic RAM bank U9-U12, U21-U24', 9) },
+      ],
       heat: 'warm',
       datasheets: [
         { label: 'C128 Service Manual, 4164 64K x 1 dynamic RAM pinout, p. 18', url: 'https://archive.org/download/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08.pdf#page=20' },
@@ -747,6 +790,10 @@ RCS.add({
       machines: ['c64'],
       summary: 'C64 CPU at ~1 MHz with a 6-bit I/O port (P0-P5) for bank switching and the Datasette. Same core as the 6502; the port is the difference.',
       fails: ['Blank screen', 'Dead machine'],
+      replacements: [
+        { part: '8500', kind: 'pin-compatible', note: 'HMOS-II 6510 from the C64C, runs cooler. Carlsen found a 6510 works in a C64C and an 8500 in an old C64 passed a diagnostic, but he could not vouch for every use.', source: CBMF.rc64c },
+        { part: '8502 in a C64C (for the 8500)', kind: 'adapter', note: 'Worked through a wired adapter in a Carlsen experiment; not a tested drop-in.', source: CBMF.rcsubs },
+      ],
       heat: 'warm',
       datasheets: [
         { label: 'CSG 6510 Microprocessor with I/O data sheet, p. 1 pin configurations (GIF scans)', url: 'http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/6510.zip' },
@@ -807,6 +854,11 @@ RCS.add({
       machines: ['c64'],
       summary: '6567 NTSC, 6569 PAL. Vdd (pin 13) is +12 V; Vcc (pin 40) is +5 V. Makes the picture, refreshes the DRAM and sets the CPU clock and bus stealing. 8565/8562 are later 5 V HMOS-II parts. Runs hot.',
       fails: ['No or garbled picture', 'Bad colour', 'Runs hot'],
+      replacements: [
+        { part: '8562 (NTSC) / 8565 (PAL)', kind: 'adapter', note: 'Same 40-pin VIC-II in HMOS-II, but pin 13 (VDD) wants +5 V where the 6567/6569 wants +12 V. A breadbin board needs pin 13 changed to +5 V; a 6567/6569 will not work in a 250469 C64C, which has no +12 V there. The 856x also shows the grey-dots artefact.', source: CBMF.wiki('VIC', 'VIC (NMOS 6566/67/69 need +12 V on pin 13; HMOS-II 8562/65 +5 V only)') },
+        { part: '6567R56A vs 6567R8', kind: 'pin-compatible', note: 'Both NTSC, but the R56A has 64 cycles per line (262 lines) and the R8 65 (263 lines); some timing-critical NTSC software and LCD monitors care. The R56A line rate is out of spec at about 15.98 kHz.', source: CBMF.bauer },
+        { part: 'VIC-II Kawari', kind: 'modern', note: 'FPGA replacement for the 6567R8, 6567R56A, 6569R3 and 6569R1; switches NTSC/PAL in software and has its own oscillators. VDD is not connected, so it is safe in either board voltage. Check the C.SRC jumpers and the cartridge pin 6 caveat.', source: { label: 'VIC-II Kawari project (GitHub README)', url: 'https://github.com/randyrossi/vicii-kawari' } },
+      ],
       heat: 'hot',
       datasheets: [
         { label: 'C64 Programmer\'s Reference Guide, App. N, p. 452 6567 pin configuration', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/c64/C64_Programmers_Reference_Guide.pdf#page=471' },
@@ -866,6 +918,12 @@ RCS.add({
       machines: ['c64', 'c128'],
       summary: '3-voice synth at $D400-$D41C. 6581 (NMOS) needs Vdd (pin 28) at +12 V and Vcc (pin 25) at +5 V. 8580 (HMOS-II) runs at +9 V on Vdd; same pinout. Do not put a 12 V rail on an 8580 without checking. Filter caps on pins 1-4.',
       fails: ['No or distorted sound', 'Dead paddles'],
+      replacements: [
+        { part: '8580 in a 6581 board (or the reverse)', kind: 'pin-compatible', note: 'Same pinout, different supply and filter: the 6581 takes +12 V on pin 28 with 470 pF filter caps on pins 1-2 and 3-4; the 8580 takes +9 V with 22 nF caps. Change pin 28 to match (on a 250469 board: zener CR7 9 V to 12 V and fit R8 1 kΩ for a 6581) and swap the caps or the filter sounds wrong. An 8580 needs 330 kΩ from pin 26 to ground to play 6581-style digi samples.', source: CBMF.rc8580 },
+        { part: 'ARMSID', kind: 'modern', note: 'Drop-in emulation; senses pin 28 to choose 6581 or 8580, emulates the POT inputs, works in the C128 at 2 MHz.', source: { label: 'ARMSID by nobomi.cz (product page)', url: 'https://www.nobomi.cz/8bit/armsid/index_en.php' } },
+        { part: 'FPGASID', kind: 'modern', note: 'Dual (stereo) FPGA SID; dearer than single-chip clones.', source: { label: 'FPGASID project page', url: 'http://www.fpgasid.de/' } },
+        { part: 'SwinSID / Nano SwinSID', kind: 'modern', note: 'Cheapest clone, but the early versions have no POT inputs, so paddles, a 1351 mouse and graphics tablets do not work. The SwinSID Ultimate has POT inputs but is no longer made.', source: CBMF.rcsid },
+      ],
       heat: 'warm',
       datasheets: [
         { label: 'C64 Programmer\'s Reference Guide, App. O, 6581 pin configuration', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/c64/C64_Programmers_Reference_Guide.pdf#page=477' },
@@ -913,6 +971,10 @@ RCS.add({
       machines: ['c64', 'c128', 'c1571'],
       summary: 'CIA1 at $DC00 (keyboard, joysticks, /IRQ). CIA2 at $DD00 (serial bus, user port, /NMI). Two of these on a C64. The timers and the TOD clock are on the same chip.',
       fails: ['Dead keyboard or joystick', 'No disk'],
+      replacements: [
+        { part: '6526A', kind: 'pin-compatible', note: 'Same chip rated for a 2 MHz bus; later C64s use it.', source: CBMF.wiki('CIA', 'CIA (6526 1 MHz, 6526A 2 MHz; later C64s use the 6526A or 8521)') },
+        { part: '8521', kind: 'pin-compatible', note: 'HMOS-II CIA from later C64C and C128 boards; Ray Carlsen lists it as interchangeable with the 6526 and 6526A.', source: CBMF.rc128 },
+      ],
       heat: 'cool',
       datasheets: [
         { label: 'C64 Programmer\'s Reference Guide, App. M, p. 420 6526 pin configuration', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/c64/C64_Programmers_Reference_Guide.pdf#page=439' },
@@ -971,6 +1033,9 @@ RCS.add({
       machines: ['c64', 'c16', 'plus4'],
       summary: 'MOS 906114-01 on the C64, 251641-02 (7700) on the C16 and Plus/4. A Signetics 82S100 field-programmed logic array: 16 inputs decoded to 8 outputs F0-F7. On the C64 it makes /BASIC, /KERNAL, /CHAROM, /I/O, /ROML, /ROMH, GR/W and CASRAM from the address, bank and VIC lines. The number one C64 failure, and it runs hot. Socket it.',
       fails: ['Black screen', 'Will not boot', 'Garbage screen or dead keys'],
+      replacements: [
+        { part: 'PLAnkton, SuperPLA, realPLA, PLAtinum, neatPLA, PLA20V8 (GAL) or EPROM-based PLA', kind: 'modern', note: 'Third-party drop-ins for the 906114-01. Timing is the trap: a part that switches faster than the original can upset some cartridges, and the board may need adjusting.', source: CBMF.wiki('PLA_(C64_chip)', 'PLA (C64 chip), replacement parts') },
+      ],
       heat: 'hot',
       datasheets: [
         { label: 'C16 Service Manual, PLA 251641-02 (82S100) pin configuration, p. 15', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/C16_Service_Manual_314001-03_(1984_Oct).pdf#page=15' },
@@ -1019,6 +1084,9 @@ RCS.add({
       location: { c64: 'U3 (BASIC 901226), U4 (KERNAL 901227)', vic20: 'UE11 (BASIC 901486-01), UE12 (KERNAL 901486-06/-07)', c1541: 'UB3 ($C000, 325302-01) and UB4 ($E000, 901229) on short boards; UAB4 ($C000) and UAB5 ($E000) on the long board' },
       summary: '8K x 8 mask ROM in 24 pins, with one mask-programmed chip select on pin 20 and A12 on pin 21. Rarely fails. A 2764 EPROM needs a 24-to-28-pin adapter. Garbage on boot or a dead KERNAL points here.',
       fails: ['Garbage on boot', 'Boots to black screen', 'Does not reach BASIC'],
+      replacements: [
+        { part: '2764 to 27512 EPROM on a 2364 adapter', kind: 'adapter', note: 'Converts the 24-pin MOS 2364 pinout to a JEDEC 28-pin EPROM; extra address lines on pads for multiple images. A buyer review on the page warns it stands taller than the socket: check the clearance.', source: { label: 'RETRO Innovations 2364 Adapter (go4retro store)', url: 'https://store.go4retro.com/2364-adapter/' } },
+      ],
       heat: 'cool',
       datasheets: [
         { label: 'CSG 2364 Static Read Only Memory data sheet, p. 1 pin configuration (GIF scans)', url: 'http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/2364.zip' },
@@ -1461,6 +1529,9 @@ RCS.add({
       machines: ['c128'],
       summary: '8564 (NTSC) and 8566 (PAL). C64-compatible 40-column composite video, plus three keyboard-scan lines (K0-K2) and the Z80 (4 MHz), 1 MHz and 2 MHz clock lines the C128 needs. Vcc (pin 48) is +5 V. Fails as no or garbled 40-column display.',
       fails: ['No or garbled 40-column display', 'No picture'],
+      replacements: [
+        { part: '8564 in a C64C (for the 8562)', kind: 'adapter', note: 'Ray Carlsen ran a C128 8564 in a 250469 C64C through a 48-to-40-pin adapter that cross-connects pins; an experiment, not a tested drop-in.', source: CBMF.rcsubs },
+      ],
       datasheets: [
         { label: 'C128 Service Manual, 8564 pinout and pin description, p. 35', url: 'https://archive.org/download/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08/Service_Manual_128_128D_Computer_1987-11_Commodore_PN-314001-08.pdf#page=37' },
       ],
@@ -3353,6 +3424,21 @@ RCS.add({
   },
   power: {
     c16: {
+      firstTen: [
+        { step: 1, check: 'Power pack unloaded', where: 'Power in (9 V DC) pin 2 to pin 1', expect: 'About +13 V DC with the plug out of the C16 (Sams); 9 V DC nominal under load. Pin 2 positive.', ifNot: 'Wrong or missing: replace the power pack (Sams). AC or reversed polarity here kills the board.', source: SAMS_CC8('Service checks, power supply check (A)', 4) },
+        { step: 2, check: '+5 V after the 7805', where: '7501 pin 5', expect: '+4.9 to +5.2 V', ifNot: 'Check DC fuse F1. If it is open, check VR1 (7805) for a short before fitting a new fuse (Sams).', source: SAMS_CC8('Service checks, power supply check (B, C)', 4) },
+        { step: 3, check: 'Reset', where: '7501 pin 40', expect: 'LOW at power-on, then HIGH', ifNot: 'Check the U10 556 reset timer and the reset switch SW2.', source: SAMS_CC8('schematic (U10 556 timer, SW2 reset)', 10) },
+        { step: 4, check: 'Master clock', where: 'TED pin 14', expect: '14.31818 MHz NTSC / 17.734475 MHz PAL, ±70 ppm', ifNot: 'Missing: oscillator Q1/Q2 and crystal Y1. Off frequency or no colour: set trimmer CT1 for 14.31818 MHz at the base of Q1 (Sams).', source: SAMS_CC8('Miscellaneous adjustments, crystal oscillator', 4) },
+        { step: 5, check: 'CPU clock', where: 'TED pin 12', expect: '0.894 MHz NTSC, doubling to 1.788 MHz in the border, into 7501 pin 1', ifNot: 'Master clock present but no clock out: the TED (U1).', source: CBMF.ted(33, 'system clock doubling (894 kHz / 1.788 MHz NTSC)') },
+        { step: 6, check: 'DRAM strobes', where: 'TED pin 10', expect: '/RAS pulsing continuously; /CAS on TED pin 11 and MUX on pin 9 likewise', ifNot: 'Flat: the TED. Pulsing but RAM errors: the 4416s.', source: CBMF.ted(9, 'dynamic RAM control pins 9 to 11') },
+        { step: 7, check: 'Video out of the TED', where: 'TED pin 23', expect: 'Luminance with sync (open drain, 1 kΩ pull-up); colour on TED pin 13', ifNot: 'No video at the TED: the TED. Video at the TED but none on the TV: the RF modulator M1 (Sams).', source: SAMS_CC8('Service checks, main board (G, H)', 4) },
+      ],
+      clocks: [
+        { name: 'Crystal', where: 'Y1 (Q1/Q2 oscillator)', ntsc: '14.31818 MHz', pal: '17.734475 MHz', source: CBMF.ted(10, '4.3 PHI In pin 14 (NTSC and PAL inputs)') },
+        { name: 'Master clock', where: 'TED pin 14', ntsc: '14.31818 MHz', pal: '17.734475 MHz', source: CBMF.ted(10, '4.3 PHI In pin 14') },
+        { name: 'CPU clock (single)', where: 'TED pin 12 to 7501 pin 1', ntsc: '0.894 MHz', pal: '0.884 MHz', source: CBMF.ted(35, 'timers decrement at 894 kHz NTSC, 884 kHz PAL') },
+        { name: 'CPU clock (double, border and blanking)', where: 'TED pin 12 to 7501 pin 1', ntsc: '1.788 MHz', source: CBMF.ted(33, 'system clock doubling') },
+      ],
       supply: {
         external: true,
         name: 'Commodore C16 power supply (9 V DC)',
@@ -3365,10 +3451,10 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+9 V DC in', expect: 'About +9 V DC (above 7.5 V)', where: 'CN8 pin 2; 7805 VR1 input', note: 'Below about 7.5 V the 7805 drops out.' },
+        { rail: '+9 V DC in', expect: 'About +9 V DC (above 7.5 V)', where: 'CN8 pin 2; 7805 VR1 input', note: 'Below about 7.5 V the 7805 drops out.', conflict: 'Sams CC8 expects about 13 V DC at the power pack plug with the C16 disconnected; 9 V DC is the loaded rating on schematic 251788. Both can be right: the pack is unregulated.' },
         { rail: '+5 V', expect: '4.9-5.2 V', where: '7805 output; TED pin 4; 7501 pin 5; 4416 pin 9', note: 'Ripple under 50 mV. Sagging 5 V with a hot 7805 = shorted chip; pull TED first.' },
       ],
-      testPoints: CBM264_TESTPOINTS,
+      testPoints: CBM264_TP({ f: '14.31818 MHz', low: '0 V', high: '3.6 V', shape: 'square', basis: 'capture', source: SAMS_CC8('schematic, waveform at Q2 collector into TED pin 14', 10), note: 'Sams photo: 3.6 V p-p over 0 V from the Q1/Q2 oscillator, edges rounded at this rate. A meter reads about 0.7 V DC here (Sams). NTSC board; PAL is 17.734475 MHz (TED System Hardware Manual). Flat line: oscillator Q1/Q2 or crystal Y1.' }),
       sources: [
         { label: 'C16 Service Manual, schematic 251788 sheet 1 (power CN8, VR1 7805), p. 7', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/C16_Service_Manual_314001-03_(1984_Oct).pdf#page=12' },
         { label: 'C16 Service Manual, chip pin assignments, p. 11', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/C16_Service_Manual_314001-03_(1984_Oct).pdf#page=11' },
@@ -3376,6 +3462,23 @@ RCS.add({
       ],
     },
     plus4: {
+      firstTen: [
+        { step: 1, check: 'Supply unloaded, +5 V', where: 'Power in (+5 V DC, 9 V AC) pin 1 to pin 2', expect: 'About +5 V DC with the plug out of the Plus/4 (Sams); over about 5.3 V, do not use it', ifNot: 'Missing or wrong: replace the power supply (Sams). The Plus/4 has no regulator of its own, so a high supply goes straight to the chips.', source: SAMS_CC9('Service checks, power supply (A)', 3) },
+        { step: 2, check: 'Supply unloaded, 9 V AC', where: 'Power in (+5 V DC, 9 V AC) pin 3 to pin 4', expect: 'About 10.6 V AC unloaded (Sams)', ifNot: 'Missing: replace the power supply (Sams). Only the user port and the 13.8 V rail use it.', source: SAMS_CC9('Service checks, power supply (A)', 3) },
+        { step: 3, check: 'Rectified rail', where: 'C7 positive end', expect: 'About +13.8 V DC with the power switch on', ifNot: 'Check DC fuse F1; if it is open, check diode CR1 and C7, C8 for a short (Sams).', source: SAMS_CC9('Troubleshooting, power supply', 18) },
+        { step: 4, check: '+5 V on the board', where: '7501 pin 5', expect: 'About +5 V', ifNot: 'Supply good but no 5 V here: line filter L1 and switch SW1 (Sams).', source: SAMS_CC9('Troubleshooting, microprocessor operation', 18) },
+        { step: 5, check: 'Reset', where: '7501 pin 40', expect: 'LOW for about two seconds after power-on, then HIGH (Sams, logic probe)', ifNot: 'Wrong: check U7 and timer U8 and their parts (Sams).', source: SAMS_CC9('Troubleshooting, microprocessor operation', 18) },
+        { step: 6, check: 'Master clock', where: 'TED pin 14', expect: '14.31818 MHz NTSC / 17.7344 MHz PAL', ifNot: 'Set trimmer C10 at the base of Q1; if it will not reach frequency, crystal Y1 and Q1/Q2 (Sams).', source: SAMS_CC9('Troubleshooting, microprocessor operation', 18) },
+        { step: 7, check: 'CPU clock', where: 'TED pin 12', expect: 'Clock present, into 7501 pin 1 (0.894 MHz NTSC, doubling in the border)', ifNot: 'Master clock present but nothing here: the TED U1 (Sams).', source: SAMS_CC9('Troubleshooting, microprocessor operation', 18) },
+        { step: 8, check: 'Bus activity', where: '7501 pin 31', expect: 'Pulses on the data lines (7501 pins 31 to 38) and address lines (pins 4, 6 to 22)', ifNot: 'CPU not running with clock and reset good: CPU U2, then KERNAL U24 and PLA U19 by substitution (Sams).', source: SAMS_CC9('Troubleshooting, microprocessor operation', 18) },
+      ],
+      clocks: [
+        { name: 'Crystal', where: 'Y1 (Q1/Q2 oscillator)', ntsc: '14.31818 MHz', pal: '17.73447 MHz', source: SAMS_CC9('parts list (Y1, NTSC and PAL crystals)', 21) },
+        { name: 'Master clock', where: 'TED pin 14', ntsc: '14.31818 MHz', pal: '17.734475 MHz', source: CBMF.ted(10, '4.3 PHI In pin 14') },
+        { name: 'CPU clock (single)', where: 'TED pin 12 to 7501 pin 1', ntsc: '0.894 MHz', pal: '0.884 MHz', source: CBMF.ted(35, 'timers decrement at 894 kHz NTSC, 884 kHz PAL') },
+        { name: 'CPU clock (double, border and blanking)', where: 'TED pin 12 to 7501 pin 1', ntsc: '1.788 MHz', source: CBMF.ted(33, 'system clock doubling') },
+        { name: 'ACIA crystal', where: '6551 pin 6 and pin 7', f: '1.8432 MHz', source: SAMS_CC9('parts list (crystal 1.8432 MHz)', 21) },
+      ],
       supply: {
         external: true,
         name: 'Commodore Plus/4 power supply (+5 V DC and 9 V AC, square 4-pin plug)',
@@ -3392,15 +3495,33 @@ RCS.add({
         { rail: '+5 V', expect: '4.9-5.2 V', where: 'Power socket pin 1; TED pin 4; 7501 pin 5; 4164 pin 8', note: 'Comes straight from the external supply. A high reading here is the supply, not the board.' },
         { rail: '9 V AC', expect: 'About 9 V AC between the two 9 V AC pins', where: 'Power socket pins 3-4; user port pins 10-11', note: 'Only brought out to the user port.' },
       ],
-      testPoints: CBM264_TESTPOINTS,
+      testPoints: CBM264_TP({ f: '14.31818 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'capture', source: SAMS_CC9('schematic, waveform at Q2 into TED pin 14', 12), note: 'Sams photo: 4 V p-p over 0 V from the Q1/Q2 oscillator; a meter reads about 1.0 V DC here (Sams). NTSC board; PAL is 17.734475 MHz (TED System Hardware Manual). Flat line: oscillator Q1/Q2 or crystal Y1.' }),
       sources: [
         { label: 'Plus/4 power supply schematic (zimmers.net)', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/powersupply.gif' },
         { label: 'TED System Hardware Manual, 4.3 TED pinout and 5.2 7501 pinout, pp. 8, 14', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/Plus_4_Technical_Docs.pdf#page=8' },
       ],
     },
     c64: {
+      firstTen: [
+        { step: 1, check: 'Brick unloaded, +5 V', where: 'Power in (brick) pin 5 to pin 2', expect: 'About +5.08 V DC with the brick unplugged from the C64 (Sams); never over 5.25 V', ifNot: 'Over about 5.25 V: do not plug it in. The regulator in the brick fails high, often only once warm, and kills the RAM, PLA and CPU (Carlsen).', source: SAMS_CC17('Power supply check (A, B)', 4) },
+        { step: 2, check: 'Brick unloaded, 9 V AC', where: 'Power in (brick) pin 6 to pin 7', expect: 'About 10.9 V AC unloaded (Sams)', ifNot: 'No 9 V AC: black screen (darker than a chip fault) and no sound. Brick winding or its fuse, or fuse F1 in the C64 (Carlsen).', source: SAMS_CC17('Power supply check (A)', 4) },
+        { step: 3, check: '+12 V on the board', where: 'SID pin 28', expect: 'About +11.8 V from VR1 7812 (Sams 11.76 V). A C64C with an 8580 reads about +9 V.', ifNot: 'Check fuse F1 and switch SW1, then the bridge CR4, VR1, CR5 and C88-C90 (Sams).', source: SAMS_CC17('Main board power check (A, B, E)', 4) },
+        { step: 4, check: '+5 V on the board', where: '6510 pin 6', expect: '+4.9 to +5.1 V (Sams reads 4.91 V at L5 and 4.9 V at the IC pins)', ifNot: 'Low with a good brick: a shorted chip loads it. Feel for a RAM or PLA running hotter than the rest after a few minutes (Carlsen).', source: SAMS_CC17('Main board power check (D)', 4) },
+        { step: 5, check: 'Reset', where: '6510 pin 40', expect: 'LOW for about 0.5 s after power-on, then HIGH (556 one-shot U20)', ifNot: 'Stuck LOW or never LOW: the 556 timer U20 and its timing parts R34 and C24.', source: CBMF.c64sm(9, 'reset logic circuits') },
+        { step: 6, check: 'Dot clock', where: 'VIC-II pin 22', expect: '8.18 MHz NTSC / 7.88 MHz PAL; colour clock on VIC-II pin 21 (14.31818 MHz NTSC)', ifNot: 'Missing: the clock circuit (U31 74LS629 and U30/U29 on early boards, the 8701 on later ones) and crystal Y1, not the VIC-II.', source: CBMF.c64sm(10, 'C64 clock circuits') },
+        { step: 7, check: 'CPU clock Φ0', where: 'VIC-II pin 17', expect: 'Square wave, 1.023 MHz NTSC / 0.985 MHz PAL, into 6510 pin 1', ifNot: 'Dot clock present but no Φ0: the VIC-II. Φ0 present but no Φ2 on 6510 pin 39: the 6510.', source: CBMF.bauer },
+        { step: 8, check: 'Data bus activity', where: '6510 pin 37', expect: 'Activity on all eight data lines, 6510 pins 37 down to 30, about 4 V p-p on a scope', ifNot: 'A line at 3 V p-p or less is being dragged down: lift one pin of each chip on that line until it recovers. Flat bus: PLA first, then KERNAL ROM, CPU, VIC-II (Carlsen).', source: CBMF.rc64blank },
+      ],
+      clocks: [
+        { name: 'Crystal', where: 'Y1', ntsc: '14.31818 MHz', pal: '17.734472 MHz', source: CBMF.c64c },
+        { name: 'Colour clock', where: 'VIC-II pin 21', ntsc: '14.31818 MHz', pal: '17.734472 MHz', source: CBMF.c64sm(10, 'C64 clock circuits (U31 pin 10 colour clock)') },
+        { name: 'Dot clock', where: 'VIC-II pin 22', ntsc: '8.18 MHz', pal: '7.88 MHz', source: CBMF.bauer },
+        { name: 'Φ0 (VIC-II out, CPU in)', where: 'VIC-II pin 17 to 6510 pin 1', ntsc: '1.023 MHz', pal: '0.985 MHz', source: CBMF.bauer },
+        { name: 'Φ2 (CPU out)', where: '6510 pin 39 to CIA pin 25 and SID pin 6', ntsc: '1.023 MHz', pal: '0.985 MHz', source: CBMF.wiki('6510', 'MOS 6510 (0.985 MHz PAL, 1.023 MHz NTSC)') },
+        { name: 'C64C clock generator outputs', where: '8701 (U31 on 250469): #6 dot, #8 colour', ntsc: '8.18 MHz / 14.31818 MHz', pal: '7.88 MHz / 17.734472 MHz', source: CBMF.c64c },
+      ],
       rails: [
-        { rail: '+5 V DC', expect: '4.95–5.10 V', where: '6510 pin 6', note: 'From the brick on power DIN pin 5. A sagging 5 V is usually a shorted chip: pull the PLA and VIC before blaming the supply.' },
+        { rail: '+5 V DC', expect: '4.95–5.10 V', where: '6510 pin 6', note: 'From the brick on power DIN pin 5. A sagging 5 V is usually a shorted chip: pull the PLA and VIC before blaming the supply.', conflict: 'Sams CC17 reads 4.9 V at the IC pins and 4.91 V at L5 on a working board, just under this range. Range kept; it is not from a Commodore document either, so treat 4.9 V as normal.' },
         { rail: '9 V AC', expect: 'About 9 V AC between the two 9 V AC pins (DIN pins 6-7)', where: 'Power DIN pins 6 and 7', note: 'Rectified on the board: CR6/CR5 and VR1 7812 make +12 V; CR4 makes the 9 V unregulated rail (cassette motor); VR2 7805 makes the 5 V CAN supply for the clock and video circuits.' },
         { rail: '+12 V (VIC-II and 6581 Vdd)', expect: 'About +12 V', where: 'VIC-II pin 13; SID pin 28', note: 'From VR1 (7812) on the board. An 8580 SID (C64C) wants +9 V on pin 28 instead. Missing or low = no picture or no sound.' },
       ],
@@ -3413,6 +3534,9 @@ RCS.add({
         { tp: 'VIC chip select', where: 'VIC-II pin 10', expect: 'Pulses LOW on each VIC register access' },
         { tp: 'DRAM strobe', where: 'VIC-II pin 18', expect: '/RAS pulsing continuously' },
         { tp: 'PLA chip enable', where: 'PLA pin 19', expect: 'LOW for the PLA to drive its outputs (tied active on the board)', verify: true },
+        { tp: 'Φ2 at CIA 1', where: 'CIA pin 25', expect: 'Square wave, 0 to 5 V, 1.023 MHz NTSC / 0.985 MHz PAL', scope: { f: '1.0227 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SAMS_CC17('schematic, waveform at U1 (CIA) pin 25 Φ2', 9), note: 'Sams photo: 5 V p-p over the 0 V line. Frequency from the service manual (1.02 MHz; CC17 is an NTSC board). Same net as 6510 pin 39 and SID pin 6. The printed sweep (0.2 µs/cm) does not fit three cycles of a 1 MHz clock, so take the levels from Sams, not the cycle count.' } },
+        { tp: 'AEC (bus split)', where: 'VIC-II pin 16', expect: 'Square wave at the CPU clock rate, 0 to 4.5 V; held LOW longer on badlines', scope: { f: '1.0227 MHz', low: '0 V', high: '4.5 V', shape: 'square', basis: 'capture', source: SAMS_CC17('schematic, waveform at U8 (7406) pin 3 on the AEC line from VIC-II pin 16', 9), note: 'LOW while the VIC-II uses the bus (Φ1), HIGH for the CPU (Φ2); stays LOW through a badline (Bauer). Frequency from the service manual; Sams gives the 4.5 V p-p swing over 0 V.' } },
+        { tp: 'CAEC at the CPU', where: '6510 pin 5', expect: 'Square wave at the CPU clock rate, 0 to 5 V', scope: { f: '1.0227 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SAMS_CC17('schematic, waveform at U7 (6510) pin 5 CAEC', 9), note: 'AEC gated with DMA by U27 before it reaches the CPU. A flat line here with AEC present on VIC-II pin 16: check U27 (MOS 7712 on the Sams drawing). Frequency from the service manual; levels from Sams.' } },
       ],
       supply: {
         external: true,
@@ -3431,6 +3555,19 @@ RCS.add({
       ],
     },
     vic20: {
+      firstTen: [
+        { step: 1, check: 'Transformer', where: 'Power in (9 V AC) pin 1 to pin 2', expect: 'About 9 V AC (9 V, 3 A transformer); a little more unloaded', ifNot: 'Nothing: transformer or cord. It has no regulator, so it cannot fail high; also squeeze the plug contacts if the fit is loose (Carlsen).', source: CBMF.rcvic20 },
+        { step: 2, check: 'Main fuse', where: 'F1 (3.15 A, in the computer)', expect: 'Intact and tight in clean clips', ifNot: 'Blown: suspect the bridge rectifier, then the LM323, then the chips, in that order. A loose fuse clip heats up and drops the supply (Carlsen).', source: CBMF.rcvic20 },
+        { step: 3, check: '+5 V', where: '6502 pin 8', expect: 'About +5 V from VR1 (LM323)', ifNot: 'Dead with no power LED, or a wavy picture with hum: the KBPC802 bridge or VR1. Tighten the bridge heat-sink screw and resolder the bridge (Carlsen).', source: CBMF.rcvic20 },
+        { step: 4, check: 'VIC chip power', where: 'VIC pin 40', expect: '+5 V on pin 40, 0 V on pin 20; the VIC runs very warm after ten minutes', ifNot: 'A cold VIC: no +5 V on pin 40 or an open ground on pin 20, possibly a damaged socket contact (Carlsen).', source: CBMF.rcvic20 },
+        { step: 5, check: 'Master oscillator', where: 'Y1 and UB9 (7402) oscillator', expect: '14.31818 MHz (NTSC board) on a scope', ifNot: 'White screen and almost no hash on an AM radio held near it: UB9 7402 or crystal Y1 (Carlsen).', source: CBMF.rcvic20 },
+        { step: 6, check: 'CPU clock', where: '6502 pin 37', expect: 'About 1.02 MHz NTSC / 1.10 MHz PAL', ifNot: 'Oscillator good but no CPU clock: the VIC chip, which passes the clock to the rest of the computer (Carlsen).', source: CBMF.rcvic20 },
+        { step: 7, check: 'Reset', where: '6502 pin 40', expect: 'LOW at power-on, then HIGH (UB6 LM555); the disk drive resets with it', ifNot: 'No reset, frozen or garbage screen: UB6 555. If the drive resets at power-up, the 555 is good (Carlsen).', source: CBMF.rcvic20 },
+      ],
+      clocks: [
+        { name: 'Crystal', where: 'Y1', ntsc: '14.31818 MHz', source: CBMF.vic20e, note: 'PAL crystal value not in our sources.' },
+        { name: 'CPU clock', where: 'VIC pin 36 to 6502 pin 37', ntsc: '1.02 MHz', pal: '1.10 MHz', source: CBMF.wiki('VIC-20', 'VIC-20 (6502 at 1.02 MHz NTSC / 1.10 MHz PAL)') },
+      ],
       rails: [
         { rail: '+5 V', expect: '4.95–5.10 V', where: '6502 pin 8; LM323 VR1 output', note: 'From the LM323 (VR1) on the board, fed by the 9 V AC transformer through bridge CR4. Only rail on the VIC-20: there is no +12 V. A sagging 5 V means a shorted chip; check the VIC and CPU first.' },
         { rail: '9 V AC in', expect: 'About 9 V AC between the two 9 V AC pins', where: 'Power jack J1; user port pins 10-11', note: 'Straight from the external transformer.' },
@@ -3457,6 +3594,22 @@ RCS.add({
       ],
     },
     pet: {
+      firstTen: [
+        { step: 1, check: 'Fuse', where: 'Rear-panel fuse beside the power switch', expect: 'Present and intact', ifNot: 'Blown or missing (school PETs often lack it): replace with the same rating, then check the rails before running it long (PET FAQ).', source: CBMF.petfaq },
+        { step: 2, check: 'Unregulated +9 V', where: 'J8 contact 2 (+9 V feed)', expect: 'About +9 to +10 V DC', ifNot: 'Missing: transformer, its connector J8 or the mains side.', source: CBMF.pet9 },
+        { step: 3, check: '-5 V for the 4116 DRAM', where: 'TP10', expect: '-4.75 to -5.25 V from VR6 (7905)', ifNot: 'Do not run the board: 4116 DRAM without -5 V is destroyed. Check VR6 and the -9 V feed.', source: CBMF.pet9 },
+        { step: 4, check: '+12 V', where: 'TP6', expect: '+11.5 to +12.5 V from VR5 (7812)', ifNot: 'Check VR5 and the +16 V bridge.', source: CBMF.pet9 },
+        { step: 5, check: '+5 V', where: '6502 pin 8', expect: '+4.9 to +5.2 V from VR3 and VR4 (LM340-5)', ifNot: 'One regulator low and very hot: a shorted chip on its half of the load. Old filter caps C62/C63 add ripple and resets.', source: CBMF.pet9 },
+        { step: 6, check: 'Master oscillator', where: 'TP9', expect: '16 MHz from Y1 and the 74S04 I1', ifNot: 'Missing: crystal Y1, I1 (74S04), C44.', source: CBMF.pet6 },
+        { step: 7, check: 'CPU clock', where: '6502 pin 37', expect: '1 MHz (CLK1 from G5 74191 pin 7)', ifNot: 'Oscillator good but no CLK1: G1 (74LS08) and G5 (74191) on sheet 6.', source: CBMF.pet6 },
+        { step: 8, check: 'Reset', where: '6502 pin 40', expect: 'LOW at power-on, then HIGH (A2 LM555 power-up reset)', ifNot: 'Stuck: A2 (555) and C67. Still dead with clock and reset good: reseat every socketed chip (PET FAQ).', source: CBMF.pet1 },
+      ],
+      clocks: [
+        { name: 'Crystal', where: 'Y1', f: '16 MHz', source: CBMF.pet6 },
+        { name: '16 MHz clock', where: 'TP9; G1 (74LS08) #6 to G5 (74191) clock input #14', f: '16 MHz', source: CBMF.pet6 },
+        { name: 'CLK8 (video)', where: 'G5 (74191) output QA, #3', f: '8 MHz', source: CBMF.pet6 },
+        { name: 'CLK1 (CPU Φ0)', where: 'G5 (74191) output QD #7 to 6502 pin 37', f: '1 MHz', source: CBMF.pet1 },
+      ],
       rails: [
         { rail: '+5 V', expect: '4.9-5.2 V', where: '6502 pin 8; VR3 and VR4 (LM340-5) outputs', note: 'Two LM340-5 regulators on the board share the logic load, fed from +9 V unregulated on J8 pin 2. A shorted chip pulls one of them down and it gets very hot.' },
         { rail: '+12 V', expect: '+11.5 to +12.5 V', where: 'VR5 (7812) output; TP6', note: 'From the +16 V unregulated winding through a bridge on the board. Used by the 4116 DRAM on Dynamic PET boards.' },
@@ -3483,6 +3636,25 @@ RCS.add({
       ],
     },
     c128: {
+      firstTen: [
+        { step: 1, check: 'Supply, +5 V', where: 'Power in pin 1 to pin 4', expect: 'About +5 V DC', ifNot: 'Missing: fuse F3 in the power supply, then its cables (Sams). A supply that clicks or shuts down under load may be the crowbar firing.', source: SAMS_CC18('Service checks, Computer dead (B, C)', 3) },
+        { step: 2, check: 'Supply, 9 V AC', where: 'Power in pin 3 to pin 5', expect: 'About 9.6 V AC', ifNot: 'Missing: fuse F1 in the power supply, then transformer T1 and the cord (Sams).', source: SAMS_CC18('Service checks, Computer dead (A)', 3) },
+        { step: 3, check: '+5 V on the board', where: '8502 pin 6', expect: 'About +5 V', ifNot: 'Supply good but no 5 V here: power switch SW1; check 5 V at the cathode of CR15 (Sams).', source: SAMS_CC18('Service checks, Computer dead (D)', 3) },
+        { step: 4, check: '+12 V on the board', where: 'SID pin 28', expect: 'About +11.9 V at U59 (7812) pin 3; +9 V on an 8580 board', ifNot: 'Check about 19.4 V at the U59 input and 9.6 V AC at bridge CR13, then CR10, CR11, C104, C106 (Sams).', source: SAMS_CC18('Troubleshooting, power supply (main board)', 25) },
+        { step: 5, check: 'Reset', where: '8502 pin 40', expect: 'LOW at power-on, then HIGH at once; LOW again while RESET is pressed', ifNot: 'Check timer U27 (556) and U63, R24, C91 and C92; reset button SW2 and CR16 (Sams).', source: SAMS_CC18('Troubleshooting, microprocessor operation', 25) },
+        { step: 6, check: 'Dot clock', where: 'VIC-IIe pin 30', expect: '8.18 MHz NTSC from the 8701 (U28 pin 6)', ifNot: 'Missing at U28 pin 6: the 8701 U28, crystal Y2 and its parts (Sams).', source: SAMS_CC18('Troubleshooting, microprocessor operation', 25) },
+        { step: 7, check: 'CPU clock', where: '8502 pin 1', expect: 'Square wave, 1.02 MHz at power-on (2.04 MHz in FAST)', ifNot: 'Dot clock good but no clock here: VIC-IIe U21. Clock good: check logic HIGH on 8502 pins 4 and 5 (Sams).', source: SAMS_CC18('Troubleshooting, microprocessor operation', 25) },
+        { step: 8, check: 'Z80 clock', where: 'Z80A pin 6', expect: 'Clock present, fed from VIC-IIe pin 25', ifNot: 'Missing at VIC-IIe pin 25: VIC-IIe U21. Present there but not at the Z80: U60 and clock amp Q6 (Sams).', source: SAMS_CC18('Troubleshooting, microprocessor operation', 25) },
+      ],
+      clocks: [
+        { name: 'Crystal (8701 clock generator)', where: 'Y2 at U28 (8701)', ntsc: '14.31818 MHz', pal: '17.734472 MHz', source: SAMS_CC18('parts list (Y2 crystal 14.31818 MHz)', 33), note: 'PAL value from the 8701 notes on C64C schematic 250469 (the same clock generator).' },
+        { name: 'Colour clock', where: 'VIC-IIe pin 29 (from 8701 U28, #8)', ntsc: '14.31818 MHz', source: SAMS_CC18('Miscellaneous adjustments, 14 MHz oscillator (C20)', 9) },
+        { name: 'Dot clock', where: 'VIC-IIe pin 30 (from 8701 U28, #6)', ntsc: '8.1818 MHz', pal: '7.88 MHz', source: SAMS_CC18('Troubleshooting, microprocessor operation', 25), note: 'PAL value from the 8701 notes on C64C schematic 250469.' },
+        { name: '1 MHz system clock', where: 'VIC-IIe pin 18', ntsc: '1.02 MHz', source: CBMF.wiki('Commodore_128', 'Commodore 128 (8502 at about 1.02 or 2.04 MHz)') },
+        { name: 'CPU clock', where: 'VIC-IIe pin 23 to 8502 pin 1', ntsc: '1.02 MHz, 2.04 MHz in FAST', source: CBMF.wiki('Commodore_128', 'Commodore 128 (8502 at about 1.02 or 2.04 MHz)') },
+        { name: 'Z80 clock', where: 'VIC-IIe pin 25 to Z80A pin 6', ntsc: '2.04 MHz effective (4 MHz Z80B)', source: CBMF.wiki('Commodore_128', 'Commodore 128 (Z80B at 2.04 MHz)') },
+        { name: 'VDC dot clock', where: 'VDC pin 2', f: '16 MHz', source: SAMS_CC18('parts list (Y1 oscillator 16 MHz)', 33) },
+      ],
       rails: [
         { rail: '+5 V', expect: '4.95-5.10 V', where: '8502 pin 6; power DIN pin 1', note: 'Comes in on the 5-pin power DIN (CN11 pin 1) from the external supply, through SW1.' },
         { rail: '+5 V (VDC)', expect: '+5 V', where: 'VDC pin 37', note: 'Supply to the 8563 VDC. A dead 80-column screen with this rail present points at the VDC.' },
@@ -3514,6 +3686,20 @@ RCS.add({
       ],
     },
     c1541: {
+      firstTen: [
+        { step: 1, check: 'Fuse and power LED', where: 'Rear-panel line fuse (1 A slow-blow)', expect: 'Green LED on and steady at power-up', ifNot: 'Dim or flickering green LED: the 5 V supply, usually the bridge rectifier or VR2 (Carlsen).', source: CBMD_SRC.rc41 },
+        { step: 2, check: 'Unregulated rails', where: 'CR4 and CR2 cathodes', expect: 'About 10 V (5 V side) and 20 V (12 V side)', ifNot: 'Low or missing: the bridge rectifier on that side, or the transformer.', source: CBMD_SRC.rc41 },
+        { step: 3, check: '+5 V', where: '6502 pin 8', expect: '+4.75 to +5.25 V', ifNot: 'Bad 5 V: dim green LED and a spindle that runs with the red LED off (Carlsen).', source: { label: '1540/1541 Service Manual 314002-01, power supply circuit theory, PDF p. 8', url: CBMD_SM41(8) } },
+        { step: 4, check: '+12 V', where: 'CR2 anode', expect: 'About +12 V from VR1', ifNot: 'Low: a shorted 10 µF 25 V tantalum C15 pulling +12 V down; neither motor runs without it (Carlsen).', source: CBMD_SRC.rc41 },
+        { step: 5, check: 'Power-up sequence and reset', where: '6502 pin 40', expect: 'LOW at power-on, then HIGH; red LED and spindle on for about 2 s, then off', ifNot: 'Red LED stays on and the motor runs: start-up failed. DOS ROM UB4 first, then 6502 UC4, VIA UC2, 74LS14 UA1, 7407 UD2 (Carlsen).', source: CBMD_SRC.rc41 },
+        { step: 6, check: 'CPU clock', where: '6502 pin 37', expect: '1 MHz square wave (16 MHz crystal ÷ 16)', ifNot: 'Missing: the 16 MHz crystal oscillator and its divider.', source: { label: '1540/1541 Service Manual 314002-01, clock circuits, PDF p. 10', url: CBMD_SM41(10) } },
+        { step: 7, check: 'Reset from the computer', where: 'Serial bus (IEC) in / out pin 6', expect: 'Pulses LOW when the computer is switched on; the drive LED and spindle cycle again', ifNot: 'No cycle: try another serial cable, then the drive VIA. A drive on a computer that is switched off stays in reset; that is normal (Carlsen).', source: CBMD_SRC.rc41 },
+      ],
+      clocks: [
+        { name: 'Crystal', where: 'Y1', f: '16 MHz', source: { label: '1540/1541 Service Manual 314002-01, clock circuits, PDF p. 10', url: CBMD_SM41(10) } },
+        { name: 'CPU clock Φ0', where: '6502 pin 37', f: '1 MHz', source: SAMS_CD4('schematic, 1 MHz line from UD5 (74177) pin 12 through L3 and R1', 10) },
+        { name: 'Φ2 out', where: '6502 pin 39', f: '1 MHz', source: SAMS_CD4('schematic, waveform at UC4 (6502) pin 39', 10) },
+      ],
       supply: {
         external: false,
         name: 'Internal linear supply: power supply assembly 1540002 (transformer 1540009-02) with LM340-12 and LM340-5 regulators on the logic board (LM323 for +5 V on the long board). 1541-II: external brick C340031-01.',
@@ -3545,7 +3731,8 @@ RCS.add({
         { rail: 'Unregulated', expect: 'About 10 V (5 V side) and 20 V (12 V side)', where: 'CR4 and CR2 cathodes', note: 'Ray Carlsen\'s check point beside the bridge rectifiers.' },
       ],
       testPoints: [
-        { tp: 'CPU clock Φ0', where: '6502 pin 37', expect: '1 MHz from the 16 MHz crystal through a ÷16 counter' },
+        { tp: 'CPU clock Φ0', where: '6502 pin 37', expect: '1 MHz from the 16 MHz crystal through a ÷16 counter', scope: { f: '1 MHz', low: '0 V', high: '4.2 V', shape: 'square', basis: 'capture', source: SAMS_CD4('schematic, waveform at R1 on the 1 MHz line into UC4 (6502) pin 37', 10), note: 'Sams photo: 4.2 V p-p over 0 V, four cycles across the 9 cm graticule at 0.5 µs/cm. Drawn on the 251748 short board (UC4 6502, UC1 325572). Frequency from the service manual (16 MHz ÷ 16).' } },
+        { tp: 'CPU clock Φ2', where: '6502 pin 39', expect: '1 MHz square wave out of the CPU', scope: { f: '1 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SAMS_CD4('schematic, waveform at UC4 (6502) pin 39', 10), note: 'Sams photo: 5 V p-p over 0 V, four cycles at 0.5 µs/cm. Φ0 present on pin 37 but nothing here: the 6502.' } },
         { tp: 'Reset', where: '6502 pin 40', expect: 'LOW at power-up or on a bus reset, then HIGH (TechTopics 15: first check for a spinning, LED-on drive)' },
         { tp: 'Byte ready', where: '6502 pin 38', expect: 'LOW pulse once per byte while reading or writing (gate array BYTE to S.O.)' },
         { tp: 'Read amplifier (alignment)', where: '592 pin 1 and 592 pin 14', expect: 'Cat\'s eye on track 16 with a 48 tpi alignment disk, scope in A+B (algebraic add), 50 mV/cm, 200 ms/div; lobe ratio 70% or better. UH6 in the technical manual, UF3 on schematic 251748.' },
@@ -3562,6 +3749,20 @@ RCS.add({
       ],
     },
     c1571: {
+      firstTen: [
+        { step: 1, check: 'Fuse', where: 'F101 on the power supply board', expect: 'Intact', ifNot: 'Open: check bridge D101 and driver Q101 for shorts, and C101, C102, C104 (Sams).', source: SAMS_CD12('Troubleshooting, power supply', 24) },
+        { step: 2, check: '+12 V from the supply board', where: 'Power supply board to main board (CN1, internal) pin 2', expect: 'About +12.0 V', ifNot: 'Missing: the supply board. To test it off the main board, load the 12 V with 50 Ω 5 W and the 5 V with 10 Ω 5 W (Sams).', source: SAMS_CD12('Service checks, disk drive dead (B)', 4) },
+        { step: 3, check: '+5 V from the supply board', where: 'Power supply board to main board (CN1, internal) pin 4', expect: 'About +5.0 V', ifNot: 'Wrong: set VR201 with the drive loaded; then D202, T101 and IC201 (Sams).', source: SAMS_CD12('Service checks, disk drive dead (B, D)', 4) },
+        { step: 4, check: 'Reset', where: '6502 pin 40', expect: 'LOW at power-on, then HIGH and stays HIGH', ifNot: 'Check U17, then a short LOW-then-HIGH on U15 pin 11; then C28, R32 and regulator U21 (Sams).', source: SAMS_CD12('Troubleshooting, microprocessor operation', 24) },
+        { step: 5, check: 'Oscillator', where: '251829 pin 1', expect: '16 MHz', ifNot: 'Missing: oscillator module Y1, C23, L1, R3, then U5 (Sams).', source: SAMS_CD12('Troubleshooting, oscillator and dividers', 24) },
+        { step: 6, check: 'Gate array clock out', where: '251828 pin 37', expect: '1 MHz (1541 mode) or 2 MHz (1571 mode)', ifNot: '16 MHz present but nothing here: U6 (251828) (Sams).', source: SAMS_CD12('Troubleshooting, oscillator and dividers', 24) },
+        { step: 7, check: 'CPU clock', where: '6502 pin 37', expect: 'Clock present on 6502 pins 37 and 39', ifNot: 'Present at 251828 pin 37 but not here: U12 (74F32) pin 11, with pin 12 LOW; if pin 12 is wrong, U13 and U18 (Sams).', source: SAMS_CD12('Troubleshooting, oscillator and dividers', 24) },
+      ],
+      clocks: [
+        { name: 'Oscillator', where: 'Y1 module to 251829 pin 1', f: '16 MHz', source: SAMS_CD12('Troubleshooting, oscillator and dividers', 24) },
+        { name: 'CPU clock', where: '251828 pin 37 to 6502 pin 37', f: '1 MHz in 1541 mode, 2 MHz in 1571 mode', source: { label: '1571 Service Manual 314002-04, 40/42-pin gate array functions (OSC, ACCL, CK), p. 8', url: CBMD_SM71(11) } },
+        { name: 'FDC clock', where: '1770 pin 18', f: '8 MHz', source: { label: '1571 Service Manual 314002-04, WD1770/1772 pin assignment, p. 9', url: CBMD_SM71(12) } },
+      ],
       supply: {
         external: false,
         name: 'Internal switching supply board (US 1571), fed from 120 V AC through fuse F101 (2 A)',
@@ -3582,15 +3783,17 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+5 V', expect: 'About 5.0 V', where: '6502 pin 8; WD1770 pin 15; CN1 pin 4', note: 'Set by VR201 on the supply board.' },
+        { rail: '+5 V', expect: 'About 5.0 V', where: '6502 pin 8; 1770 pin 15; CN1 pin 4', note: 'Set by VR201 on the supply board.' },
         { rail: '+12 V', expect: 'About 12.0 V', where: 'CN1 pin 2; R/W hybrid', note: 'Motors and the R/W hybrid.' },
       ],
       testPoints: [
-        { tp: 'Oscillator', where: '64H157 pin 1', expect: '16 MHz' },
-        { tp: 'CPU clock', where: '64H156 pin 37', expect: '1 MHz in 1541 mode, 2 MHz in 1571 mode (ACCL on pin 20)' },
-        { tp: 'FDC clock', where: 'WD1770 pin 18', expect: '8 MHz ±1%' },
+        { tp: 'Oscillator', where: '251829 pin 1', expect: '16 MHz', scope: { f: '16 MHz', low: '0 V', high: '4.8 V', shape: 'sine', basis: 'capture', source: SAMS_CD12('schematic, waveform at U5 (251829) pin 1', 11), note: 'Sams photo: 4.8 V p-p over 0 V, close to a sine at 0.1 µs/cm. Missing: oscillator module Y1, C23, L1, R3 (Sams troubleshooting).' } },
+        { tp: 'CPU clock', where: '251828 pin 37', expect: '1 MHz in 1541 mode, 2 MHz in 1571 mode (ACCL on pin 20)' },
+        { tp: 'CPU clock at the 6502', where: '6502 pin 37', expect: '1 MHz (1541 mode) or 2 MHz (1571 mode)', scope: { f: '1 MHz', low: '0 V', high: '3.5 V', shape: 'square', basis: 'capture', source: SAMS_CD12('schematic, waveform at R2 into U1 (6502) pin 37', 11), note: 'Sams photo: 3.5 V p-p over 0 V, about two cycles at 0.2 µs/cm, so the drive was in 1541 mode; 2 MHz in 1571 mode (service manual).' } },
+        { tp: 'Φ2 out', where: '6502 pin 39', expect: 'Same rate as pin 37, 0 to 5 V', scope: { f: '1 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SAMS_CD12('schematic, waveform at U1 (6502) pin 39', 11), note: 'Sams photo: 5 V p-p over 0 V in 1541 mode. 2 MHz in 1571 mode.' } },
+        { tp: 'FDC clock', where: '1770 pin 18', expect: '8 MHz ±1%' },
         { tp: 'Reset', where: '6502 pin 40', expect: 'LOW at power-up, then HIGH' },
-        { tp: 'Index', where: 'WD1770 pin 24', expect: 'One LOW pulse per revolution with a disk turning' },
+        { tp: 'Index', where: '1770 pin 24', expect: 'One LOW pulse per revolution with a disk turning' },
       ],
       sources: [
         CBMD_SRC.sch310420,
@@ -3599,6 +3802,20 @@ RCS.add({
       ],
     },
     c1581: {
+      firstTen: [
+        { step: 1, check: 'Brick, +5 V', where: 'Power in pin 1 to pin 2', expect: 'About +5.0 V', ifNot: 'Missing: substitute the power supply (Sams). It is potted and not repairable.', source: SAMS_CD22('Service checks, drive is dead (A)', 5) },
+        { step: 2, check: 'Brick, +12 V', where: 'Power in pin 4 to pin 2', expect: 'About +12 V', ifNot: 'Missing: substitute the power supply (Sams).', source: SAMS_CD22('Service checks, drive is dead (B)', 5) },
+        { step: 3, check: '+5 V under load', where: '6502 pin 8', expect: 'Steady +5 V while the drive reads and writes', ifNot: 'Sags when warm or during access: the brick. An unloaded reading proves nothing (Carlsen).', source: CBMD_SRC.rc81 },
+        { step: 4, check: 'Power switch', where: 'Power switch SW2', expect: 'Continuity when on', ifNot: 'Replace or clean the switch (Sams).', source: SAMS_CD22('Service checks, drive is dead (C)', 5) },
+        { step: 5, check: 'Oscillator', where: 'Y1 16 MHz module (to U10 74LS93, #1)', expect: '16.0 MHz', ifNot: 'Missing: the oscillator module Y1 (Sams).', source: SAMS_CD22('Service checks, drive is dead (D)', 5) },
+        { step: 6, check: 'CPU clock', where: '6502 pin 37', expect: '2 MHz square wave', ifNot: '16 MHz present but no 2 MHz: divider U10 (74LS93).', source: { label: '1581 Service Manual 314982-01, schematic 252380 sheet 2 (Y1, U10, WD1770 clock), p. 16', url: CBMD_SM81(19) } },
+        { step: 7, check: 'Start-up finished', where: 'Serial bus (IEC) in / out pin 4', expect: 'Pins 4 and 5 HIGH once the drive has initialised; activity LED off after about 2 s', ifNot: 'LOW, LED stays on: the DOS ROM U2 first (the only socketed chip), then the 8520 U5 and 74LS14 U9 (Carlsen; Sams also points at ROM U2).', source: CBMD_SRC.rc81 },
+      ],
+      clocks: [
+        { name: 'Oscillator', where: 'Y1 16 MHz module to U10 (74LS93), #1', f: '16 MHz', source: SAMS_CD22('Service checks, drive is dead (D)', 5) },
+        { name: 'CPU clock φ2', where: '6502 pin 37; 8520 pin 25', f: '2 MHz', source: { label: '1581 Service Manual 314982-01, programmable baud rate (φ2 = 2 MHz), p. 4', url: CBMD_SM81(7) } },
+        { name: 'FDC clock', where: '1770 pin 18', f: '8 MHz', source: { label: '1581 Service Manual 314982-01, schematic 252380 sheet 2 (Y1, U10, WD1770 clock), p. 16', url: CBMD_SM81(19) } },
+      ],
       supply: {
         external: true,
         name: 'Commodore 1581 power supply C354027-01 (drawing 312551-01, shared with the 1541-II and 1571-II)',
@@ -3607,7 +3824,7 @@ RCS.add({
         notes: [
           'Linear and epoxy-potted: 3522 regulator for +5 V and 7812 for +12 V, a 5 A fuse inside, 120 V AC 60 Hz 0.25 A in (312551-01 drawing). Not repairable without cutting it open.',
           'The usual 1581 fault: +5 V sags once warm and the drive throws random errors. Measure it loaded, on the red wire to the mechanism, while the drive works (Carlsen). An unloaded reading proves nothing.',
-          'The +12 V / +5 V trap is inside: the 4-wire cable from CN1 to the mechanism is not keyed and reversing it destroys the mechanism. The schematic and Carlsen disagree on which pin is +5 V, so measure.',
+          'The +12 V / +5 V trap is inside: the 4-wire cable from CN1 to the mechanism is not keyed and reversing it destroys the mechanism. The schematic and Carlsen disagree on which pin is +5 V; Sams CD22 sides with the schematic (5 V on CN1 pin 4, 12 V on pin 1). Measure before connecting.',
           'Plug: 4-pin DIN, pin 1 +5 V, pin 4 +12 V, pin 2 ground, pin 3 not used. The 1541-II brick has the same plug and pinout.',
         ],
         sources: [
@@ -3619,13 +3836,14 @@ RCS.add({
         ],
       },
       rails: [
-        { rail: '+5 V', expect: 'About +5 V, steady under load', where: '6502 pin 8; 8520 pin 20; WD1770 pin 15; CN6 pin 1', note: 'Straight from the brick through SW2. Sagging under load = the brick.' },
+        { rail: '+5 V', expect: 'About +5 V, steady under load', where: '6502 pin 8; 8520 pin 20; 1770 pin 15; CN6 pin 1', note: 'Straight from the brick through SW2. Sagging under load = the brick.' },
         { rail: '+12 V', expect: 'About +12 V', where: 'CN6 pin 4; CN1 to the mechanism', note: 'Only the mechanism uses it.' },
       ],
       testPoints: [
-        { tp: 'Oscillator', where: 'Y1 16 MHz module', expect: '16 MHz; U10 (74LS93) divides it' },
+        { tp: 'Oscillator', where: 'Y1 16 MHz module', expect: '16 MHz; U10 (74LS93) divides it', scope: { f: '16 MHz', low: '0.7 V', high: '3.7 V', shape: 'square', basis: 'capture', source: SAMS_CD22('schematic, waveform at R9 into U10 (74LS93) pin 1', 12), note: 'Sams photo: 3 V p-p riding on a 0.7 V bottom line at 0.1 µs/cm. Missing: the oscillator module (Sams service checks).' } },
+        { tp: 'CPU clock Φ0', where: '6502 pin 37', expect: '2 MHz square wave from U10', scope: { f: '2 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'capture', source: SAMS_CD22('schematic, waveform at U1 (6502) pin 37', 12), note: 'Sams photo: 4 V p-p over 0 V, about nine cycles at 0.5 µs/cm. Frequency from the service manual (φ2 = 2 MHz).' } },
         { tp: 'CPU clock', where: '8520 pin 25', expect: '2 MHz φ2' },
-        { tp: 'FDC clock', where: 'WD1770 pin 18', expect: '8 MHz ±1%' },
+        { tp: 'FDC clock', where: '1770 pin 18', expect: '8 MHz ±1%' },
         { tp: 'Reset', where: '6502 pin 40', expect: 'LOW at power-up, then HIGH' },
         { tp: 'Serial idle', where: 'Serial DIN pins 4 and 5', expect: 'HIGH once initialisation finishes; LOW means the drive did not boot (Carlsen)' },
       ],
