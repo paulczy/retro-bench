@@ -363,11 +363,12 @@ RCS.add({
       summary: 'The VDP drives the picture from up to 16 KB of DRAM on its own bus: AD0-AD7 carry the multiplexed address and write data with /RAS, /CAS and R/W, and RD0-RD7 bring read data back. It runs from a 10.738635 MHz crystal and divides it down for the colour burst clock (pin 38, 9918A) and a GROM clock (pin 37). The 9928A (60 Hz) and 9929A (50 Hz) replace EXTVDP, COMVID and CPUCLK with B-Y, Y and R-Y outputs, so check the suffix before you swap. AD0, CD0 and RD0 are the MSBs. No picture or a garbled one points here and at the VRAM.',
       fails: ['No picture', 'Garbled picture (VRAM)', 'Bad colour', 'No frame interrupt'],
       heat: 'warm',
-      verifiedAgainst: 'TMS9918A/TMS9928A/TMS9929A Video Display Processors Data Manual (TI, 1982), section 3.7 Terminal Assignments',
+      verifiedAgainst: 'TMS9918A/TMS9928A/TMS9929A Video Display Processors Data Manual (TI, 1982), section 3.7 Terminal Assignments; TMS9928A pins 35, 36, 38 also in the ColecoVision Technical Manual signal pictures (U9)',
       datasheets: [
         { label: 'TMS9918A/9928A/9929A VDP Data Manual (1982), 3.7.1 TMS9918A terminal assignments, pp. 3-9 to 3-10', url: TI_DS('9918a28a29a.pdf', 52) },
         { label: 'Same manual, 3.7.2 TMS9928A/9929A terminal assignments, p. 3-11', url: TI_DS('9918a28a29a.pdf', 54) },
         { label: 'TI-99/4A Servicing Manual, VDP description (oscillator, GROM clock, CPU clock), printed pp. 67-68', url: TI_SM(76) },
+        { label: 'ColecoVision Technical Manual (Coleco, 1983), VII signal pictures: U9 (TMS9928A) pin 35 B-Y, pin 36 Y, pin 38 R-Y video outputs, PDF pp. 70-71', url: 'https://cvaddict.com/manuals/Colecovision_Technical_Manual.pdf#page=70' },
         { label: 'TMS9918A/9928A/9929A Data Manual (Nov 1982), applefritter mirror', url: 'https://git.applefritter.com/Apple-1-Tools/apple1-videocard-lib/raw/branch/main/docs/TMS9918A_TMS9928A_TMS9929A_Video_Display_Processors_Data_Manual_Nov82.pdf' },
       ],
       pins: vdp9918Pins,

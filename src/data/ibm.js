@@ -376,6 +376,78 @@
     ],
   };
 
+  // ---------- PCjr fit of the 8259A, 8253-5 and 8255A-5 ----------
+  // PCjr Technical Reference (Nov 1983): logic diagram sheet 1 (ZM32 8259A, PDF p. 501), sheet 9 (ZM22 8255A-5,
+  // ZM23 8253-5, PDF p. 509); IRQ list p. 2-15; 8255 bits pp. 2-30 to 2-34; port $A0 p. 2-35. Appended after the PC text.
+  const jrPins = (chip, add) => { for (const p of chip.pins) if (add[p.n]) p.desc += ' PCjr: ' + add[p.n]; };
+  const JR_SH1 = S('PCjr Technical Reference (Nov 1983), system board logic diagram sheet 1 (8259A at ZM32), p. B-3', JRTR + '#page=501');
+  const JR_SH9 = S('PCjr Technical Reference (Nov 1983), system board logic diagram sheet 9 (8255A-5 at ZM22, 8253-5 at ZM23), p. B-11', JRTR + '#page=509');
+  pic8259.machines.push('pcjr');
+  pic8259.summary += ' PCjr (ZM32): also at $20, but the IRQ use differs (serial, modem, vertical retrace, diskette).';
+  pic8259.datasheets.push(S('PCjr Technical Reference (Nov 1983), 8259A interrupt controller and IRQ list, p. 2-15', JRTR + '#page=41'), JR_SH1);
+  pic8259.verifiedAgainst += ' PCjr wiring from the PCjr Technical Reference logic diagram, sheet 1 (ZM32).';
+  jrPins(pic8259, { 18: 'timer (8253 OUT0).', 19: 'I/O channel, reserved.', 20: 'I/O channel.', 21: 'serial port (RS-232C).', 22: 'internal modem.',
+    23: 'vertical retrace from the video gate array.', 24: 'diskette adapter.', 25: 'I/O channel (parallel printer).',
+    26: 'there is no 8288; in minimum mode the 8088 makes /INTA itself (8088 pin 24).' });
+  pit8253.machines.push('pcjr');
+  pit8253.summary += ' PCjr (ZM23): no DMA refresh. Counter 1 helps the BIOS deserialise keyboard data, or counts timer 0 overflows during diskette I/O; port $A0 bit 5 picks its clock.';
+  pit8253.datasheets.push(S('PCjr Technical Reference (Nov 1983), 8253-5 channel use, p. 2-6', JRTR + '#page=32'), S('PCjr Technical Reference (Nov 1983), port $A0 bit 5 (timer 1 clock select), p. 2-35', JRTR + '#page=61'), JR_SH9);
+  pit8253.verifiedAgainst += ' PCjr wiring from the PCjr Technical Reference logic diagram, sheet 9 (ZM23).';
+  jrPins(pit8253, { 9: '1.1925 MHz from ZM34 (74LS112) pin 9, shared with CLK2.', 11: 'tied to +5 V.', 13: 'not connected; the BIOS reads counter 1 to time keyboard bits.',
+    14: 'tied to +5 V.', 15: '1.1925 MHz, or timer 0 OUT0 when port $A0 bit 5 is 1.', 16: 'from 8255 PB0.',
+    17: 'speaker tone, gated with 8255 PB1 in ZM1 (74LS08); read back on 8255 PC5; also cassette data out and the IR receiver test.', 18: '1.1925 MHz, as CLK0.' });
+  ppi8255.machines.push('pcjr');
+  ppi8255.summary += ' PCjr (ZM22): same ports, different bits. Port A is an output that only stores keystrokes; port B steers sound and video mode; port C reads the keyboard, the fitted options and cassette data.';
+  ppi8255.datasheets.push(S('PCjr Technical Reference (Nov 1983), 8255 bit assignments and description, pp. 2-30 to 2-34', JRTR + '#page=56'), JR_SH9);
+  ppi8255.verifiedAgainst += ' PCjr port use from the PCjr Technical Reference 8255 bit assignments (pp. 2-30 to 2-34) and logic diagram sheet 9 (ZM22).';
+  const JR_PA = 'output; stores keystrokes for PC compatibility, not used by the hardware.';
+  jrPins(ppi8255, { 1: JR_PA, 2: JR_PA, 3: JR_PA, 4: JR_PA, 37: JR_PA, 38: JR_PA, 39: JR_PA, 40: JR_PA,
+    18: 'timer 2 gate (speaker).', 19: 'speaker data; 0 forces the timer 2 output to 0.', 20: 'HIGH for alphanumeric modes, LOW for graphics; steers video data into the video gate array.',
+    21: 'HIGH turns the cassette motor off.', 22: 'HIGH disables the internal beeper and the cassette motor relay.',
+    23: 'sound source select, with PB6 (PB6 PB5: 00 timer 2, 01 cassette audio in, 10 I/O channel audio, 11 SN76496) to the RF modulator and audio jack.',
+    24: 'sound source select (see PB5).', 25: 'reserved.',
+    14: 'keyboard latched (a key was pressed while NMI was off).', 15: 'LOW = internal modem card fitted.', 16: 'LOW = diskette drive card fitted.',
+    17: 'LOW = 64KB Memory and Display Expansion fitted.', 13: 'cassette data in.', 12: 'timer channel 2 output.', 11: 'keyboard data (cable or IR receiver).', 10: 'LOW = keyboard cable connected.' });
+
+  // ---------- 41256 DRAM (256K x 1): XT 5160 256-640KB board, banks 0 and 1 ----------
+  const HIT84 = 'https://bitsavers.org/components/hitachi/_dataBooks/1984_Hitachi_IC_Memory_Data_Book_Mar84.pdf';
+  const TI84M = 'http://www.bitsavers.org/components/ti/_dataBooks/1984_TI_MOS_Memory_Data_Book.pdf';
+  const dram41256 = {
+    id: 'dram41256', name: '41256 DRAM 256K x 1', short: '41256', family: 'JEDEC DRAM', role: 'Dynamic RAM, 256K x 1', pkg: 'DIP-16',
+    machines: ['xt5160'],
+    summary: '256K x 1 dynamic RAM on +5 V only. Nine multiplexed address bits: pin 1 is A8, which is NC on a 4164; every other pin matches the 4164. It needs all 256 rows (A0 to A7) refreshed every 4 ms. On the IBM 5160 256-640KB board banks 0 and 1 are 41256 and banks 2 and 3 are 4164, all 200 ns or faster.',
+    fails: ['IBM: 201 memory error', 'Dead board, no beep (a fault in the first 64 KB on the IBM 5160)', 'Less memory counted than fitted'],
+    heat: 'warm',
+    verifiedAgainst: 'Hitachi HM50256 data sheet, pin arrangement (1984 Hitachi IC Memory Data Book, p. 219); TI TMS4256 data sheet (1984 TI MOS Memory Data Book, p. 4-63)',
+    datasheets: [
+      S('Hitachi HM50256 data sheet, features and pin arrangement, 1984 IC Memory Data Book p. 219', HIT84 + '#page=221'),
+      S('TI TMS4256 data sheet (pinout, 256-row 4 ms refresh, upward pin compatible with TMS4164), 1984 MOS Memory Data Book p. 4-63', TI84M + '#page=103'),
+      S('minuszerodegrees.net, IBM 5160 RAM on a 256-640KB motherboard', MZD + '/5160/ram/5160_ram_256_640.htm'),
+    ],
+    pins: [
+      P(1, 'A8', 'addr', 'in', 'Multiplexed address bit 8. NC on a 4164, so a 41256 in a 4164 board needs this pin driven or tied.', { terms: ['mux'] }),
+      P(2, 'DIN', 'data', 'in', 'Data in.'),
+      P(3, '/WE', 'ctrl', 'in', 'Write enable. LOW writes DIN.', { ...AL, probe: 'Pulses LOW on writes.' }),
+      P(4, '/RAS', 'ctrl', 'in', 'Row address strobe. Latches the row address; a RAS-only cycle refreshes the row.', { activeLow: true, terms: ['ras-cas'], probe: 'Pulses LOW on every access and refresh.' }),
+      P(5, 'A0', 'addr', 'in', 'Multiplexed address bit 0.', { terms: ['mux'] }),
+      P(6, 'A2', 'addr', 'in', 'Multiplexed address bit 2.', { terms: ['mux'] }),
+      P(7, 'A1', 'addr', 'in', 'Multiplexed address bit 1.', { terms: ['mux'] }),
+      P(8, 'VCC', 'power', '-', '+5 V, the only supply.', { terms: ['vcc'], probe: '+4.5 to +5.5 V' }),
+      P(9, 'A7', 'addr', 'in', 'Multiplexed address bit 7.', { terms: ['mux'] }),
+      P(10, 'A5', 'addr', 'in', 'Multiplexed address bit 5.', { terms: ['mux'] }),
+      P(11, 'A4', 'addr', 'in', 'Multiplexed address bit 4.', { terms: ['mux'] }),
+      P(12, 'A3', 'addr', 'in', 'Multiplexed address bit 3.', { terms: ['mux'] }),
+      P(13, 'A6', 'addr', 'in', 'Multiplexed address bit 6.', { terms: ['mux'] }),
+      P(14, 'DOUT', 'data', 'out', 'Data out, three-state; driven only while /CAS is LOW on a read.', { terms: ['tristate'] }),
+      P(15, '/CAS', 'ctrl', 'in', 'Column address strobe. Latches the column address and gates DOUT.', { activeLow: true, terms: ['ras-cas'], probe: 'Pulses LOW on every read or write.' }),
+      P(16, 'VSS', 'ground', '-', '0 V.', { terms: ['gnd'], probe: '0 V' }),
+    ],
+    replacements: [
+      { part: 'HM50256, TMS4256 and other 41256s', kind: 'pin-compatible', note: 'Same JEDEC pinout from every maker. Match or beat the access time of the part fitted; the IBM 5160 wants 200 ns or faster.', source: S('minuszerodegrees.net, IBM 5160 RAM on a 256-640KB motherboard (41256, 200 ns or faster)', MZD + '/5160/ram/5160_ram_256_640.htm') },
+      { part: '41256 on an IBM 5160 64-256KB board', kind: 'adapter', note: 'IBM-supported change to 640 KB: 41256s in banks 0 and 1 and a jumper on pad E2 pins 1-2, which grounds U44 pin 1 (the same as wiring U44 pins 1 and 8 together). A 1986 BIOS is optional. Mark the board once done.', source: S('minuszerodegrees.net, IBM 5160 motherboard versions, note 1', MZD + '/5160/motherboard/5160_motherboard_revisions.htm') },
+    ],
+  };
+
   // ---------- 8237A-5 DMA controller ----------
   const dma8237 = {
     id: 'dma8237', name: '8237A-5 DMA controller', short: '8237A', family: 'Intel MCS-85 support',
@@ -809,6 +881,10 @@
   crtc6845.replacements = [
     { part: 'HD46505R (Hitachi)', kind: 'pin-compatible', note: 'Hitachi second source of the 6845, TTL compatible, character clock to 3.0 MHz. The IBM cards clock it at about 1.8 MHz.', source: S('Hitachi HD46505R CRT Controller user manual, features p. 6, electrical characteristics p. 22', 'https://bitsavers.org/components/hitachi/_dataSheets/HLN014_HD46505R_CRT_Controller_Users_Manual.pdf#page=22') },
     { part: 'R6545-1 (Rockwell)', kind: 'pin-compatible', note: 'Rockwell calls it pin-compatible with the MC6845, but the registers differ: non-interlaced only, R8 is a mode register (straight or row/column addressing), a status register and a programmable VS width. IBM BIOS settings may give a wrong picture. The 1P and 1C grades are 1 MHz parts; the MDA and CGA clock the CRTC near 1.8 MHz.', source: S('Rockwell R6545-1 CRT Controller data sheet (Dec 1980), features and pin configuration p. 1, R8 p. 2', 'https://bitsavers.org/components/rockwell/R6545-1_CRT_Controller_DataSheet_Dec1980.pdf') },
+    { part: 'HD6845S (Hitachi) or UM6845 (UMC)', kind: 'pin-compatible', note: 'Amstrad CPC: CRTC type 0, the usual CPC part (HD6845SP at IC108). The CPC community numbers the 6845 makes "types 0 to 4": same pinout, but they differ in detail, and demos and some games detect the type and break on the wrong one. Fit the same type as the original.', source: S('CPCWiki, CRTC: part numbers and type numbers (archived Jan 2025)', 'https://web.archive.org/web/20250102091704/https://www.cpcwiki.eu/index.php/CRTC') },
+    { part: 'UM6845R (UMC)', kind: 'pin-compatible', note: 'Amstrad CPC: CRTC type 1. Adds a status register (read at &BExx on the CPC) and behaves differently from type 0 in some register cases. Replace a type 1 with a type 1.', source: S('CPCWiki, CRTC: type 1 status register (archived Jan 2025)', 'https://web.archive.org/web/20250102091704/https://www.cpcwiki.eu/index.php/CRTC') },
+    { part: 'MC6845 (Motorola)', kind: 'pin-compatible', note: 'Amstrad CPC: CRTC type 2. Types 3 (AMS40489, inside the Plus ASIC) and 4 (AMS40226, the cost-down pre-ASIC) are not socket parts, so a CPC with a socketed 6845 has type 0, 1 or 2.', source: S('CPCWiki, CRTC: part numbers and type numbers (archived Jan 2025)', 'https://web.archive.org/web/20250102091704/https://www.cpcwiki.eu/index.php/CRTC') },
+    { part: 'HD6345 (Hitachi CRTC-II)', kind: 'pin-compatible', note: 'Its data sheet calls it upward-compatible with the HD6845S in pins and software. Never fitted by Amstrad; some CPC owners fit it for split screens and extra modes.', source: S('CPCWiki, CRTC: CRTC-II (archived Jan 2025)', 'https://web.archive.org/web/20250102091704/https://www.cpcwiki.eu/index.php/CRTC') },
   ];
 
   RCS.add({
@@ -824,6 +900,8 @@
         dram4116: 'Planar RAM (designators not read)',
         crtc6845: 'MDA/CGA card (not the planar)',
       },
+      xt5160: { dram41256: 'Banks 0 and 1 on the 256-640KB board (banks 2 and 3 are 4164)' },
+      pcjr: { pic8259: 'ZM32', pit8253: 'ZM23', ppi8255: 'ZM22' },
     },
     machines: {
       pc5150: {
@@ -845,7 +923,7 @@
         video: 'MDA or CGA card in an expansion slot',
         sound: 'One-voice speaker',
         os: 'PC DOS 2.x (disk). BASICA on disk',
-        chips: ['cpu8088', 'clk8284', 'bus8288', 'pic8259', 'pit8253', 'ppi8255', 'dma8237', 'fpu8087', 'dram4164', 'crtc6845'],
+        chips: ['cpu8088', 'clk8284', 'bus8288', 'pic8259', 'pit8253', 'ppi8255', 'dma8237', 'fpu8087', 'dram4164', 'dram41256', 'crtc6845'],
         tagline: 'The XT: an 8088 (16-bit core, 8-bit bus) with a hard disk slot and one switch block.',
       },
       pcjr: {
@@ -856,7 +934,7 @@
         video: 'Video gate array with a 6845 CRTC; RGBI, composite and RF outputs',
         sound: 'SN76496N complex sound generator (three tones and noise) plus the 8253 and beeper',
         os: 'PC DOS 2.1 (disk). Cartridge BASIC',
-        chips: ['cpu8088', 'clk8284', 'crtc6845', 'pcjr_ga', 'sn76496'],
+        chips: ['cpu8088', 'clk8284', 'pic8259', 'pit8253', 'ppi8255', 'crtc6845', 'pcjr_ga', 'sn76496'],
         tagline: 'The PCjr: an 8088 (16-bit core, 8-bit bus) with a wireless keyboard and a custom video gate array.',
       },
       portable5155: {
@@ -882,7 +960,7 @@
         tagline: 'The Convertible: an 80C88 (16-bit core, 8-bit bus) in a laptop. Facts only; no reference data yet.',
       },
     },
-    chips: { cpu8088, clk8284, bus8288, pic8259, pit8253, ppi8255, dma8237, fpu8087, crtc6845, pcjr_ga: pcjrGa, sn76496 },
+    chips: { cpu8088, clk8284, bus8288, pic8259, pit8253, ppi8255, dma8237, fpu8087, crtc6845, dram41256, pcjr_ga: pcjrGa, sn76496 },
     symptoms: {
       pc5150: [
         { symptom: 'No beep, no picture', suspects: ['cpu8088', 'clk8284', 'bus8288'], note: 'Check P8 pin 1 (Power Good), +5 V at 8088 pin 40, then CLK at 8088 pin 19. No beep means the POST never ran: PSU, CPU, clock or BIOS ROM.' },
@@ -1163,11 +1241,11 @@
           ],
         },
         rails: [
-          { rail: '+5 V', expect: '4.80 to 5.25 V (+5 / -4 percent)', where: 'P9 pins 4, 5, 6; 8088 pin 40', note: 'The logic rail: about 3 A for the board, 4 A left for the slots. Dead +5 V means no POST.' },
-          { rail: '+12 V', expect: '11.52 to 12.60 V (+5 / -4 percent)', where: 'P8 pin 3; I/O channel B9', note: 'Drive motors, 4116 RAM and the EIA drivers. Missing +12 V gives a dead floppy.' },
-          { rail: '-12 V', expect: '-10.92 to -13.20 V (+10 / -9 percent)', where: 'P8 pin 4; I/O channel B7', note: 'Serial card EIA drivers.' },
-          { rail: '-5 V', expect: '-4.60 to -5.50 V (+10 / -8 percent)', where: 'P9 pin 3; I/O channel B5', note: 'RAM bias on 16-64 KB boards (4116) and the diskette adapter PLL. On a 64-256 KB board, missing -5 V gives a 131 cassette error.' },
-          { rail: 'Power Good', expect: '0 to 0.4 V at switch-on, then 2.4 to 5.5 V after 100 to 500 ms', where: 'P8 pin 1; 8284A pin 11', note: 'The 8284A holds the CPU in reset until it is HIGH. Wait at least 5 seconds off before switching on again.' },
+          { rail: '+5 V', expect: '4.80 to 5.25 V (+5 / -4 percent)', where: 'pc-psu pins P9-4, P9-5, P9-6; 8088 pin 40', note: 'The logic rail: about 3 A for the board, 4 A left for the slots. Dead +5 V means no POST.' },
+          { rail: '+12 V', expect: '11.52 to 12.60 V (+5 / -4 percent)', where: 'pc-psu pin P8-3; I/O channel B9', note: 'Drive motors, 4116 RAM and the EIA drivers. Missing +12 V gives a dead floppy.' },
+          { rail: '-12 V', expect: '-10.92 to -13.20 V (+10 / -9 percent)', where: 'pc-psu pin P8-4; I/O channel B7', note: 'Serial card EIA drivers.' },
+          { rail: '-5 V', expect: '-4.60 to -5.50 V (+10 / -8 percent)', where: 'pc-psu pin P9-3; I/O channel B5', note: 'RAM bias on 16-64 KB boards (4116) and the diskette adapter PLL. On a 64-256 KB board, missing -5 V gives a 131 cassette error.' },
+          { rail: 'Power Good', expect: '0 to 0.4 V at switch-on, then 2.4 to 5.5 V after 100 to 500 ms', where: 'pc-psu pin P8-1; 8284A pin 11', note: 'The 8284A holds the CPU in reset until it is HIGH. Wait at least 5 seconds off before switching on again.' },
         ],
         testPoints: [
           { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V, 4.80 to 5.25 V' },
@@ -1213,9 +1291,9 @@
         firstTen: [
           { step: 1, check: 'Supply on a load', where: 'Power P8 and P9 to the system board only; no drives, no cards', expect: 'Fan starts and keeps running. TechRef minimum load: 2.3 A on +5 V and 0.4 A on +12 V; a working board alone is normally enough',
             ifNot: 'Fan still, or it stops after a second: too little load or a short. Both look the same, so try a known load. A shorted tantalum capacitor on the board or a card gives this too.', source: S('IBM PC Technical Reference (Apr 1983), Power Supply, pp. 1-24 to 1-27', PCTR + '#page=32') },
-          { step: 2, check: 'Power Good', where: 'P8-1 to P8-5 at the system board connector', expect: '+2.4 to +5.2 V DC once running; LOW for the first 100 to 500 ms',
+          { step: 2, check: 'Power Good', where: 'pc-psu pin P8-1 to pin P8-5 (at the system board connector)', expect: '+2.4 to +5.2 V DC once running; LOW for the first 100 to 500 ms',
             ifNot: 'Missing: check the rails next. Off for less than 5 s, the supply may not send Power Good again; switch off and wait.', source: S_HMS_PG },
-          { step: 3, check: 'Rails at the board connector', where: 'P9-4 to P9-6 (+5 V), P8-3 (+12 V), P9-3 (-5 V), P8-4 (-12 V), each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
+          { step: 3, check: 'Rails at the board connector', where: 'pc-psu pins P9-4, P9-5, P9-6 (+5 V); pc-psu pin P8-3 (+12 V); pc-psu pin P9-3 (-5 V); pc-psu pin P8-4 (-12 V); each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
             ifNot: 'Out of range with only the board connected: the supply (HMS step 008). The TechRef allows +5 V up to 5.25 V; HMS is tighter.', source: S_HMS_V },
           { step: 4, check: 'Minimum diagnostic configuration', where: 'Board, supply and speaker only; no cards, no keyboard; SW1 switches 5 and 6 OFF', expect: 'One long and two short beeps about 5 s after switch-on',
             ifNot: 'No beeps: go on with Power Good at the 8284A, the clocks and reset below.', source: S_MDC },
@@ -1267,11 +1345,11 @@
           ],
         },
         rails: [
-          { rail: '+5 V', expect: '4.80 to 5.25 V (+5 / -4 percent)', where: 'P9 pins 4, 5, 6; 8088 pin 40', note: 'The board takes 2 to 4 A, leaving about 11 A for the eight slots.' },
-          { rail: '+12 V', expect: '11.52 to 12.60 V (+5 / -4 percent)', where: 'P8 pin 3; I/O channel B9', note: 'Diskette and fixed disk motors.' },
-          { rail: '-12 V', expect: '-10.92 to -13.20 V (+10 / -9 percent)', where: 'P8 pin 4; I/O channel B7' },
-          { rail: '-5 V', expect: '-4.60 to -5.50 V (+10 / -8 percent)', where: 'P9 pin 3; I/O channel B5', note: 'Diskette adapter PLL.' },
-          { rail: 'Power Good', expect: 'LOW at switch-on, HIGH after 100 to 500 ms', where: 'P8 pin 1', note: 'Wait at least 1 second off before switching on again.' },
+          { rail: '+5 V', expect: '4.80 to 5.25 V (+5 / -4 percent)', where: 'xt-psu pins P9-4, P9-5, P9-6; 8088 pin 40', note: 'The board takes 2 to 4 A, leaving about 11 A for the eight slots.' },
+          { rail: '+12 V', expect: '11.52 to 12.60 V (+5 / -4 percent)', where: 'xt-psu pin P8-3; I/O channel B9', note: 'Diskette and fixed disk motors.' },
+          { rail: '-12 V', expect: '-10.92 to -13.20 V (+10 / -9 percent)', where: 'xt-psu pin P8-4; I/O channel B7' },
+          { rail: '-5 V', expect: '-4.60 to -5.50 V (+10 / -8 percent)', where: 'xt-psu pin P9-3; I/O channel B5', note: 'Diskette adapter PLL.' },
+          { rail: 'Power Good', expect: 'LOW at switch-on, HIGH after 100 to 500 ms', where: 'xt-psu pin P8-1', note: 'Wait at least 1 second off before switching on again.' },
         ],
         testPoints: [
           { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V, 4.80 to 5.25 V' },
@@ -1280,9 +1358,9 @@
         firstTen: [
           { step: 1, check: 'Supply on a load', where: 'Power P8 and P9 to the system board only; no drives, no cards', expect: 'Fan starts and keeps running. TechRef minimum load: 2.3 A on +5 V and 0.4 A on +12 V; a working board alone is normally enough',
             ifNot: 'Fan still, or it stops after a second: too little load, an overload or a short. It stays off until the fault is gone and power is cycled.', source: S('IBM PC XT Technical Reference (Apr 1984), XT Power Supply, pp. 3-3 to 3-6', XTTR + '#page=68') },
-          { step: 2, check: 'Power Good', where: 'P8-1 to P8-5 at the system board connector', expect: '+2.4 to +5.2 V DC once running; LOW for the first 100 to 500 ms',
+          { step: 2, check: 'Power Good', where: 'xt-psu pin P8-1 to pin P8-5 (at the system board connector)', expect: '+2.4 to +5.2 V DC once running; LOW for the first 100 to 500 ms',
             ifNot: 'Missing: check the rails next. Leave it off at least 1 s before switching on again.', source: S_HMS_PG },
-          { step: 3, check: 'Rails at the board connector', where: 'P9-4 to P9-6 (+5 V), P8-3 (+12 V), P9-3 (-5 V), P8-4 (-12 V), each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
+          { step: 3, check: 'Rails at the board connector', where: 'xt-psu pins P9-4, P9-5, P9-6 (+5 V); xt-psu pin P8-3 (+12 V); xt-psu pin P9-3 (-5 V); xt-psu pin P8-4 (-12 V); each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
             ifNot: 'Out of range with only the board connected: the supply (HMS step 008). The TechRef allows +5 V up to 5.25 V; HMS is tighter.', source: S_HMS_V },
           { step: 4, check: 'Minimum diagnostic configuration', where: 'Board, supply and speaker only; no cards, no keyboard; SW1 switches 5 and 6 OFF', expect: 'One long and two short beeps about 5 s after switch-on',
             ifNot: 'No beeps: go on with reset and the clocks below.', source: S_MDC },
@@ -1317,12 +1395,12 @@
           ],
         },
         rails: [
-          { rail: '+5 V', expect: 'Power Good sense window +4.5 to +6.5 V', where: 'P9 pins 4, 5, 6; 8088 pin 40', note: '2.3 to 11.2 A.' },
-          { rail: '+12 V', expect: 'Power Good sense window +10.8 to +15.6 V', where: 'P8 pin 3', note: '0.04 to 2.9 A: diskette drive and the EIA drivers.' },
+          { rail: '+5 V', expect: 'Power Good sense window +4.5 to +6.5 V', where: 'p-psu pins P9-4, P9-5, P9-6; 8088 pin 40', note: '2.3 to 11.2 A.' },
+          { rail: '+12 V', expect: 'Power Good sense window +10.8 to +15.6 V', where: 'p-psu pin P8-3', note: '0.04 to 2.9 A: diskette drive and the EIA drivers.' },
           { rail: '+12 V display', expect: 'Power Good sense window +10.8 to +15.6 V', where: 'p-disp pin 1 (P12)', note: '0.5 to 1.5 A to the built-in display.' },
-          { rail: '-12 V', expect: 'Power Good sense window -10.2 to -15.6 V', where: 'P8 pin 4' },
-          { rail: '-5 V', expect: 'Power Good sense window -4.3 to -6.5 V', where: 'P9 pin 3' },
-          { rail: 'Power Good', expect: 'LOW at switch-on, then HIGH', where: 'P8 pin 1' },
+          { rail: '-12 V', expect: 'Power Good sense window -10.2 to -15.6 V', where: 'p-psu pin P8-4' },
+          { rail: '-5 V', expect: 'Power Good sense window -4.3 to -6.5 V', where: 'p-psu pin P9-3' },
+          { rail: 'Power Good', expect: 'LOW at switch-on, then HIGH', where: 'p-psu pin P8-1' },
         ],
         testPoints: [
           { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V' },
@@ -1331,9 +1409,9 @@
         firstTen: [
           { step: 1, check: 'Selector and load', where: '115/230 V selector; P8 and P9 on the system board', expect: 'Selector matches the mains. Fan starts and keeps running with the board connected',
             ifNot: 'It needs a load on +5 V: one IDE drive, some MFM drives or the CRT alone are not enough; a working 5155 board normally is, even with P8 unplugged.', source: S('minuszerodegrees.net, IBM 5155 power supply (start-up loading)', MZD + '/5155/psu/5155_psu.htm') },
-          { step: 2, check: 'Power Good', where: 'P8-1 to P8-5 at the system board connector', expect: '+2.4 to +5.2 V DC once running',
+          { step: 2, check: 'Power Good', where: 'p-psu pin P8-1 to pin P8-5 (at the system board connector)', expect: '+2.4 to +5.2 V DC once running',
             ifNot: 'Missing: check the rails. After an overload it stays off until the fault is cleared and it is switched off and on.', source: S_HMS_PG },
-          { step: 3, check: 'Rails at the board connector', where: 'P9-4 to P9-6 (+5 V), P8-3 (+12 V), P9-3 (-5 V), P8-4 (-12 V), each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
+          { step: 3, check: 'Rails at the board connector', where: 'p-psu pins P9-4, P9-5, P9-6 (+5 V); p-psu pin P8-3 (+12 V); p-psu pin P9-3 (-5 V); p-psu pin P8-4 (-12 V); each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
             ifNot: 'Out of range with only the board connected: the supply (HMS MAP 0020 covers the Portable).', source: S_HMS_V },
           { step: 4, check: 'Display supply', where: 'p-disp pin 1 to pin 2', expect: 'About +12 V (Power Good senses 10.8 to 15.6 V); 0.5 to 1.5 A load',
             ifNot: 'System runs but the screen is dead: no +12 V here means the supply; +12 V present means the display unit or the CGA in slot 1.', source: S('IBM PC XT Technical Reference (Apr 1984), Portable Power Supply, pp. 3-7 to 3-10', XTTR + '#page=74') },
@@ -1396,7 +1474,7 @@
           { name: 'CLK (CPU and I/O channel)', where: '8284A pin 8; 8088 pin 19; jr-io pin A24', f: '4.7727 MHz', note: 'Crystal / 3, 33 percent duty.', source: S('PCjr Technical Reference (Nov 1983), I/O channel description, p. 2-23', JRTR + '#page=49') },
           { name: 'Colour reference', where: 'Video gate array (pins not captured)', f: '3.579545 MHz', note: 'Crystal / 4.', source: S('PCjr Technical Reference (Nov 1983), system board, p. 2-6', JRTR + '#page=32') },
           { name: 'Sound generator clock', where: 'SN76496 clock input (pins not captured)', f: '3.579 MHz', source: S('PCjr Technical Reference (Nov 1983), Sound Subsystem, p. 2-89', JRTR + '#page=115') },
-          { name: 'Timer clock', where: '8253 timer (not listed as a PCjr chip here)', f: '1.1925 MHz', source: S('PCjr Technical Reference (Nov 1983), I/O channel, p. 2-35', JRTR + '#page=61') },
+          { name: 'Timer clock', where: '8253 pin 9 and pin 18; 8253 pin 15', f: '1.1925 MHz', note: 'PCLK / 2 from ZM34 (74LS112) pin 9 to CLK0 and CLK2. CLK1 gets the same 1.1925 MHz, or timer 0 OUT0 when port $A0 bit 5 is 1 (logic diagram sheet 9).', source: S('PCjr Technical Reference (Nov 1983), I/O channel, port $A0 bit 5, p. 2-35', JRTR + '#page=61') },
         ],
         sources: [S('PCjr Technical Reference (Nov 1983), System Power Supply, pp. 2-135 to 2-139', JRTR + '#page=161')],
       },
