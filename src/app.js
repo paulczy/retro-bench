@@ -1226,6 +1226,7 @@ function printCard(m) {
     <header class="pc-h"><span class="pc-d">${esc(mDes(m))}</span><h1>${esc(m.name)}</h1><span class="pc-s">Retro Bench card, ${new Date().toISOString().slice(0, 10)}. Check readings against the sources in the app.</span></header>
     ${chips.length ? sec('Chips', boardGrid(m, chips)) : ''}
     <div class="pc-cols">
+      ${!rails.length && sup ? sec('Supply', sup) : ''}
       ${rails.length ? sec('Rails', `${sup}<table class="pc-t"><thead><tr><th>Rail</th><th>Where</th><th>Expect</th></tr></thead><tbody>${rails.map(r => `<tr><td class="m">${esc(r.rail)}</td><td>${esc(r.where || '')}${r.note ? `<div class="pc-if">${esc(r.note)}</div>` : ''}</td><td class="m">${esc(r.expect || '')}</td></tr>`).join('')}</tbody></table>`, ' pc-flow') : ''}
       ${sec(ften.length ? 'First ten minutes' : 'Order of checks', checks, ' pc-flow')}
       ${clocks.length ? sec('Clocks', `<table class="pc-t"><thead><tr><th>Clock</th><th>Where</th>${tv ? '<th>PAL</th><th>NTSC</th>' : '<th>Frequency</th>'}</tr></thead><tbody>${clocks.map(c => `<tr><td>${esc(c.name)}</td><td>${esc(c.where || '')}</td>${clk(c)}</tr>`).join('')}</tbody></table>`) : ''}
@@ -1257,13 +1258,14 @@ function noteSave(k, text) {
 })();
 function noteKeys() {
   const out = [];
-  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(NOTE_PFX)) out.push(k); } } catch {}
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && (k.startsWith(NOTE_PFX) || /^rb-note:[mc]:/.test(k))) out.push(k); } } catch {}
+  /* legacy keys stay listed when the move to this install's prefix could not be written (storage full) */
   return out;
 }
 /* what a key belongs to: its name and the page it came from. Own properties only: a stored or imported id such as
    __proto__ names nothing, and an unknown id is listed by its id so it can still be exported or deleted. */
 function noteTarget(k) {
-  const mm = /^([mc]):(.+)$/.exec(k.startsWith(NOTE_PFX) ? k.slice(NOTE_PFX.length) : '') || [], kind = mm[1], id = mm[2];
+  const mm = /^([mc]):(.+)$/.exec(k.startsWith(NOTE_PFX) ? k.slice(NOTE_PFX.length) : /^rb-note:[mc]:/.test(k) ? k.slice(8) : '') || [], kind = mm[1], id = mm[2];
   if (!kind) return {};
   const it = noteKnown(kind, id) ? (kind === 'm' ? D.machines : D.chips)[id] : null, name = String((it && it.name) || id);
   if (kind === 'm') return { kind, id, name, href: it ? mPath(it) : '' };

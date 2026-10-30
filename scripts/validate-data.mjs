@@ -131,13 +131,15 @@ function checkScope(f, mid, x) {
     if (v == null || Math.abs(v) > 50) err(f, `${at} ${k} "${String(s[k]).slice(0, 40)}" must read as volts within ±50 V, nothing after the unit (e.g. '0.4 V')`); else V[k] = v;
   }
   if (V.low != null && V.high != null && !(V.high > V.low)) err(f, `${at} high must be above low`);
+  if (V.sync != null && V.high != null && !(V.high > V.sync)) err(f, `${at} high must be above the sync tip`);
+  if (s.sync != null && s.pp != null) err(f, `${at} sync is an absolute level; give it with high, not with pp`);
   if (s.pp != null) {
     if (s.shape === 'dc') err(f, `${at} pp is a swing; a dc level is given as high`);
     if (s.low != null || s.high != null) err(f, `${at} pp replaces low/high (swing with no DC level); give one or the other`);
     if (V.pp != null && !(V.pp > 0)) err(f, `${at} pp must be above 0 V`);
   }
   if (s.shape === 'dc' && s.high == null) err(f, `${at} dc needs high (the level, '0 V' allowed)`);
-  if (s.shape !== 'dc' && s.pp == null && (s.low == null || s.high == null)) warn(f, `${at} has no low/high or pp: VOLTS/DIV cannot be derived`);
+  if (s.shape !== 'dc' && s.pp == null && ((s.low ?? (s.shape === 'video-line' ? s.sync : null)) == null || s.high == null)) warn(f, `${at} has no low/high or pp: VOLTS/DIV cannot be derived`);
   for (const k of ['black', 'sync']) if (s[k] != null && s.shape !== 'video-line') err(f, `${at} ${k} is a video-line level`);
   if (V.sync != null && V.low != null && Math.abs(V.sync - V.low) > 1e-6) err(f, `${at} sync "${s.sync}" is the sync tip, so it must equal low "${s.low}" (or give only one)`);
   const tip = V.low ?? V.sync;
