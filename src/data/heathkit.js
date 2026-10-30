@@ -6,6 +6,9 @@ const hkRow = ns => ns.map((n, i) => ({ n, x: Math.round((4 + i * (92 / Math.max
 const hkRowOutline = n => { const d = 92 / Math.max(1, n - 1), h = Math.round(d * 7) / 10, l = Math.round((4 - d * 0.7) * 10) / 10, r = Math.round((96 + d * 0.7) * 10) / 10; return `M${l} ${50 - h} H${r} V${50 + h} H${l} Z`; };
 // HERO 1 charger socket: 4 columns of 3 as on the P101 wire-side drawing (3/6/9/12 top, 1/4/7/10 bottom).
 const H1_CHG_PADS = [[3, 6, 9, 12], [2, 5, 8, 11], [1, 4, 7, 10]].flatMap((row, r) => row.map((n, c) => ({ n, x: 20 + c * 20, y: 25 + r * 25 })));
+const DS6808 = p => `https://alshapton.github.io/MC6800Catalogue/_downloads/b25ee82e53f4fdcaf7ce3b25eca70a01/DS-MC6802-6808-6802NS.pdf#page=${p}`;
+const H1TM = (p, what) => ({ label: `ET-18 Technical Manual (Heath), ${what} (archive.org)`, url: `https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=${p}` });
+const JRTM = (p, what) => ({ label: `HERO Jr Technical Manual 595-3271 (Heath), ${what} (archive.org)`, url: `https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=${p}` });
 // HERO Jr J1: round 4-pin, key at top, 1 4 over 2 3 as drawn on schematic sheet 1.
 const JR_J1_PADS = [{ n: 1, x: 35, y: 38 }, { n: 4, x: 65, y: 38 }, { n: 2, x: 35, y: 66 }, { n: 3, x: 65, y: 66 }];
 
@@ -61,6 +64,10 @@ RCS.add({
       heat: 'warm',
       datasheets: [{ label: 'Motorola MC6802/6808 datasheet DS9818-R3 (1984), pin assignment p. 1, signals p. 7-8', url: 'https://alshapton.github.io/MC6800Catalogue/_downloads/b25ee82e53f4fdcaf7ce3b25eca70a01/DS-MC6802-6808-6802NS.pdf#page=1' }],
       verifiedAgainst: 'Motorola DS9818-R3 (pin assignment p. 1, signal descriptions p. 7-8, MR p. 11). HERO Jr TM printed p. 25-26; HERO 1 TM printed p. 78 (U401).',
+      replacements: [
+        { part: 'MC6802', kind: 'pin-compatible', note: 'The same chip with 128 bytes of RAM at $0000-$007F; the data sheet calls the 6808 "identical to the MC6802 without on-board RAM". The RAM is off when RE (pin 36) is low, so a 6802 works where the board grounds RE, as the HERO 1 does. With RE high the internal RAM answers at $0000-$007F on top of the board\'s RAM. Check pin 36 on a HERO Jr before fitting one.', source: { label: 'Motorola MC6802/6808 data sheet DS9818-R3, p. 1 (description, ordering, pin assignment)', url: DS6808(1) } },
+        { part: 'MC68A08 / MC68B08', kind: 'pin-compatible', note: 'Faster grades of the same part (1.5 and 2 MHz maximum, 6 and 8 MHz crystal). Both run at the HERO\'s 0.9 to 1 MHz: the minimum is 0.1 MHz. The MC68A02 and MC68B02 follow the RE rule above.', source: { label: 'Motorola MC6802/6808 data sheet DS9818-R3, control timing (fo, fXTAL by grade), p. 3', url: DS6808(3) } },
+      ],
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
         { n: 2, name: '/HALT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Halt: pulled low stops the CPU after the current instruction.', terms: ['active-low'] },
@@ -112,6 +119,9 @@ RCS.add({
       heat: 'cool',
       datasheets: [{ label: 'Motorola MC6821 datasheet DS9435-R3, pin assignment p. 1 (bitsavers)', url: 'https://bitsavers.org/components/motorola/_dataSheets/6821.pdf#page=1' }],
       verifiedAgainst: 'Motorola MC6821 DS9435-R3, pin assignment p. 1. HERO Jr roles: TM printed p. 20-27 (U214 keypad $D820, U215 speech/sense $D840; U214 pin 19 sonar INIT, U215 pin 18 echo, U215 pins 39/40 speech).',
+      replacements: [
+        { part: 'MC6821P / MC68A21P / MC68B21P', kind: 'pin-compatible', note: 'The P is only the plastic package (L ceramic, S cerdip), not a speed grade. MC6821 is rated 1.0 MHz, MC68A21 1.5 MHz, MC68B21 2.0 MHz; a C after the number (MC6821CP) means -40 to 85 °C. Any of them runs on a 1 MHz E clock.', source: { label: 'Motorola MC6821 data sheet DS9435-R3, ordering information, p. 1', url: 'https://bitsavers.org/components/motorola/_dataSheets/6821.pdf#page=1' } },
+      ],
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
         { n: 2, name: 'PA0', type: 'io', dir: 'bidir', desc: 'Port A bit 0.', terms: ['pia'] },
@@ -163,6 +173,9 @@ RCS.add({
       heat: 'cool',
       datasheets: [{ label: 'Votrax SC-01 speech synthesizer data sheet (1980), pinout p. 2, signals p. 4', url: 'https://www.redcedar.com/sc01/sc01.pdf#page=2' }],
       verifiedAgainst: 'Votrax SC-01 data sheet 1980 (pinout p. 2, signal descriptions p. 4). HERO 1 speech accessory schematic (U501, P501). HERO Jr TM printed p. 27 (U223).',
+      replacements: [
+        { part: 'SC-01 Emulator (Alberto Antonini, sold by ReActiveMicro)', kind: 'modern', note: 'No SC-01 or SC-01A is made any more: only new old stock. This plug-in module replaces the chip in pinball and early Mockingboard boards. No report of it in a HERO was found: check speech pitch and the A/R handshake before you trust it. Out of stock when checked on 2026-10-30.', source: { label: 'ReActiveMicro, SC-01 Emulator - Sound and Speech Replacement Module', url: 'https://www.reactivemicro.com/product/sc-01-emulator-sound-and-speech-replacement-module/' } },
+      ],
       pins: [
         { n: 1, name: 'VP', type: 'power', dir: '-', desc: 'Positive supply (+5 V). Switched on HERO 1 by $C2E0 bit 3 through P501 pin 11.', terms: ['vcc'] },
         { n: 2, name: 'I2', type: 'io', dir: 'in', desc: 'Pitch/inflection input bit 2. On HERO 1 this comes from P501 pins 1-2.' },
@@ -196,6 +209,9 @@ RCS.add({
       heat: 'cool',
       datasheets: [{ label: 'Hitachi HM6116, 1984 IC Memory Data Book, printed p. 65 (bitsavers)', url: 'https://bitsavers.org/components/hitachi/_dataBooks/1984_Hitachi_IC_Memory_Data_Book_Mar84.pdf#page=67' }],
       verifiedAgainst: 'Hitachi HM6116 pin arrangement, 1984 IC Memory Data Book p. 65 (I/O1-I/O8 named D0-D7 here). Designators: HERO 1 TM parts list (U415, U416 = 443-1027); HERO Jr TM parts list (U203).',
+      replacements: [
+        { part: 'HM6116LP-2 / -3 / -4', kind: 'pin-compatible', note: 'The low-power (L) versions keep their data down to 2.0 V. Use one where the RAM sits on a standby or battery rail (HERO 1 VSB, HERO Jr Vca with the J202-J206 jumpers). All three speeds (120, 150, 200 ns) are fast enough at 1 MHz.', source: { label: 'Hitachi IC Memory Data Book (1984), HM6116LP data sheet, p. 87', url: 'https://bitsavers.org/components/hitachi/_dataBooks/1984_Hitachi_IC_Memory_Data_Book_Mar84.pdf#page=89' } },
+      ],
       pins: [
         { n: 1, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bit 7.' },
         { n: 2, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6.' },
@@ -231,6 +247,10 @@ RCS.add({
       heat: 'cool',
       datasheets: [{ label: 'Intel 2764, 1983 Memory Component Handbook p. 4-19 (bitsavers)', url: 'https://bitsavers.org/components/intel/_dataBooks/1983_Memory_Component_Handbook.pdf#page=401' }],
       verifiedAgainst: 'Intel 2764 pin configuration, 1983 Memory Component Handbook p. 4-19 (outputs named O0-O7 there). Socket and jumpers: HERO 1 TM printed p. 118 and parts list (U418 444-198-1).',
+      replacements: [
+        { part: '27C64', kind: 'pin-compatible', note: 'CMOS version of the 2764 with the same pinout (pin 1 VPP, 26 NC, 27 /PGM). Microchip lists its 27C64 as obsolete, but parts are common. In the ColecoVision U2 socket, set jumpers WJ4/WJ5 for a 2764 first.', source: { label: 'Microchip 27C64 data sheet DS11107M, pin diagram, p. 1', url: 'https://ww1.microchip.com/downloads/en/DeviceDoc/11107M.pdf#page=1' } },
+        { part: 'AT28C64B', kind: 'modern', note: 'Electrically erasable 8K x 8 in the same 28-pin JEDEC pinout: re-program it in place of UV erasing. Pin 27 is /WE, so it must be held high, as a 2764 socket does with /PGM; pin 1 and pin 26 are NC. A socket that leaves pin 27 floating can write to the part.', source: { label: 'Microchip (Atmel) AT28C64B data sheet 0270L, pin configurations, p. 2', url: 'https://ww1.microchip.com/downloads/en/DeviceDoc/doc0270.pdf#page=2' } },
+      ],
       pins: [
         { n: 1, name: 'VPP', type: 'power', dir: '-', desc: 'Programming voltage. Tie to Vcc in normal use.', terms: ['vpp'] },
         { n: 2, name: 'A12', type: 'addr', dir: 'in', desc: 'Address bit 12.' },
@@ -270,6 +290,10 @@ RCS.add({
       heat: 'cool',
       datasheets: [{ label: 'Intel 27128, 1983 Memory Component Handbook p. 4-29 (bitsavers)', url: 'https://bitsavers.org/components/intel/_dataBooks/1983_Memory_Component_Handbook.pdf#page=411' }],
       verifiedAgainst: 'Intel 27128 pin configuration, 1983 Memory Component Handbook p. 4-29. Sizes and designators: HERO Jr TM printed p. 27 and parts list (U207, U208); errata notice 591-4523.',
+      replacements: [
+        { part: '27C128', kind: 'pin-compatible', note: 'CMOS 27128 with the same pinout (pin 26 A13, 27 /PGM). Microchip lists it as obsolete; parts are common.', source: { label: 'Microchip 27C128 data sheet DS11003L, pin diagram, p. 1', url: 'https://ww1.microchip.com/downloads/en/DeviceDoc/11003L.pdf#page=1' } },
+        { part: 'AT27C256R', kind: 'pin-compatible', note: 'One-time-programmable 32K x 8, still made. Pin 27 becomes A14; a 27128 socket holds it high (/PGM), so the part reads its upper half. Program the 16 KB image twice (at $0000 and $4000) and it works whatever pin 27 does.', source: { label: 'Microchip (Atmel) AT27C256R data sheet 0014, pin configurations, p. 2', url: 'https://ww1.microchip.com/downloads/en/DeviceDoc/doc0014.pdf#page=2' } },
+      ],
       pins: [
         { n: 1, name: 'VPP', type: 'power', dir: '-', desc: 'Programming voltage. Tie to Vcc in normal use.', terms: ['vpp'] },
         { n: 2, name: 'A12', type: 'addr', dir: 'in', desc: 'Address bit 12.' },
@@ -344,6 +368,9 @@ RCS.add({
       heat: 'warm',
       datasheets: [{ label: 'Motorola MC6850 datasheet DS9493R4 (1985), pin assignment p. 1', url: 'https://ipv4.pccomponents.com/datasheets/MOTOR-MC6850P.pdf#page=1' }],
       verifiedAgainst: 'Motorola MC6850 DS9493R4, pin assignment p. 1. HERO Jr use: TM printed p. 25 (U216 at $D880, serial out pin 6 through U219, input pin 2 from Q201, SW201 baud jumper).',
+      replacements: [
+        { part: 'MC6850P / MC68A50P / MC68B50P', kind: 'pin-compatible', note: 'Speed grades of one part: MC6850 1.0 MHz, MC68A50 1.5 MHz, MC68B50 2.0 MHz. P is the plastic package; C after the number is the -40 to 85 °C range. Any grade works on the HERO Jr\'s 1 MHz E.', source: { label: 'Motorola MC6850 data sheet DS9493R4, ordering information', url: 'https://ipv4.pccomponents.com/datasheets/MOTOR-MC6850P.pdf#page=7' } },
+      ],
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
         { n: 2, name: 'Rx Data', type: 'serial', dir: 'in', desc: 'Receive serial data in.', terms: ['acia'] },
@@ -456,6 +483,9 @@ RCS.add({
       heat: 'warm',
       datasheets: [{ label: 'TI TL851 Sonar Ranging Control, SLSS004 (1988), p. 1', url: 'https://www.ti.com/lit/ds/symlink/tl851.pdf#page=1' }],
       verifiedAgainst: 'TI TL851 SLSS004 terminal assignments p. 1 (output schematics p. 4). HERO Jr schematic sheet 1 (U307 pin 1 = +5SW, pin 3 = GND); TM printed p. 23 and parts list (U307 = 443-1188).',
+      replacements: [
+        { part: 'TL851CN', kind: 'pin-compatible', note: 'Still made by TI (status ACTIVE on 2026-10-30); CN is the DIP-16. It needs the 420 kHz ceramic resonator on pins 11 and 12.', source: { label: 'TI TL851 product page', url: 'https://www.ti.com/product/TL851' } },
+      ],
       pins: [
         { n: 1, name: 'VCC', type: 'power', dir: '-', desc: 'Supply, 4.5-6.8 V.', terms: ['vcc'] },
         { n: 2, name: 'XMIT', type: 'io', dir: 'out', desc: 'Transmit drive output (Darlington emitter follower, about 140 mA); sends a 16-pulse burst after each INIT.', probe: 'A burst of 16 pulses (about 49.4 kHz) after each INIT.' },
@@ -483,6 +513,9 @@ RCS.add({
       heat: 'cool',
       datasheets: [{ label: 'TI TL852 Sonar Ranging Receiver, SLSS003 (1988), p. 1', url: 'https://www.ti.com/lit/ds/symlink/tl852.pdf#page=1' }],
       verifiedAgainst: 'TI TL852 SLSS003 terminal assignments p. 1. HERO Jr schematic sheet 1 (U308 pin 5 = +5SW, pin 16 = GND); TM printed p. 23-24 and parts list (U308 = 442-765).',
+      replacements: [
+        { part: 'TL852CN', kind: 'pin-compatible', note: 'Still made by TI (status ACTIVE on 2026-10-30); CN is the DIP-16. Replace the TL851 and TL852 as a pair only if both are suspect: R358, R359 and R361 set the bias, gain and detect level around this one.', source: { label: 'TI TL852 product page', url: 'https://www.ti.com/product/TL852' } },
+      ],
       pins: [
         { n: 1, name: 'G1IN', type: 'io', dir: 'in', desc: 'First-stage amplifier input; a resistor from G1IN to GADJ sets gain.' },
         { n: 2, name: 'XIN', type: 'io', dir: 'in', desc: 'Clamp input for the transducer transformer secondary during transmit.' },
@@ -510,6 +543,9 @@ RCS.add({
       heat: 'cool',
       datasheets: [{ label: 'OKI MSM5832RS, 1986 OKI Microprocessor Data Book, printed p. 251 (pins p. 256-257)', url: 'https://bitsavers.org/components/oki/_dataBooks/1986_OKI_Microprocessor_Databook.pdf#page=254' }],
       verifiedAgainst: 'OKI MSM5832RS pin configuration, 1986 OKI Microprocessor Data Book p. 251 and pin descriptions p. 256-257. Designator: HERO 1 TM parts list (U315 = 443-1055); schematic sheet 3 (REAL TIME CLOCK).',
+      replacements: [
+        { part: 'MSM5832RS (new old stock)', kind: 'pin-compatible', note: 'No modern pin-compatible clock chip was found (searched 2026-10-30); the DIP-18 MSM5832RS itself is only new old stock. Parts such as the DS12887 have a different pinout and bus, so they need an adapter and new software.', source: { label: 'OKI 1986 Microprocessor Data Book, MSM5832RS data sheet, p. 251', url: 'https://bitsavers.org/components/oki/_dataBooks/1986_OKI_Microprocessor_Databook.pdf#page=254' } },
+      ],
       pins: [
         { n: 1, name: 'VDD', type: 'power', dir: '-', desc: '+5 V supply; keeps counting with backup down to 2.2 V.', terms: ['vcc'] },
         { n: 2, name: 'WRITE', type: 'ctrl', dir: 'in', desc: 'Write enable, active high; writes when CS, HOLD and WRITE are all high.' },
@@ -557,6 +593,9 @@ RCS.add({
       heat: 'cool',
       datasheets: [{ label: 'Silicon Systems SSI 263A, 1985 Silicon Systems Data Book, printed p. 1-42', url: 'https://bitsavers.org/components/siliconSystems/_dataBooks/1985_Silicon_Systems_Data_Book.pdf#page=50' }],
       verifiedAgainst: 'Silicon Systems SSI 263A pinout and pin descriptions, 1985 Data Book p. 1-42 (PDF p. 50-53); selection guide lists it as Votrax SC-02 compatible. Not checked against a HERO 2000 board.',
+      replacements: [
+        { part: 'SSI 263A / SSI 263AP (new old stock)', kind: 'pin-compatible', note: 'The Silicon Systems part that the SC-02 is the same as. None is made any more and no emulator module was found (searched 2026-10-30): only new old stock, at collector prices.', source: { label: 'Silicon Systems 1985 Data Book, SSI 263A data sheet, p. 1-42', url: 'https://bitsavers.org/components/siliconSystems/_dataBooks/1985_Silicon_Systems_Data_Book.pdf#page=50' } },
+      ],
       pins: [
         { n: 1, name: 'AO', type: 'audio', dir: 'out', desc: 'Analog audio output, biased at VDD/2; needs an external amplifier.' },
         { n: 2, name: 'AGND', type: 'ground', dir: '-', desc: 'Analog ground.', terms: ['gnd'] },
@@ -1110,7 +1149,7 @@ RCS.add({
         ],
         sources: [
           { label: 'HERO Jr Schematics 595-3271, sheet 1 interconnect (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' },
-          { label: 'HERO Jr Technical Manual, battery charger, printed p. 20 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=21' },
+          { label: 'HERO Jr Technical Manual, battery charger, printed p. 19 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=21' },
           { label: 'HERO Robot FAQ 3.9, Hero-Jr charger plug (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html' }
         ] },
 
@@ -1429,19 +1468,51 @@ RCS.add({
         { rail: '+8 V motion', expect: 'About 8 V', where: 'Motion board regulator U1401 (TM printed p. 78)', note: 'Regulated from +12 V.', verify: true }
       ],
       testPoints: [
-        { tp: 'CPU crystal', where: 'CPU pin 38 (XTAL) and pin 39 (EXTAL)', expect: '3.579545 MHz (ROM 1.0) or 4 MHz (ROM 1.3/1.U with ET-18-6)', verify: true },
-        { tp: 'E clock', where: 'CPU pin 37 (E)', expect: 'Crystal divided by four: about 0.895 MHz (3.58 MHz) or 1 MHz (4 MHz)' },
+        { tp: 'CPU crystal', where: 'CPU pin 38 (XTAL) and pin 39 (EXTAL)', expect: '3.579545 MHz (Y401, TM); 4 MHz reported with ET-18-6 or ROM 1.3/1.U', verify: true },
+        { tp: 'E clock', where: 'CPU pin 37 (E)', expect: 'Crystal divided by four: about 0.895 MHz (3.58 MHz) or 1 MHz (4 MHz)',
+          scope: { f: '0.8949 MHz', low: '0.4 V', high: '2.4 V', shape: 'square', duty: '50%', basis: 'datasheet', source: { label: 'Motorola MC6802/6808 data sheet DS9818-R3, bus timing (PWEL and PWEH 450 ns min at 1 MHz), p. 4; E levels VOL 0.4 V max, VOH 2.4 V min, p. 3', url: DS6808(4) },
+            note: 'Levels are the data sheet limits, not a capture; a working E swings wider. Rate: the stock 3.579545 MHz crystal Y401 (TM printed p. 79) divided by four. With a 4 MHz crystal it reads 1 MHz. Flat: Y401, C416, C417, then U401.' } },
         { tp: 'Reset', where: 'CPU pin 40 (/RESET)', expect: 'Low at power-up, then high' },
         { tp: 'Speech strobe', where: 'SC-01A pin 7 (STB)', expect: 'Short high pulse for each phoneme' },
         { tp: 'Speech request', where: 'SC-01A pin 8 (A/R)', expect: 'High between phonemes; stuck low = no speech' },
         { tp: 'Logic charge reference', where: 'TP1 to chassis, then TP1 to TP2 (power supply board)', expect: '5.6 V, then 0 V (adjust R202), charger on' },
         { tp: 'Motor charge reference', where: 'TP8 to chassis, then TP8 to TP9 (power supply board)', expect: '5.6 V, then 0 V (adjust R225), charger on' },
-        { tp: 'Sonar', where: 'TP1 and TP2, sense board', expect: 'Sonar alignment check per TM; values not transcribed', verify: true }
+        { tp: 'Sonar receive', where: 'TP1, sonar receive board', expect: 'About 0.7 V on a scope or AC voltmeter with the sonar running and a wall 4 to 6 ft away; peak it with R108 (Osc Freq) on the transmit board' },
+        { tp: 'Sonar transmit', where: 'Sonar transmit board, U106B/U106C to the transducer', expect: 'Bursts of eight cycles at about 32 kHz, repeating about every 1/4 s' }
       ],
       sources: [
         { label: 'ET-18 Schematics sheet 3 of 4, power supply circuit board (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Schematics%20sheet%203%20of%204%20%28io%2C%20main%20drive%2C%20power%20supply%29.pdf' },
         { label: 'ET-18 Technical Manual, circuit description printed p. 73-82 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=84' },
-        { label: 'ET-18 Technical Manual, power supply adjustment printed p. 47 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=56' }
+        { label: 'ET-18 Technical Manual, power supply adjustment printed p. 47 (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Technical%20Manual%20ET-18A.pdf#page=56' },
+        H1TM(58, 'sonar transmit frequency adjustment, printed p. 48'),
+        H1TM(72, 'troubleshooting charts, logic +12 V and +5 V supplies, printed p. 62'),
+        H1TM(73, 'troubleshooting charts, motor +12 V supply, printed p. 63'),
+        H1TM(88, 'sonar transmitter circuit description, printed p. 76')
+      ],
+      firstTen: [
+        { step: 1, check: 'Charger input', where: 'hero1-p202 pin 14 to pin 13', expect: '+25 V DC or more with the charger and the robot switched on; red POWER lamp lit',
+          ifNot: 'Red lamp out: the charger fuse. Under 25 V: P202, the charger plug P2 and the charger. Red lamp on but white CHARGE lamp out: fuses F1 and F2 and the charger plug connection.', source: H1TM(72, 'troubleshooting chart, logic +12 V and +5 V supplies (+25 V at P202-14), printed p. 62') },
+        { step: 2, check: 'Logic charge regulator', where: 'hero1-p202 pin 15', expect: '+13.5 to +14 V (13.8 V) with robot power off and F1 out',
+          ifNot: 'In range: the logic batteries and their connections. Under 13.5 V with +25 V in, or over 14 V: U201 and its connector and mounting hardware.', source: H1TM(72, 'troubleshooting chart, logic supplies (+13.8 V at P202-15), printed p. 62') },
+        { step: 3, check: 'Motor charge regulator', where: 'hero1-p202 pin 22', expect: '+13.5 to +14 V (13.8 V) with robot power off and F2 out',
+          ifNot: 'In range: the motor batteries and their connections. No +25 V at P202 pin 23: P202, P2, the charger. Otherwise U204 and its connector and mounting hardware.', source: H1TM(73, 'troubleshooting chart, motor +12 V supply (+13.8 V at P202-22), printed p. 63') },
+        { step: 4, check: 'Logic battery under load', where: 'hero1-p201 pin 3', expect: 'More than 10 V with the robot on (13.9 V float on charge)',
+          ifNot: 'Under 10 V: fuses F1, F3 and F201, then step 2. Over 10 V but the robot shows LGLo: the low-battery detector (U202, D202, Q201, Q208) or the wiring at P201 and P311; the chart reads P201 pin 2 to decide.', source: H1TM(72, 'troubleshooting chart, logic supplies (+12 V at P201-3), printed p. 62') },
+        { step: 5, check: 'Motor battery under load', where: 'hero1-p201 pin 10', expect: 'More than 10 V with the robot on',
+          ifNot: 'Under 10 V: fuses F2 and F202, then step 3. Over 10 V but the robot shows drlo: U205, D206, Q205, Q206 or the wiring at P201 and P311 (the chart reads P201 pin 11).', source: H1TM(73, 'troubleshooting chart, motor supply (+12 V at P201-10), printed p. 63') },
+        { step: 6, check: '+5 V logic', where: 'hero1-p201 pin 4', expect: '4.5 V or more (4.9 to 5.1 V)',
+          ifNot: 'Under 4.5 V: put the Sleep switch on the experimental board to NORM and cycle the power. Still low, measure P201 pin 6: under 2 V, U203, Q203, Q204, D204; over 1 V, the wiring at P201, P311, P317, then the I/O chart.', source: H1TM(72, 'troubleshooting chart, logic supplies (+5 V at P201-4, 5 and P201-6), printed p. 62') },
+        { step: 7, check: 'Reset and display', where: 'CPU pin 40', expect: 'High after power-up; the display reads HErol.X for about 10 s, then a moving dash; RESET repeats it ("ready" with the speech board)',
+          ifNot: '"ready" heard but no display: the Display chart. Neither: back to steps 1 to 6, then the CPU board.', source: H1TM(65, 'Initial Tests, power supply test and display tests, printed p. 55') },
+        { step: 8, check: 'CPU clock', where: 'CPU pin 37', expect: 'About 0.895 MHz (3.58 MHz crystal; 1 MHz with a 4 MHz crystal)',
+          ifNot: 'Flat: Y401, C416 and C417 on pins 38 and 39, then U401.', source: H1TM(91, 'CPU board circuit description (U401, Y401 3.58 MHz oscillator), printed p. 79') },
+      ],
+      clocks: [
+        { name: 'CPU crystal Y401', where: 'CPU pin 38 to pin 39', f: '3.579545 MHz', source: H1TM(91, 'CPU board circuit description, printed p. 79') },
+        { name: 'E clock (crystal divided by four)', where: 'CPU pin 37', f: '0.8949 MHz', source: { label: 'Motorola MC6802/6808 data sheet DS9818-R3, control timing (fXTAL = 4 x fo), p. 3', url: DS6808(3) } },
+        { name: 'RTC crystal Y301 (trim C316)', where: 'MSM5832 pin 16 to pin 17; U317-15 (buffered)', f: '32.768 kHz', source: H1TM(60, 'clock adjustment, frequency counter method at U317 pin 15, printed p. 50') },
+        { name: 'Sonar transmit oscillator U106A (adjust R108)', where: 'Sonar transmit board', f: '32 kHz', source: H1TM(88, 'sonar transmitter, printed p. 76') },
+        { name: 'Sonar ping repetition (about every 1/4 s)', where: 'Sonar transmit board, U103/U104 counter', f: '4 Hz', verify: true, source: H1TM(88, 'sonar transmitter: the counter runs about 1/4 s per cycle, printed p. 76') },
       ]
     },
     herojr: {
@@ -1453,11 +1524,11 @@ RCS.add({
           'Batteries: two 6 V batteries B1, B2 (Heath 418-45, 4 Ah per the FAQ) in series, through fuse F1 4 A 3AG slow-blow above the batteries. The RTA-1-4 accessory adds B3/B4 in parallel. Charge 12-14 h from flat; expect about four hours of running.',
           'When the cube is unplugged from the wall, unplug the cord from the robot too, or the cube slowly discharges the batteries (Owner\'s Guide).',
           'Rails: U209 5 V regulator (Vca) runs whenever SW1 is ON, even asleep: RTC, reset circuits, decoder and any jumpered RAM. U302 switching regulator (Vcc, about 25 kHz) is shut down in sleep. The Q301 square wave also makes -10 V for RS-232.',
-          'No 5 V: check U209 first (TM chart). "Low battery" with good batteries: U201, U213, U221. Batteries will not take charge: the TM chart names U211 or U212, and the J1/P1 jumper.',
+          'TM troubleshooting charts (printed pp. 13-15): dead robot with the green LED off: battery wiring, low battery, fuse F1, keyboard, U302/Q301/Q302, U221/U222, U201, the TP201 jumper. Memory faults: U209 if there is no 5.0 V. "Low battery" with good batteries: D304, D305, U303, U214 or U201. Batteries will not take charge: the charger, P1 or J1, P307, U301.',
           'The robot will not explore on its own while the charger is plugged in (charger sense, P202).'
         ],
         sources: [
-          { label: 'HERO Jr Technical Manual, battery charger and charging regulator, printed p. 20 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=21' },
+          { label: 'HERO Jr Technical Manual, battery charger and charging regulator, printed p. 19 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=21' },
           { label: 'HERO Jr Technical Manual, chassis parts list (B1, B2, F1, charger), printed p. 42 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=43' },
           { label: 'HERO Jr Owner\'s Guide, charging the batteries, p. 6 (archive.org)', url: 'https://archive.org/download/HEROJrOwnersGuide/HERO%20Jr%20Owner%27s%20Guide.pdf#page=8' },
           { label: 'HERO Robot FAQ 2.5 and 3.9, batteries and charger (second source)', url: 'https://www.hero.dsavage.net/robots/Hero_FAQ.html' }
@@ -1471,7 +1542,9 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'CPU crystal', where: 'CPU pin 38 (XTAL) and pin 39 (EXTAL)', expect: '4 MHz (Y201, JR-TM)' },
-        { tp: 'E clock', where: 'CPU pin 37 (E)', expect: 'About 1 MHz' },
+        { tp: 'E clock', where: 'CPU pin 37 (E)', expect: 'About 1 MHz',
+          scope: { f: '1 MHz', low: '0.4 V', high: '2.4 V', shape: 'square', duty: '50%', basis: 'datasheet', source: { label: 'Motorola MC6802/6808 data sheet DS9818-R3, bus timing (PWEL and PWEH 450 ns min at 1 MHz), p. 4; E levels VOL 0.4 V max, VOH 2.4 V min, p. 3', url: DS6808(4) },
+            note: 'Levels are the data sheet limits, not a capture; a working E swings wider. Rate: the 4 MHz crystal Y201 divided by four inside U201 (TM printed p. 24). Flat: Y201, then U201.' } },
         { tp: 'RTC crystal', where: 'RTC pin 2 (OSC1) and pin 3 (OSC2)', expect: '32.768 kHz' },
         { tp: 'Reset', where: 'CPU pin 40 (/RESET); RTC pin 18 (/RESET)', expect: 'Low at power-up and by the RESET key, then high' },
         { tp: 'Sonar INIT', where: 'U214 pin 19 (CB2); TL851 pin 14 (INIT)', expect: 'Pulse per ping' },
@@ -1483,7 +1556,34 @@ RCS.add({
       ],
       sources: [
         { label: 'HERO Jr Technical Manual, circuit description printed p. 20-25 (archive.org)', url: 'https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=21' },
-        { label: 'HERO Jr Schematics 595-3271, sheets 1-4 (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' }
+        { label: 'HERO Jr Schematics 595-3271, sheets 1-4 (archive.org)', url: 'https://archive.org/download/hero-jr-schematics/HeroJr%20595-3271%20Schematics.pdf#page=1' },
+        JRTM(15, 'troubleshooting charts, printed pp. 13-15')
+      ],
+      firstTen: [
+        { step: 1, check: 'Charger', where: 'herojr-charger pin 2 to pin 3', expect: 'About 12 V DC into a flat battery, rising to about 16 V near full, with the cube plugged in',
+          ifNot: 'Batteries will not take charge: the charger, P1 or J1, P307, U301.', source: JRTM(17, 'troubleshooting charts, printed p. 15') },
+        { step: 2, check: 'Battery', where: 'herojr-p310 pin 2', expect: '11 to 14 V DC with SW1 on; the robot warns of low battery below about 10 V',
+          ifNot: 'Dead robot, green LED off: battery wiring, low battery, fuse F1 (p. 13). "Low battery" with good batteries: D304, D305, U303, U214 or U201 (p. 15).', source: JRTM(15, 'troubleshooting charts, printed p. 13') },
+        { step: 3, check: '+5 V Vcc', where: 'herojr-p201 pin 10; CPU pin 8', expect: '+5 V DC awake; 0 V in sleep',
+          ifNot: 'Good battery and F1 but no Vcc: the switching regulator U302, Q301, Q302.', source: JRTM(15, 'troubleshooting charts, printed p. 13') },
+        { step: 4, check: 'Vca (always-on 5 V)', where: 'RTC pin 24', expect: 'About 5 V whenever SW1 is ON, even asleep',
+          ifNot: 'Missing, with memory faults: U209 ("U209 if no 5.0 volts").', source: JRTM(15, 'troubleshooting charts, memory circuits, printed p. 13') },
+        { step: 5, check: 'Reset', where: 'CPU pin 40; RTC pin 18', expect: 'Low at power-up and while RESET is pressed, then high',
+          ifNot: 'Dead robot: the reset circuits U221 and U222, then U201.', source: JRTM(15, 'troubleshooting charts, printed p. 13') },
+        { step: 6, check: 'CPU clock', where: 'CPU pin 37', expect: '1 MHz (4 MHz crystal Y201 divided by four)',
+          ifNot: 'Flat: Y201, then U201.', source: JRTM(26, 'CPU pin-out description, printed p. 24') },
+        { step: 7, check: 'Real-time clock', where: 'RTC pin 2', expect: '32.768 kHz ±0.001 kHz on a frequency counter; trim with OSC TRIM C228',
+          ifNot: 'Data LEDs do not flash, or cannot set the time: U213, U221.', source: JRTM(10, 'time adjustment, frequency counter method at U213 pin 2, printed p. 8') },
+        { step: 8, check: 'Sonar', where: 'herojr-p201 pin 20; TL851 pin 14; TL851 pin 2', expect: 'SENSE ENABLE high; INIT goes high about 5 ms later; XMIT sends 16 pulses at 49.4 kHz',
+          ifNot: '"Sonar malfunction" and no sound from the transducer: A4 not on P305, U214 or U215, U201, U304 or U314, U307, U308 or U313.', source: JRTM(16, 'troubleshooting charts, printed p. 14') },
+      ],
+      clocks: [
+        { name: 'CPU crystal Y201', where: 'CPU pin 38 to pin 39', f: '4 MHz', source: JRTM(26, 'CPU pin-out description, printed p. 24') },
+        { name: 'E clock (crystal divided by four)', where: 'CPU pin 37', f: '1 MHz', source: JRTM(26, 'CPU pin-out description, printed p. 24') },
+        { name: 'RTC crystal Y202 (oscillator U221E, buffer U221A)', where: 'RTC pin 2 to pin 3', f: '32.768 kHz', source: JRTM(10, 'time adjustment, printed p. 8') },
+        { name: 'Sonar resonator Y301', where: 'TL851 pin 11 to pin 12', f: '420 kHz', source: JRTM(43, 'parts list, Y301 420 kHz, printed p. 41') },
+        { name: 'Sonar transmit (resonator divided by 8.5, 16 pulses per ping)', where: 'TL851 pin 2', f: '49.4 kHz', source: JRTM(24, 'sonar circuit, Figure 1, printed p. 22') },
+        { name: 'Switching regulator U302 (fixed frequency)', where: 'Power/sense board, U302 and Q301', f: '25 kHz', source: JRTM(22, 'switching regulator, printed p. 20') },
       ]
     },
     hero2000: {
@@ -1508,6 +1608,10 @@ RCS.add({
       ],
       testPoints: [
         { tp: 'CPU clock crystal', where: 'Y301 at U304 (clock generator)', expect: '15 MHz', verify: true }
+      ],
+      clocks: [
+        { name: 'Crystal Y301', where: 'U304 (clock generator, CPU board)', f: '15 MHz', verify: true, source: { label: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, p. 2 CPU board (Y301 15 MHZ at U304) (archive.org)', url: 'https://archive.org/download/heathkit-hero-2000-et-19-schematic-diagrams-595-3416/heathkit-hero-2000-et-19-schematic-diagrams-595-3416.pdf#page=2' } },
+        { name: 'CPU clock (U304 CLK, crystal divided by three)', where: 'U304-8 to 8088 pin 19', f: '5 MHz', verify: true, source: { label: 'Intel 8284A data sheet (1983 Microprocessors and Peripherals Handbook), CLK = crystal / 3 with 1/3 duty, p. 3-235. U304 is read from the scan as an 8284A-type part (pins X1, X2, CLK 8, READY, RESET); confirm the part number.', url: 'https://bitsavers.org/components/intel/_dataBooks/1983_Intel_Microprocessors_and_Peripherals_Handbook.pdf#page=415' } },
       ],
       sources: [
         { label: 'HERO 2000 ET-19 Schematic Diagrams 595-3416, p. 2 CPU, p. 4 power supply, p. 6 backplane (archive.org)', url: 'https://archive.org/download/heathkit-hero-2000-et-19-schematic-diagrams-595-3416/heathkit-hero-2000-et-19-schematic-diagrams-595-3416.pdf#page=4' }
