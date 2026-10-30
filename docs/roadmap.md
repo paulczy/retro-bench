@@ -72,3 +72,10 @@ and 8 last. Cross-model review and a push to GitHub Pages after each group.
 - linkPins cannot resolve header pins named like `P8-1`; either allow `<connector id> pin P8-1` or rename those pins.
 - App: the `video-line` scope shape always draws `low` as the sync tip; the 6847 VDG outputs inverted video (sync highest). Add `inverted: true` to the scope block and draw sync at `high`; then enter the CoCo VDG luma/chroma traces from Sams CC13/CC15.
 - Shared RAM records (dram4116 in sinclair.js, dram4164 in commodore.js) need `replacements` rows: 4116-to-4164 adapters, 4164 variants, 41256; owners of those files add them (links in tandy-features.md, ibm-features.md, ti-features.md, atari-features.md).
+
+## Requested 2026-10-30 (user): reset filter and clock frequency in pin callouts
+
+- Reset filter, pad mark and "Reset check" callout on chip pages (app agent, in progress).
+- Clock pin callouts show the frequency expected on that machine, from the machine's clocks/testPoints (app agent, in progress).
+- Data pass after the app lands: about 154 of 444 clock pins on ready machines are not referenced by any clocks/testPoints `where` (e.g. C128 CIA pin 25). Extend the clocks rows with the receiving pins, sourced to the schematic; the validator will WARN on each uncovered pin.
+- Shared chip text that names one machine (6526 pin 25 "from the CPU (6510 pin 39)" shows on the C128) should move to the machine's clocks rows once covered.
