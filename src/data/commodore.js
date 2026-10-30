@@ -1,2287 +1,2819 @@
-/* Retro Bench data: Commodore. Generated 2026-10-30 from the shared mockup data; edit by hand from here on. */
+/* Retro Bench data: Commodore. Edit by hand. */
+Object.assign(RCS.terms, {
+  pla: {
+    term: 'PLA (Programmable Logic Array)',
+    short: 'A chip that turns address lines into chip-selects.',
+    long: 'A fixed grid of logic programmed once at the factory. On the C64 the 82S100 decodes the address and bank bits into chip-selects for ROM, colour RAM, VIC-II, SID and CIA. It runs hot; a dead PLA gives a black screen or a machine that will not boot.',
+  },
+  mmu: {
+    term: 'MMU (Memory Management Unit)',
+    short: 'Maps the CPU address space onto ROM and RAM banks.',
+    long: 'Chooses which ROM or RAM bank appears at each address. The C128 8722 MMU also chooses between the 8502 and the Z80 and sets the common areas. A fault shows as dead in one mode or wrong banking.',
+  },
+  'ieee-488': {
+    term: 'IEEE-488 bus',
+    short: 'Parallel bus used by PET disk drives and printers.',
+    long: 'A 24-contact parallel bus (also called GPIB) with handshake lines DAV, NRFD, NDAC and ATN. PET disks and printers use it instead of the serial IEC bus. Device numbers pick the device.',
+  },
+  rgbi: {
+    term: 'RGBI',
+    short: 'Digital colour video: red, green, blue, intensity.',
+    long: 'Four TTL lines that give 16 colours on a digital monitor. The C128 80-column port outputs RGBI. A composite or luma/chroma cable does not give the same colours.',
+  },
+  crtc: {
+    term: 'CRTC (6545)',
+    short: 'Video timing chip: sync, cursor and screen addresses.',
+    long: 'Cathode-ray Controller. Makes the sync pulses, the cursor and the screen RAM addresses for a text display. Later PET and 80-column boards use it; early PETs use discrete logic instead.',
+  },
+});
 RCS.add({
-  "brand": {
-    "id": "commodore",
-    "name": "Commodore",
-    "blurb": "PET to C128. MOS custom chips, IEC serial, PETSCII."
+  brand: {
+    id: 'commodore',
+    name: 'Commodore',
+    blurb: 'PET to C128. MOS custom chips, IEC serial, PETSCII.',
   },
-  "machines": {
-    "pet": {
-      "id": "pet",
-      "brand": "commodore",
-      "name": "PET / CBM",
-      "aka": "2001, 3000, 4000, 8000",
-      "year": 1977,
-      "status": "sheet",
-      "cpu": "6502 @ 1 MHz",
-      "ram": "4-32 KB",
-      "video": "Discrete / 6545 CRTC",
-      "os": "BASIC 1.0-4.0",
-      "chips": [],
-      "tagline": "All-in-one with IEEE-488."
+  machines: {
+    pet: {
+      id: 'pet',
+      brand: 'commodore',
+      name: 'PET / CBM',
+      aka: '2001, 3000, 4000, 8000',
+      year: 1977,
+      status: 'ready',
+      cpu: '6502 @ 1 MHz',
+      ram: '4-32 KB',
+      rom: 'BASIC, EDITOR, KERNAL, char (24-pin mask ROMs)',
+      video: 'Discrete / 6545 CRTC',
+      sound: 'One beep (VIA CB2)',
+      os: 'BASIC 1.0-4.0',
+      chips: ['cpu6502', 'crtc6545', 'pia6520', 'via6522', 'sram2114', 'rom2364', 'rom2332'],
+      tagline: 'All-in-one with IEEE-488.',
     },
-    "vic20": {
-      "id": "vic20",
-      "brand": "commodore",
-      "name": "VIC-20",
-      "aka": "VC-20 / VIC-1001",
-      "year": 1981,
-      "status": "sheet",
-      "cpu": "6502 @ 1 MHz",
-      "ram": "5 KB (3.5 KB free)",
-      "video": "VIC 6560/6561",
-      "os": "BASIC 2.0",
-      "chips": [],
-      "tagline": "The friendly computer."
+    vic20: {
+      id: 'vic20',
+      brand: 'commodore',
+      name: 'VIC-20',
+      aka: 'VC-20 / VIC-1001',
+      year: 1981,
+      status: 'ready',
+      cpu: '6502 @ 1 MHz',
+      ram: '5 KB (3583 bytes free)',
+      rom: 'BASIC 2.0 (8K) + KERNAL (8K) + char (4K)',
+      video: 'VIC 6560/6561',
+      sound: 'VIC 6560/6561 (3 tones + noise)',
+      os: 'Commodore BASIC 2.0',
+      chips: ['vic6560', 'cpu6502', 'via6522', 'sram2114', 'rom2364', 'rom2332'],
+      tagline: 'The friendly computer.',
     },
-    "c64": {
-      "id": "c64",
-      "brand": "commodore",
-      "name": "Commodore 64",
-      "aka": "C64 / C64C / SX-64",
-      "year": 1982,
-      "status": "sheet",
-      "cpu": "6510 @ 1.02/0.985 MHz",
-      "ram": "64 KB (38,911 free)",
-      "rom": "BASIC 2.0 + KERNAL + char",
-      "video": "VIC-II 6567/6569",
-      "sound": "SID 6581/8580",
-      "os": "Commodore BASIC 2.0",
-      "chips": [
-        "cpu6510",
-        "vic2",
-        "sid6581",
-        "cia6526",
-        "pla82s100",
-        "dram4164"
-      ],
-      "tagline": "The best seller. PLA and VIC-II run hot."
+    c64: {
+      id: 'c64',
+      brand: 'commodore',
+      name: 'Commodore 64',
+      aka: 'C64 / C64C / SX-64',
+      year: 1982,
+      status: 'ready',
+      cpu: '6510 @ 1.02/0.985 MHz',
+      ram: '64 KB (38,911 free)',
+      rom: 'BASIC 2.0 + KERNAL + char',
+      video: 'VIC-II 6567/6569',
+      sound: 'SID 6581/8580',
+      os: 'Commodore BASIC 2.0',
+      chips: ['pla82s100', 'vic2', 'cpu6510', 'sid6581', 'cia6526', 'dram4164', 'sram2114', 'rom2364', 'rom2332'],
+      tagline: 'The best seller. PLA and VIC-II run hot.',
     },
-    "c16": {
-      "id": "c16",
-      "brand": "commodore",
-      "name": "Commodore 16",
-      "aka": "C16 / C116 (264 series)",
-      "year": 1984,
-      "status": "ready",
-      "cpu": "7501/8501 @ 0.89/1.76 MHz",
-      "ram": "16 KB (12,277 free)",
-      "rom": "BASIC 3.5 + KERNAL (2 × 16 KB)",
-      "video": "TED 7360: 40×25 text, 320×200, 121 colours",
-      "sound": "TED, 2 voices",
-      "os": "Commodore BASIC 3.5",
-      "chips": [
-        "ted7360",
-        "cpu7501",
-        "pio6529",
-        "dram4164",
-        "rom23128"
-      ],
-      "tagline": "Budget 264-series machine with the best Commodore BASIC and the hottest chip."
+    c16: {
+      id: 'c16',
+      brand: 'commodore',
+      name: 'Commodore 16',
+      aka: 'C16 / C116 (264 series)',
+      year: 1984,
+      status: 'ready',
+      cpu: '7501/8501 @ 0.89/1.76 MHz',
+      ram: '16 KB (12,277 free)',
+      rom: 'BASIC 3.5 + KERNAL (2 × 16 KB)',
+      video: 'TED 7360: 40×25 text, 320×200, 121 colours',
+      sound: 'TED, 2 voices',
+      os: 'Commodore BASIC 3.5',
+      chips: ['ted7360', 'cpu7501', 'pio6529', 'dram4164', 'rom23128'],
+      tagline: 'Budget 264-series machine with the best Commodore BASIC and the hottest chip.',
     },
-    "plus4": {
-      "id": "plus4",
-      "brand": "commodore",
-      "name": "Commodore Plus/4",
-      "aka": "264 series",
-      "year": 1984,
-      "status": "ready",
-      "cpu": "7501/8501 @ 0.89/1.76 MHz",
-      "ram": "64 KB (60 KB free)",
-      "rom": "BASIC 3.5 + KERNAL + 3-Plus-1",
-      "video": "TED 7360",
-      "sound": "TED, 2 voices",
-      "os": "Commodore BASIC 3.5",
-      "chips": [
-        "ted7360",
-        "cpu7501",
-        "pio6529",
-        "acia6551",
-        "dram4164",
-        "rom23128"
-      ],
-      "tagline": "The C16's big brother: 64 KB, user port, RS-232 and built-in office suite."
+    plus4: {
+      id: 'plus4',
+      brand: 'commodore',
+      name: 'Commodore Plus/4',
+      aka: '264 series',
+      year: 1984,
+      status: 'ready',
+      cpu: '7501/8501 @ 0.89/1.76 MHz',
+      ram: '64 KB (60 KB free)',
+      rom: 'BASIC 3.5 + KERNAL + 3-Plus-1',
+      video: 'TED 7360',
+      sound: 'TED, 2 voices',
+      os: 'Commodore BASIC 3.5',
+      chips: ['ted7360', 'cpu7501', 'pio6529', 'acia6551', 'dram4164', 'rom23128'],
+      tagline: 'The C16\'s big brother: 64 KB, user port, RS-232 and built-in office suite.',
     },
-    "c128": {
-      "id": "c128",
-      "brand": "commodore",
-      "name": "Commodore 128",
-      "aka": "C128 / C128D",
-      "year": 1985,
-      "status": "sheet",
-      "cpu": "8502 + Z80",
-      "ram": "128 KB",
-      "video": "VIC-IIe + 8563 VDC",
-      "sound": "SID 8580",
-      "os": "BASIC 7.0, CP/M, C64 mode",
-      "chips": [
-        "sid6581",
-        "cia6526"
-      ],
-      "tagline": "Three machines in one box."
-    }
+    c128: {
+      id: 'c128',
+      brand: 'commodore',
+      name: 'Commodore 128',
+      aka: 'C128 / C128D',
+      year: 1985,
+      status: 'ready',
+      cpu: '8502 + Z80',
+      ram: '128 KB',
+      video: 'VIC-IIe + 8563 VDC',
+      sound: 'SID 8580',
+      os: 'BASIC 7.0, CP/M, C64 mode',
+      chips: ['vdc8563', 'vic2e', 'pla8721', 'mmu8722', 'cpu8502', 'cpuz80', 'sid6581', 'cia6526'],
+      tagline: 'Three machines in one box.',
+      rom: 'BASIC 7.0, KERNAL, C64 mode, char (32 KB+)',
+    },
   },
-  "chips": {
-    "cpu7501": {
-      "id": "cpu7501",
-      "name": "7501 / 8501 CPU",
-      "short": "7501",
-      "family": "6502-family (6510 HMOS variant)",
-      "role": "CPU",
-      "pkg": "DIP-40",
-      "machines": [
-        "c16",
-        "plus4"
-      ],
-      "location": {
-        "c16": "U2",
-        "plus4": "U2"
+  chips: {
+    cpu7501: {
+      id: 'cpu7501',
+      name: '7501 / 8501 CPU',
+      short: '7501',
+      family: '6502-family (6510 HMOS variant)',
+      role: 'CPU',
+      pkg: 'DIP-40',
+      machines: ['c16', 'plus4'],
+      location: {
+        c16: 'U2',
+        plus4: 'U2',
       },
-      "summary": "HMOS 6510 variant running at 0.89 MHz (TED busy) / 1.76 MHz (dual-speed). Has a 7-bit on-chip I/O port (P0-P4, P6, P7) that drives the Datasette and IEC serial bus. GATE IN holds R/W off until /RAS. The 8501 is identical. No /NMI pin.",
-      "fails": [
-        "Dead machine, no boot",
-        "Black screen with power present"
+      summary: 'HMOS 6510 variant running at 0.89 MHz (TED busy) / 1.76 MHz (dual-speed). Has a 7-bit on-chip I/O port (P0-P4, P6, P7) that drives the Datasette and IEC serial bus. GATE IN holds R/W off until /RAS. The 8501 is identical. No /NMI pin.',
+      fails: ['Dead machine, no boot', 'Black screen with power present'],
+      heat: 'warm',
+      verifiedAgainst: 'Commodore Plus/4 Technical Manual',
+      datasheets: [
+        {
+          label: 'Commodore Plus/4 Technical Manual (zimmers.net)',
+          url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/264/',
+          verify: true,
+        },
+        {
+          label: 'MOS 7501 chip data (zimmers.net chipdata)',
+          url: 'http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/',
+          verify: true,
+        },
       ],
-      "heat": "warm",
-      "verifiedAgainst": "Commodore Plus/4 Technical Manual",
-      "datasheets": [
-        {
-          "label": "Commodore Plus/4 Technical Manual (zimmers.net)",
-          "url": "http://www.zimmers.net/anonftp/pub/cbm/manuals/264/",
-          "verify": true
-        },
-        {
-          "label": "MOS 7501 chip data (zimmers.net chipdata)",
-          "url": "http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/",
-          "verify": true
-        }
+      pins: [
+        { n: 1, name: 'IN', type: 'clock', dir: 'in', desc: 'Clock input (PHI IN). Fed by TED pin 12 OUT at 0.89 / 1.76 MHz.', terms: ['clock'], probe: 'Pulsing. Dead = no clock from TED or crystal.' },
+        { n: 2, name: 'RDY', type: 'ctrl', dir: 'in', desc: 'Ready. HIGH lets the CPU run; TED pulls it LOW (via BA) to steal bus cycles.', terms: ['rdy', 'badline'] },
+        { n: 3, name: '/IRQ', type: 'ctrl', dir: 'in', desc: 'Interrupt request from TED (raster, timers) and the 6551 on the Plus/4.', terms: ['irq', 'active-low'], activeLow: true },
+        { n: 4, name: 'AEC', type: 'ctrl', dir: 'in', desc: 'Address Enable Control. LOW tri-states the CPU address bus so TED can fetch.', terms: ['aec', 'tristate'] },
+        { n: 5, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.9 to +5.2 V' },
+        { n: 6, name: 'A0', type: 'addr', dir: 'out', desc: 'Address bus bit 0.' },
+        { n: 7, name: 'A1', type: 'addr', dir: 'out', desc: 'Address bus bit 1.' },
+        { n: 8, name: 'A2', type: 'addr', dir: 'out', desc: 'Address bus bit 2.' },
+        { n: 9, name: 'A3', type: 'addr', dir: 'out', desc: 'Address bus bit 3.' },
+        { n: 10, name: 'A4', type: 'addr', dir: 'out', desc: 'Address bus bit 4.' },
+        { n: 11, name: 'A5', type: 'addr', dir: 'out', desc: 'Address bus bit 5.' },
+        { n: 12, name: 'A6', type: 'addr', dir: 'out', desc: 'Address bus bit 6.' },
+        { n: 13, name: 'A7', type: 'addr', dir: 'out', desc: 'Address bus bit 7.' },
+        { n: 14, name: 'A8', type: 'addr', dir: 'out', desc: 'Address bus bit 8.' },
+        { n: 15, name: 'A9', type: 'addr', dir: 'out', desc: 'Address bus bit 9.' },
+        { n: 16, name: 'A10', type: 'addr', dir: 'out', desc: 'Address bus bit 10.' },
+        { n: 17, name: 'A11', type: 'addr', dir: 'out', desc: 'Address bus bit 11.' },
+        { n: 18, name: 'A12', type: 'addr', dir: 'out', desc: 'Address bus bit 12.' },
+        { n: 19, name: 'A13', type: 'addr', dir: 'out', desc: 'Address bus bit 13.' },
+        { n: 20, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 21, name: 'A14', type: 'addr', dir: 'out', desc: 'Address bus bit 14.' },
+        { n: 22, name: 'A15', type: 'addr', dir: 'out', desc: 'Address bus bit 15.' },
+        { n: 23, name: 'GATE', type: 'ctrl', dir: 'in', desc: 'GATE IN. Holds R/W inactive until /RAS falls so DRAM is never written early.', terms: ['ras-cas'] },
+        { n: 24, name: 'P7', type: 'io', dir: 'bidir', desc: 'I/O port bit 7: Datasette motor control (via driver transistor).' },
+        { n: 25, name: 'P6', type: 'io', dir: 'bidir', desc: 'I/O port bit 6: IEC serial DATA in.', terms: ['iec'] },
+        { n: 26, name: 'P4', type: 'io', dir: 'bidir', desc: 'I/O port bit 4: Datasette read / sense.' },
+        { n: 27, name: 'P3', type: 'io', dir: 'bidir', desc: 'I/O port bit 3: IEC serial ATN out.', terms: ['iec'] },
+        { n: 28, name: 'P2', type: 'io', dir: 'bidir', desc: 'I/O port bit 2: IEC serial DATA out.' },
+        { n: 29, name: 'P1', type: 'io', dir: 'bidir', desc: 'I/O port bit 1: IEC serial CLK out.' },
+        { n: 30, name: 'P0', type: 'io', dir: 'bidir', desc: 'I/O port bit 0: IEC serial CLK in.' },
+        { n: 31, name: 'DB7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 32, name: 'DB6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 33, name: 'DB5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 34, name: 'DB4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 35, name: 'DB3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 36, name: 'DB2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 37, name: 'DB1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 38, name: 'DB0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 39, name: 'R/W', type: 'ctrl', dir: 'out', desc: 'Read (HIGH) / Write (LOW) level for the whole bus.', terms: ['rw'] },
+        { n: 40, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. Held LOW at power-up, then HIGH. Stuck LOW = dead machine.', terms: ['reset', 'active-low'], activeLow: true, probe: 'LOW for ~0.3 s after power-on, then steady HIGH.' },
       ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "IN",
-          "type": "clock",
-          "dir": "in",
-          "desc": "Clock input (PHI IN). Fed by TED pin 12 OUT at 0.89 / 1.76 MHz.",
-          "terms": [
-            "clock"
-          ],
-          "probe": "Pulsing. Dead = no clock from TED or crystal."
-        },
-        {
-          "n": 2,
-          "name": "RDY",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Ready. HIGH lets the CPU run; TED pulls it LOW (via BA) to steal bus cycles.",
-          "terms": [
-            "rdy",
-            "badline"
-          ]
-        },
-        {
-          "n": 3,
-          "name": "/IRQ",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Interrupt request from TED (raster, timers) and the 6551 on the Plus/4.",
-          "terms": [
-            "irq",
-            "active-low"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 4,
-          "name": "AEC",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Address Enable Control. LOW tri-states the CPU address bus so TED can fetch.",
-          "terms": [
-            "aec",
-            "tristate"
-          ]
-        },
-        {
-          "n": 5,
-          "name": "VCC",
-          "type": "power",
-          "dir": "-",
-          "desc": "+5 V supply.",
-          "terms": [
-            "vcc"
-          ],
-          "probe": "+4.9 to +5.2 V"
-        },
-        {
-          "n": 6,
-          "name": "A0",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 0."
-        },
-        {
-          "n": 7,
-          "name": "A1",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 1."
-        },
-        {
-          "n": 8,
-          "name": "A2",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 2."
-        },
-        {
-          "n": 9,
-          "name": "A3",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 3."
-        },
-        {
-          "n": 10,
-          "name": "A4",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 4."
-        },
-        {
-          "n": 11,
-          "name": "A5",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 5."
-        },
-        {
-          "n": 12,
-          "name": "A6",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 6."
-        },
-        {
-          "n": 13,
-          "name": "A7",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 7."
-        },
-        {
-          "n": 14,
-          "name": "A8",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 8."
-        },
-        {
-          "n": 15,
-          "name": "A9",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 9."
-        },
-        {
-          "n": 16,
-          "name": "A10",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 10."
-        },
-        {
-          "n": 17,
-          "name": "A11",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 11."
-        },
-        {
-          "n": 18,
-          "name": "A12",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 12."
-        },
-        {
-          "n": 19,
-          "name": "A13",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 13."
-        },
-        {
-          "n": 20,
-          "name": "GND",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        },
-        {
-          "n": 21,
-          "name": "A14",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 14."
-        },
-        {
-          "n": 22,
-          "name": "A15",
-          "type": "addr",
-          "dir": "out",
-          "desc": "Address bus bit 15."
-        },
-        {
-          "n": 23,
-          "name": "GATE",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "GATE IN. Holds R/W inactive until /RAS falls so DRAM is never written early.",
-          "terms": [
-            "ras-cas"
-          ]
-        },
-        {
-          "n": 24,
-          "name": "P7",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "I/O port bit 7: Datasette motor control (via driver transistor)."
-        },
-        {
-          "n": 25,
-          "name": "P6",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "I/O port bit 6: IEC serial DATA in.",
-          "terms": [
-            "iec"
-          ]
-        },
-        {
-          "n": 26,
-          "name": "P4",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "I/O port bit 4: Datasette read / sense."
-        },
-        {
-          "n": 27,
-          "name": "P3",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "I/O port bit 3: IEC serial ATN out.",
-          "terms": [
-            "iec"
-          ]
-        },
-        {
-          "n": 28,
-          "name": "P2",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "I/O port bit 2: IEC serial DATA out."
-        },
-        {
-          "n": 29,
-          "name": "P1",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "I/O port bit 1: IEC serial CLK out."
-        },
-        {
-          "n": 30,
-          "name": "P0",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "I/O port bit 0: IEC serial CLK in."
-        },
-        {
-          "n": 31,
-          "name": "DB7",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 7."
-        },
-        {
-          "n": 32,
-          "name": "DB6",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 6."
-        },
-        {
-          "n": 33,
-          "name": "DB5",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 5."
-        },
-        {
-          "n": 34,
-          "name": "DB4",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 4."
-        },
-        {
-          "n": 35,
-          "name": "DB3",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 3."
-        },
-        {
-          "n": 36,
-          "name": "DB2",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 2."
-        },
-        {
-          "n": 37,
-          "name": "DB1",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 1."
-        },
-        {
-          "n": 38,
-          "name": "DB0",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 0."
-        },
-        {
-          "n": 39,
-          "name": "R/W",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Read (HIGH) / Write (LOW) level for the whole bus.",
-          "terms": [
-            "rw"
-          ]
-        },
-        {
-          "n": 40,
-          "name": "/RES",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Reset. Held LOW at power-up, then HIGH. Stuck LOW = dead machine.",
-          "terms": [
-            "reset",
-            "active-low"
-          ],
-          "activeLow": true,
-          "probe": "LOW for ~0.3 s after power-on, then steady HIGH."
-        }
-      ]
     },
-    "ted7360": {
-      "id": "ted7360",
-      "name": "7360 / 8360 TED",
-      "short": "TED",
-      "family": "MOS custom (Text Editing Device)",
-      "role": "Video, sound, DRAM controller, MMU, keyboard scan",
-      "pkg": "DIP-48",
-      "machines": [
-        "c16",
-        "plus4"
-      ],
-      "location": {
-        "c16": "U1",
-        "plus4": "U1"
+    ted7360: {
+      id: 'ted7360',
+      name: '7360 / 8360 TED',
+      short: 'TED',
+      family: 'MOS custom (Text Editing Device)',
+      role: 'Video, sound, DRAM controller, MMU, keyboard scan',
+      pkg: 'DIP-48',
+      machines: ['c16', 'plus4'],
+      location: {
+        c16: 'U1',
+        plus4: 'U1',
       },
-      "summary": "The heart of the 264 series: 121-colour video, 2-voice sound, DRAM controller (/RAS, /CAS, MUX), ROM chip-selects (a simple MMU), timers and keyboard scan (K0-K7). Runs hot and is the number one failure. The only source of replacements is another 264-series board, so socket it and fit a heatsink.",
-      "fails": [
-        "No picture or garbled picture",
-        "No sound",
-        "Dead machine",
-        "Dead keyboard (shared with 6529)"
+      summary: 'The heart of the 264 series: 121-colour video, 2-voice sound, DRAM controller (/RAS, /CAS, MUX), ROM chip-selects (a simple MMU), timers and keyboard scan (K0-K7). Runs hot and is the number one failure. The only source of replacements is another 264-series board, so socket it and fit a heatsink.',
+      fails: ['No picture or garbled picture', 'No sound', 'Dead machine', 'Dead keyboard (shared with 6529)'],
+      heat: 'hot',
+      verifiedAgainst: 'Commodore Plus/4 Technical Manual',
+      datasheets: [
+        {
+          label: 'TED 7360 datasheet (zimmers.net chipdata)',
+          url: 'http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/',
+          verify: true,
+        },
+        { label: 'Plus/4 World: TED', url: 'https://plus4world.powweb.com/', verify: true },
       ],
-      "heat": "hot",
-      "verifiedAgainst": "Commodore Plus/4 Technical Manual",
-      "datasheets": [
-        {
-          "label": "TED 7360 datasheet (zimmers.net chipdata)",
-          "url": "http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/",
-          "verify": true
-        },
-        {
-          "label": "Plus/4 World: TED",
-          "url": "https://plus4world.powweb.com/",
-          "verify": true
-        }
+      pins: [
+        { n: 1, name: 'A2', type: 'addr', dir: 'bidir', desc: 'Address bus bit 2 (input for register access, output during DMA/refresh).' },
+        { n: 2, name: 'A1', type: 'addr', dir: 'bidir', desc: 'Address bus bit 1.' },
+        { n: 3, name: 'A0', type: 'addr', dir: 'bidir', desc: 'Address bus bit 0.' },
+        { n: 4, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply. TED draws a lot; expect the body to be hot.', terms: ['vcc', 'hmos'], probe: '+4.9 to +5.2 V' },
+        { n: 5, name: 'CS0', type: 'ctrl', dir: 'out', desc: 'ROM chip-select for BASIC ROM ($8000-$BFFF). Active low in practice.', terms: ['cs', 'bank-switch'], verify: true },
+        { n: 6, name: 'CS1', type: 'ctrl', dir: 'out', desc: 'ROM chip-select for KERNAL ROM ($C000-$FFFF).', terms: ['cs', 'bank-switch'], verify: true },
+        { n: 7, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/Write from the CPU.', terms: ['rw'] },
+        { n: 8, name: '/IRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt to CPU: raster compare, timers 1-3, light pen.', terms: ['irq'], activeLow: true },
+        { n: 9, name: 'MUX', type: 'ctrl', dir: 'out', desc: 'DRAM row/column address multiplex control to the 4164s.', terms: ['mux'] },
+        { n: 10, name: '/RAS', type: 'ctrl', dir: 'out', desc: 'DRAM Row Address Strobe.', terms: ['ras-cas'], activeLow: true, probe: 'Must pulse constantly. No pulses = TED dead.' },
+        { n: 11, name: '/CAS', type: 'ctrl', dir: 'out', desc: 'DRAM Column Address Strobe.', terms: ['ras-cas'], activeLow: true },
+        { n: 12, name: 'OUT', type: 'clock', dir: 'out', desc: 'CPU clock out (PHI OUT) to 7501 pin 1. 0.89 MHz single / 1.76 MHz double speed.', terms: ['clock'] },
+        { n: 13, name: 'COLOR', type: 'video', dir: 'out', desc: 'Chrominance (colour) video output.', terms: ['luma-chroma'] },
+        { n: 14, name: 'IN', type: 'clock', dir: 'in', desc: 'Master clock in from the oscillator: 17.734 MHz (PAL) / 14.318 MHz (NTSC).', terms: ['clock'], probe: 'Crystal frequency present. Dead = oscillator / crystal.' },
+        { n: 15, name: 'K0', type: 'kbd', dir: 'in', desc: 'Keyboard row input 0 (read via the 6529 column latch).' },
+        { n: 16, name: 'K1', type: 'kbd', dir: 'in', desc: 'Keyboard row input 1.' },
+        { n: 17, name: 'K2', type: 'kbd', dir: 'in', desc: 'Keyboard row input 2.' },
+        { n: 18, name: 'K3', type: 'kbd', dir: 'in', desc: 'Keyboard row input 3.' },
+        { n: 19, name: 'K4', type: 'kbd', dir: 'in', desc: 'Keyboard row input 4.' },
+        { n: 20, name: 'K5', type: 'kbd', dir: 'in', desc: 'Keyboard row input 5.' },
+        { n: 21, name: 'K6', type: 'kbd', dir: 'in', desc: 'Keyboard row input 6.' },
+        { n: 22, name: 'K7', type: 'kbd', dir: 'in', desc: 'Keyboard row input 7.' },
+        { n: 23, name: 'LUM', type: 'video', dir: 'out', desc: 'Luminance + sync video output.', terms: ['luma-chroma'], probe: 'Video waveform with sync pulses on a scope.' },
+        { n: 24, name: 'VSS', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 25, name: 'DB0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 26, name: 'DB1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 27, name: 'DB2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 28, name: 'DB3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 29, name: 'DB4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 30, name: 'DB5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 31, name: 'DB6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 32, name: 'DB7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 33, name: 'SND', type: 'audio', dir: 'out', desc: 'Sound output (2 voices: tone + tone/noise).' },
+        { n: 34, name: 'BA', type: 'ctrl', dir: 'out', desc: 'Bus Available: goes LOW before TED takes the bus. Drives CPU RDY.', terms: ['ba', 'badline'] },
+        { n: 35, name: 'AEC', type: 'ctrl', dir: 'out', desc: 'Address Enable Control to CPU pin 4.', terms: ['aec'] },
+        { n: 36, name: 'A15', type: 'addr', dir: 'bidir', desc: 'Address bus bit 15.' },
+        { n: 37, name: 'A14', type: 'addr', dir: 'bidir', desc: 'Address bus bit 14.' },
+        { n: 38, name: 'A13', type: 'addr', dir: 'bidir', desc: 'Address bus bit 13.' },
+        { n: 39, name: 'A12', type: 'addr', dir: 'bidir', desc: 'Address bus bit 12.' },
+        { n: 40, name: 'A11', type: 'addr', dir: 'bidir', desc: 'Address bus bit 11.' },
+        { n: 41, name: 'A10', type: 'addr', dir: 'bidir', desc: 'Address bus bit 10.' },
+        { n: 42, name: 'A9', type: 'addr', dir: 'bidir', desc: 'Address bus bit 9.' },
+        { n: 43, name: 'A8', type: 'addr', dir: 'bidir', desc: 'Address bus bit 8.' },
+        { n: 44, name: 'A7', type: 'addr', dir: 'bidir', desc: 'Address bus bit 7.' },
+        { n: 45, name: 'A6', type: 'addr', dir: 'bidir', desc: 'Address bus bit 6.' },
+        { n: 46, name: 'A5', type: 'addr', dir: 'bidir', desc: 'Address bus bit 5.' },
+        { n: 47, name: 'A4', type: 'addr', dir: 'bidir', desc: 'Address bus bit 4.' },
+        { n: 48, name: 'A3', type: 'addr', dir: 'bidir', desc: 'Address bus bit 3.' },
       ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "A2",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 2 (input for register access, output during DMA/refresh)."
-        },
-        {
-          "n": 2,
-          "name": "A1",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 1."
-        },
-        {
-          "n": 3,
-          "name": "A0",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 0."
-        },
-        {
-          "n": 4,
-          "name": "VCC",
-          "type": "power",
-          "dir": "-",
-          "desc": "+5 V supply. TED draws a lot; expect the body to be hot.",
-          "terms": [
-            "vcc",
-            "hmos"
-          ],
-          "probe": "+4.9 to +5.2 V"
-        },
-        {
-          "n": 5,
-          "name": "CS0",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "ROM chip-select for BASIC ROM ($8000-$BFFF). Active low in practice.",
-          "terms": [
-            "cs",
-            "bank-switch"
-          ],
-          "verify": true
-        },
-        {
-          "n": 6,
-          "name": "CS1",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "ROM chip-select for KERNAL ROM ($C000-$FFFF).",
-          "terms": [
-            "cs",
-            "bank-switch"
-          ],
-          "verify": true
-        },
-        {
-          "n": 7,
-          "name": "R/W",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Read/Write from the CPU.",
-          "terms": [
-            "rw"
-          ]
-        },
-        {
-          "n": 8,
-          "name": "/IRQ",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Interrupt to CPU: raster compare, timers 1-3, light pen.",
-          "terms": [
-            "irq"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 9,
-          "name": "MUX",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "DRAM row/column address multiplex control to the 4164s.",
-          "terms": [
-            "mux"
-          ]
-        },
-        {
-          "n": 10,
-          "name": "/RAS",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "DRAM Row Address Strobe.",
-          "terms": [
-            "ras-cas"
-          ],
-          "activeLow": true,
-          "probe": "Must pulse constantly. No pulses = TED dead."
-        },
-        {
-          "n": 11,
-          "name": "/CAS",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "DRAM Column Address Strobe.",
-          "terms": [
-            "ras-cas"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 12,
-          "name": "OUT",
-          "type": "clock",
-          "dir": "out",
-          "desc": "CPU clock out (PHI OUT) to 7501 pin 1. 0.89 MHz single / 1.76 MHz double speed.",
-          "terms": [
-            "clock"
-          ]
-        },
-        {
-          "n": 13,
-          "name": "COLOR",
-          "type": "video",
-          "dir": "out",
-          "desc": "Chrominance (colour) video output.",
-          "terms": [
-            "luma-chroma"
-          ]
-        },
-        {
-          "n": 14,
-          "name": "IN",
-          "type": "clock",
-          "dir": "in",
-          "desc": "Master clock in from the oscillator: 17.734 MHz (PAL) / 14.318 MHz (NTSC).",
-          "terms": [
-            "clock"
-          ],
-          "probe": "Crystal frequency present. Dead = oscillator / crystal."
-        },
-        {
-          "n": 15,
-          "name": "K0",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard row input 0 (read via the 6529 column latch)."
-        },
-        {
-          "n": 16,
-          "name": "K1",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard row input 1."
-        },
-        {
-          "n": 17,
-          "name": "K2",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard row input 2."
-        },
-        {
-          "n": 18,
-          "name": "K3",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard row input 3."
-        },
-        {
-          "n": 19,
-          "name": "K4",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard row input 4."
-        },
-        {
-          "n": 20,
-          "name": "K5",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard row input 5."
-        },
-        {
-          "n": 21,
-          "name": "K6",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard row input 6."
-        },
-        {
-          "n": 22,
-          "name": "K7",
-          "type": "kbd",
-          "dir": "in",
-          "desc": "Keyboard row input 7."
-        },
-        {
-          "n": 23,
-          "name": "LUM",
-          "type": "video",
-          "dir": "out",
-          "desc": "Luminance + sync video output.",
-          "terms": [
-            "luma-chroma"
-          ],
-          "probe": "Video waveform with sync pulses on a scope."
-        },
-        {
-          "n": 24,
-          "name": "VSS",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        },
-        {
-          "n": 25,
-          "name": "DB0",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 0."
-        },
-        {
-          "n": 26,
-          "name": "DB1",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 1."
-        },
-        {
-          "n": 27,
-          "name": "DB2",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 2."
-        },
-        {
-          "n": 28,
-          "name": "DB3",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 3."
-        },
-        {
-          "n": 29,
-          "name": "DB4",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 4."
-        },
-        {
-          "n": 30,
-          "name": "DB5",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 5."
-        },
-        {
-          "n": 31,
-          "name": "DB6",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 6."
-        },
-        {
-          "n": 32,
-          "name": "DB7",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 7."
-        },
-        {
-          "n": 33,
-          "name": "SND",
-          "type": "audio",
-          "dir": "out",
-          "desc": "Sound output (2 voices: tone + tone/noise)."
-        },
-        {
-          "n": 34,
-          "name": "BA",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Bus Available: goes LOW before TED takes the bus. Drives CPU RDY.",
-          "terms": [
-            "ba",
-            "badline"
-          ]
-        },
-        {
-          "n": 35,
-          "name": "AEC",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Address Enable Control to CPU pin 4.",
-          "terms": [
-            "aec"
-          ]
-        },
-        {
-          "n": 36,
-          "name": "A15",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 15."
-        },
-        {
-          "n": 37,
-          "name": "A14",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 14."
-        },
-        {
-          "n": 38,
-          "name": "A13",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 13."
-        },
-        {
-          "n": 39,
-          "name": "A12",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 12."
-        },
-        {
-          "n": 40,
-          "name": "A11",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 11."
-        },
-        {
-          "n": 41,
-          "name": "A10",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 10."
-        },
-        {
-          "n": 42,
-          "name": "A9",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 9."
-        },
-        {
-          "n": 43,
-          "name": "A8",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 8."
-        },
-        {
-          "n": 44,
-          "name": "A7",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 7."
-        },
-        {
-          "n": 45,
-          "name": "A6",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 6."
-        },
-        {
-          "n": 46,
-          "name": "A5",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 5."
-        },
-        {
-          "n": 47,
-          "name": "A4",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 4."
-        },
-        {
-          "n": 48,
-          "name": "A3",
-          "type": "addr",
-          "dir": "bidir",
-          "desc": "Address bus bit 3."
-        }
-      ]
     },
-    "pio6529": {
-      "id": "pio6529",
-      "name": "6529 Single Port Interface",
-      "short": "6529",
-      "family": "MOS",
-      "role": "Keyboard column latch / user port",
-      "pkg": "DIP-20",
-      "machines": [
-        "c16",
-        "plus4"
-      ],
-      "location": {
-        "c16": "U7",
-        "plus4": "U7 (keyboard), U8 (user port)"
+    pio6529: {
+      id: 'pio6529',
+      name: '6529 Single Port Interface',
+      short: '6529',
+      family: 'MOS',
+      role: 'Keyboard column latch / user port',
+      pkg: 'DIP-20',
+      machines: ['c16', 'plus4'],
+      location: {
+        c16: 'U7',
+        plus4: 'U7 (keyboard), U8 (user port)',
       },
-      "summary": "A single 8-bit latching port. The C16 uses one to drive the keyboard columns; the Plus/4 uses two (keyboard and user port). Written when /CS and R/W are LOW.",
-      "fails": [
-        "Dead keyboard row or column",
-        "Dead user port (Plus/4)"
+      summary: 'A single 8-bit latching port. The C16 uses one to drive the keyboard columns; the Plus/4 uses two (keyboard and user port). Written when /CS and R/W are LOW.',
+      fails: ['Dead keyboard row or column', 'Dead user port (Plus/4)'],
+      heat: 'cool',
+      datasheets: [
+        {
+          label: 'MOS 6529 datasheet (zimmers.net chipdata)',
+          url: 'http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/',
+          verify: true,
+        },
       ],
-      "heat": "cool",
-      "datasheets": [
-        {
-          "label": "MOS 6529 datasheet (zimmers.net chipdata)",
-          "url": "http://www.zimmers.net/anonftp/pub/cbm/documents/chipdata/",
-          "verify": true
-        }
+      pins: [
+        { n: 1, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/Write from CPU.', terms: ['rw'] },
+        { n: 2, name: 'P0', type: 'io', dir: 'bidir', desc: 'Port bit 0: keyboard column 0 drive.' },
+        { n: 3, name: 'P1', type: 'io', dir: 'bidir', desc: 'Port bit 1: keyboard column 1.' },
+        { n: 4, name: 'P2', type: 'io', dir: 'bidir', desc: 'Port bit 2: keyboard column 2.' },
+        { n: 5, name: 'P3', type: 'io', dir: 'bidir', desc: 'Port bit 3: keyboard column 3.' },
+        { n: 6, name: 'P4', type: 'io', dir: 'bidir', desc: 'Port bit 4: keyboard column 4.' },
+        { n: 7, name: 'P5', type: 'io', dir: 'bidir', desc: 'Port bit 5: keyboard column 5.' },
+        { n: 8, name: 'P6', type: 'io', dir: 'bidir', desc: 'Port bit 6: keyboard column 6.' },
+        { n: 9, name: 'P7', type: 'io', dir: 'bidir', desc: 'Port bit 7: keyboard column 7.' },
+        { n: 10, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 11, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 12, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 13, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 14, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 15, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 16, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 17, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 18, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 19, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select, active low.', terms: ['cs'], activeLow: true },
+        { n: 20, name: 'Vdd', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+5 V' },
       ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "R/W",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Read/Write from CPU.",
-          "terms": [
-            "rw"
-          ]
-        },
-        {
-          "n": 2,
-          "name": "P0",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "Port bit 0: keyboard column 0 drive."
-        },
-        {
-          "n": 3,
-          "name": "P1",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "Port bit 1: keyboard column 1."
-        },
-        {
-          "n": 4,
-          "name": "P2",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "Port bit 2: keyboard column 2."
-        },
-        {
-          "n": 5,
-          "name": "P3",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "Port bit 3: keyboard column 3."
-        },
-        {
-          "n": 6,
-          "name": "P4",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "Port bit 4: keyboard column 4."
-        },
-        {
-          "n": 7,
-          "name": "P5",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "Port bit 5: keyboard column 5."
-        },
-        {
-          "n": 8,
-          "name": "P6",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "Port bit 6: keyboard column 6."
-        },
-        {
-          "n": 9,
-          "name": "P7",
-          "type": "io",
-          "dir": "bidir",
-          "desc": "Port bit 7: keyboard column 7."
-        },
-        {
-          "n": 10,
-          "name": "Vss",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        },
-        {
-          "n": 11,
-          "name": "D7",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 7."
-        },
-        {
-          "n": 12,
-          "name": "D6",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 6."
-        },
-        {
-          "n": 13,
-          "name": "D5",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 5."
-        },
-        {
-          "n": 14,
-          "name": "D4",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 4."
-        },
-        {
-          "n": 15,
-          "name": "D3",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 3."
-        },
-        {
-          "n": 16,
-          "name": "D2",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 2."
-        },
-        {
-          "n": 17,
-          "name": "D1",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 1."
-        },
-        {
-          "n": 18,
-          "name": "D0",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 0."
-        },
-        {
-          "n": 19,
-          "name": "/CS",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Chip select, active low.",
-          "terms": [
-            "cs"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 20,
-          "name": "Vdd",
-          "type": "power",
-          "dir": "-",
-          "desc": "+5 V supply.",
-          "terms": [
-            "vcc"
-          ],
-          "probe": "+5 V"
-        }
-      ]
     },
-    "acia6551": {
-      "id": "acia6551",
-      "name": "6551 ACIA",
-      "short": "6551",
-      "family": "MOS / Rockwell / WDC",
-      "role": "RS-232 serial (Plus/4 only)",
-      "pkg": "DIP-28",
-      "machines": [
-        "plus4"
-      ],
-      "location": {
-        "plus4": "U4"
+    acia6551: {
+      id: 'acia6551',
+      name: '6551 ACIA',
+      short: '6551',
+      family: 'MOS / Rockwell / WDC',
+      role: 'RS-232 serial (Plus/4 only)',
+      pkg: 'DIP-28',
+      machines: ['plus4'],
+      location: {
+        plus4: 'U4',
       },
-      "summary": "Asynchronous serial interface for the Plus/4 user port, up to 19,200 bps. Vdd is on pin 15, not 28. Any 6551 or 65C51 works as a replacement.",
-      "fails": [
-        "No or garbled RS-232"
+      summary: 'Asynchronous serial interface for the Plus/4 user port, up to 19,200 bps. Vdd is on pin 15, not 28. Any 6551 or 65C51 works as a replacement.',
+      fails: ['No or garbled RS-232'],
+      heat: 'cool',
+      datasheets: [
+        {
+          label: 'WDC W65C51 datasheet',
+          url: 'https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf',
+          verify: true,
+        },
       ],
-      "heat": "cool",
-      "datasheets": [
-        {
-          "label": "WDC W65C51 datasheet",
-          "url": "https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf",
-          "verify": true
-        }
+      pins: [
+        { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 2, name: 'CS0', type: 'ctrl', dir: 'in', desc: 'Chip select, active HIGH.', terms: ['cs', 'active-high'] },
+        { n: 3, name: '/CS1', type: 'ctrl', dir: 'in', desc: 'Chip select, active LOW. Both must be true.', terms: ['cs'], activeLow: true },
+        { n: 4, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset.', terms: ['reset'], activeLow: true },
+        { n: 5, name: 'RxC', type: 'clock', dir: 'bidir', desc: 'Receive clock (external) or baud-rate clock out.', terms: ['clock'] },
+        { n: 6, name: 'XTLI', type: 'clock', dir: 'in', desc: 'Crystal in (1.8432 MHz).' },
+        { n: 7, name: 'XTLO', type: 'clock', dir: 'out', desc: 'Crystal out.' },
+        { n: 8, name: '/RTS', type: 'serial', dir: 'out', desc: 'Request To Send.', terms: ['acia'], activeLow: true },
+        { n: 9, name: '/CTS', type: 'serial', dir: 'in', desc: 'Clear To Send.', activeLow: true },
+        { n: 10, name: 'TxD', type: 'serial', dir: 'out', desc: 'Transmit data.' },
+        { n: 11, name: '/DTR', type: 'serial', dir: 'out', desc: 'Data Terminal Ready.', activeLow: true },
+        { n: 12, name: 'RxD', type: 'serial', dir: 'in', desc: 'Receive data.' },
+        { n: 13, name: 'RS0', type: 'addr', dir: 'in', desc: 'Register select 0.' },
+        { n: 14, name: 'RS1', type: 'addr', dir: 'in', desc: 'Register select 1.' },
+        { n: 15, name: 'Vdd', type: 'power', dir: '-', desc: '+5 V supply (note: pin 15, not 28).', terms: ['vcc'] },
+        { n: 16, name: '/DCD', type: 'serial', dir: 'in', desc: 'Data Carrier Detect.', activeLow: true },
+        { n: 17, name: '/DSR', type: 'serial', dir: 'in', desc: 'Data Set Ready.', activeLow: true },
+        { n: 18, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 19, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 20, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 21, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 22, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 23, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 24, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 25, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 26, name: '/IRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt request.', terms: ['irq'], activeLow: true },
+        { n: 27, name: 'Φ2', type: 'clock', dir: 'in', desc: 'System clock phase 2.', terms: ['clock'] },
+        { n: 28, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/Write.', terms: ['rw'] },
       ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "Vss",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        },
-        {
-          "n": 2,
-          "name": "CS0",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Chip select, active HIGH.",
-          "terms": [
-            "cs",
-            "active-high"
-          ]
-        },
-        {
-          "n": 3,
-          "name": "/CS1",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Chip select, active LOW. Both must be true.",
-          "terms": [
-            "cs"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 4,
-          "name": "/RES",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Reset.",
-          "terms": [
-            "reset"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 5,
-          "name": "RxC",
-          "type": "clock",
-          "dir": "bidir",
-          "desc": "Receive clock (external) or baud-rate clock out.",
-          "terms": [
-            "clock"
-          ]
-        },
-        {
-          "n": 6,
-          "name": "XTLI",
-          "type": "clock",
-          "dir": "in",
-          "desc": "Crystal in (1.8432 MHz)."
-        },
-        {
-          "n": 7,
-          "name": "XTLO",
-          "type": "clock",
-          "dir": "out",
-          "desc": "Crystal out."
-        },
-        {
-          "n": 8,
-          "name": "/RTS",
-          "type": "serial",
-          "dir": "out",
-          "desc": "Request To Send.",
-          "terms": [
-            "acia"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 9,
-          "name": "/CTS",
-          "type": "serial",
-          "dir": "in",
-          "desc": "Clear To Send.",
-          "activeLow": true
-        },
-        {
-          "n": 10,
-          "name": "TxD",
-          "type": "serial",
-          "dir": "out",
-          "desc": "Transmit data."
-        },
-        {
-          "n": 11,
-          "name": "/DTR",
-          "type": "serial",
-          "dir": "out",
-          "desc": "Data Terminal Ready.",
-          "activeLow": true
-        },
-        {
-          "n": 12,
-          "name": "RxD",
-          "type": "serial",
-          "dir": "in",
-          "desc": "Receive data."
-        },
-        {
-          "n": 13,
-          "name": "RS0",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Register select 0."
-        },
-        {
-          "n": 14,
-          "name": "RS1",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Register select 1."
-        },
-        {
-          "n": 15,
-          "name": "Vdd",
-          "type": "power",
-          "dir": "-",
-          "desc": "+5 V supply (note: pin 15, not 28).",
-          "terms": [
-            "vcc"
-          ]
-        },
-        {
-          "n": 16,
-          "name": "/DCD",
-          "type": "serial",
-          "dir": "in",
-          "desc": "Data Carrier Detect.",
-          "activeLow": true
-        },
-        {
-          "n": 17,
-          "name": "/DSR",
-          "type": "serial",
-          "dir": "in",
-          "desc": "Data Set Ready.",
-          "activeLow": true
-        },
-        {
-          "n": 18,
-          "name": "D0",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 0."
-        },
-        {
-          "n": 19,
-          "name": "D1",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 1."
-        },
-        {
-          "n": 20,
-          "name": "D2",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 2."
-        },
-        {
-          "n": 21,
-          "name": "D3",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 3."
-        },
-        {
-          "n": 22,
-          "name": "D4",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 4."
-        },
-        {
-          "n": 23,
-          "name": "D5",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 5."
-        },
-        {
-          "n": 24,
-          "name": "D6",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 6."
-        },
-        {
-          "n": 25,
-          "name": "D7",
-          "type": "data",
-          "dir": "bidir",
-          "desc": "Data bus bit 7."
-        },
-        {
-          "n": 26,
-          "name": "/IRQ",
-          "type": "ctrl",
-          "dir": "out",
-          "desc": "Interrupt request.",
-          "terms": [
-            "irq"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 27,
-          "name": "Φ2",
-          "type": "clock",
-          "dir": "in",
-          "desc": "System clock phase 2.",
-          "terms": [
-            "clock"
-          ]
-        },
-        {
-          "n": 28,
-          "name": "R/W",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Read/Write.",
-          "terms": [
-            "rw"
-          ]
-        }
-      ]
     },
-    "dram4164": {
-      "id": "dram4164",
-      "name": "4164 DRAM 64K×1",
-      "short": "4164",
-      "family": "JEDEC DRAM",
-      "role": "Main RAM (8 chips = 64 KB; C16 fits 2 × 4416 or 8 × 4164 depending on revision)",
-      "pkg": "DIP-16",
-      "machines": [
-        "c16",
-        "plus4",
-        "c64",
-        "apple2e"
-      ],
-      "location": {
-        "c16": "U5, U6 (4416) or bank",
-        "plus4": "U9-U16",
-        "c64": "U9-U12, U21-U24",
-        "apple2e": "RAM row"
+    dram4164: {
+      id: 'dram4164',
+      name: '4164 DRAM 64K×1',
+      short: '4164',
+      family: 'JEDEC DRAM',
+      role: 'Main RAM (8 chips = 64 KB; C16 fits 2 × 4416 or 8 × 4164 depending on revision)',
+      pkg: 'DIP-16',
+      machines: ['c16', 'plus4', 'c64', 'apple2e'],
+      location: {
+        c16: 'U5, U6 (4416) or bank',
+        plus4: 'U9-U16',
+        c64: 'U9-U12, U21-U24',
+        apple2e: 'RAM row',
       },
-      "summary": "One bit wide, 64K deep. Eight of them make 64 KB. The video chip (TED, VIC-II) generates /RAS, /CAS and MUX and supplies refresh. A 41256 substitutes if pins 1 and 16 are linked. Single +5 V supply (unlike the 4116).",
-      "fails": [
-        "Garbled or checkerboard screen",
-        "Will not boot",
-        "Random crashes",
-        "One stuck bit in every byte"
+      summary: 'One bit wide, 64K deep. Eight of them make 64 KB. The video chip (TED, VIC-II) generates /RAS, /CAS and MUX and supplies refresh. A 41256 substitutes if pins 1 and 16 are linked. Single +5 V supply (unlike the 4116).',
+      fails: ['Garbled or checkerboard screen', 'Will not boot', 'Random crashes', 'One stuck bit in every byte'],
+      heat: 'warm',
+      datasheets: [
+        { label: 'TI TMS4164 datasheet (bitsavers)', url: 'http://www.bitsavers.org/components/ti/', verify: true },
       ],
-      "heat": "warm",
-      "datasheets": [
-        {
-          "label": "TI TMS4164 datasheet (bitsavers)",
-          "url": "http://www.bitsavers.org/components/ti/",
-          "verify": true
-        }
+      pins: [
+        { n: 1, name: 'NC', type: 'nc', dir: '-', desc: 'No connection (A8 on a 41256).' },
+        { n: 2, name: 'DIN', type: 'data', dir: 'in', desc: 'Data in.' },
+        { n: 3, name: '/WE', type: 'ctrl', dir: 'in', desc: 'Write enable.', activeLow: true },
+        { n: 4, name: '/RAS', type: 'ctrl', dir: 'in', desc: 'Row address strobe.', terms: ['ras-cas'], activeLow: true },
+        { n: 5, name: 'A0', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 0.', terms: ['mux'] },
+        { n: 6, name: 'A2', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 2.' },
+        { n: 7, name: 'A1', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 1.' },
+        { n: 8, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+5 V' },
+        { n: 9, name: 'A7', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 7.' },
+        { n: 10, name: 'A5', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 5.' },
+        { n: 11, name: 'A4', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 4.' },
+        { n: 12, name: 'A3', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 3.' },
+        { n: 13, name: 'A6', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 6.' },
+        { n: 14, name: 'DOUT', type: 'data', dir: 'out', desc: 'Data out (tri-state).', terms: ['tristate'] },
+        { n: 15, name: '/CAS', type: 'ctrl', dir: 'in', desc: 'Column address strobe.', terms: ['ras-cas'], activeLow: true },
+        { n: 16, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
       ],
-      "pins": [
-        {
-          "n": 1,
-          "name": "NC",
-          "type": "nc",
-          "dir": "-",
-          "desc": "No connection (A8 on a 41256)."
-        },
-        {
-          "n": 2,
-          "name": "DIN",
-          "type": "data",
-          "dir": "in",
-          "desc": "Data in."
-        },
-        {
-          "n": 3,
-          "name": "/WE",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Write enable.",
-          "activeLow": true
-        },
-        {
-          "n": 4,
-          "name": "/RAS",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Row address strobe.",
-          "terms": [
-            "ras-cas"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 5,
-          "name": "A0",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Multiplexed address bit 0.",
-          "terms": [
-            "mux"
-          ]
-        },
-        {
-          "n": 6,
-          "name": "A2",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Multiplexed address bit 2."
-        },
-        {
-          "n": 7,
-          "name": "A1",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Multiplexed address bit 1."
-        },
-        {
-          "n": 8,
-          "name": "Vcc",
-          "type": "power",
-          "dir": "-",
-          "desc": "+5 V.",
-          "terms": [
-            "vcc"
-          ],
-          "probe": "+5 V"
-        },
-        {
-          "n": 9,
-          "name": "A7",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Multiplexed address bit 7."
-        },
-        {
-          "n": 10,
-          "name": "A5",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Multiplexed address bit 5."
-        },
-        {
-          "n": 11,
-          "name": "A4",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Multiplexed address bit 4."
-        },
-        {
-          "n": 12,
-          "name": "A3",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Multiplexed address bit 3."
-        },
-        {
-          "n": 13,
-          "name": "A6",
-          "type": "addr",
-          "dir": "in",
-          "desc": "Multiplexed address bit 6."
-        },
-        {
-          "n": 14,
-          "name": "DOUT",
-          "type": "data",
-          "dir": "out",
-          "desc": "Data out (tri-state).",
-          "terms": [
-            "tristate"
-          ]
-        },
-        {
-          "n": 15,
-          "name": "/CAS",
-          "type": "ctrl",
-          "dir": "in",
-          "desc": "Column address strobe.",
-          "terms": [
-            "ras-cas"
-          ],
-          "activeLow": true
-        },
-        {
-          "n": 16,
-          "name": "Vss",
-          "type": "ground",
-          "dir": "-",
-          "desc": "0 V.",
-          "terms": [
-            "gnd"
-          ]
-        }
-      ]
     },
-    "rom23128": {
-      "id": "rom23128",
-      "name": "23128 Mask ROM 16K×8",
-      "short": "23128",
-      "family": "Mask ROM (27128-style)",
-      "role": "BASIC 3.5 and KERNAL ROMs",
-      "pkg": "DIP-28",
-      "machines": [
-        "c16",
-        "plus4"
-      ],
-      "location": {
-        "c16": "U3 (BASIC), U4 (KERNAL)",
-        "plus4": "U23, U24 + 3-plus-1 ROMs"
+    rom23128: {
+      id: 'rom23128',
+      name: '23128 Mask ROM 16K×8',
+      short: '23128',
+      family: 'Mask ROM (27128-style)',
+      role: 'BASIC 3.5 and KERNAL ROMs',
+      pkg: 'DIP-28',
+      machines: ['c16', 'plus4'],
+      location: {
+        c16: 'U3 (BASIC), U4 (KERNAL)',
+        plus4: 'U23, U24 + 3-plus-1 ROMs',
       },
-      "summary": "28-pin mask ROMs selected by TED CS0 ($8000-$BFFF) and CS1 ($C000-$FFFF). Replace with a 27128 EPROM; check the chip-select pin polarity.",
-      "fails": [
-        "Garbage on boot",
-        "Boots to black screen",
-        "Missing characters"
-      ],
-      "heat": "cool",
-      "pins": null,
-      "datasheets": [
+      summary: '28-pin mask ROMs selected by TED CS0 ($8000-$BFFF) and CS1 ($C000-$FFFF). Replace with a 27128 EPROM; check the chip-select pin polarity.',
+      fails: ['Garbage on boot', 'Boots to black screen', 'Missing characters'],
+      heat: 'cool',
+      pins: null,
+      datasheets: [
         {
-          "label": "Plus/4 Technical Manual (ROM section)",
-          "url": "http://www.zimmers.net/anonftp/pub/cbm/manuals/264/",
-          "verify": true
-        }
-      ]
+          label: 'Plus/4 Technical Manual (ROM section)',
+          url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/264/',
+          verify: true,
+        },
+      ],
     },
-    "cpu6510": {
-      "id": "cpu6510",
-      "name": "6510 CPU",
-      "short": "6510",
-      "role": "CPU",
-      "pkg": "DIP-40",
-      "machines": [
-        "c64"
+    cpu6510: {
+      id: 'cpu6510',
+      name: '6510 CPU',
+      short: '6510',
+      role: 'CPU',
+      pkg: 'DIP-40',
+      machines: ['c64'],
+      summary: 'C64 CPU at ~1 MHz with a 6-bit I/O port (P0-P5) for bank switching and the Datasette. Same core as the 6502; the port is the difference.',
+      fails: ['Blank screen', 'Dead machine'],
+      heat: 'warm',
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'Φ0 in', type: 'clock', dir: 'in', desc: 'Clock input. On the C64 it is fed from the VIC-II Φ0 output (VIC pin 17).', terms: ['clock'], probe: 'Square wave near 1 MHz. Dead clock = dead CPU.', verify: true },
+        { n: 2, name: 'RDY', type: 'ctrl', dir: 'in', desc: 'Ready. The VIC-II pulls this LOW through BA to stall the CPU on badlines.', terms: ['rdy', 'ba'], probe: 'HIGH. Stuck LOW = frozen machine.' },
+        { n: 3, name: '/IRQ', type: 'ctrl', dir: 'in', desc: 'Interrupt request from CIA1 and the VIC-II.', activeLow: true, terms: ['irq'] },
+        { n: 4, name: '/NMI', type: 'ctrl', dir: 'in', desc: 'Non-maskable interrupt, from CIA2 (sheet).', activeLow: true, terms: ['nmi'] },
+        { n: 5, name: 'AEC', type: 'ctrl', dir: 'in', desc: 'Address Enable Control. VIC-II takes it LOW to tri-state the CPU address bus during its own fetches.', terms: ['aec', 'tristate'] },
+        { n: 6, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V logic supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V', verify: true },
+        { n: 7, name: 'A0', type: 'addr', dir: 'out', desc: 'Address bus bit 0.' },
+        { n: 8, name: 'A1', type: 'addr', dir: 'out', desc: 'Address bus bit 1.' },
+        { n: 9, name: 'A2', type: 'addr', dir: 'out', desc: 'Address bus bit 2.' },
+        { n: 10, name: 'A3', type: 'addr', dir: 'out', desc: 'Address bus bit 3.' },
+        { n: 11, name: 'A4', type: 'addr', dir: 'out', desc: 'Address bus bit 4.' },
+        { n: 12, name: 'A5', type: 'addr', dir: 'out', desc: 'Address bus bit 5.' },
+        { n: 13, name: 'A6', type: 'addr', dir: 'out', desc: 'Address bus bit 6.' },
+        { n: 14, name: 'A7', type: 'addr', dir: 'out', desc: 'Address bus bit 7.' },
+        { n: 15, name: 'A8', type: 'addr', dir: 'out', desc: 'Address bus bit 8.' },
+        { n: 16, name: 'A9', type: 'addr', dir: 'out', desc: 'Address bus bit 9.' },
+        { n: 17, name: 'A10', type: 'addr', dir: 'out', desc: 'Address bus bit 10.' },
+        { n: 18, name: 'A11', type: 'addr', dir: 'out', desc: 'Address bus bit 11.' },
+        { n: 19, name: 'A12', type: 'addr', dir: 'out', desc: 'Address bus bit 12.' },
+        { n: 20, name: 'A13', type: 'addr', dir: 'out', desc: 'Address bus bit 13.' },
+        { n: 21, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 22, name: 'A14', type: 'addr', dir: 'out', desc: 'Address bus bit 14.' },
+        { n: 23, name: 'A15', type: 'addr', dir: 'out', desc: 'Address bus bit 15.' },
+        { n: 24, name: 'P5', type: 'io', dir: 'bidir', desc: 'Processor port bit 5: Datasette motor (verify bit map against the 6510 port table).', verify: true },
+        { n: 25, name: 'P4', type: 'io', dir: 'bidir', desc: 'Processor port bit 4: Datasette sense (switch).', verify: true },
+        { n: 26, name: 'P3', type: 'io', dir: 'bidir', desc: 'Processor port bit 3: Datasette write line.', verify: true },
+        { n: 27, name: 'P2', type: 'io', dir: 'bidir', desc: 'Processor port bit 2: /CHAREN, character ROM or I/O at $D000.', verify: true },
+        { n: 28, name: 'P1', type: 'io', dir: 'bidir', desc: 'Processor port bit 1: /HIRAM, KERNAL ROM at $E000.', verify: true },
+        { n: 29, name: 'P0', type: 'io', dir: 'bidir', desc: 'Processor port bit 0: /LORAM, BASIC ROM at $A000.', verify: true },
+        { n: 30, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 31, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 32, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 33, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 34, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 35, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 36, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 37, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 38, name: 'R/W', type: 'ctrl', dir: 'out', desc: 'Read/write from the CPU. HIGH = read, LOW = write.', terms: ['rw'], probe: 'Toggles on a running machine.' },
+        { n: 39, name: 'Φ2 out', type: 'clock', dir: 'out', desc: 'Phase 2 system clock out. Feeds the CIA (pin 25) and SID (pin 6) Φ2 inputs.', terms: ['clock'], probe: 'Square wave about 1 MHz.' },
+        { n: 40, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW at power-up, released HIGH so the CPU reads its reset vector.', activeLow: true, terms: ['reset'], probe: 'LOW briefly at power-up, then HIGH.' },
       ],
-      "summary": "C64 CPU at ~1 MHz with 6-bit I/O port for bank switching and Datasette.",
-      "fails": [
-        "Blank screen",
-        "Dead machine"
-      ],
-      "heat": "warm",
-      "pins": null,
-      "datasheets": []
+      verifiedAgainst: 'Commodore C64 Chip Pinouts sheet',
     },
-    "vic2": {
-      "id": "vic2",
-      "name": "6567 / 6569 VIC-II",
-      "short": "VIC-II",
-      "role": "Video + DRAM refresh + CPU clock",
-      "pkg": "DIP-40",
-      "machines": [
-        "c64"
+    vic2: {
+      id: 'vic2',
+      name: '6567 / 6569 VIC-II',
+      short: 'VIC-II',
+      role: 'Video + DRAM refresh + CPU clock',
+      pkg: 'DIP-40',
+      machines: ['c64'],
+      summary: '6567 NTSC, 6569 PAL. Vdd (pin 13) is +12 V; Vcc (pin 40) is +5 V. Makes the picture, refreshes the DRAM and sets the CPU clock and bus stealing. 8565/8562 are later 5 V HMOS-II parts. Runs hot.',
+      fails: ['No or garbled picture', 'Bad colour', 'Runs hot'],
+      heat: 'hot',
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'DB6', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 6 (DB0-DB11 are the 12-bit VIC bus to colour and screen RAM).' },
+        { n: 2, name: 'DB5', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 5.' },
+        { n: 3, name: 'DB4', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 4.' },
+        { n: 4, name: 'DB3', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 3.' },
+        { n: 5, name: 'DB2', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 2.' },
+        { n: 6, name: 'DB1', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 1.' },
+        { n: 7, name: 'DB0', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 0.' },
+        { n: 8, name: '/IRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt request to the CPU /IRQ. Open-drain, shared with CIA1.', activeLow: true, terms: ['irq', 'open-drain'] },
+        { n: 9, name: 'LP', type: 'ctrl', dir: 'in', desc: 'Light pen input.' },
+        { n: 10, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select from the PLA. LOW to read or write VIC registers.', activeLow: true, terms: ['cs'], probe: 'Pulses LOW on each VIC register access.' },
+        { n: 11, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 12, name: 'BA', type: 'ctrl', dir: 'out', desc: 'Bus Available. Goes LOW about three cycles before a badline; wired to CPU RDY.', terms: ['ba', 'badline'] },
+        { n: 13, name: 'Vdd', type: 'power', dir: '-', desc: '+12 V supply on the 6567/6569 (sheet).', terms: ['vcc'], probe: 'About +12 V. Missing or low = no picture.' },
+        { n: 14, name: 'COLOR', type: 'video', dir: 'out', desc: 'Chroma (colour) output to the video DIN.', terms: ['luma-chroma'] },
+        { n: 15, name: 'S/LUM', type: 'video', dir: 'out', desc: 'Luminance and sync output to the video DIN.', terms: ['luma-chroma'] },
+        { n: 16, name: 'AEC', type: 'ctrl', dir: 'out', desc: 'Address Enable Control. Drops LOW when the VIC takes the bus.', terms: ['aec'] },
+        { n: 17, name: 'Φ0', type: 'clock', dir: 'out', desc: 'Clock output to the CPU Φ0 input and the timing chain.', terms: ['clock'], probe: 'About 1 MHz square wave. No clock here = dead CPU.' },
+        { n: 18, name: '/RAS', type: 'ctrl', dir: 'out', desc: 'Row address strobe for the DRAM (refresh and video fetch).', activeLow: true, terms: ['ras-cas'], probe: 'Pulsing continuously.' },
+        { n: 19, name: '/CAS', type: 'ctrl', dir: 'out', desc: 'Column address strobe for the DRAM.', activeLow: true, terms: ['ras-cas'], probe: 'Pulsing continuously.' },
+        { n: 20, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 21, name: 'CL', type: 'clock', dir: 'in', desc: 'Video crystal, pin 21 side (sheet name CL). PAL 17.734 MHz / NTSC 14.318 MHz.', verify: true },
+        { n: 22, name: 'IN', type: 'clock', dir: 'in', desc: 'Video crystal, pin 22 side (sheet name IN). Pair with pin 21.', verify: true },
+        { n: 23, name: 'A11', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 11 to the DRAM.' },
+        { n: 24, name: 'A0', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 0 to the DRAM (row or column, multiplexed).' },
+        { n: 25, name: 'A1', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 1 to the DRAM.' },
+        { n: 26, name: 'A2', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 2 to the DRAM.' },
+        { n: 27, name: 'A3', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 3 to the DRAM.' },
+        { n: 28, name: 'A4', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 4 to the DRAM.' },
+        { n: 29, name: 'A5', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 5 to the DRAM.' },
+        { n: 30, name: 'A6', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 6 to the DRAM.' },
+        { n: 31, name: 'A7', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 7 to the DRAM.' },
+        { n: 32, name: 'A8', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 8 to the DRAM.' },
+        { n: 33, name: 'A9', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 9 to the DRAM.' },
+        { n: 34, name: 'A10', type: 'addr', dir: 'out', desc: 'VIC-II address bus bit 10 to the DRAM.' },
+        { n: 35, name: 'DB11', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 11 (top of the 12-bit VIC bus).' },
+        { n: 36, name: 'DB10', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 10.' },
+        { n: 37, name: 'DB9', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 9.' },
+        { n: 38, name: 'DB8', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 8.' },
+        { n: 39, name: 'DB7', type: 'data', dir: 'bidir', desc: 'VIC-II data bus bit 7.' },
+        { n: 40, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V logic supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
       ],
-      "summary": "6567 NTSC, 6569 PAL (Vdd +12 V); 8565/8562 are 5 V HMOS-II.",
-      "fails": [
-        "No or garbled picture",
-        "Bad colour",
-        "Runs hot"
-      ],
-      "heat": "hot",
-      "pins": null,
-      "datasheets": []
+      verifiedAgainst: 'Commodore C64 Chip Pinouts sheet',
     },
-    "sid6581": {
-      "id": "sid6581",
-      "name": "6581 / 8580 SID",
-      "short": "SID",
-      "role": "Sound + paddle A/D",
-      "pkg": "DIP-28",
-      "machines": [
-        "c64",
-        "c128"
+    sid6581: {
+      id: 'sid6581',
+      name: '6581 / 8580 SID',
+      short: 'SID',
+      role: 'Sound + paddle A/D',
+      pkg: 'DIP-28',
+      machines: ['c64', 'c128'],
+      summary: '3-voice synth at $D400-$D41C. 6581 (NMOS) needs Vdd (pin 28) at +12 V and Vcc (pin 25) at +5 V. 8580 (HMOS-II) runs at +9 V on Vdd; same pinout. Do not put a 12 V rail on an 8580 without checking. Filter caps on pins 1-4.',
+      fails: ['No or distorted sound', 'Dead paddles'],
+      heat: 'warm',
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'CAP1A', type: 'audio', dir: '-', desc: 'Filter capacitor pin, pair 1 (with CAP1B). Leave the external cap in place.' },
+        { n: 2, name: 'CAP1B', type: 'audio', dir: '-', desc: 'Filter capacitor pin, pair 1 (with CAP1A).' },
+        { n: 3, name: 'CAP2A', type: 'audio', dir: '-', desc: 'Filter capacitor pin, pair 2 (with CAP2B).' },
+        { n: 4, name: 'CAP2B', type: 'audio', dir: '-', desc: 'Filter capacitor pin, pair 2 (with CAP2A).' },
+        { n: 5, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW clears the SID registers.', activeLow: true, terms: ['reset'], probe: 'LOW at power-up, then HIGH.' },
+        { n: 6, name: 'Φ2', type: 'clock', dir: 'in', desc: 'Phase 2 clock from the CPU (6510 pin 39).', terms: ['clock'], probe: 'About 1 MHz square wave.' },
+        { n: 7, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 8, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select from the PLA. LOW enables SID registers at $D400.', activeLow: true, terms: ['cs'] },
+        { n: 9, name: 'A0', type: 'addr', dir: 'in', desc: 'Register select bit 0.' },
+        { n: 10, name: 'A1', type: 'addr', dir: 'in', desc: 'Register select bit 1.' },
+        { n: 11, name: 'A2', type: 'addr', dir: 'in', desc: 'Register select bit 2.' },
+        { n: 12, name: 'A3', type: 'addr', dir: 'in', desc: 'Register select bit 3.' },
+        { n: 13, name: 'A4', type: 'addr', dir: 'in', desc: 'Register select bit 4.' },
+        { n: 14, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 15, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 16, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 17, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 18, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 19, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 20, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 21, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 22, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 23, name: 'POTY', type: 'audio', dir: 'in', desc: 'Paddle A/D input Y. Control port pin 5.', verify: true },
+        { n: 24, name: 'POTX', type: 'audio', dir: 'in', desc: 'Paddle A/D input X. Control port pin 9.', verify: true },
+        { n: 25, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V digital supply (sheet).', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+        { n: 26, name: 'EXT IN', type: 'audio', dir: 'in', desc: 'External audio input into the filter. Unused on a stock C64.' },
+        { n: 27, name: 'AUDIO', type: 'audio', dir: 'out', desc: 'Mixed audio output to the audio and video DIN and the RF modulator.', verify: true },
+        { n: 28, name: 'Vdd', type: 'power', dir: '-', desc: 'Analog supply: +12 V on a 6581 (sheet). 8580 uses +9 V here.', terms: ['vcc'], probe: '+12 V (6581) or +9 V (8580)', verify: true },
       ],
-      "summary": "3-voice synth at $D400. 6581 Vdd = +12 V, 8580 = +9 V.",
-      "fails": [
-        "No or distorted sound",
-        "Dead paddles"
-      ],
-      "heat": "warm",
-      "pins": null,
-      "datasheets": []
+      verifiedAgainst: 'Commodore C64 Chip Pinouts sheet',
     },
-    "cia6526": {
-      "id": "cia6526",
-      "name": "6526 CIA",
-      "short": "CIA",
-      "role": "Keyboard, joysticks, serial, user port",
-      "pkg": "DIP-40",
-      "machines": [
-        "c64",
-        "c128"
+    cia6526: {
+      id: 'cia6526',
+      name: '6526 CIA',
+      short: 'CIA',
+      role: 'Keyboard, joysticks, serial, user port',
+      pkg: 'DIP-40',
+      machines: ['c64', 'c128'],
+      summary: 'CIA1 at $DC00 (keyboard, joysticks, /IRQ). CIA2 at $DD00 (serial bus, user port, /NMI). Two of these on a C64. The timers and the TOD clock are on the same chip.',
+      fails: ['Dead keyboard or joystick', 'No disk'],
+      heat: 'cool',
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 2, name: 'PA0', type: 'io', dir: 'bidir', desc: 'Port A bit 0. CIA1: keyboard rows and joystick. CIA2: serial bus.' },
+        { n: 3, name: 'PA1', type: 'io', dir: 'bidir', desc: 'Port A bit 1. CIA1: keyboard rows and joystick. CIA2: serial bus.' },
+        { n: 4, name: 'PA2', type: 'io', dir: 'bidir', desc: 'Port A bit 2. CIA1: keyboard rows and joystick. CIA2: serial bus.' },
+        { n: 5, name: 'PA3', type: 'io', dir: 'bidir', desc: 'Port A bit 3. CIA1: keyboard rows and joystick. CIA2: serial bus.' },
+        { n: 6, name: 'PA4', type: 'io', dir: 'bidir', desc: 'Port A bit 4. CIA1: keyboard rows and joystick. CIA2: serial bus.' },
+        { n: 7, name: 'PA5', type: 'io', dir: 'bidir', desc: 'Port A bit 5. CIA1: keyboard rows and joystick. CIA2: serial bus.' },
+        { n: 8, name: 'PA6', type: 'io', dir: 'bidir', desc: 'Port A bit 6. CIA1: keyboard rows and joystick. CIA2: serial bus.' },
+        { n: 9, name: 'PA7', type: 'io', dir: 'bidir', desc: 'Port A bit 7. CIA1: keyboard rows and joystick. CIA2: serial bus.' },
+        { n: 10, name: 'PB0', type: 'io', dir: 'bidir', desc: 'Port B bit 0. CIA1: keyboard columns and joystick. CIA2: user port.' },
+        { n: 11, name: 'PB1', type: 'io', dir: 'bidir', desc: 'Port B bit 1. CIA1: keyboard columns and joystick. CIA2: user port.' },
+        { n: 12, name: 'PB2', type: 'io', dir: 'bidir', desc: 'Port B bit 2. CIA1: keyboard columns and joystick. CIA2: user port.' },
+        { n: 13, name: 'PB3', type: 'io', dir: 'bidir', desc: 'Port B bit 3. CIA1: keyboard columns and joystick. CIA2: user port.' },
+        { n: 14, name: 'PB4', type: 'io', dir: 'bidir', desc: 'Port B bit 4. CIA1: keyboard columns and joystick. CIA2: user port.' },
+        { n: 15, name: 'PB5', type: 'io', dir: 'bidir', desc: 'Port B bit 5. CIA1: keyboard columns and joystick. CIA2: user port.' },
+        { n: 16, name: 'PB6', type: 'io', dir: 'bidir', desc: 'Port B bit 6. CIA1: keyboard columns and joystick. CIA2: user port.' },
+        { n: 17, name: 'PB7', type: 'io', dir: 'bidir', desc: 'Port B bit 7. CIA1: keyboard columns and joystick. CIA2: user port.' },
+        { n: 18, name: '/PC', type: 'ctrl', dir: 'out', desc: 'Peripheral control strobe. Pulses when port B is written.', activeLow: true, terms: ['strobe'], verify: true },
+        { n: 19, name: 'TOD', type: 'io', dir: 'in', desc: 'Time-of-day clock input (50/60 Hz tick).', verify: true },
+        { n: 20, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+        { n: 21, name: '/IRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt request. CIA1 drives /IRQ to the CPU; CIA2 drives /NMI (sheet).', activeLow: true, terms: ['irq', 'open-drain'] },
+        { n: 22, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 23, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select from the PLA. CIA1 at $DC00, CIA2 at $DD00.', activeLow: true, terms: ['cs'] },
+        { n: 24, name: '/FLAG', type: 'ctrl', dir: 'in', desc: 'Flag input. Edge-triggered interrupt input.', activeLow: true, verify: true },
+        { n: 25, name: 'Φ2', type: 'clock', dir: 'in', desc: 'Phase 2 clock from the CPU (6510 pin 39).', terms: ['clock'] },
+        { n: 26, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 27, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 28, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 29, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 30, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 31, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 32, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 33, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 34, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW clears the CIA.', activeLow: true, terms: ['reset'], probe: 'LOW at power-up, then HIGH.' },
+        { n: 35, name: 'RS3', type: 'addr', dir: 'in', desc: 'Register select bit 3.' },
+        { n: 36, name: 'RS2', type: 'addr', dir: 'in', desc: 'Register select bit 2.' },
+        { n: 37, name: 'RS1', type: 'addr', dir: 'in', desc: 'Register select bit 1.' },
+        { n: 38, name: 'RS0', type: 'addr', dir: 'in', desc: 'Register select bit 0.' },
+        { n: 39, name: 'SP', type: 'io', dir: 'bidir', desc: 'Serial port shift register I/O.', verify: true },
+        { n: 40, name: 'CNT', type: 'io', dir: 'bidir', desc: 'Counter clock input/output for the timers.', verify: true },
       ],
-      "summary": "CIA1 at $DC00 (keyboard/joystick/IRQ), CIA2 at $DD00 (serial bus, user port, NMI).",
-      "fails": [
-        "Dead keyboard or joystick",
-        "No disk"
-      ],
-      "heat": "cool",
-      "pins": null,
-      "datasheets": []
+      verifiedAgainst: 'Commodore C64 Chip Pinouts sheet',
     },
-    "pla82s100": {
-      "id": "pla82s100",
-      "name": "PLA 82S100",
-      "short": "PLA",
-      "role": "Address decode + bank switching",
-      "pkg": "DIP-28",
-      "machines": [
-        "c64"
+    pla82s100: {
+      id: 'pla82s100',
+      name: 'PLA 82S100',
+      short: 'PLA',
+      role: 'Address decode + bank switching',
+      pkg: 'DIP-28',
+      machines: ['c64'],
+      summary: 'MOS 906114-01. 16 inputs (address and bank bits) decoded to 8 chip-selects F0-F7 for ROM, colour RAM, VIC, SID, CIA and I/O. The number one C64 failure, and it runs hot. Socket it. Its inputs and outputs are not fully on the sheet; check the decode map before condemning it.',
+      fails: ['Black screen', 'Will not boot', 'Garbage screen or dead keys'],
+      heat: 'hot',
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'FE', type: 'ctrl', dir: 'in', desc: 'Fuse-programming enable on the 82S100. Not a bus signal in normal use.', verify: true },
+        { n: 2, name: 'I7', type: 'ctrl', dir: 'in', desc: 'PLA input bit 7 (address or bank input, see the decode map).', verify: true },
+        { n: 3, name: 'I6', type: 'ctrl', dir: 'in', desc: 'PLA input bit 6 (address or bank input, see the decode map).', verify: true },
+        { n: 4, name: 'I5', type: 'ctrl', dir: 'in', desc: 'PLA input bit 5 (address or bank input, see the decode map).', verify: true },
+        { n: 5, name: 'I4', type: 'ctrl', dir: 'in', desc: 'PLA input bit 4 (address or bank input, see the decode map).', verify: true },
+        { n: 6, name: 'I3', type: 'ctrl', dir: 'in', desc: 'PLA input bit 3 (address or bank input, see the decode map).', verify: true },
+        { n: 7, name: 'I2', type: 'ctrl', dir: 'in', desc: 'PLA input bit 2 (address or bank input, see the decode map).', verify: true },
+        { n: 8, name: 'I1', type: 'ctrl', dir: 'in', desc: 'PLA input bit 1 (address or bank input, see the decode map).', verify: true },
+        { n: 9, name: 'I0', type: 'ctrl', dir: 'in', desc: 'PLA input bit 0 (address or bank input, see the decode map).', verify: true },
+        { n: 10, name: 'F7', type: 'ctrl', dir: 'out', desc: 'Chip-select output F7. Which device it selects is in the decode map.', terms: ['cs'], verify: true },
+        { n: 11, name: 'F6', type: 'ctrl', dir: 'out', desc: 'Chip-select output F6. Which device it selects is in the decode map.', terms: ['cs'], verify: true },
+        { n: 12, name: 'F5', type: 'ctrl', dir: 'out', desc: 'Chip-select output F5. Which device it selects is in the decode map.', terms: ['cs'], verify: true },
+        { n: 13, name: 'F4', type: 'ctrl', dir: 'out', desc: 'Chip-select output F4. Which device it selects is in the decode map.', terms: ['cs'], verify: true },
+        { n: 14, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 15, name: 'F3', type: 'ctrl', dir: 'out', desc: 'Chip-select output F3. Which device it selects is in the decode map.', terms: ['cs'], verify: true },
+        { n: 16, name: 'F2', type: 'ctrl', dir: 'out', desc: 'Chip-select output F2. Which device it selects is in the decode map.', terms: ['cs'], verify: true },
+        { n: 17, name: 'F1', type: 'ctrl', dir: 'out', desc: 'Chip-select output F1. Which device it selects is in the decode map.', terms: ['cs'], verify: true },
+        { n: 18, name: 'F0', type: 'ctrl', dir: 'out', desc: 'Chip-select output F0. Which device it selects is in the decode map.', terms: ['cs'], verify: true },
+        { n: 19, name: '/CE', type: 'ctrl', dir: 'in', desc: 'Chip enable, LOW to let the PLA drive its outputs.', activeLow: true, terms: ['cs'], verify: true, probe: 'LOW for the PLA to work. A stuck HIGH makes every output dead.' },
+        { n: 20, name: 'I15', type: 'ctrl', dir: 'in', desc: 'PLA input bit 15 (A15, see the decode map).', verify: true },
+        { n: 21, name: 'I14', type: 'ctrl', dir: 'in', desc: 'PLA input bit 14 (A14, see the decode map).', verify: true },
+        { n: 22, name: 'I13', type: 'ctrl', dir: 'in', desc: 'PLA input bit 13 (A13, see the decode map).', verify: true },
+        { n: 23, name: 'I12', type: 'ctrl', dir: 'in', desc: 'PLA input bit 12 (A12, see the decode map).', verify: true },
+        { n: 24, name: 'I11', type: 'ctrl', dir: 'in', desc: 'PLA input bit 11 (see the decode map).', verify: true },
+        { n: 25, name: 'I10', type: 'ctrl', dir: 'in', desc: 'PLA input bit 10 (see the decode map).', verify: true },
+        { n: 26, name: 'I9', type: 'ctrl', dir: 'in', desc: 'PLA input bit 9 (see the decode map).', verify: true },
+        { n: 27, name: 'I8', type: 'ctrl', dir: 'in', desc: 'PLA input bit 8 (see the decode map).', verify: true },
+        { n: 28, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V. Check this first on a hot PLA.' },
       ],
-      "summary": "MOS 906114-01. The number one C64 failure. Runs hot.",
-      "fails": [
-        "Black screen",
-        "Will not boot"
+      verifiedAgainst: 'Commodore C64 Chip Pinouts sheet',
+    },
+    sram2114: {
+      id: 'sram2114',
+      name: '2114 SRAM 1K×4',
+      short: '2114',
+      role: 'Colour RAM (C64); main/screen RAM (VIC-20, PET)',
+      pkg: 'DIP-18',
+      machines: ['c64', 'vic20', 'pet'],
+      summary: '1K × 4 static RAM. On the C64 it is the colour RAM at $D800-$DBFF (4 bits per cell). On the VIC-20 and PET it is main/screen RAM. No refresh needed. On the C64 a bad one shows wrong or flashing colours.',
+      fails: ['Wrong or flashing colours', 'Garbage screen', 'Memory errors'],
+      heat: 'cool',
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6.' },
+        { n: 2, name: 'A5', type: 'addr', dir: 'in', desc: 'Address bit 5.' },
+        { n: 3, name: 'A4', type: 'addr', dir: 'in', desc: 'Address bit 4.' },
+        { n: 4, name: 'A3', type: 'addr', dir: 'in', desc: 'Address bit 3.' },
+        { n: 5, name: 'A0', type: 'addr', dir: 'in', desc: 'Address bit 0.' },
+        { n: 6, name: 'A1', type: 'addr', dir: 'in', desc: 'Address bit 1.' },
+        { n: 7, name: 'A2', type: 'addr', dir: 'in', desc: 'Address bit 2.' },
+        { n: 8, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select, LOW to access the RAM.', activeLow: true, terms: ['cs'], probe: 'Pulses LOW on each access to its address range.' },
+        { n: 9, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 10, name: '/WE', type: 'ctrl', dir: 'in', desc: 'Write enable, LOW to write.', activeLow: true },
+        { n: 11, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bit 4 (the 4-bit cell).' },
+        { n: 12, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bit 3.' },
+        { n: 13, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bit 2.' },
+        { n: 14, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bit 1.' },
+        { n: 15, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9.' },
+        { n: 16, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bit 8.' },
+        { n: 17, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bit 7.' },
+        { n: 18, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
       ],
-      "heat": "hot",
-      "pins": null,
-      "datasheets": []
-    }
+      verifiedAgainst: 'Commodore C64 Chip Pinouts sheet (also VIC-20 and PET sheets)',
+    },
+    rom2364: {
+      id: 'rom2364',
+      name: '2364 Mask ROM 8K×8',
+      short: '2364',
+      role: 'BASIC and KERNAL ROMs (C64); BASIC and KERNAL (VIC-20, PET)',
+      pkg: 'DIP-24',
+      machines: ['c64', 'vic20', 'pet'],
+      location: {
+        c64: 'U3 (BASIC 901226), U4 (KERNAL 901227)',
+      },
+      summary: '8K mask ROM. Factory-programmed, rarely fails, cannot be rewritten. A 2764/27128 EPROM with a small pin adapter is the usual replacement. Pinout not captured in this file (the sheets give the type only). Garbage on boot or a dead KERNAL points here.',
+      fails: ['Garbage on boot', 'Boots to black screen', 'Does not reach BASIC'],
+      heat: 'cool',
+      datasheets: [],
+      pins: null,
+      verifiedAgainst: 'Commodore C64 Chip Pinouts sheet (type only; pinout not captured)',
+    },
+    rom2332: {
+      id: 'rom2332',
+      name: '2332 Mask ROM 4K×8',
+      short: '2332',
+      role: 'Character ROM (C64, VIC-20, PET)',
+      pkg: 'DIP-24',
+      machines: ['c64', 'vic20', 'pet'],
+      location: {
+        c64: 'U5 (character 901225)',
+      },
+      summary: '4K mask ROM holding the character shapes. A bad character ROM gives missing or garbled letters. Pinout not captured in this file. Replace with a 2732/2764 EPROM via an adapter.',
+      fails: ['Missing or garbled characters', 'Wrong character set'],
+      heat: 'cool',
+      datasheets: [],
+      pins: null,
+      verifiedAgainst: 'Commodore C64 Chip Pinouts sheet (type only; pinout not captured)',
+    },
+    vic6560: {
+      id: 'vic6560',
+      name: '6560 / 6561 VIC-I',
+      short: 'VIC',
+      role: 'Video, sound, paddles, light pen, CPU clock',
+      pkg: 'DIP-40',
+      machines: ['vic20'],
+      summary: 'The VIC-20 video and sound chip at $9000-$900F. 6560 is NTSC, 6561 is PAL. Runs from +5 V only (the VIC-20 has no +12 V rail). Makes the colour, three tones and noise, and reads the paddles. A failure gives no or garbled picture and no sound.',
+      fails: ['No or garbled picture', 'No sound', 'Dead machine'],
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'NC', type: 'nc', dir: '-', desc: 'No connection.' },
+        { n: 2, name: 'CHROMA', type: 'video', dir: 'out', desc: 'Chroma (colour) output to the video DIN.', terms: ['luma-chroma'] },
+        { n: 3, name: 'SYNC/LUM', type: 'video', dir: 'out', desc: 'Sync and luminance output to the video DIN.', terms: ['luma-chroma'] },
+        { n: 4, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 5, name: 'VD11', type: 'addr', dir: 'out', desc: 'Video address bit 11 (VIC video bus to the screen RAM).', verify: true },
+        { n: 6, name: 'VD10', type: 'addr', dir: 'out', desc: 'Video address bit 10 (VIC video bus).', verify: true },
+        { n: 7, name: 'VD9', type: 'addr', dir: 'out', desc: 'Video address bit 9 (VIC video bus).', verify: true },
+        { n: 8, name: 'VD8', type: 'addr', dir: 'out', desc: 'Video address bit 8 (VIC video bus).', verify: true },
+        { n: 9, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 10, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 11, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 12, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 13, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 14, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 15, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 16, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 17, name: 'POTX', type: 'audio', dir: 'in', desc: 'Paddle A/D input X.', verify: true },
+        { n: 18, name: 'POTY', type: 'audio', dir: 'in', desc: 'Paddle A/D input Y.', verify: true },
+        { n: 19, name: 'AUDIO', type: 'audio', dir: 'out', desc: 'Mixed tone and noise output to the audio DIN.' },
+        { n: 20, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 21, name: 'A0', type: 'addr', dir: 'in', desc: 'CPU address bit 0 (register select within $9000-$900F).' },
+        { n: 22, name: 'A1', type: 'addr', dir: 'in', desc: 'CPU address bit 1.' },
+        { n: 23, name: 'A2', type: 'addr', dir: 'in', desc: 'CPU address bit 2.' },
+        { n: 24, name: 'A3', type: 'addr', dir: 'in', desc: 'CPU address bit 3.' },
+        { n: 25, name: 'A4', type: 'addr', dir: 'in', desc: 'CPU address bit 4.' },
+        { n: 26, name: 'A5', type: 'addr', dir: 'in', desc: 'CPU address bit 5.' },
+        { n: 27, name: 'A6', type: 'addr', dir: 'in', desc: 'CPU address bit 6.' },
+        { n: 28, name: 'A7', type: 'addr', dir: 'in', desc: 'CPU address bit 7.' },
+        { n: 29, name: 'A8', type: 'addr', dir: 'in', desc: 'CPU address bit 8.' },
+        { n: 30, name: 'A9', type: 'addr', dir: 'in', desc: 'CPU address bit 9.' },
+        { n: 31, name: 'A10', type: 'addr', dir: 'in', desc: 'CPU address bit 10.' },
+        { n: 32, name: 'A11', type: 'addr', dir: 'in', desc: 'CPU address bit 11.' },
+        { n: 33, name: 'A12', type: 'addr', dir: 'in', desc: 'CPU address bit 12.' },
+        { n: 34, name: 'A13', type: 'addr', dir: 'in', desc: 'CPU address bit 13.' },
+        { n: 35, name: 'PHI1 out', type: 'clock', dir: 'out', desc: 'Phase 1 clock output.', terms: ['clock'] },
+        { n: 36, name: 'PHI0 out', type: 'clock', dir: 'out', desc: 'Clock output to the 6502 Φ0 input. The sheet shows the phase symbol missing here.', terms: ['clock'], verify: true, probe: 'About 1 MHz square wave. No clock = dead CPU.' },
+        { n: 37, name: 'LP', type: 'ctrl', dir: 'in', desc: 'Light pen input.' },
+        { n: 38, name: 'PHI2 in', type: 'clock', dir: 'in', desc: 'Phase 2 clock input (from the 6502 phase 2 output).', terms: ['clock'] },
+        { n: 39, name: 'PHI1 in', type: 'clock', dir: 'in', desc: 'Phase 1 clock input.', terms: ['clock'] },
+        { n: 40, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply (VIC-20 is +5 V only).', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+      ],
+      verifiedAgainst: 'Commodore VIC-20 Chip Pinouts sheet',
+    },
+    via6522: {
+      id: 'via6522',
+      name: '6522 VIA',
+      short: 'VIA',
+      role: 'Two 8-bit ports, timers, serial and user port',
+      pkg: 'DIP-40',
+      machines: ['vic20', 'pet'],
+      summary: 'Versatile interface adapter. Two ports (PA, PB), two timers, shift register and handshake lines CA1/CA2 and CB1/CB2. VIC-20: VIA1 at $9110 (serial bus, cassette, RESTORE NMI), VIA2 at $9120 (keyboard, joystick, timers, IRQ). PET: VIA at $E840 (user port, cassette 2, IEEE-488 handshake, timers, CB2 beep).',
+      fails: [
+        'Dead keyboard or joystick (VIC-20 VIA2)',
+        'No serial or cassette (VIC-20 VIA1)',
+        'No IEEE or user port (PET)',
+        'No beep (PET)',
+      ],
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 2, name: 'PA0', type: 'io', dir: 'bidir', desc: 'Port A bit 0.' },
+        { n: 3, name: 'PA1', type: 'io', dir: 'bidir', desc: 'Port A bit 1.' },
+        { n: 4, name: 'PA2', type: 'io', dir: 'bidir', desc: 'Port A bit 2.' },
+        { n: 5, name: 'PA3', type: 'io', dir: 'bidir', desc: 'Port A bit 3.' },
+        { n: 6, name: 'PA4', type: 'io', dir: 'bidir', desc: 'Port A bit 4.' },
+        { n: 7, name: 'PA5', type: 'io', dir: 'bidir', desc: 'Port A bit 5.' },
+        { n: 8, name: 'PA6', type: 'io', dir: 'bidir', desc: 'Port A bit 6.' },
+        { n: 9, name: 'PA7', type: 'io', dir: 'bidir', desc: 'Port A bit 7.' },
+        { n: 10, name: 'PB0', type: 'io', dir: 'bidir', desc: 'Port B bit 0.' },
+        { n: 11, name: 'PB1', type: 'io', dir: 'bidir', desc: 'Port B bit 1.' },
+        { n: 12, name: 'PB2', type: 'io', dir: 'bidir', desc: 'Port B bit 2.' },
+        { n: 13, name: 'PB3', type: 'io', dir: 'bidir', desc: 'Port B bit 3.' },
+        { n: 14, name: 'PB4', type: 'io', dir: 'bidir', desc: 'Port B bit 4.' },
+        { n: 15, name: 'PB5', type: 'io', dir: 'bidir', desc: 'Port B bit 5.' },
+        { n: 16, name: 'PB6', type: 'io', dir: 'bidir', desc: 'Port B bit 6.' },
+        { n: 17, name: 'PB7', type: 'io', dir: 'bidir', desc: 'Port B bit 7.' },
+        { n: 18, name: 'CB1', type: 'io', dir: 'bidir', desc: 'Handshake / shift clock, port B.' },
+        { n: 19, name: 'CB2', type: 'io', dir: 'bidir', desc: 'Handshake / shift data, port B. PET: beep sound output.' },
+        { n: 20, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+        { n: 21, name: '/IRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt request to the CPU /IRQ.', activeLow: true, terms: ['irq'] },
+        { n: 22, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 23, name: '/CS2', type: 'ctrl', dir: 'in', desc: 'Chip select 2, active LOW.', activeLow: true, terms: ['cs'] },
+        { n: 24, name: 'CS1', type: 'ctrl', dir: 'in', desc: 'Chip select 1, active HIGH.', terms: ['cs'] },
+        { n: 25, name: 'Φ2', type: 'clock', dir: 'in', desc: 'Phase 2 clock from the CPU.', terms: ['clock'] },
+        { n: 26, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 27, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 28, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 29, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 30, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 31, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 32, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 33, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 34, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW clears the VIA.', activeLow: true, terms: ['reset'], probe: 'LOW at power-up, then HIGH.' },
+        { n: 35, name: 'RS3', type: 'addr', dir: 'in', desc: 'Register select bit 3.' },
+        { n: 36, name: 'RS2', type: 'addr', dir: 'in', desc: 'Register select bit 2.' },
+        { n: 37, name: 'RS1', type: 'addr', dir: 'in', desc: 'Register select bit 1.' },
+        { n: 38, name: 'RS0', type: 'addr', dir: 'in', desc: 'Register select bit 0.' },
+        { n: 39, name: 'CA2', type: 'io', dir: 'bidir', desc: 'Handshake line, port A.' },
+        { n: 40, name: 'CA1', type: 'io', dir: 'in', desc: 'Interrupt input, port A.' },
+      ],
+      verifiedAgainst: 'Commodore VIC-20 and PET Chip Pinouts sheets',
+    },
+    pia6520: {
+      id: 'pia6520',
+      name: '6520 PIA',
+      short: 'PIA',
+      role: 'Keyboard, cassette 1, IEEE-488 data (PET)',
+      pkg: 'DIP-40',
+      machines: ['pet'],
+      summary: 'Two 8-bit ports with handshake lines. PIA1 at $E810: keyboard rows, cassette 1, screen-retrace IRQ, diagnostic sense. PIA2 at $E820: IEEE-488 data port. Dead keyboard points at PIA1; no disk or IEEE-488 points at PIA2 or the VIA.',
+      fails: ['Dead keyboard (PIA1)', 'No IEEE-488 or disk (PIA2)', 'Cassette 1 dead'],
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 2, name: 'PA0', type: 'io', dir: 'bidir', desc: 'Port A bit 0.' },
+        { n: 3, name: 'PA1', type: 'io', dir: 'bidir', desc: 'Port A bit 1.' },
+        { n: 4, name: 'PA2', type: 'io', dir: 'bidir', desc: 'Port A bit 2.' },
+        { n: 5, name: 'PA3', type: 'io', dir: 'bidir', desc: 'Port A bit 3.' },
+        { n: 6, name: 'PA4', type: 'io', dir: 'bidir', desc: 'Port A bit 4.' },
+        { n: 7, name: 'PA5', type: 'io', dir: 'bidir', desc: 'Port A bit 5.' },
+        { n: 8, name: 'PA6', type: 'io', dir: 'bidir', desc: 'Port A bit 6.' },
+        { n: 9, name: 'PA7', type: 'io', dir: 'bidir', desc: 'Port A bit 7.' },
+        { n: 10, name: 'PB0', type: 'io', dir: 'bidir', desc: 'Port B bit 0.' },
+        { n: 11, name: 'PB1', type: 'io', dir: 'bidir', desc: 'Port B bit 1.' },
+        { n: 12, name: 'PB2', type: 'io', dir: 'bidir', desc: 'Port B bit 2.' },
+        { n: 13, name: 'PB3', type: 'io', dir: 'bidir', desc: 'Port B bit 3.' },
+        { n: 14, name: 'PB4', type: 'io', dir: 'bidir', desc: 'Port B bit 4.' },
+        { n: 15, name: 'PB5', type: 'io', dir: 'bidir', desc: 'Port B bit 5.' },
+        { n: 16, name: 'PB6', type: 'io', dir: 'bidir', desc: 'Port B bit 6.' },
+        { n: 17, name: 'PB7', type: 'io', dir: 'bidir', desc: 'Port B bit 7.' },
+        { n: 18, name: 'CB1', type: 'io', dir: 'bidir', desc: 'Handshake, port B.' },
+        { n: 19, name: 'CB2', type: 'io', dir: 'bidir', desc: 'Handshake, port B.' },
+        { n: 20, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+        { n: 21, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 22, name: 'CS0', type: 'ctrl', dir: 'in', desc: 'Chip select 0, active HIGH.', terms: ['cs'] },
+        { n: 23, name: '/CS2', type: 'ctrl', dir: 'in', desc: 'Chip select 2, active LOW.', activeLow: true, terms: ['cs'] },
+        { n: 24, name: 'CS1', type: 'ctrl', dir: 'in', desc: 'Chip select 1, active HIGH.', terms: ['cs'] },
+        { n: 25, name: 'Φ2 (E)', type: 'clock', dir: 'in', desc: 'Phase 2 (E) clock from the CPU.', terms: ['clock'] },
+        { n: 26, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 27, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 28, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 29, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 30, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 31, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 32, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 33, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 34, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW clears the PIA.', activeLow: true, terms: ['reset'], probe: 'LOW at power-up, then HIGH.' },
+        { n: 35, name: 'RS1', type: 'addr', dir: 'in', desc: 'Register select bit 1.' },
+        { n: 36, name: 'RS0', type: 'addr', dir: 'in', desc: 'Register select bit 0.' },
+        { n: 37, name: '/IRQB', type: 'ctrl', dir: 'out', desc: 'Interrupt request, port B.', activeLow: true, terms: ['irq'] },
+        { n: 38, name: '/IRQA', type: 'ctrl', dir: 'out', desc: 'Interrupt request, port A.', activeLow: true, terms: ['irq'] },
+        { n: 39, name: 'CA2', type: 'io', dir: 'bidir', desc: 'Handshake line, port A.' },
+        { n: 40, name: 'CA1', type: 'io', dir: 'in', desc: 'Interrupt input, port A.' },
+      ],
+      verifiedAgainst: 'Commodore PET Chip Pinouts sheet',
+    },
+    crtc6545: {
+      id: 'crtc6545',
+      name: '6545 CRTC',
+      short: 'CRTC',
+      role: 'Video timing and screen addressing (later PET boards)',
+      pkg: 'DIP-40',
+      machines: ['pet'],
+      summary: 'CRT controller that makes the sync, display-enable and cursor and gives the screen RAM addresses. Only on later PET and 80-column boards. Early 2001s used discrete logic and have no CRTC, so a missing CRTC there is normal. Fails as no, rolling or distorted display.',
+      fails: ['No display (later boards)', 'Rolling or distorted display'],
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 2, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW resets the CRTC.', activeLow: true, terms: ['reset'], probe: 'LOW at power-up, then HIGH.' },
+        { n: 3, name: 'LPEN', type: 'ctrl', dir: 'in', desc: 'Light pen input.' },
+        { n: 4, name: 'MA0', type: 'addr', dir: 'out', desc: 'Memory address bit 0 to the screen RAM.' },
+        { n: 5, name: 'MA1', type: 'addr', dir: 'out', desc: 'Memory address bit 1 to the screen RAM.' },
+        { n: 6, name: 'MA2', type: 'addr', dir: 'out', desc: 'Memory address bit 2 to the screen RAM.' },
+        { n: 7, name: 'MA3', type: 'addr', dir: 'out', desc: 'Memory address bit 3 to the screen RAM.' },
+        { n: 8, name: 'MA4', type: 'addr', dir: 'out', desc: 'Memory address bit 4 to the screen RAM.' },
+        { n: 9, name: 'MA5', type: 'addr', dir: 'out', desc: 'Memory address bit 5 to the screen RAM.' },
+        { n: 10, name: 'MA6', type: 'addr', dir: 'out', desc: 'Memory address bit 6 to the screen RAM.' },
+        { n: 11, name: 'MA7', type: 'addr', dir: 'out', desc: 'Memory address bit 7 to the screen RAM.' },
+        { n: 12, name: 'MA8', type: 'addr', dir: 'out', desc: 'Memory address bit 8 to the screen RAM.' },
+        { n: 13, name: 'MA9', type: 'addr', dir: 'out', desc: 'Memory address bit 9 to the screen RAM.' },
+        { n: 14, name: 'MA10', type: 'addr', dir: 'out', desc: 'Memory address bit 10 to the screen RAM.' },
+        { n: 15, name: 'MA11', type: 'addr', dir: 'out', desc: 'Memory address bit 11 to the screen RAM.' },
+        { n: 16, name: 'MA12', type: 'addr', dir: 'out', desc: 'Memory address bit 12 to the screen RAM.' },
+        { n: 17, name: 'MA13', type: 'addr', dir: 'out', desc: 'Memory address bit 13 to the screen RAM.' },
+        { n: 18, name: 'DE', type: 'ctrl', dir: 'out', desc: 'Display enable: HIGH while the picture is being drawn.' },
+        { n: 19, name: 'CURSOR', type: 'ctrl', dir: 'out', desc: 'Cursor output.' },
+        { n: 20, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+        { n: 21, name: 'CCLK', type: 'clock', dir: 'in', desc: 'Character clock input from the video timing.', terms: ['clock'] },
+        { n: 22, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 23, name: 'Φ2 (E)', type: 'clock', dir: 'in', desc: 'Phase 2 (E) clock from the CPU.', terms: ['clock'] },
+        { n: 24, name: 'RS', type: 'ctrl', dir: 'in', desc: 'Register select: picks address or data register.' },
+        { n: 25, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select, LOW to access the CRTC registers.', activeLow: true, terms: ['cs'] },
+        { n: 26, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 27, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 28, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 29, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 30, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 31, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 32, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 33, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 34, name: 'RA4', type: 'addr', dir: 'out', desc: 'Raster address bit 4 (character-row scan line to the character ROM).' },
+        { n: 35, name: 'RA3', type: 'addr', dir: 'out', desc: 'Raster address bit 3.' },
+        { n: 36, name: 'RA2', type: 'addr', dir: 'out', desc: 'Raster address bit 2.' },
+        { n: 37, name: 'RA1', type: 'addr', dir: 'out', desc: 'Raster address bit 1.' },
+        { n: 38, name: 'RA0', type: 'addr', dir: 'out', desc: 'Raster address bit 0.' },
+        { n: 39, name: 'HSYNC', type: 'video', dir: 'out', desc: 'Horizontal sync to the monitor.' },
+        { n: 40, name: 'VSYNC', type: 'video', dir: 'out', desc: 'Vertical sync to the monitor.' },
+      ],
+      verifiedAgainst: 'Commodore PET Chip Pinouts sheet',
+    },
+    cpu8502: {
+      id: 'cpu8502',
+      name: '8502 CPU',
+      short: '8502',
+      role: 'CPU (6510 family, native C128 mode)',
+      pkg: 'DIP-40',
+      machines: ['c128'],
+      summary: 'C128 main CPU at 1 or 2 MHz (FAST). 6510-family with a 7-bit I/O port (P0-P6, pins 30-24) for tape and serial. It has no φ2 output pin: R/W moves to pin 39 and the data bus to pins 38-31. Dead in every mode points here, the MMU or the PLA.',
+      fails: ['Dead machine in 128 and 64 mode', 'No boot'],
+      heat: 'warm',
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'Φ0 in', type: 'clock', dir: 'in', desc: 'Clock input (Φ0).', terms: ['clock'], probe: 'Square wave. No clock = dead machine.' },
+        { n: 2, name: 'RDY', type: 'ctrl', dir: 'in', desc: 'Ready. Pull LOW to stall the CPU.', terms: ['rdy'] },
+        { n: 3, name: '/IRQ', type: 'ctrl', dir: 'in', desc: 'Interrupt request.', activeLow: true, terms: ['irq'] },
+        { n: 4, name: '/NMI', type: 'ctrl', dir: 'in', desc: 'Non-maskable interrupt.', activeLow: true, terms: ['nmi'] },
+        { n: 5, name: 'AEC', type: 'ctrl', dir: 'in', desc: 'Address Enable Control. LOW tri-states the address bus for the video chip.', terms: ['aec', 'tristate'] },
+        { n: 6, name: '+5V', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+        { n: 7, name: 'A0', type: 'addr', dir: 'out', desc: 'Address bus bit 0.' },
+        { n: 8, name: 'A1', type: 'addr', dir: 'out', desc: 'Address bus bit 1.' },
+        { n: 9, name: 'A2', type: 'addr', dir: 'out', desc: 'Address bus bit 2.' },
+        { n: 10, name: 'A3', type: 'addr', dir: 'out', desc: 'Address bus bit 3.' },
+        { n: 11, name: 'A4', type: 'addr', dir: 'out', desc: 'Address bus bit 4.' },
+        { n: 12, name: 'A5', type: 'addr', dir: 'out', desc: 'Address bus bit 5.' },
+        { n: 13, name: 'A6', type: 'addr', dir: 'out', desc: 'Address bus bit 6.' },
+        { n: 14, name: 'A7', type: 'addr', dir: 'out', desc: 'Address bus bit 7.' },
+        { n: 15, name: 'A8', type: 'addr', dir: 'out', desc: 'Address bus bit 8.' },
+        { n: 16, name: 'A9', type: 'addr', dir: 'out', desc: 'Address bus bit 9.' },
+        { n: 17, name: 'A10', type: 'addr', dir: 'out', desc: 'Address bus bit 10.' },
+        { n: 18, name: 'A11', type: 'addr', dir: 'out', desc: 'Address bus bit 11.' },
+        { n: 19, name: 'A12', type: 'addr', dir: 'out', desc: 'Address bus bit 12.' },
+        { n: 20, name: 'A13', type: 'addr', dir: 'out', desc: 'Address bus bit 13.' },
+        { n: 21, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 22, name: 'A14', type: 'addr', dir: 'out', desc: 'Address bus bit 14.' },
+        { n: 23, name: 'A15', type: 'addr', dir: 'out', desc: 'Address bus bit 15.' },
+        { n: 24, name: 'P6', type: 'io', dir: 'bidir', desc: 'Processor port bit 6 (tape or serial).', verify: true },
+        { n: 25, name: 'P5', type: 'io', dir: 'bidir', desc: 'Processor port bit 5 (tape or serial).', verify: true },
+        { n: 26, name: 'P4', type: 'io', dir: 'bidir', desc: 'Processor port bit 4 (tape or serial).', verify: true },
+        { n: 27, name: 'P3', type: 'io', dir: 'bidir', desc: 'Processor port bit 3 (tape or serial).', verify: true },
+        { n: 28, name: 'P2', type: 'io', dir: 'bidir', desc: 'Processor port bit 2 (bank select, see the MMU).', verify: true },
+        { n: 29, name: 'P1', type: 'io', dir: 'bidir', desc: 'Processor port bit 1 (bank select, see the MMU).', verify: true },
+        { n: 30, name: 'P0', type: 'io', dir: 'bidir', desc: 'Processor port bit 0 (bank select, see the MMU).', verify: true },
+        { n: 31, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 32, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 33, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 34, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 35, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 36, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 37, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 38, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 39, name: 'R/W', type: 'ctrl', dir: 'out', desc: 'Read/write from the CPU. HIGH = read. Moved to pin 39 on the 8502.', terms: ['rw'] },
+        { n: 40, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW at power-up, released HIGH.', activeLow: true, terms: ['reset'], probe: 'LOW briefly at power-up, then HIGH.' },
+      ],
+      verifiedAgainst: 'Commodore 128 CPUs, Sound and I/O sheet',
+    },
+    cpuz80: {
+      id: 'cpuz80',
+      name: 'Z80A CPU',
+      short: 'Z80',
+      role: 'Second CPU for CP/M mode',
+      pkg: 'DIP-40',
+      machines: ['c128'],
+      summary: 'Zilog Z80A, the CP/M processor. Runs at 4 MHz when selected by the MMU. The 8502 is the normal CPU; the MMU chooses which one drives the bus. No CP/M or a stalled boot points here and at the MMU.',
+      fails: ['No CP/M', 'Stalled boot'],
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'A11', type: 'addr', dir: 'out', desc: 'Address bus bit 11.' },
+        { n: 2, name: 'A12', type: 'addr', dir: 'out', desc: 'Address bus bit 12.' },
+        { n: 3, name: 'A13', type: 'addr', dir: 'out', desc: 'Address bus bit 13.' },
+        { n: 4, name: 'A14', type: 'addr', dir: 'out', desc: 'Address bus bit 14.' },
+        { n: 5, name: 'A15', type: 'addr', dir: 'out', desc: 'Address bus bit 15.' },
+        { n: 6, name: 'CLK', type: 'clock', dir: 'in', desc: 'Clock input (4 MHz in CP/M mode).', terms: ['clock'], probe: 'Square wave when CP/M mode is running.' },
+        { n: 7, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 8, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 9, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 10, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 11, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+        { n: 12, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 13, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 14, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 15, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 16, name: '/INT', type: 'ctrl', dir: 'in', desc: 'Maskable interrupt request.', activeLow: true, terms: ['irq'] },
+        { n: 17, name: '/NMI', type: 'ctrl', dir: 'in', desc: 'Non-maskable interrupt.', activeLow: true, terms: ['nmi'] },
+        { n: 18, name: '/HALT', type: 'ctrl', dir: 'out', desc: 'Halted (executing HALT).', activeLow: true },
+        { n: 19, name: '/MREQ', type: 'ctrl', dir: 'out', desc: 'Memory request.', activeLow: true },
+        { n: 20, name: '/IORQ', type: 'ctrl', dir: 'out', desc: 'I/O request.', activeLow: true },
+        { n: 21, name: '/RD', type: 'ctrl', dir: 'out', desc: 'Read strobe.', activeLow: true },
+        { n: 22, name: '/WR', type: 'ctrl', dir: 'out', desc: 'Write strobe.', activeLow: true },
+        { n: 23, name: '/BUSAK', type: 'ctrl', dir: 'out', desc: 'Bus acknowledge.', activeLow: true },
+        { n: 24, name: '/WAIT', type: 'ctrl', dir: 'in', desc: 'Wait request: stretches the cycle.', activeLow: true },
+        { n: 25, name: '/BUSRQ', type: 'ctrl', dir: 'in', desc: 'Bus request.', activeLow: true },
+        { n: 26, name: '/RESET', type: 'ctrl', dir: 'in', desc: 'Reset.', activeLow: true, terms: ['reset'] },
+        { n: 27, name: '/M1', type: 'ctrl', dir: 'out', desc: 'Machine cycle 1 (opcode fetch).', activeLow: true },
+        { n: 28, name: '/RFSH', type: 'ctrl', dir: 'out', desc: 'Refresh cycle.', activeLow: true },
+        { n: 29, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 30, name: 'A0', type: 'addr', dir: 'out', desc: 'Address bus bit 0.' },
+        { n: 31, name: 'A1', type: 'addr', dir: 'out', desc: 'Address bus bit 1.' },
+        { n: 32, name: 'A2', type: 'addr', dir: 'out', desc: 'Address bus bit 2.' },
+        { n: 33, name: 'A3', type: 'addr', dir: 'out', desc: 'Address bus bit 3.' },
+        { n: 34, name: 'A4', type: 'addr', dir: 'out', desc: 'Address bus bit 4.' },
+        { n: 35, name: 'A5', type: 'addr', dir: 'out', desc: 'Address bus bit 5.' },
+        { n: 36, name: 'A6', type: 'addr', dir: 'out', desc: 'Address bus bit 6.' },
+        { n: 37, name: 'A7', type: 'addr', dir: 'out', desc: 'Address bus bit 7.' },
+        { n: 38, name: 'A8', type: 'addr', dir: 'out', desc: 'Address bus bit 8.' },
+        { n: 39, name: 'A9', type: 'addr', dir: 'out', desc: 'Address bus bit 9.' },
+        { n: 40, name: 'A10', type: 'addr', dir: 'out', desc: 'Address bus bit 10.' },
+      ],
+      verifiedAgainst: 'Commodore 128 CPUs, Sound and I/O sheet',
+    },
+    vdc8563: {
+      id: 'vdc8563',
+      name: '8563 VDC',
+      short: 'VDC',
+      role: '80-column RGBI video controller with its own video RAM',
+      pkg: 'DIP-48',
+      machines: ['c128'],
+      summary: '80-column video display controller with its own 16 or 64 KB video RAM (DA0-DA7 address and DD0-DD7 data). Outputs RGBI (R, G, B, I) to the 9-pin RGBI port. Two chip-select pins: pin 4 CS (active HIGH) and pin 7 /CS (active LOW); pins 5 and 6 are NC. Runs hot, low yield, and a known failure. Fails as no or garbled 80-column display.',
+      fails: ['No or garbled 80-column display', 'Runs hot'],
+      heat: 'hot',
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'CCLK', type: 'clock', dir: 'in', desc: 'Character clock input.', terms: ['clock'] },
+        { n: 2, name: 'DCLK', type: 'clock', dir: 'in', desc: 'Dot clock input.', terms: ['clock'] },
+        { n: 3, name: 'HSYNC', type: 'video', dir: 'out', desc: 'Horizontal sync output (RGBI port).' },
+        { n: 4, name: 'CS', type: 'ctrl', dir: 'in', desc: 'Chip select, active HIGH. Pin 4 with pin 7 is the dual chip select.', terms: ['cs'] },
+        { n: 5, name: 'NC', type: 'nc', dir: '-', desc: 'No connection.' },
+        { n: 6, name: 'NC', type: 'nc', dir: '-', desc: 'No connection.' },
+        { n: 7, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select, active LOW. Pin 7 with pin 4 is the dual chip select.', activeLow: true, terms: ['cs'] },
+        { n: 8, name: '/RS', type: 'ctrl', dir: 'in', desc: 'Register select: address or data register.', activeLow: true },
+        { n: 9, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 10, name: 'D7', type: 'data', dir: 'bidir', desc: 'CPU data bus bit 7.' },
+        { n: 11, name: 'D6', type: 'data', dir: 'bidir', desc: 'CPU data bus bit 6.' },
+        { n: 12, name: 'VSS', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 13, name: 'D5', type: 'data', dir: 'bidir', desc: 'CPU data bus bit 5.' },
+        { n: 14, name: 'D4', type: 'data', dir: 'bidir', desc: 'CPU data bus bit 4.' },
+        { n: 15, name: 'D3', type: 'data', dir: 'bidir', desc: 'CPU data bus bit 3.' },
+        { n: 16, name: 'D2', type: 'data', dir: 'bidir', desc: 'CPU data bus bit 2.' },
+        { n: 17, name: 'D1', type: 'data', dir: 'bidir', desc: 'CPU data bus bit 1.' },
+        { n: 18, name: 'D0', type: 'data', dir: 'bidir', desc: 'CPU data bus bit 0.' },
+        { n: 19, name: 'DISPEN', type: 'ctrl', dir: 'out', desc: 'Display enable.' },
+        { n: 20, name: 'VSYNC', type: 'video', dir: 'out', desc: 'Vertical sync output (RGBI port).' },
+        { n: 21, name: 'DR/W', type: 'ctrl', dir: 'out', desc: 'Video RAM read/write strobe (sheet name).', verify: true },
+        { n: 22, name: 'INIT', type: 'ctrl', dir: 'in', desc: 'Init input (sheet name).', verify: true },
+        { n: 23, name: '/RES', type: 'ctrl', dir: 'in', desc: 'Reset. LOW resets the VDC.', activeLow: true, terms: ['reset'], probe: 'LOW at power-up, then HIGH.' },
+        { n: 24, name: 'TEST', type: 'ctrl', dir: 'in', desc: 'Test input. Leave to the board.', verify: true },
+        { n: 25, name: 'LPEN', type: 'ctrl', dir: 'in', desc: 'Light pen input.' },
+        { n: 26, name: 'DA0', type: 'addr', dir: 'bidir', desc: 'Video RAM address/data bus bit 0.' },
+        { n: 27, name: 'DA1', type: 'addr', dir: 'bidir', desc: 'Video RAM address/data bus bit 1.' },
+        { n: 28, name: 'DA2', type: 'addr', dir: 'bidir', desc: 'Video RAM address/data bus bit 2.' },
+        { n: 29, name: 'DA3', type: 'addr', dir: 'bidir', desc: 'Video RAM address/data bus bit 3.' },
+        { n: 30, name: 'DA4', type: 'addr', dir: 'bidir', desc: 'Video RAM address/data bus bit 4.' },
+        { n: 31, name: 'DA5', type: 'addr', dir: 'bidir', desc: 'Video RAM address/data bus bit 5.' },
+        { n: 32, name: 'DA6', type: 'addr', dir: 'bidir', desc: 'Video RAM address/data bus bit 6.' },
+        { n: 33, name: 'DA7', type: 'addr', dir: 'bidir', desc: 'Video RAM address/data bus bit 7.' },
+        { n: 34, name: 'DD0', type: 'data', dir: 'bidir', desc: 'Video RAM data bit 0.' },
+        { n: 35, name: 'DD1', type: 'data', dir: 'bidir', desc: 'Video RAM data bit 1.' },
+        { n: 36, name: 'DD2', type: 'data', dir: 'bidir', desc: 'Video RAM data bit 2.' },
+        { n: 37, name: 'VDD', type: 'power', dir: '-', desc: 'Supply (+5 V on the 8563).', terms: ['vcc'], verify: true },
+        { n: 38, name: 'DD3', type: 'data', dir: 'bidir', desc: 'Video RAM data bit 3.' },
+        { n: 39, name: 'DD4', type: 'data', dir: 'bidir', desc: 'Video RAM data bit 4.' },
+        { n: 40, name: 'DD5', type: 'data', dir: 'bidir', desc: 'Video RAM data bit 5.' },
+        { n: 41, name: 'DD6', type: 'data', dir: 'bidir', desc: 'Video RAM data bit 6.' },
+        { n: 42, name: 'DD7', type: 'data', dir: 'bidir', desc: 'Video RAM data bit 7.' },
+        { n: 43, name: 'I', type: 'video', dir: 'out', desc: 'RGBI intensity output (RGBI port pin 6).' },
+        { n: 44, name: 'B', type: 'video', dir: 'out', desc: 'RGBI blue output (RGBI port pin 4).' },
+        { n: 45, name: 'G', type: 'video', dir: 'out', desc: 'RGBI green output (RGBI port pin 3).' },
+        { n: 46, name: 'R', type: 'video', dir: 'out', desc: 'RGBI red output (RGBI port pin 2).' },
+        { n: 47, name: '/RAS', type: 'ctrl', dir: 'out', desc: 'Row address strobe for the video RAM.', activeLow: true, terms: ['ras-cas'] },
+        { n: 48, name: '/CAS', type: 'ctrl', dir: 'out', desc: 'Column address strobe for the video RAM.', activeLow: true, terms: ['ras-cas'] },
+      ],
+      verifiedAgainst: 'Commodore 128 Video and Custom sheet',
+    },
+    vic2e: {
+      id: 'vic2e',
+      name: '8564 / 8566 VIC-IIe',
+      short: 'VIC-IIe',
+      role: '40-column video, C64-compatible, plus C128 clocks and keyboard scan',
+      pkg: 'DIP-48',
+      machines: ['c128'],
+      summary: '8564 (NTSC) and 8566 (PAL). C64-compatible 40-column composite video, plus three keyboard-scan lines (K0-K2) and the Z80PHI, 1 MHz and 2 MHz clock lines the C128 needs. Vcc (pin 48) is +5 V. Fails as no or garbled 40-column display.',
+      fails: ['No or garbled 40-column display', 'No picture'],
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'DB6', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 6 (DB0-DB11 to colour and screen RAM).' },
+        { n: 2, name: 'DB5', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 5.' },
+        { n: 3, name: 'DB4', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 4.' },
+        { n: 4, name: 'DB3', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 3.' },
+        { n: 5, name: 'DB2', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 2.' },
+        { n: 6, name: 'DB1', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 1.' },
+        { n: 7, name: 'DB0', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 0.' },
+        { n: 8, name: '/IRQ', type: 'ctrl', dir: 'out', desc: 'Interrupt request to the CPU. Open-drain.', activeLow: true, terms: ['irq', 'open-drain'] },
+        { n: 9, name: '/LP', type: 'ctrl', dir: 'in', desc: 'Light pen input.', activeLow: true },
+        { n: 10, name: 'BA', type: 'ctrl', dir: 'out', desc: 'Bus Available. Goes LOW before a badline; wired to the CPU RDY.', terms: ['ba'] },
+        { n: 11, name: '/DMAR', type: 'ctrl', dir: 'out', desc: 'DMA request.', activeLow: true },
+        { n: 12, name: 'AEC', type: 'ctrl', dir: 'out', desc: 'Address Enable Control. Drops LOW when the VIC takes the bus.', terms: ['aec'] },
+        { n: 13, name: '/CS', type: 'ctrl', dir: 'in', desc: 'Chip select from the MMU/PLA.', activeLow: true, terms: ['cs'] },
+        { n: 14, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 15, name: '/DMAA', type: 'ctrl', dir: 'in', desc: 'DMA acknowledge.', activeLow: true },
+        { n: 16, name: 'CL', type: 'clock', dir: 'in', desc: 'Video clock input (crystal side, sheet name CL).', verify: true },
+        { n: 17, name: 'S/LUM', type: 'video', dir: 'out', desc: 'Sync and luminance output.', terms: ['luma-chroma'] },
+        { n: 18, name: '1MHz', type: 'clock', dir: 'out', desc: 'System clock output, 1 MHz.', terms: ['clock'], probe: 'About 1 MHz square wave.' },
+        { n: 19, name: '/RAS', type: 'ctrl', dir: 'out', desc: 'Row address strobe for the DRAM.', activeLow: true, terms: ['ras-cas'] },
+        { n: 20, name: 'CAS', type: 'ctrl', dir: 'out', desc: 'Column address strobe for the DRAM (sheet name CAS, active HIGH on the sheet).', terms: ['ras-cas'], verify: true },
+        { n: 21, name: 'MU', type: 'ctrl', dir: 'out', desc: 'Multiplex control (row and column address select).', terms: ['mux'], verify: true },
+        { n: 22, name: '/IDACC', type: 'ctrl', dir: 'out', desc: 'Input/DMA acknowledge (sheet name).', activeLow: true, verify: true },
+        { n: 23, name: '2MHz', type: 'clock', dir: 'out', desc: 'System clock output, 2 MHz (FAST mode).', terms: ['clock'], probe: 'About 2 MHz square wave.', verify: true },
+        { n: 24, name: 'VSS', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 25, name: 'Z80PHI', type: 'clock', dir: 'out', desc: 'Clock output for the Z80.', terms: ['clock'], verify: true },
+        { n: 26, name: 'K0', type: 'kbd', dir: 'out', desc: 'Keyboard scan line K0.', terms: [] },
+        { n: 27, name: 'K1', type: 'kbd', dir: 'out', desc: 'Keyboard scan line K1.' },
+        { n: 28, name: 'K2', type: 'kbd', dir: 'out', desc: 'Keyboard scan line K2.' },
+        { n: 29, name: 'PHCL', type: 'clock', dir: 'out', desc: 'Phase clock output (sheet name).', verify: true },
+        { n: 30, name: 'PHIN', type: 'clock', dir: 'in', desc: 'Phase clock input (sheet name).', verify: true },
+        { n: 31, name: 'A11', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 11 to the DRAM.' },
+        { n: 32, name: 'A0', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 0 to the DRAM.' },
+        { n: 33, name: 'A1', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 1 to the DRAM.' },
+        { n: 34, name: 'A2', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 2 to the DRAM.' },
+        { n: 35, name: 'A3', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 3 to the DRAM.' },
+        { n: 36, name: 'A4', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 4 to the DRAM.' },
+        { n: 37, name: 'A5', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 5 to the DRAM.' },
+        { n: 38, name: 'A6', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 6 to the DRAM.' },
+        { n: 39, name: 'A7', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 7 to the DRAM.' },
+        { n: 40, name: 'A8', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 8 to the DRAM.' },
+        { n: 41, name: 'A9', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 9 to the DRAM.' },
+        { n: 42, name: 'A10', type: 'addr', dir: 'out', desc: 'VIC-IIe address bus bit 10 to the DRAM.' },
+        { n: 43, name: 'DB11', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 11.' },
+        { n: 44, name: 'DB10', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 10.' },
+        { n: 45, name: 'DB9', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 9.' },
+        { n: 46, name: 'DB8', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 8.' },
+        { n: 47, name: 'DB7', type: 'data', dir: 'bidir', desc: 'VIC-IIe data bus bit 7.' },
+        { n: 48, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+      ],
+      verifiedAgainst: 'Commodore 128 Video and Custom sheet',
+    },
+    mmu8722: {
+      id: 'mmu8722',
+      name: '8722 MMU',
+      short: 'MMU',
+      role: 'Memory management: ROM/RAM banks, common areas, CPU select',
+      pkg: 'DIP-48',
+      verify: true,
+      machines: ['c128'],
+      summary: 'Memory management unit. Chooses which CPU (8502 or Z80) drives the bus, the ROM/RAM bank mapping across $0000-$FFFF, and the common areas. Outputs translated addresses TA8-TA15. Pins 22 and 23 are multiplexed (A4/A5 and A6/A7). Fails: dead in 64 or 128 mode, or bad banking. Verify the pinout against the datasheet before use: the sheet calls the chip reconstructed in places.',
+      fails: ['Dead in 64 or 128 mode', 'Bad banking', 'No CP/M'],
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'VDD', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'] },
+        { n: 2, name: '/RESET', type: 'ctrl', dir: 'in', desc: 'Reset.', activeLow: true, terms: ['reset'] },
+        { n: 3, name: 'TA15', type: 'addr', dir: 'out', desc: 'Translated address bit 15.' },
+        { n: 4, name: 'TA14', type: 'addr', dir: 'out', desc: 'Translated address bit 14.' },
+        { n: 5, name: 'TA13', type: 'addr', dir: 'out', desc: 'Translated address bit 13.' },
+        { n: 6, name: 'TA12', type: 'addr', dir: 'out', desc: 'Translated address bit 12.' },
+        { n: 7, name: 'TA11', type: 'addr', dir: 'out', desc: 'Translated address bit 11.' },
+        { n: 8, name: 'TA10', type: 'addr', dir: 'out', desc: 'Translated address bit 10.' },
+        { n: 9, name: 'TA9', type: 'addr', dir: 'out', desc: 'Translated address bit 9.' },
+        { n: 10, name: 'TA8', type: 'addr', dir: 'out', desc: 'Translated address bit 8.' },
+        { n: 11, name: '/CAS1', type: 'ctrl', dir: 'out', desc: 'Column address strobe, bank 1.', activeLow: true, terms: ['ras-cas'] },
+        { n: 12, name: '/CAS0', type: 'ctrl', dir: 'out', desc: 'Column address strobe, bank 0.', activeLow: true, terms: ['ras-cas'] },
+        { n: 13, name: 'I/O SEL', type: 'ctrl', dir: 'out', desc: 'I/O select.' },
+        { n: 14, name: 'MS1', type: 'ctrl', dir: 'out', desc: 'Memory select bit 1 (bank mapping).' },
+        { n: 15, name: 'MS0', type: 'ctrl', dir: 'out', desc: 'Memory select bit 0 (bank mapping).' },
+        { n: 16, name: 'AEC', type: 'ctrl', dir: 'in', desc: 'Address Enable Control from the VIC.', terms: ['aec'] },
+        { n: 17, name: 'MUX', type: 'ctrl', dir: 'out', desc: 'Row/column address multiplex control for the DRAM.', terms: ['mux'] },
+        { n: 18, name: 'A0', type: 'addr', dir: 'in', desc: 'CPU address bit 0.' },
+        { n: 19, name: 'A1', type: 'addr', dir: 'in', desc: 'CPU address bit 1.' },
+        { n: 20, name: 'A2', type: 'addr', dir: 'in', desc: 'CPU address bit 2.' },
+        { n: 21, name: 'A3', type: 'addr', dir: 'in', desc: 'CPU address bit 3.' },
+        { n: 22, name: 'A4/5', type: 'addr', dir: 'in', desc: 'Multiplexed: CPU address bit 4 or 5 (see the pin note: pins 22 and 23 are shared).', verify: true },
+        { n: 23, name: 'A6/7', type: 'addr', dir: 'in', desc: 'Multiplexed: CPU address bit 6 or 7 (see the pin note).', verify: true },
+        { n: 24, name: 'A8', type: 'addr', dir: 'in', desc: 'CPU address bit 8.' },
+        { n: 25, name: 'A9', type: 'addr', dir: 'in', desc: 'CPU address bit 9.' },
+        { n: 26, name: 'A10', type: 'addr', dir: 'in', desc: 'CPU address bit 10.' },
+        { n: 27, name: 'A11', type: 'addr', dir: 'in', desc: 'CPU address bit 11.' },
+        { n: 28, name: 'A12', type: 'addr', dir: 'in', desc: 'CPU address bit 12.' },
+        { n: 29, name: 'A13', type: 'addr', dir: 'in', desc: 'CPU address bit 13.' },
+        { n: 30, name: 'A14', type: 'addr', dir: 'in', desc: 'CPU address bit 14.' },
+        { n: 31, name: 'A15', type: 'addr', dir: 'in', desc: 'CPU address bit 15.' },
+        { n: 32, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 33, name: 'PHI0', type: 'clock', dir: 'in', desc: 'Phase 0 clock from the CPU.', terms: ['clock'] },
+        { n: 34, name: 'VSS', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 35, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bus bit 0.' },
+        { n: 36, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bus bit 1.' },
+        { n: 37, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bus bit 2.' },
+        { n: 38, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bus bit 3.' },
+        { n: 39, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bus bit 4.' },
+        { n: 40, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bus bit 5.' },
+        { n: 41, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bus bit 6.' },
+        { n: 42, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bus bit 7.' },
+        { n: 43, name: '/Z80EN', type: 'ctrl', dir: 'out', desc: 'Enables the Z80 (LOW when the Z80 is selected).', activeLow: true },
+        { n: 44, name: 'FSDIR', type: 'ctrl', dir: 'out', desc: 'Fast serial direction.' },
+        { n: 45, name: '/GAME', type: 'ctrl', dir: 'in', desc: 'Cartridge GAME line.', activeLow: true },
+        { n: 46, name: '/EXROM', type: 'ctrl', dir: 'in', desc: 'Cartridge EXROM line.', activeLow: true },
+        { n: 47, name: '128/64', type: 'ctrl', dir: 'in', desc: 'Mode sense: 128 or 64 mode.' },
+        { n: 48, name: 'SENSE', type: 'ctrl', dir: 'in', desc: 'Sense input (sheet name).' },
+      ],
+      verifiedAgainst: 'Commodore 128 Video and Custom sheet',
+    },
+    pla8721: {
+      id: 'pla8721',
+      name: '8721 PLA',
+      short: 'PLA',
+      role: 'C128 address decode: ROM/RAM banks, chip selects, VIC and colour RAM',
+      pkg: 'DIP-48',
+      verify: true,
+      machines: ['c128'],
+      summary: 'The C128 address-decode PLA, not the C64 82S100. Makes /ROM1-/ROM4, /ROML, /ROMH, /CHAROM, /COLRAM, /VIC, /IOCS and the DRAM strobes from the address bus and the bank inputs LORAM, HIRAM, CHAREN and the cartridge lines. Runs in every mode, so a bad one looks like a dead machine or wrong banking. Pinout from the companion sheet, which flags this chip as reconstructed: verify before use.',
+      fails: ['Dead machine', 'Wrong banking', 'No I/O'],
+      datasheets: [],
+      pins: [
+        { n: 1, name: 'A15', type: 'addr', dir: 'in', desc: 'CPU address bit 15.' },
+        { n: 2, name: 'A14', type: 'addr', dir: 'in', desc: 'CPU address bit 14.' },
+        { n: 3, name: 'A13', type: 'addr', dir: 'in', desc: 'CPU address bit 13.' },
+        { n: 4, name: 'A12', type: 'addr', dir: 'in', desc: 'CPU address bit 12.' },
+        { n: 5, name: 'A11', type: 'addr', dir: 'in', desc: 'CPU address bit 11.' },
+        { n: 6, name: 'A10', type: 'addr', dir: 'in', desc: 'CPU address bit 10.' },
+        { n: 7, name: 'VICFIX', type: 'ctrl', dir: 'out', desc: 'VIC fixed-address decode (sheet name).' },
+        { n: 8, name: 'DMAACK', type: 'ctrl', dir: 'in', desc: 'DMA acknowledge (sheet name).' },
+        { n: 9, name: 'AEC', type: 'ctrl', dir: 'in', desc: 'Address Enable Control from the VIC-IIe.', terms: ['aec'] },
+        { n: 10, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write from the CPU.', terms: ['rw'] },
+        { n: 11, name: 'GAME', type: 'ctrl', dir: 'in', desc: 'Cartridge GAME line.' },
+        { n: 12, name: 'EXROM', type: 'ctrl', dir: 'in', desc: 'Cartridge EXROM line.' },
+        { n: 13, name: 'Z80 EN', type: 'ctrl', dir: 'in', desc: 'Z80 enable (sheet name).' },
+        { n: 14, name: 'Z80 I/O', type: 'ctrl', dir: 'out', desc: 'Z80 I/O select (sheet name).' },
+        { n: 15, name: '64/128', type: 'ctrl', dir: 'in', desc: 'Mode sense: 64 or 128.' },
+        { n: 16, name: 'I/O SE', type: 'ctrl', dir: 'out', desc: 'I/O select enable (sheet name).' },
+        { n: 17, name: 'ROMBNKHI', type: 'ctrl', dir: 'in', desc: 'ROM bank select, high bit (sheet name).' },
+        { n: 18, name: 'ROMBNKLO', type: 'ctrl', dir: 'in', desc: 'ROM bank select, low bit (sheet name).' },
+        { n: 19, name: 'VMA4', type: 'ctrl', dir: 'in', desc: 'VIC memory address line 4 (sheet name).' },
+        { n: 20, name: 'VMA5', type: 'ctrl', dir: 'in', desc: 'VIC memory address line 5 (sheet name).' },
+        { n: 21, name: 'BA', type: 'ctrl', dir: 'in', desc: 'Bus Available from the VIC.', terms: ['ba'] },
+        { n: 22, name: 'LORAM', type: 'ctrl', dir: 'in', desc: 'Processor port bit: LORAM (BASIC ROM select).' },
+        { n: 23, name: 'HIRAM', type: 'ctrl', dir: 'in', desc: 'Processor port bit: HIRAM (KERNAL ROM select).' },
+        { n: 24, name: 'VSS', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 25, name: 'CHAREN', type: 'ctrl', dir: 'in', desc: 'Processor port bit: CHAREN (character ROM or I/O select).' },
+        { n: 26, name: 'VA14', type: 'addr', dir: 'out', desc: 'VIC address bit 14 (bank select to the VIC).' },
+        { n: 27, name: '128/256', type: 'ctrl', dir: 'in', desc: 'Mode sense: 128K or 256K.' },
+        { n: 28, name: 'N/C', type: 'nc', dir: '-', desc: 'No connection.' },
+        { n: 29, name: '/SDEN', type: 'ctrl', dir: 'out', desc: 'Sprite/data enable (sheet name).', activeLow: true },
+        { n: 30, name: '/ROML', type: 'ctrl', dir: 'out', desc: 'Low ROM select.', activeLow: true },
+        { n: 31, name: '/ROMH', type: 'ctrl', dir: 'out', desc: 'High ROM select.', activeLow: true },
+        { n: 32, name: 'CLRBNK', type: 'ctrl', dir: 'out', desc: 'Clear bank (sheet name).' },
+        { n: 33, name: '/FROM', type: 'ctrl', dir: 'out', desc: 'Function ROM select.', activeLow: true },
+        { n: 34, name: '/ROM4', type: 'ctrl', dir: 'out', desc: 'ROM 4 select.', activeLow: true },
+        { n: 35, name: '/ROM3', type: 'ctrl', dir: 'out', desc: 'ROM 3 select.', activeLow: true },
+        { n: 36, name: '/ROM2', type: 'ctrl', dir: 'out', desc: 'ROM 2 select.', activeLow: true },
+        { n: 37, name: '/ROM1', type: 'ctrl', dir: 'out', desc: 'ROM 1 select.', activeLow: true },
+        { n: 38, name: '/IOCS', type: 'ctrl', dir: 'out', desc: 'I/O chip select (VIC, SID, CIA and the rest).', activeLow: true, terms: ['cs'] },
+        { n: 39, name: 'DIR', type: 'ctrl', dir: 'out', desc: 'Data direction for the buffers.' },
+        { n: 40, name: 'DWE', type: 'ctrl', dir: 'out', desc: 'DRAM write enable.' },
+        { n: 41, name: 'CASENB', type: 'ctrl', dir: 'out', desc: 'Column address strobe enable.' },
+        { n: 42, name: '/VIC', type: 'ctrl', dir: 'out', desc: 'VIC chip select.', activeLow: true, terms: ['cs'] },
+        { n: 43, name: '/IOACC', type: 'ctrl', dir: 'out', desc: 'I/O access strobe.', activeLow: true, terms: ['cs'] },
+        { n: 44, name: 'GWE', type: 'ctrl', dir: 'out', desc: 'Global write enable.' },
+        { n: 45, name: '/COLRAM', type: 'ctrl', dir: 'out', desc: 'Colour RAM chip select.', activeLow: true, terms: ['cs'] },
+        { n: 46, name: '/CHAROM', type: 'ctrl', dir: 'out', desc: 'Character ROM select.', activeLow: true, terms: ['cs'] },
+        { n: 47, name: 'CLK', type: 'clock', dir: 'in', desc: 'Clock input.', terms: ['clock'] },
+        { n: 48, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.95 to +5.10 V' },
+      ],
+      verifiedAgainst: 'Commodore 128 Video and Custom sheet',
+    },
   },
-  "symptoms": {
-    "c16": [
+  symptoms: {
+    c16: [
+      { symptom: 'Hot chip, no video', suspects: ['ted7360'], note: 'Add a heatsink. TED failure is heat-driven.' },
+      { symptom: 'No boot', suspects: ['cpu7501', 'ted7360'], note: 'Check clock at TED pin 12 and 7501 pin 1.' },
+      { symptom: 'Garbled screen / random crashes', suspects: ['dram4164'], note: 'Swap suspect DRAMs.' },
       {
-        "symptom": "Hot chip, no video",
-        "suspects": [
-          "ted7360"
-        ],
-        "note": "Add a heatsink. TED failure is heat-driven."
+        symptom: 'Dead keyboard',
+        suspects: ['pio6529', 'ted7360'],
+        note: 'Rows are TED K0-K7, columns are the 6529.',
+      },
+      { symptom: 'No RS-232 (Plus/4)', suspects: ['acia6551'], note: 'Any 6551/65C51 works.' },
+      { symptom: 'Black screen', suspects: ['cpu7501'], note: 'Check +5 V rail and /RES at 7501 pin 40 first.' },
+    ],
+    c64: [
+      {
+        symptom: 'Black screen, no boot',
+        suspects: ['pla82s100', 'cpu6510', 'rom2364'],
+        note: 'Sheet order: PLA, then CPU, clock and ROM. Check +5 V and the 9 V AC in first.',
       },
       {
-        "symptom": "No boot",
-        "suspects": [
-          "cpu7501",
-          "ted7360"
-        ],
-        "note": "Check clock at TED pin 12 and 7501 pin 1."
+        symptom: 'Garbage screen or checkerboard',
+        suspects: ['dram4164', 'pla82s100'],
+        note: 'Swap the 4164 DRAMs first, then check the PLA and address lines.',
       },
       {
-        "symptom": "Garbled screen / random crashes",
-        "suspects": [
-          "dram4164"
-        ],
-        "note": "Swap suspect DRAMs."
+        symptom: 'No picture or garbled picture',
+        suspects: ['vic2'],
+        note: 'VIC-II. Check Vdd (pin 13, +12 V) and Vcc (pin 40) before swapping.',
       },
       {
-        "symptom": "Dead keyboard",
-        "suspects": [
-          "pio6529",
-          "ted7360"
-        ],
-        "note": "Rows are TED K0-K7, columns are the 6529."
+        symptom: 'No sound or dead paddles',
+        suspects: ['sid6581'],
+        note: 'SID. Check Vdd (pin 28): +12 V on a 6581, +9 V on an 8580.',
+      },
+      { symptom: 'Dead keyboard or joystick', suspects: ['cia6526'], note: 'CIA1 at $DC00 (keys and joysticks).' },
+      { symptom: 'No disk or serial bus', suspects: ['cia6526'], note: 'CIA2 at $DD00 (serial bus and user port).' },
+      { symptom: 'Wrong or flashing colours', suspects: ['sram2114'], note: 'Colour RAM 2114 at $D800.' },
+      {
+        symptom: 'Garbage on boot',
+        suspects: ['rom2364'],
+        note: 'BASIC (U3) or KERNAL (U4) ROM. Pinout not captured; use the sheet as the type reference.',
+      },
+      { symptom: 'Missing or garbled characters', suspects: ['rom2332'], note: 'Character ROM at U5.' },
+      {
+        symptom: 'Hot PLA or VIC-II',
+        suspects: ['pla82s100', 'vic2'],
+        note: 'Both run hot. Heatsink or socket them; heat alone is not a fault, but a dead one is usually hot.',
+      },
+    ],
+    vic20: [
+      {
+        symptom: 'Black or blank screen',
+        suspects: ['cpu6502', 'rom2364'],
+        note: 'CPU, clock and KERNAL ROM. Check the clock from the VIC (pin 36) first.',
       },
       {
-        "symptom": "No RS-232 (Plus/4)",
-        "suspects": [
-          "acia6551"
-        ],
-        "note": "Any 6551/65C51 works."
+        symptom: 'Garbage screen',
+        suspects: ['sram2114', 'vic6560'],
+        note: '2114 main RAM or the VIC. Swap the 2114s first.',
       },
       {
-        "symptom": "Black screen",
-        "suspects": [
-          "cpu7501"
-        ],
-        "note": "Check +5 V rail and /RES at 7501 pin 40 first."
-      }
-    ]
+        symptom: 'No picture or sound',
+        suspects: ['vic6560'],
+        note: 'VIC 6560 (NTSC) or 6561 (PAL) at $9000. No +12 V rail to check.',
+      },
+      {
+        symptom: 'Dead keyboard or joystick',
+        suspects: ['via6522'],
+        note: 'VIA2 at $9120: keyboard, joystick and timers.',
+      },
+      {
+        symptom: 'No serial or cassette',
+        suspects: ['via6522'],
+        note: 'VIA1 at $9110: serial bus, cassette and RESTORE NMI.',
+      },
+      { symptom: 'Garbled characters', suspects: ['rom2332'], note: 'Character ROM (4K).' },
+      {
+        symptom: 'Dead machine, no boot',
+        suspects: ['vic6560', 'cpu6502', 'sram2114'],
+        note: 'Socket suspect chips. Swap order: VIC, CPU, RAM, then the VIAs.',
+      },
+    ],
+    pet: [
+      {
+        symptom: 'Black screen, no startup chirp',
+        suspects: ['cpu6502', 'rom2364'],
+        note: 'CPU, clock and ROM. Sheet order: CPU / clock / ROM first.',
+      },
+      { symptom: 'Garbage screen', suspects: ['sram2114'], note: 'Screen 2114 RAM at $8000. Swap the 2114s.' },
+      {
+        symptom: 'No display (later boards)',
+        suspects: ['crtc6545'],
+        note: 'The 6545 CRTC. Early 2001s have no CRTC (discrete logic), so no CRTC is normal there.',
+      },
+      {
+        symptom: 'Dead keyboard',
+        suspects: ['pia6520'],
+        note: 'PIA1 at $E810: keyboard rows, cassette 1, retrace IRQ.',
+      },
+      {
+        symptom: 'No disk or IEEE-488',
+        suspects: ['pia6520', 'via6522'],
+        note: 'PIA2 at $E820 (IEEE-488 data) and the VIA at $E840 (handshake, timers).',
+      },
+      {
+        symptom: 'No beep',
+        suspects: ['via6522'],
+        note: 'The only sound: a beep from the VIA CB2 line. There is no sound chip.',
+      },
+    ],
+    c128: [
+      {
+        symptom: 'Dead in every mode',
+        suspects: ['cpu8502', 'mmu8722', 'pla8721'],
+        note: 'The 8502, MMU or PLA. Check the clocks and /RESET first.',
+      },
+      {
+        symptom: 'Dead in 64 or 128 mode, bad banking',
+        suspects: ['mmu8722', 'pla8721'],
+        note: 'Memory maps: the MMU and the PLA.',
+      },
+      {
+        symptom: 'No CP/M',
+        suspects: ['cpuz80', 'mmu8722'],
+        note: 'Z80 or MMU. Check that the MMU hands the bus to the Z80.',
+      },
+      {
+        symptom: 'No or garbled 40-column picture',
+        suspects: ['vic2e'],
+        note: 'VIC-IIe or its RAM. Check composite out on the DIN-8.',
+      },
+      {
+        symptom: 'No or garbled 80-column picture',
+        suspects: ['vdc8563'],
+        note: '8563 VDC: runs hot and is a known failure. Its RAM is 4416 or 4464 on the 64 KB upgrade.',
+      },
+      { symptom: 'No sound', suspects: ['sid6581'], note: '8580 SID (or 6581 on early boards). Check Vdd.' },
+      {
+        symptom: 'Dead keyboard or no disk',
+        suspects: ['cia6526'],
+        note: 'CIA1 for keys and joystick; CIA2 for the serial bus and user port.',
+      },
+    ],
   },
-  "connectors": {
-    "c16": [
+  connectors: {
+    c16: [
       {
-        "id": "c16-power",
-        "name": "Power in",
-        "kind": "DIN-7 round",
-        "verify": true,
-        "summary": "9 V DC, about 1 A, regulated on board by a 7805. Do not assume a C64 supply is safe without checking: the C64 brick outputs +5 V DC and 9 V AC.",
-        "pins": [
-          {
-            "n": "?",
-            "name": "+9 V DC",
-            "desc": "Unregulated input to the 7805."
-          },
-          {
-            "n": "?",
-            "name": "GND",
-            "desc": "Return."
-          }
-        ]
-      },
-      {
-        "id": "c16-joy",
-        "name": "Joystick 1 / 2",
-        "kind": "mini-DIN-8",
-        "verify": true,
-        "summary": "Non-standard mini-DIN. An Atari-style DE-9 joystick needs an adapter.",
-        "pins": [
-          {
-            "n": 1,
-            "name": "Up"
-          },
-          {
-            "n": 2,
-            "name": "Down"
-          },
-          {
-            "n": 3,
-            "name": "Left"
-          },
-          {
-            "n": 4,
-            "name": "Right"
-          },
-          {
-            "n": 5,
-            "name": "+5 V"
-          },
-          {
-            "n": 6,
-            "name": "Fire"
-          },
-          {
-            "n": 7,
-            "name": "GND"
-          },
-          {
-            "n": 8,
-            "name": "Select / NC"
-          }
-        ]
-      },
-      {
-        "id": "c16-cass",
-        "name": "Cassette (1531 Datasette)",
-        "kind": "mini-DIN-7",
-        "verify": true,
-        "summary": "Not the C64 edge connector. A 1530 needs an adapter.",
-        "pins": [
-          {
-            "n": 1,
-            "name": "GND"
-          },
-          {
-            "n": 2,
-            "name": "+5 V"
-          },
-          {
-            "n": 3,
-            "name": "Motor"
-          },
-          {
-            "n": 4,
-            "name": "Read"
-          },
-          {
-            "n": 5,
-            "name": "Write"
-          },
-          {
-            "n": 6,
-            "name": "Sense"
-          },
-          {
-            "n": 7,
-            "name": "NC"
-          }
-        ]
-      },
-      {
-        "id": "c16-iec",
-        "name": "Serial (IEC) disk / printer",
-        "kind": "DIN-6",
-        "verify": false,
-        "summary": "Same bus as the C64. 1541 and 1551 (Plus/4 via expansion port) drives.",
-        "pins": [
-          {
-            "n": 1,
-            "name": "/SRQ",
-            "desc": "Service request (unused by most drives)."
-          },
-          {
-            "n": 2,
-            "name": "GND"
-          },
-          {
-            "n": 3,
-            "name": "/ATN",
-            "desc": "Attention: computer wants to talk."
-          },
-          {
-            "n": 4,
-            "name": "CLK",
-            "desc": "Serial clock."
-          },
-          {
-            "n": 5,
-            "name": "DATA",
-            "desc": "Serial data."
-          },
-          {
-            "n": 6,
-            "name": "/RESET",
-            "desc": "Resets the drive with the computer."
-          }
+        id: 'c16-power',
+        name: 'Power in',
+        kind: 'DIN-7 round',
+        verify: true,
+        summary: '9 V DC, about 1 A, regulated on board by a 7805. Do not assume a C64 supply is safe without checking: the C64 brick outputs +5 V DC and 9 V AC.',
+        pins: [
+          { n: '?', name: '+9 V DC', desc: 'Unregulated input to the 7805.' },
+          { n: '?', name: 'GND', desc: 'Return.' },
         ],
-        "terms": [
-          "iec",
-          "open-drain"
-        ]
       },
       {
-        "id": "c16-video",
-        "name": "Video / audio",
-        "kind": "DIN-8 (C64-style)",
-        "verify": false,
-        "summary": "Composite plus separate LUM and CHROMA (S-Video quality with a simple cable).",
-        "pins": [
-          {
-            "n": 1,
-            "name": "LUM",
-            "desc": "Luminance + sync."
-          },
-          {
-            "n": 2,
-            "name": "GND"
-          },
-          {
-            "n": 3,
-            "name": "Audio out"
-          },
-          {
-            "n": 4,
-            "name": "Composite video"
-          },
-          {
-            "n": 5,
-            "name": "Audio in"
-          },
-          {
-            "n": 6,
-            "name": "CHROMA",
-            "desc": "Colour."
-          },
-          {
-            "n": 7,
-            "name": "NC"
-          },
-          {
-            "n": 8,
-            "name": "NC"
-          }
+        id: 'c16-joy',
+        name: 'Joystick 1 / 2',
+        kind: 'mini-DIN-8',
+        verify: true,
+        summary: 'Non-standard mini-DIN. An Atari-style DE-9 joystick needs an adapter.',
+        pins: [
+          { n: 1, name: 'Up' },
+          { n: 2, name: 'Down' },
+          { n: 3, name: 'Left' },
+          { n: 4, name: 'Right' },
+          { n: 5, name: '+5 V' },
+          { n: 6, name: 'Fire' },
+          { n: 7, name: 'GND' },
+          { n: 8, name: 'Select / NC' },
         ],
-        "terms": [
-          "luma-chroma"
-        ]
       },
       {
-        "id": "c16-exp",
-        "name": "Memory expansion port",
-        "kind": "50-pin edge",
-        "verify": true,
-        "summary": "Cartridges, RAM expansion to 64 KB, and the 1551 disk drive.",
-        "pins": [
-          {
-            "n": "1",
-            "name": "GND"
-          },
-          {
-            "n": "2",
-            "name": "+5 V"
-          },
-          {
-            "n": "…",
-            "name": "A0-A15, DB0-DB7, R/W, /RAS, /CAS, MUX, /IRQ, /RES, Φ0, /C1 LOW, /C2 LOW"
-          }
-        ]
-      }
-    ]
+        id: 'c16-cass',
+        name: 'Cassette (1531 Datasette)',
+        kind: 'mini-DIN-7',
+        verify: true,
+        summary: 'Not the C64 edge connector. A 1530 needs an adapter.',
+        pins: [
+          { n: 1, name: 'GND' },
+          { n: 2, name: '+5 V' },
+          { n: 3, name: 'Motor' },
+          { n: 4, name: 'Read' },
+          { n: 5, name: 'Write' },
+          { n: 6, name: 'Sense' },
+          { n: 7, name: 'NC' },
+        ],
+      },
+      {
+        id: 'c16-iec',
+        name: 'Serial (IEC) disk / printer',
+        kind: 'DIN-6',
+        verify: false,
+        summary: 'Same bus as the C64. 1541 and 1551 (Plus/4 via expansion port) drives.',
+        pins: [
+          { n: 1, name: '/SRQ', desc: 'Service request (unused by most drives).' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: '/ATN', desc: 'Attention: computer wants to talk.' },
+          { n: 4, name: 'CLK', desc: 'Serial clock.' },
+          { n: 5, name: 'DATA', desc: 'Serial data.' },
+          { n: 6, name: '/RESET', desc: 'Resets the drive with the computer.' },
+        ],
+        terms: ['iec', 'open-drain'],
+      },
+      {
+        id: 'c16-video',
+        name: 'Video / audio',
+        kind: 'DIN-8 (C64-style)',
+        verify: false,
+        summary: 'Composite plus separate LUM and CHROMA (S-Video quality with a simple cable).',
+        pins: [
+          { n: 1, name: 'LUM', desc: 'Luminance + sync.' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: 'Audio out' },
+          { n: 4, name: 'Composite video' },
+          { n: 5, name: 'Audio in' },
+          { n: 6, name: 'CHROMA', desc: 'Colour.' },
+          { n: 7, name: 'NC' },
+          { n: 8, name: 'NC' },
+        ],
+        terms: ['luma-chroma'],
+      },
+      {
+        id: 'c16-exp',
+        name: 'Memory expansion port',
+        kind: '50-pin edge',
+        verify: true,
+        summary: 'Cartridges, RAM expansion to 64 KB, and the 1551 disk drive.',
+        pins: [
+          { n: '1', name: 'GND' },
+          { n: '2', name: '+5 V' },
+          { n: '…', name: 'A0-A15, DB0-DB7, R/W, /RAS, /CAS, MUX, /IRQ, /RES, Φ0, /C1 LOW, /C2 LOW' },
+        ],
+      },
+    ],
+    c64: [
+      {
+        id: 'c64-power',
+        name: 'Power in (brick)',
+        kind: 'DIN-7',
+        verify: true,
+        summary: 'Regulated +5 V DC and 9 V AC from the brick. Do not use a C16 or VIC-20 supply. Sourced from C64-Wiki; check your brick.',
+        pins: [
+          { n: 1, name: 'GND' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: 'GND' },
+          { n: 4, name: 'unused', desc: '5 V or not connected.' },
+          { n: 5, name: '+5 V DC', desc: 'Up to about 1.5 A.' },
+          { n: 6, name: '9 V AC', desc: 'Phase 1, about 1 A.' },
+          { n: 7, name: '9 V AC', desc: 'Phase 2, about 1 A.' },
+        ],
+        terms: ['vcc'],
+      },
+      {
+        id: 'c64-iec',
+        name: 'Serial (IEC) disk / printer',
+        kind: 'DIN-6',
+        verify: true,
+        summary: 'Same bus as the C16. Open-collector: ATN, CLK, DATA, /SRQ and /RESET. A drive that hangs the computer is often holding DATA LOW.',
+        pins: [
+          { n: 1, name: '/SRQ', desc: 'Service request. Mostly unused.' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: '/ATN', desc: 'Attention: the computer is addressing a device.' },
+          { n: 4, name: 'CLK', desc: 'Serial clock.' },
+          { n: 5, name: 'DATA', desc: 'Serial data.' },
+          { n: 6, name: '/RESET', desc: 'Resets the drive with the computer.' },
+        ],
+        terms: ['iec', 'open-drain'],
+      },
+      {
+        id: 'c64-video',
+        name: 'Video and audio',
+        kind: 'DIN-8',
+        verify: true,
+        summary: 'Luma and chroma as separate signals, composite, and audio in and out. Pin 8 is +5 V on later C64C units per one listing; chroma on another. Verify before wiring.',
+        pins: [
+          { n: 1, name: 'LUMA', desc: 'Luminance and sync.' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: 'Audio out' },
+          { n: 4, name: 'Composite video' },
+          { n: 5, name: 'Audio in' },
+          { n: 6, name: 'CHROMA', desc: 'Colour.' },
+          { n: 7, name: 'NC', desc: 'Optional second SID channel on some aftermarket cables.' },
+          { n: 8, name: '+5 V or NC', desc: 'Listing disagrees; verify.' },
+        ],
+        terms: ['luma-chroma'],
+      },
+      {
+        id: 'c64-user',
+        name: 'User port (edge)',
+        kind: 'Edge 2x12',
+        verify: true,
+        summary: 'Parallel user port on CIA2: PB0-PB7 and PA2, with FLAG2 and PC2 handshake. Letters A-N skip G and I.',
+        pins: [
+          { n: '1', name: 'GND' },
+          { n: '2', name: '+5 V' },
+          { n: '3', name: '/RESET' },
+          { n: '4', name: 'CNT1' },
+          { n: '5', name: 'SP1' },
+          { n: '6', name: 'CNT2' },
+          { n: '7', name: 'SP2' },
+          { n: '8', name: '/PC2' },
+          { n: '9', name: 'SER ATN' },
+          { n: '10', name: '9 V AC' },
+          { n: '11', name: '9 V AC' },
+          { n: '12', name: 'GND' },
+          { n: 'A', name: 'GND' },
+          { n: 'B', name: '/FLAG2' },
+          { n: 'C', name: 'PB0' },
+          { n: 'D', name: 'PB1' },
+          { n: 'E', name: 'PB2' },
+          { n: 'F', name: 'PB3' },
+          { n: 'H', name: 'PB4' },
+          { n: 'J', name: 'PB5' },
+          { n: 'K', name: 'PB6' },
+          { n: 'L', name: 'PB7' },
+          { n: 'M', name: 'PA2' },
+          { n: 'N', name: 'GND' },
+        ],
+        terms: ['pia'],
+      },
+      {
+        id: 'c64-exp',
+        name: 'Cartridge / expansion port (edge)',
+        kind: 'Edge 2x22',
+        verify: true,
+        summary: 'Cartridge ROM and I/O expansion. Key signals only; pin letters not captured here. /GAME and /EXROM set the cartridge memory map.',
+        pins: [
+          { n: '-', name: 'GND, +5 V', desc: 'Power.' },
+          { n: '-', name: 'A0-A15, D0-D7, R/W, Φ2, BA', desc: 'CPU bus.' },
+          { n: '-', name: '/ROML, /ROMH', desc: 'Cartridge ROM selects.' },
+          { n: '-', name: '/IO1, /IO2', desc: 'I/O expansion selects ($DE00 and $DF00).' },
+          { n: '-', name: '/GAME, /EXROM', desc: 'Cartridge memory-map lines.' },
+          { n: '-', name: '/IRQ, /NMI, /RESET, /DMA', desc: 'Interrupts, reset and DMA.' },
+        ],
+      },
+      {
+        id: 'c64-ctrl',
+        name: 'Control ports 1 and 2 (DE-9)',
+        kind: 'DE-9',
+        verify: true,
+        summary: 'Joystick and paddle ports. Pin 7 is +5 V at up to 100 mA. Port 1 also takes the light pen on the fire pin.',
+        pins: [
+          { n: 1, name: 'Up' },
+          { n: 2, name: 'Down' },
+          { n: 3, name: 'Left' },
+          { n: 4, name: 'Right' },
+          { n: 5, name: 'POT Y', desc: 'Paddle Y.' },
+          { n: 6, name: 'Fire' },
+          { n: 7, name: '+5 V', desc: 'Max 100 mA.' },
+          { n: 8, name: 'GND' },
+          { n: 9, name: 'POT X', desc: 'Paddle X.' },
+        ],
+        terms: ['pia'],
+      },
+      {
+        id: 'c64-cass',
+        name: 'Cassette port (Datasette, edge)',
+        kind: 'Edge 2x6',
+        verify: true,
+        summary: 'Datasette motor, read, write and sense. The lines are processor-port bits P3-P5. Pin letters not captured.',
+        pins: [
+          { n: '-', name: 'GND' },
+          { n: '-', name: '+5 V' },
+          { n: '-', name: 'Motor', desc: 'Motor drive (P5).' },
+          { n: '-', name: 'Read', desc: 'Pulses from the tape head (sense).' },
+          { n: '-', name: 'Write', desc: 'Write data (P3).' },
+          { n: '-', name: 'Sense', desc: 'Play/record switch (P4).' },
+        ],
+      },
+    ],
+    vic20: [
+      {
+        id: 'vic20-power',
+        name: 'Power in (brick)',
+        kind: 'Brick plug',
+        verify: true,
+        summary: 'The VIC-20 runs on +5 V only. The plug and polarity vary, so check the label. It is not the C64 brick.',
+        pins: [],
+      },
+      {
+        id: 'vic20-iec',
+        name: 'Serial (IEC) disk / printer',
+        kind: 'DIN-6',
+        verify: true,
+        summary: 'Same serial bus as the C64: ATN, CLK, DATA, /SRQ and /RESET. VIA1 drives it.',
+        pins: [
+          { n: 1, name: '/SRQ' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: '/ATN' },
+          { n: 4, name: 'CLK' },
+          { n: 5, name: 'DATA' },
+          { n: 6, name: '/RESET' },
+        ],
+        terms: ['iec', 'open-drain'],
+      },
+      {
+        id: 'vic20-video',
+        name: 'Video and audio',
+        kind: 'DIN-5 180°',
+        verify: true,
+        summary: 'Pin 1 feeds +6 V to an external RF modulator (10 mA max): do not wire it into an A/V cable. Video pins disagree between listings; verify.',
+        pins: [
+          { n: 1, name: '+6 V', desc: 'RF modulator feed, 10 mA max.' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: 'Audio out' },
+          { n: 4, name: 'Video (composite)', desc: 'One listing; verify.' },
+          { n: 5, name: 'Video high', desc: 'Listing disagrees with pin 4; verify.' },
+        ],
+        terms: ['luma-chroma'],
+      },
+      {
+        id: 'vic20-user',
+        name: 'User port (edge)',
+        kind: 'Edge',
+        verify: true,
+        summary: 'Parallel user port. CB1 and CB2 come from VIA1 (sheet). Pin letters not captured.',
+        pins: [
+          { n: '-', name: 'GND, +5 V, /RESET' },
+          { n: '-', name: 'PB0-PB7', desc: 'VIA parallel port B.' },
+          { n: '-', name: 'CA2, PA2' },
+          { n: '-', name: 'CB1, CB2', desc: 'VIA1 handshake lines.' },
+        ],
+        terms: ['pia'],
+      },
+      {
+        id: 'vic20-cart',
+        name: 'Cartridge port (edge)',
+        kind: 'Edge',
+        verify: true,
+        summary: 'Cartridge ROM and RAM blocks. Key signals only; the block map is in the chip notes. Check the block selects before wiring.',
+        pins: [
+          { n: '-', name: 'A0-A15, D0-D7, R/W, Φ2' },
+          { n: '-', name: '/BLK1-/BLK5', desc: 'Cartridge block selects.' },
+          { n: '-', name: '/IRQ, /NMI, /RESET' },
+          { n: '-', name: 'GND, +5 V' },
+        ],
+      },
+      {
+        id: 'vic20-ctrl',
+        name: 'Control port (DE-9)',
+        kind: 'DE-9',
+        verify: true,
+        summary: 'Joystick and paddle port. Same numbering as the C64 control port; verify.',
+        pins: [
+          { n: 1, name: 'Up' },
+          { n: 2, name: 'Down' },
+          { n: 3, name: 'Left' },
+          { n: 4, name: 'Right' },
+          { n: 5, name: 'POT Y' },
+          { n: 6, name: 'Fire' },
+          { n: 7, name: '+5 V' },
+          { n: 8, name: 'GND' },
+          { n: 9, name: 'POT X' },
+        ],
+        terms: ['pia'],
+      },
+      {
+        id: 'vic20-cass',
+        name: 'Cassette port (Datasette)',
+        kind: 'Edge',
+        verify: true,
+        summary: 'Motor, read, write and sense, from VIA1. Pinout not captured; check the VIC-20 manual.',
+        pins: [
+          { n: '-', name: 'GND, +5 V' },
+          { n: '-', name: 'Motor' },
+          { n: '-', name: 'Read' },
+          { n: '-', name: 'Write' },
+          { n: '-', name: 'Sense' },
+        ],
+      },
+    ],
+    pet: [
+      {
+        id: 'pet-ieee',
+        name: 'IEEE-488 bus (24-contact edge)',
+        kind: 'Edge 2x12 (Commodore)',
+        verify: true,
+        summary: 'Parallel bus for disk drives and printers. Upper row pins 1-12; lower row letters A-N for pins 13-24. The PET uses a Commodore 24-contact edge, not the standard micro-ribbon connector. Pin 12 is GND in the Commodore document, SHIELD in another listing.',
+        pins: [
+          { n: '1', name: 'DIO1' },
+          { n: '2', name: 'DIO2' },
+          { n: '3', name: 'DIO3' },
+          { n: '4', name: 'DIO4' },
+          { n: '5', name: 'EOI' },
+          { n: '6', name: 'DAV', desc: 'Data valid.' },
+          { n: '7', name: 'NRFD', desc: 'Not ready for data.' },
+          { n: '8', name: 'NDAC', desc: 'Not data accepted.' },
+          { n: '9', name: 'IFC', desc: 'Interface clear.' },
+          { n: '10', name: 'SRQ', desc: 'Service request.' },
+          { n: '11', name: 'ATN', desc: 'Attention.' },
+          { n: '12', name: 'GND' },
+          { n: 'A', name: 'DIO5' },
+          { n: 'B', name: 'DIO6' },
+          { n: 'C', name: 'DIO7' },
+          { n: 'D', name: 'DIO8' },
+          { n: 'E', name: 'REN', desc: 'Remote enable.' },
+          { n: 'F', name: 'GND' },
+          { n: 'H', name: 'GND' },
+          { n: 'J', name: 'GND' },
+          { n: 'K', name: 'GND' },
+          { n: 'L', name: 'GND' },
+          { n: 'M', name: 'GND' },
+          { n: 'N', name: 'GND' },
+        ],
+        terms: ['ieee-488'],
+      },
+      {
+        id: 'pet-user',
+        name: 'User port (edge)',
+        kind: 'Edge',
+        verify: true,
+        summary: 'Parallel port on the VIA at $E840: PB0-PB7 with CB1 and CB2 handshake. Pin letters not captured.',
+        pins: [
+          { n: '-', name: 'GND, +5 V' },
+          { n: '-', name: 'PB0-PB7', desc: 'VIA port B.' },
+          { n: '-', name: 'CA1, CA2, CB1, CB2', desc: 'Handshake lines.' },
+        ],
+        terms: ['pia'],
+      },
+      {
+        id: 'pet-cass1',
+        name: 'Cassette 1 (Datasette)',
+        kind: 'Edge',
+        verify: true,
+        summary: 'Motor, read, write and sense on PIA1 at $E810. Pinout not captured; check the service manual.',
+        pins: [
+          { n: '-', name: 'GND, +5 V' },
+          { n: '-', name: 'Motor' },
+          { n: '-', name: 'Read' },
+          { n: '-', name: 'Write' },
+          { n: '-', name: 'Sense' },
+        ],
+      },
+      {
+        id: 'pet-cass2',
+        name: 'Cassette 2 (Datasette)',
+        kind: 'Edge',
+        verify: true,
+        summary: 'Second Datasette port on the VIA at $E840. Pinout not captured; check the service manual.',
+        pins: [
+          { n: '-', name: 'GND, +5 V' },
+          { n: '-', name: 'Motor' },
+          { n: '-', name: 'Read' },
+          { n: '-', name: 'Write' },
+          { n: '-', name: 'Sense' },
+        ],
+      },
+      {
+        id: 'pet-exp',
+        name: 'Memory expansion',
+        kind: 'On-board sockets',
+        verify: true,
+        summary: 'No external memory-expansion edge is captured here. The RAM is 2114 SRAM in sockets on the board. Early 2001 boards used a 6550 instead (sheet).',
+        pins: [],
+      },
+    ],
+    c128: [
+      {
+        id: 'c128-power',
+        name: 'Power (square DIN)',
+        kind: 'Square DIN (4 or 5 pins, verify)',
+        verify: true,
+        summary: 'Shared with the Plus/4, so the plug may look the same and fit a Plus/4 brick. One listing shows +5 V DC at about 2.5 A, two 9 V AC pins and ground. Verify the pinout against the C128 service manual before wiring.',
+        pins: [
+          { n: 1, name: '+5 V DC', desc: 'About 2.5 A.' },
+          { n: 2, name: 'NC' },
+          { n: 3, name: '9 V AC', desc: 'About 1 A.' },
+          { n: 4, name: 'GND' },
+          { n: 5, name: '9 V AC', desc: 'About 1 A.' },
+        ],
+      },
+      {
+        id: 'c128-rgbi',
+        name: 'RGBI video (9-pin D-sub)',
+        kind: 'DE-9 female',
+        verify: true,
+        summary: '80-column digital output: 16 colours on an RGBI monitor. Pin 7 is composite video on most listings and monochrome on one. Use an RGBI cable; a composite cable will not give colour.',
+        pins: [
+          { n: 1, name: 'GND' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: 'R', desc: 'Red, TTL.' },
+          { n: 4, name: 'G', desc: 'Green, TTL.' },
+          { n: 5, name: 'B', desc: 'Blue, TTL.' },
+          { n: 6, name: 'I', desc: 'Intensity.' },
+          { n: 7, name: 'VIDEO', desc: 'Composite (monochrome on one listing).' },
+          { n: 8, name: 'HSYNC' },
+          { n: 9, name: 'VSYNC' },
+        ],
+        terms: ['rgbi'],
+      },
+      {
+        id: 'c128-video',
+        name: 'Composite video (DIN-8, 40-column)',
+        kind: 'DIN-8',
+        verify: true,
+        summary: 'The 8-pin video DIN from the VIC-IIe: luma, chroma, composite and audio. Same connector family as the C64 video port; verify the mapping.',
+        pins: [
+          { n: 1, name: 'LUMA', desc: 'Luminance and sync.' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: 'Audio out' },
+          { n: 4, name: 'Composite video' },
+          { n: 5, name: 'Audio in' },
+          { n: 6, name: 'CHROMA' },
+          { n: 7, name: 'NC' },
+          { n: 8, name: 'NC or +5 V', desc: 'Listing disagrees; verify.' },
+        ],
+        terms: ['luma-chroma'],
+      },
+      {
+        id: 'c128-iec',
+        name: 'Serial (IEC) disk / printer',
+        kind: 'DIN-6',
+        verify: true,
+        summary: 'Same serial bus as the C64.',
+        pins: [
+          { n: 1, name: '/SRQ' },
+          { n: 2, name: 'GND' },
+          { n: 3, name: '/ATN' },
+          { n: 4, name: 'CLK' },
+          { n: 5, name: 'DATA' },
+          { n: 6, name: '/RESET' },
+        ],
+        terms: ['iec', 'open-drain'],
+      },
+      {
+        id: 'c128-user',
+        name: 'User port (edge)',
+        kind: 'Edge 2x12',
+        verify: true,
+        summary: 'Parallel user port on CIA2, laid out like the C64 user port. Pin letters not captured.',
+        pins: [
+          { n: '-', name: 'GND, +5 V, /RESET' },
+          { n: '-', name: 'PB0-PB7, /FLAG2, /PC2' },
+          { n: '-', name: 'SP1, SP2, CNT1, CNT2, SER ATN' },
+        ],
+        terms: ['pia'],
+      },
+      {
+        id: 'c128-exp',
+        name: 'Expansion (cartridge) port',
+        kind: 'Edge',
+        verify: true,
+        summary: 'Cartridge and expansion lines. Key signals only; pin letters not captured. /GAME and /EXROM set the cartridge map, which the MMU and PLA read.',
+        pins: [
+          { n: '-', name: 'A0-A15, D0-D7, R/W, Φ2' },
+          { n: '-', name: '/GAME, /EXROM' },
+          { n: '-', name: '/ROML, /ROMH, /IOCS' },
+          { n: '-', name: '/RESET, /NMI, /IRQ' },
+          { n: '-', name: 'GND, +5 V' },
+        ],
+      },
+    ],
   },
-  "power": {
-    "c16": {
-      "rails": [
+  power: {
+    c16: {
+      rails: [
         {
-          "rail": "+9 V DC in",
-          "expect": "9-12 V unregulated",
-          "where": "Power DIN / 7805 input",
-          "note": "Below 7.5 V the 7805 drops out."
+          rail: '+9 V DC in',
+          expect: '9-12 V unregulated',
+          where: 'Power DIN / 7805 input',
+          note: 'Below 7.5 V the 7805 drops out.',
         },
         {
-          "rail": "+5 V",
-          "expect": "4.9-5.2 V",
-          "where": "7805 output; TED pin 4; 7501 pin 5; 4164 pin 8",
-          "note": "Ripple under 50 mV. Sagging 5 V with a hot 7805 = shorted chip; pull TED first."
-        }
+          rail: '+5 V',
+          expect: '4.9-5.2 V',
+          where: '7805 output; TED pin 4; 7501 pin 5; 4164 pin 8',
+          note: 'Ripple under 50 mV. Sagging 5 V with a hot 7805 = shorted chip; pull TED first.',
+        },
       ],
-      "testPoints": [
+      testPoints: [
+        { tp: 'Master clock', where: 'TED pin 14', expect: '17.734 MHz PAL / 14.318 MHz NTSC' },
+        { tp: 'CPU clock', where: 'TED pin 12 → 7501 pin 1', expect: '0.89 MHz (1.76 MHz when TED not drawing)' },
+        { tp: 'Reset', where: '7501 pin 40', expect: 'LOW ~0.3 s after power-on, then HIGH' },
+        { tp: 'DRAM strobes', where: 'TED pins 10, 11', expect: 'Continuous pulsing' },
+        { tp: 'Video', where: 'TED pin 23 LUM', expect: '~1 V p-p with sync' },
+        { tp: 'TED temperature', where: 'TED body', expect: 'Hot to touch is normal; fit a heatsink' },
+      ],
+    },
+    c64: {
+      rails: [
         {
-          "tp": "Master clock",
-          "where": "TED pin 14",
-          "expect": "17.734 MHz PAL / 14.318 MHz NTSC"
+          rail: '+5 V DC',
+          expect: '4.95–5.10 V',
+          where: '6510 pin 6',
+          note: 'From the brick (DIN pin 5). A sagging 5 V is usually a shorted chip: pull the PLA and VIC before blaming the supply.',
+          verify: true,
         },
         {
-          "tp": "CPU clock",
-          "where": "TED pin 12 → 7501 pin 1",
-          "expect": "0.89 MHz (1.76 MHz when TED not drawing)"
+          rail: '9 V AC',
+          expect: 'About 9 V AC; 8.1 V AC minimum',
+          where: 'Power DIN pin 6',
+          note: 'Rectified on the board for the SID, the older NMOS VIC-II and the Datasette motor. Measure at the DIN, not the board.',
+          verify: true,
         },
         {
-          "tp": "Reset",
-          "where": "7501 pin 40",
-          "expect": "LOW ~0.3 s after power-on, then HIGH"
+          rail: '+12 V (VIC-II and 6581 Vdd)',
+          expect: 'About +12 V',
+          where: 'VIC-II pin 13',
+          note: 'Made on the board from the 9 V AC. The 6581 SID Vdd is pin 28; an 8580 runs at +9 V there. Missing or low = no picture or no sound.',
+          verify: true,
+        },
+      ],
+      testPoints: [
+        { tp: 'CPU clock Φ2', where: '6510 pin 39', expect: 'Square wave, about 1 MHz' },
+        { tp: 'VIC-II clock Φ0', where: 'VIC-II pin 17', expect: 'Square wave, about 1 MHz' },
+        { tp: 'Video crystal', where: 'VIC-II pin 21', expect: '17.734 MHz PAL / 14.318 MHz NTSC', verify: true },
+        { tp: 'CPU reset', where: '6510 pin 40', expect: 'LOW briefly at power-up, then HIGH' },
+        { tp: 'CIA reset', where: 'CIA pin 34', expect: 'LOW briefly at power-up, then HIGH' },
+        { tp: 'VIC chip select', where: 'VIC-II pin 10', expect: 'Pulses LOW on each VIC register access' },
+        { tp: 'DRAM strobe', where: 'VIC-II pin 18', expect: '/RAS pulsing continuously' },
+        { tp: 'PLA chip enable', where: 'PLA pin 19', expect: 'LOW for the PLA to drive its outputs', verify: true },
+      ],
+    },
+    vic20: {
+      rails: [
+        {
+          rail: '+5 V',
+          expect: '4.95–5.10 V',
+          where: '6502 pin 8',
+          note: 'Only rail on the VIC-20: there is no +12 V. A sagging 5 V means a shorted chip; check the VIC and CPU first.',
+          verify: true,
+        },
+      ],
+      testPoints: [
+        {
+          tp: 'CPU clock Φ0',
+          where: 'VIC pin 36',
+          expect: 'About 1 MHz (1.02 MHz NTSC / 1.11 MHz PAL)',
+          verify: true,
+        },
+        { tp: 'CPU reset', where: '6502 pin 40', expect: 'LOW briefly at power-up, then HIGH' },
+        { tp: 'Chroma', where: 'VIC pin 2', expect: 'Video signal with sync; check on a scope', verify: true },
+        { tp: 'VIA reset', where: 'VIA pin 34', expect: 'LOW briefly at power-up, then HIGH' },
+      ],
+    },
+    pet: {
+      rails: [
+        {
+          rail: '+5 V',
+          expect: '4.9–5.2 V',
+          where: '6502 pin 8',
+          note: 'The logic rail comes from the internal supply on the board, not a brick. Check the board supply first; a shorted chip pulls it down.',
+          verify: true,
+        },
+      ],
+      testPoints: [
+        { tp: 'CPU clock Φ0', where: '6502 pin 37', expect: 'Square wave, about 1 MHz (sheet: 1 MHz CPU)' },
+        { tp: 'CPU reset', where: '6502 pin 40', expect: 'LOW briefly at power-up, then HIGH' },
+        { tp: 'PIA reset', where: 'PIA pin 34', expect: 'LOW briefly at power-up, then HIGH' },
+        { tp: 'CRTC character clock', where: 'CRTC pin 21', expect: 'Pulsing on later boards', verify: true },
+      ],
+    },
+    c128: {
+      rails: [
+        {
+          rail: '+5 V',
+          expect: '4.95–5.10 V',
+          where: '8502 pin 6',
+          note: 'Power comes in on the square DIN, shared with the Plus/4. One listing gives +5 V DC on pin 1 and 9 V AC on pins 3 and 5; verify before measuring.',
+          verify: true,
         },
         {
-          "tp": "DRAM strobes",
-          "where": "TED pins 10, 11",
-          "expect": "Continuous pulsing"
+          rail: '+5 V (VDC)',
+          expect: '+5 V',
+          where: 'VDC pin 37',
+          note: 'Supply to the 8563 VDC. A dead 80-column screen with this rail present points at the VDC.',
+          verify: true,
         },
-        {
-          "tp": "Video",
-          "where": "TED pin 23 LUM",
-          "expect": "~1 V p-p with sync"
-        },
-        {
-          "tp": "TED temperature",
-          "where": "TED body",
-          "expect": "Hot to touch is normal; fit a heatsink"
-        }
-      ]
-    }
+      ],
+      testPoints: [
+        { tp: 'CPU clock Φ0', where: '8502 pin 1', expect: 'Square wave, 1 MHz (2 MHz in FAST)' },
+        { tp: '1 MHz clock', where: 'VIC-IIe pin 18', expect: 'About 1 MHz', verify: true },
+        { tp: '2 MHz clock', where: 'VIC-IIe pin 23', expect: 'About 2 MHz in FAST mode', verify: true },
+        { tp: 'CPU reset', where: '8502 pin 40', expect: 'LOW briefly at power-up, then HIGH' },
+        { tp: 'MMU reset', where: 'MMU pin 2', expect: 'LOW briefly at power-up, then HIGH' },
+        { tp: 'VDC reset', where: 'VDC pin 23', expect: 'LOW briefly at power-up, then HIGH' },
+      ],
+    },
   },
-  "quickref": {
-    "c16": {
-      "firstLook": [
-        "Powers from 9 V DC via a round DIN. Not the same brick as a C64.",
-        "TED chip does video, sound, memory and keyboard. It runs hot and is the usual failure.",
-        "BASIC 3.5 is a big step up from C64 BASIC 2.0: GRAPHIC, SOUND, DO/LOOP, HELP.",
-        "12,277 bytes free on a stock 16 KB machine. Expandable to 64 KB.",
-        "Joysticks and Datasette use mini-DIN plugs; you need adapters for C64 kit."
+  quickref: {
+    c16: {
+      firstLook: [
+        'Powers from 9 V DC via a round DIN. Not the same brick as a C64.',
+        'TED chip does video, sound, memory and keyboard. It runs hot and is the usual failure.',
+        'BASIC 3.5 is a big step up from C64 BASIC 2.0: GRAPHIC, SOUND, DO/LOOP, HELP.',
+        '12,277 bytes free on a stock 16 KB machine. Expandable to 64 KB.',
+        'Joysticks and Datasette use mini-DIN plugs; you need adapters for C64 kit.',
       ],
-      "keys": [
+      keys: [
+        { keys: 'RUN/STOP', does: 'Break a running program.' },
+        { keys: 'RUN/STOP + RESTORE', does: 'Warm reset to BASIC, program kept.' },
+        { keys: 'Reset button (right side)', does: 'Hardware reset. Program in memory is usually recoverable.' },
+        { keys: 'SHIFT + CLR/HOME', does: 'Clear screen.' },
+        { keys: 'C= + SHIFT', does: 'Toggle upper/lower case.' },
+        { keys: 'INST/DEL', does: 'Insert (shifted) / delete character.' },
+        { keys: 'CTRL + 1-8', does: 'Text colours 1-8 while typing.' },
+        { keys: 'C= + 1-8', does: 'Text colours 9-16.' },
+        { keys: 'HELP', does: 'After an error, lists the line and highlights the bad statement in reverse video.' },
         {
-          "keys": "RUN/STOP",
-          "does": "Break a running program."
+          keys: 'F1-F8',
+          does: 'Programmable. Defaults: F1 GRAPHIC, F2 DLOAD", F3 DIRECTORY, F4 SCNCLR, F5 DSAVE", F6 RUN, F7 LIST, F8 HELP.',
         },
         {
-          "keys": "RUN/STOP + RESTORE",
-          "does": "Warm reset to BASIC, program kept."
+          keys: 'ESC + letter',
+          does: 'Screen editor commands: ESC A auto-insert, ESC D delete line, ESC I insert line, ESC J/K start/end of line, ESC P/Q erase to start/end, ESC T/B set window corners, ESC X exit.',
         },
+        { keys: 'Cursor keys', does: 'Four separate arrow keys (unlike the C64 shifted pairs).' },
         {
-          "keys": "Reset button (right side)",
-          "does": "Hardware reset. Program in memory is usually recoverable."
+          keys: 'Quote mode',
+          does: 'After a " cursor and colour keys insert control codes instead of moving. ESC O or RETURN exits.',
         },
-        {
-          "keys": "SHIFT + CLR/HOME",
-          "does": "Clear screen."
-        },
-        {
-          "keys": "C= + SHIFT",
-          "does": "Toggle upper/lower case."
-        },
-        {
-          "keys": "INST/DEL",
-          "does": "Insert (shifted) / delete character."
-        },
-        {
-          "keys": "CTRL + 1-8",
-          "does": "Text colours 1-8 while typing."
-        },
-        {
-          "keys": "C= + 1-8",
-          "does": "Text colours 9-16."
-        },
-        {
-          "keys": "HELP",
-          "does": "After an error, lists the line and highlights the bad statement in reverse video."
-        },
-        {
-          "keys": "F1-F8",
-          "does": "Programmable. Defaults: F1 GRAPHIC, F2 DLOAD\", F3 DIRECTORY, F4 SCNCLR, F5 DSAVE\", F6 RUN, F7 LIST, F8 HELP."
-        },
-        {
-          "keys": "ESC + letter",
-          "does": "Screen editor commands: ESC A auto-insert, ESC D delete line, ESC I insert line, ESC J/K start/end of line, ESC P/Q erase to start/end, ESC T/B set window corners, ESC X exit."
-        },
-        {
-          "keys": "Cursor keys",
-          "does": "Four separate arrow keys (unlike the C64 shifted pairs)."
-        },
-        {
-          "keys": "Quote mode",
-          "does": "After a \" cursor and colour keys insert control codes instead of moving. ESC O or RETURN exits."
-        }
       ],
-      "basic": {
-        "dialect": "Commodore BASIC 3.5",
-        "essentials": [
-          {
-            "cmd": "LOAD \"name\",8",
-            "does": "Load from disk (device 8)."
-          },
-          {
-            "cmd": "DLOAD \"name\"",
-            "does": "Shorter disk load (3.5)."
-          },
-          {
-            "cmd": "DIRECTORY",
-            "does": "Show disk directory without clobbering memory."
-          },
-          {
-            "cmd": "SAVE \"name\",8  /  DSAVE \"name\"",
-            "does": "Save program."
-          },
-          {
-            "cmd": "RUN / LIST / NEW",
-            "does": "Run, list, erase program."
-          },
-          {
-            "cmd": "SCNCLR",
-            "does": "Clear screen."
-          },
-          {
-            "cmd": "HELP",
-            "does": "Show the line that errored."
-          },
-          {
-            "cmd": "GRAPHIC 1 / GRAPHIC 0",
-            "does": "Hi-res screen on / back to text."
-          },
-          {
-            "cmd": "SOUND 1,500,30",
-            "does": "Voice 1, frequency, duration (jiffies)."
-          },
-          {
-            "cmd": "COLOR 0,1",
-            "does": "Set colour source (0 bg, 1 fg, 4 border) to colour 1-16[,luminance 0-7]."
-          },
-          {
-            "cmd": "AUTO 10 / RENUMBER / DELETE 10-50",
-            "does": "Editing helpers."
-          },
-          {
-            "cmd": "SYS 65526",
-            "does": "Reset via KERNAL (verify).",
-            "verify": true
-          }
+      basic: {
+        dialect: 'Commodore BASIC 3.5',
+        essentials: [
+          { cmd: 'LOAD "name",8', does: 'Load from disk (device 8).' },
+          { cmd: 'DLOAD "name"', does: 'Shorter disk load (3.5).' },
+          { cmd: 'DIRECTORY', does: 'Show disk directory without clobbering memory.' },
+          { cmd: 'SAVE "name",8  /  DSAVE "name"', does: 'Save program.' },
+          { cmd: 'RUN / LIST / NEW', does: 'Run, list, erase program.' },
+          { cmd: 'SCNCLR', does: 'Clear screen.' },
+          { cmd: 'HELP', does: 'Show the line that errored.' },
+          { cmd: 'GRAPHIC 1 / GRAPHIC 0', does: 'Hi-res screen on / back to text.' },
+          { cmd: 'SOUND 1,500,30', does: 'Voice 1, frequency, duration (jiffies).' },
+          { cmd: 'COLOR 0,1', does: 'Set colour source (0 bg, 1 fg, 4 border) to colour 1-16[,luminance 0-7].' },
+          { cmd: 'AUTO 10 / RENUMBER / DELETE 10-50', does: 'Editing helpers.' },
+          { cmd: 'SYS 65526', does: 'Reset via KERNAL (verify).', verify: true },
         ],
-        "groups": [
+        groups: [
           {
-            "group": "Program control",
-            "items": [
-              "RUN [line]",
-              "LIST [a-b]",
-              "NEW",
-              "CLR",
-              "CONT",
-              "STOP / END",
-              "SYS addr",
-              "WAIT a,m,x",
-              "AUTO n",
-              "RENUMBER",
-              "DELETE a-b",
-              "TRON / TROFF",
-              "HELP"
-            ]
+            group: 'Program control',
+            items: [
+              'RUN [line]',
+              'LIST [a-b]',
+              'NEW',
+              'CLR',
+              'CONT',
+              'STOP / END',
+              'SYS addr',
+              'WAIT a,m,x',
+              'AUTO n',
+              'RENUMBER',
+              'DELETE a-b',
+              'TRON / TROFF',
+              'HELP',
+            ],
           },
           {
-            "group": "Statements",
-            "items": [
-              "PRINT / ?",
-              "INPUT / GET / GETKEY",
-              "LET",
-              "REM",
-              "GOTO / GOSUB / RETURN",
-              "ON x GOTO/GOSUB",
-              "FOR..TO..STEP..NEXT",
-              "IF..THEN..ELSE",
-              "DO..LOOP WHILE/UNTIL / EXIT",
-              "DATA / READ / RESTORE",
-              "DIM",
-              "DEF FN",
-              "POKE a,v",
-              "TRAP n / RESUME"
-            ]
+            group: 'Statements',
+            items: [
+              'PRINT / ?',
+              'INPUT / GET / GETKEY',
+              'LET',
+              'REM',
+              'GOTO / GOSUB / RETURN',
+              'ON x GOTO/GOSUB',
+              'FOR..TO..STEP..NEXT',
+              'IF..THEN..ELSE',
+              'DO..LOOP WHILE/UNTIL / EXIT',
+              'DATA / READ / RESTORE',
+              'DIM',
+              'DEF FN',
+              'POKE a,v',
+              'TRAP n / RESUME',
+            ],
           },
           {
-            "group": "Functions",
-            "items": [
-              "ABS SGN INT",
-              "SQR EXP LOG",
-              "SIN COS TAN ATN",
-              "RND(x)",
-              "PEEK(a)",
-              "FRE(0)",
-              "LEN POS",
-              "LEFT$ RIGHT$ MID$",
-              "STR$ VAL",
-              "CHR$ ASC",
-              "TAB SPC",
-              "USR(x)",
-              "INSTR",
-              "DEC / HEX$",
-              "JOY(n)",
-              "RCLR RGR RLUM",
-              "ERR$ EL ER"
-            ]
+            group: 'Functions',
+            items: [
+              'ABS SGN INT',
+              'SQR EXP LOG',
+              'SIN COS TAN ATN',
+              'RND(x)',
+              'PEEK(a)',
+              'FRE(0)',
+              'LEN POS',
+              'LEFT$ RIGHT$ MID$',
+              'STR$ VAL',
+              'CHR$ ASC',
+              'TAB SPC',
+              'USR(x)',
+              'INSTR',
+              'DEC / HEX$',
+              'JOY(n)',
+              'RCLR RGR RLUM',
+              'ERR$ EL ER',
+            ],
           },
           {
-            "group": "Graphics (3.5)",
-            "items": [
-              "GRAPHIC m[,c]  0 text, 1 hi-res, 2 split, 3 multi, 4 split multi",
-              "COLOR s,c[,l]",
-              "DRAW c,x,y TO x,y",
-              "CIRCLE c,x,y,rx,ry",
-              "BOX c,x1,y1,x2,y2",
-              "PAINT c,x,y",
-              "CHAR c,col,row,\"text\"",
-              "LOCATE x,y",
-              "SSHAPE / GSHAPE",
-              "SCNCLR",
-              "SCALE n"
-            ]
+            group: 'Graphics (3.5)',
+            items: [
+              'GRAPHIC m[,c]  0 text, 1 hi-res, 2 split, 3 multi, 4 split multi',
+              'COLOR s,c[,l]',
+              'DRAW c,x,y TO x,y',
+              'CIRCLE c,x,y,rx,ry',
+              'BOX c,x1,y1,x2,y2',
+              'PAINT c,x,y',
+              'CHAR c,col,row,"text"',
+              'LOCATE x,y',
+              'SSHAPE / GSHAPE',
+              'SCNCLR',
+              'SCALE n',
+            ],
+          },
+          { group: 'Sound (3.5)', items: ['SOUND v,f,d  voice 1-3, freq 0-1023, duration', 'VOL n  0-8'] },
+          {
+            group: 'Disk & tape',
+            items: [
+              'LOAD "name",8[,1]',
+              'SAVE "name",8',
+              'VERIFY',
+              'DLOAD / DSAVE / DVERIFY',
+              'DIRECTORY',
+              'HEADER "name",Ixx',
+              'SCRATCH "name"',
+              'RENAME "old" TO "new"',
+              'COPY',
+              'COLLECT',
+              'BACKUP D0 TO D1',
+              'OPEN 15,8,15 : PRINT#15,"cmd"',
+              'DS / DS$  drive status',
+              'LOAD / SAVE  (tape, device 1)',
+            ],
           },
           {
-            "group": "Sound (3.5)",
-            "items": [
-              "SOUND v,f,d  voice 1-3, freq 0-1023, duration",
-              "VOL n  0-8"
-            ]
+            group: 'Screen codes',
+            items: [
+              'CHR$(147) clear',
+              'CHR$(19) home',
+              'CHR$(17)/(145) down/up',
+              'CHR$(29)/(157) right/left',
+              'CHR$(18)/(146) reverse on/off',
+              'CHR$(14)/(142) lower/upper',
+              'CHR$(13) return',
+            ],
           },
-          {
-            "group": "Disk & tape",
-            "items": [
-              "LOAD \"name\",8[,1]",
-              "SAVE \"name\",8",
-              "VERIFY",
-              "DLOAD / DSAVE / DVERIFY",
-              "DIRECTORY",
-              "HEADER \"name\",Ixx",
-              "SCRATCH \"name\"",
-              "RENAME \"old\" TO \"new\"",
-              "COPY",
-              "COLLECT",
-              "BACKUP D0 TO D1",
-              "OPEN 15,8,15 : PRINT#15,\"cmd\"",
-              "DS / DS$  drive status",
-              "LOAD / SAVE  (tape, device 1)"
-            ]
-          },
-          {
-            "group": "Screen codes",
-            "items": [
-              "CHR$(147) clear",
-              "CHR$(19) home",
-              "CHR$(17)/(145) down/up",
-              "CHR$(29)/(157) right/left",
-              "CHR$(18)/(146) reverse on/off",
-              "CHR$(14)/(142) lower/upper",
-              "CHR$(13) return"
-            ]
-          }
         ],
-        "quirks": [
-          "Colour values are 1-16 in COLOR statements but 0-15 in POKEs.",
-          "The TED has 16 colours × 8 luminances; \"black\" ignores luminance.",
-          "Disk commands DLOAD/DSAVE default to device 8 and unit 0.",
-          "GRAPHIC 1 reserves 10 KB for the bitmap: on a 16 KB C16 you lose most of your BASIC memory."
-        ]
+        quirks: [
+          'Colour values are 1-16 in COLOR statements but 0-15 in POKEs.',
+          'The TED has 16 colours × 8 luminances; "black" ignores luminance.',
+          'Disk commands DLOAD/DSAVE default to device 8 and unit 0.',
+          'GRAPHIC 1 reserves 10 KB for the bitmap: on a 16 KB C16 you lose most of your BASIC memory.',
+        ],
       },
-      "memory": [
+      memory: [
+        { range: '$0000-$00FF', what: 'Zero page' },
+        { range: '$0100-$01FF', what: 'Stack' },
+        { range: '$0800-$0BFF', what: 'Colour RAM (text)' },
+        { range: '$0C00-$0FFF', what: 'Screen RAM 40×25' },
+        { range: '$1000-$3FFF', what: 'BASIC program (16 KB machine)' },
+        { range: '$8000-$BFFF', what: 'BASIC 3.5 ROM (TED CS0)' },
+        { range: '$C000-$FFFF', what: 'KERNAL ROM (TED CS1)' },
+        { range: '$FD00-$FD0F', what: '6551 ACIA (Plus/4)' },
+        { range: '$FD10', what: '6529 user port (Plus/4)' },
+        { range: '$FD30', what: '6529 keyboard column latch' },
+        { range: '$FF00-$FF3F', what: 'TED registers' },
+        { range: '$FF3E / $FF3F', what: 'ROM in / RAM in (write to switch)' },
+      ],
+    },
+    c64: {
+      firstLook: [
+        'PLA and VIC-II run hot. The PLA is the number one failure: check it before the CPU.',
+        'Power is +5 V DC and 9 V AC from the brick. Do not use a C16 or VIC-20 supply.',
+        'Dead board: swap in this order: PLA, VIC-II, CPU, RAM, CIA. Socket chips before testing.',
+        'Wrong or flashing colours point at the 2114 colour RAM at $D800.',
+        'A dead keyboard points at CIA1; no disk or serial bus points at CIA2.',
+      ],
+      keys: [
+        { keys: 'RUN/STOP', does: 'Break a running program.' },
+        { keys: 'RUN/STOP + RESTORE', does: 'Warm reset to BASIC, program kept.' },
+        { keys: 'SHIFT + CLR/HOME', does: 'Clear screen.' },
+        { keys: 'C= + SHIFT', does: 'Toggle upper / lower case.' },
+        { keys: 'INST/DEL', does: 'Insert (shifted) / delete character.' },
+        { keys: 'CTRL + 1-8', does: 'Text colours 1-8 while typing.' },
+        { keys: 'C= + 1-8', does: 'Text colours 9-16 while typing.' },
+        { keys: 'f1-f8', does: 'Function keys: CHR$(133)-CHR$(140).' },
+        { keys: 'Quote mode', does: 'After a " cursor and colour keys print codes instead of moving.' },
+      ],
+      basic: {
+        dialect: 'Commodore BASIC 2.0 (C64)',
+        essentials: [
+          { cmd: 'LOAD "name",8', does: 'Load a program from disk (device 8).' },
+          { cmd: 'LOAD "name",8,1', does: 'Load to the address it was saved from.' },
+          { cmd: 'LOAD "$",8  then  LIST', does: 'Show the disk directory.' },
+          { cmd: 'SAVE "name",8', does: 'Save the program to disk.' },
+          { cmd: 'VERIFY "name",8', does: 'Compare memory with the disk copy.' },
+          { cmd: 'RUN / LIST / NEW', does: 'Run, list or erase the program.' },
+          { cmd: 'POKE 53280,0', does: 'Border colour (0-15).' },
+          { cmd: 'POKE 53281,0', does: 'Background colour (0-15).' },
+          { cmd: 'POKE 646,n', does: 'Text colour for the next PRINT.' },
+          { cmd: 'PRINT / INPUT / GET', does: 'Output, read a line, read one key.' },
+          { cmd: 'SYS 64738', does: 'Cold reset: restart the C64.' },
+          { cmd: 'PEEK(a) / POKE a,v', does: 'Read or write one byte.' },
+          { cmd: 'OPEN 15,8,15', does: 'Open the disk command channel; then PRINT#15,"S0:name".' },
+          { cmd: 'FOR I=1 TO 9 STEP 2', does: 'Counted loop; NEXT closes it.' },
+        ],
+        groups: [
+          {
+            group: 'Program control',
+            items: ['RUN [line]', 'LIST [a-b]', 'NEW', 'CLR', 'CONT', 'STOP / END', 'SYS addr', 'WAIT a,m,x'],
+          },
+          {
+            group: 'Statements',
+            items: [
+              'PRINT ? (; joins, , tabs)',
+              'INPUT / GET',
+              'LET',
+              'REM',
+              'GOTO / GOSUB / RETURN',
+              'ON x GOTO / GOSUB',
+              'FOR..NEXT',
+              'IF..THEN',
+              'DATA / READ / RESTORE',
+              'DIM',
+              'DEF FN',
+              'POKE a,v',
+            ],
+          },
+          {
+            group: 'Functions',
+            items: [
+              'ABS SGN INT',
+              'SQR EXP LOG',
+              'SIN COS TAN ATN',
+              'RND(x)',
+              'PEEK(a)',
+              'FRE(0)',
+              'LEN POS',
+              'LEFT$ RIGHT$ MID$',
+              'STR$ VAL',
+              'CHR$ ASC',
+              'TAB SPC (PRINT only)',
+              'USR(x)',
+            ],
+          },
+          {
+            group: 'Disk and tape',
+            items: [
+              'LOAD / SAVE / VERIFY (device 8 = disk, 1 = tape)',
+              'OPEN n,8,n,"f,s,r" (sequential)',
+              'PRINT# / INPUT#',
+              'CLOSE n',
+            ],
+          },
+          {
+            group: 'Disk DOS (via channel 15)',
+            items: [
+              'N0:name,id (format)',
+              'S0:name (scratch)',
+              'R0:new=old (rename)',
+              'C0:new=old (copy)',
+              'V0 (validate)',
+              'I0 (initialise)',
+            ],
+          },
+          {
+            group: 'Sound and sprites (POKE)',
+            items: [
+              'SID $D400 = 54272: volume POKE 54296,15',
+              'Voice 1 freq lo/hi: 54272 / 54273',
+              'ADSR: 54277 / 54278',
+              'Waveform + gate: POKE 54276,17 (triangle), 33 saw, 65 pulse, 129 noise; even value = note off',
+              'Sprites: enable 53269; pointers 2040-2047; sprite 0 X/Y 53248 / 53249; X bit 8 53264; colours 53287-53294',
+            ],
+          },
+          {
+            group: 'C64 Ultimate panel',
+            items: [
+              'C= + RESTORE: toggle the Ultimate menu overlay',
+              'Power button (tap): also opens the menu; the C64 keeps running',
+              'Cursors or W A S D: navigate; RIGHT enters, RUN/STOP backs out',
+              'F1 in menu: power and reset',
+              'F2 in menu: advanced settings',
+              'C= + J in menu: swap joystick ports 1 and 2',
+              'C= + N / C= + P held at power-on: NTSC / PAL',
+              'Hold the power button about 4 s for a normal shutdown',
+            ],
+          },
+        ],
+        quirks: [
+          'Device 8 is the first disk drive. Device 1 is the Datasette (no ",8").',
+          'POKE a colour into 646 before PRINT; the text colour changes from then on.',
+          'C64 BASIC 2.0 has no sound or graphics commands: sound and sprites are POKEs.',
+          'SYS 64738 is a cold start and the program in memory is lost. RUN/STOP + RESTORE keeps it.',
+        ],
+      },
+      memory: [
+        { range: '$0000-$00FF', what: 'Zero page: KERNAL and BASIC work area.' },
+        { range: '$0100-$01FF', what: '6510 stack.' },
+        { range: '$0200-$03FF', what: 'Input buffer and system vectors.', verify: true },
+        { range: '$0400-$07E7', what: 'Screen RAM (1024-2023), 40 x 25.' },
+        { range: '$0801-$9FFF', what: 'BASIC program and variables (about 38 KB free).' },
         {
-          "range": "$0000-$00FF",
-          "what": "Zero page"
+          range: '$A000-$BFFF',
+          what: 'BASIC ROM (901226) when LORAM and HIRAM are high; RAM otherwise.',
+          verify: true,
         },
+        { range: '$C000-$CFFF', what: 'RAM.' },
         {
-          "range": "$0100-$01FF",
-          "what": "Stack"
+          range: '$D000-$D3FF',
+          what: 'VIC-II registers. Character ROM is visible here when CHAREN is low.',
+          verify: true,
         },
+        { range: '$D400-$D7FF', what: 'SID registers.' },
+        { range: '$D800-$DBFF', what: 'Colour RAM (2114, 4 bits per cell).' },
+        { range: '$DC00-$DCFF', what: 'CIA1: keyboard, joysticks, /IRQ.' },
+        { range: '$DD00-$DDFF', what: 'CIA2: serial bus, user port, /NMI.' },
+        { range: '$DE00-$DFFF', what: 'I/O expansion (cartridge /IO1 and /IO2).', verify: true },
+        { range: '$E000-$FFFF', what: 'KERNAL ROM (901227) when HIRAM is high; RAM otherwise.' },
+        { range: '$FFFA-$FFFF', what: 'Vectors: NMI, RESET, IRQ.', verify: true },
+      ],
+    },
+    vic20: {
+      firstLook: [
+        'VIC 6560/6561 makes the picture, the three tones and the noise, and reads the paddles.',
+        'Runs from +5 V only. There is no +12 V rail on this machine.',
+        'Unexpanded: 5 KB of 2114 RAM. A bad 2114 gives garbage on screen.',
+        'VIA1 at $9110 (serial, cassette, RESTORE NMI). VIA2 at $9120 (keyboard, joystick, timers, IRQ).',
+        'Swap order for a dead board: VIC, CPU, RAM, then the VIAs.',
+      ],
+      keys: [
+        { keys: 'RUN/STOP', does: 'Break a running program.' },
+        { keys: 'RUN/STOP + RESTORE', does: 'Warm reset to BASIC, program kept.', verify: true },
+        { keys: 'SHIFT + CLR/HOME', does: 'Clear screen.', verify: true },
+        { keys: 'C= + SHIFT', does: 'Toggle upper / lower case.', verify: true },
+        { keys: 'INST/DEL', does: 'Insert / delete character.', verify: true },
+        { keys: 'f1-f8', does: 'Function keys.', verify: true },
+      ],
+      basic: {
+        dialect: 'Commodore BASIC 2.0 (VIC-20)',
+        essentials: [
+          { cmd: 'LOAD "name",8', does: 'Load from disk (device 8). Tape is device 1.' },
+          { cmd: 'LOAD "$",8  then  LIST', does: 'Show the disk directory.', verify: true },
+          { cmd: 'SAVE "name",8', does: 'Save the program.' },
+          { cmd: 'RUN / LIST / NEW', does: 'Run, list or erase the program.' },
+          {
+            cmd: 'POKE 36879,n',
+            does: 'Border (low 3 bits), background (high 4 bits), screen bit 3.',
+            verify: true,
+          },
+          { cmd: 'POKE 36878,n', does: 'Volume (low 4 bits).', verify: true },
+          { cmd: 'POKE 646,n', does: 'Text colour for the next PRINT.' },
+          { cmd: 'PEEK(7680)', does: 'First screen byte: screen RAM at 7680 ($1E00).' },
+          { cmd: 'PRINT / INPUT / GET', does: 'Output, read a line, read one key.' },
+          { cmd: 'FOR..NEXT / IF..THEN', does: 'Loops and branches.' },
+          { cmd: 'GOSUB / RETURN', does: 'Subroutine call.' },
+          { cmd: 'SYS addr', does: 'Call machine code.' },
+          { cmd: 'PEEK(a) / POKE a,v', does: 'Read or write one byte.' },
+          { cmd: 'OPEN 15,8,15', does: 'Open the disk command channel.' },
+        ],
+        groups: [
+          {
+            group: 'Program control',
+            items: ['RUN [line]', 'LIST [a-b]', 'NEW', 'CLR', 'CONT', 'STOP / END', 'SYS addr', 'WAIT a,m,x'],
+          },
+          {
+            group: 'Statements',
+            items: [
+              'PRINT ? (; joins, , tabs)',
+              'INPUT / GET',
+              'LET',
+              'REM',
+              'GOTO / GOSUB / RETURN',
+              'ON x GOTO / GOSUB',
+              'FOR..NEXT',
+              'IF..THEN',
+              'DATA / READ / RESTORE',
+              'DIM',
+              'DEF FN',
+              'POKE a,v',
+            ],
+          },
+          {
+            group: 'Functions',
+            items: [
+              'ABS SGN INT',
+              'SQR EXP LOG',
+              'SIN COS TAN ATN',
+              'RND(x)',
+              'PEEK(a)',
+              'FRE(0)',
+              'LEN POS',
+              'LEFT$ RIGHT$ MID$',
+              'STR$ VAL',
+              'CHR$ ASC',
+            ],
+          },
+          {
+            group: 'VIC chip POKEs',
+            items: [
+              '36864 ($9000): horizontal position',
+              '36869 ($9005): character and screen base',
+              '36874-36876 ($900A-$900C): tone registers',
+              '36878 ($900E): volume',
+              '36879 ($900F): border and background colour',
+            ],
+            verify: true,
+          },
+        ],
+        quirks: [
+          'Unexpanded: 3583 bytes free. Every RAM expansion adds to that.',
+          'Screen at 7680 ($1E00). Colour RAM is at 38400 ($9600): the C64 addresses do not apply.',
+          'POKE colour into 646 before PRINT, as on the C64.',
+          'No sprites and no SID. Sound is the VIC chip tone and noise registers.',
+        ],
+      },
+      memory: [
+        { range: '$0000-$03FF', what: 'Zero page, stack and system area.', verify: true },
+        { range: '$0400-$0FFF', what: 'Expansion RAM block 0 (only with a RAM cartridge).', verify: true },
+        { range: '$1000-$1DFF', what: 'BASIC program and variables: 3583 bytes free unexpanded.' },
+        { range: '$1E00-$1FFF', what: 'Screen RAM (7680), 512 bytes, unexpanded.' },
+        { range: '$2000-$3FFF', what: 'Expansion RAM block 1 or cartridge.', verify: true },
+        { range: '$4000-$7FFF', what: 'Expansion RAM blocks 2 and 3 or cartridge.', verify: true },
+        { range: '$8000-$8FFF', what: 'Cartridge block 1.', verify: true },
+        { range: '$9000-$900F', what: 'VIC-I registers (6560/6561).' },
+        { range: '$9110-$911F', what: 'VIA1: serial bus, cassette, RESTORE NMI, user port.' },
+        { range: '$9120-$912F', what: 'VIA2: keyboard, joystick, timers, IRQ.' },
+        { range: '$9600-$97FF', what: 'Colour RAM (38400 = $9600).' },
+        { range: '$A000-$BFFF', what: 'Cartridge blocks 2 and 3.', verify: true },
+        { range: '$C000-$DFFF', what: 'BASIC ROM (8K).' },
+        { range: '$E000-$FFFF', what: 'KERNAL ROM (8K).' },
+      ],
+    },
+    pet: {
+      firstLook: [
+        'Early PETs have no sound chip: one beep from the VIA CB2 line.',
+        'Screen RAM at $8000. I/O page at $E800: PIA1 $E810, PIA2 $E820, VIA $E840.',
+        'IEEE-488 is the disk and printer bus here, not the serial IEC bus of the C64.',
+        'Dead keyboard points at PIA1. No disk or IEEE-488 points at PIA2 or the VIA.',
+        'Early 2001s use discrete video with no CRTC. Later boards use the 6545.',
+      ],
+      keys: [
+        { keys: 'STOP', does: 'Break a running program.', verify: true },
+        { keys: 'CLR/HOME', does: 'Clear the screen and home the cursor.', verify: true },
+        { keys: 'INST / DEL', does: 'Insert / delete character.', verify: true },
+        { keys: 'Cursor keys', does: 'Move the cursor. SHIFT reverses direction.', verify: true },
+        { keys: 'RETURN', does: 'Enter the line.' },
+      ],
+      basic: {
+        dialect: 'Commodore BASIC 1.0-4.0 (PET/CBM)',
+        essentials: [
+          { cmd: 'LOAD "name",8', does: 'Load from an IEEE-488 disk (device 8).' },
+          { cmd: 'SAVE "name",8', does: 'Save the program to disk.' },
+          { cmd: 'DLOAD "name" / DSAVE "name"', does: 'Short disk load and save (BASIC 4.0).' },
+          { cmd: 'DIRECTORY', does: 'Show the disk directory (BASIC 4.0).' },
+          { cmd: 'SCRATCH "name"', does: 'Delete a file (BASIC 4.0).' },
+          {
+            cmd: 'OPEN 15,8,15 then PRINT#15,"I0"',
+            does: 'Open the command channel and initialise the drive.',
+            verify: true,
+          },
+          { cmd: 'RUN / LIST / NEW', does: 'Run, list or erase the program.' },
+          { cmd: 'PRINT / INPUT / GET', does: 'Output, read a line, read one key.' },
+          { cmd: 'PEEK(a) / POKE a,v', does: 'Read or write one byte.' },
+          { cmd: 'PRINT# / INPUT#', does: 'Write or read an open file.' },
+          { cmd: 'SYS addr / WAIT a,m,x', does: 'Call machine code / wait for a memory bit.' },
+        ],
+        groups: [
+          {
+            group: 'Program control',
+            items: ['RUN [line]', 'LIST', 'NEW', 'CONT', 'STOP / END', 'SYS addr', 'WAIT a,m,x'],
+          },
+          {
+            group: 'Statements',
+            items: [
+              'PRINT',
+              'INPUT / GET',
+              'LET',
+              'REM',
+              'GOTO / GOSUB / RETURN',
+              'ON x GOTO / GOSUB',
+              'FOR..NEXT',
+              'IF..THEN',
+              'DATA / READ / RESTORE',
+              'DIM',
+              'DEF FN',
+              'POKE a,v',
+              'OPEN / CLOSE / PRINT# / INPUT#',
+            ],
+          },
+          {
+            group: 'Functions',
+            items: [
+              'ABS SGN INT',
+              'SQR EXP LOG',
+              'SIN COS TAN ATN',
+              'RND(x)',
+              'PEEK(a)',
+              'FRE(0)',
+              'LEN POS',
+              'LEFT$ RIGHT$ MID$',
+              'STR$ VAL',
+              'CHR$ ASC',
+              'TAB SPC',
+              'USR(x)',
+            ],
+          },
+          {
+            group: 'Disk (BASIC 3.5/4.0 keywords)',
+            items: ['DLOAD / DSAVE', 'SCRATCH', 'DIRECTORY', 'HEADER', 'RENAME', 'COPY', 'COLLECT'],
+          },
+          {
+            group: 'IEEE-488 device numbers',
+            items: ['8 = disk drive (IEEE-488)', '4 = printer', '1 = cassette 1 (verify)'],
+            verify: true,
+          },
+        ],
+        quirks: [
+          'Check the BASIC version at power-up (1.0, 2.0 or 4.0). Commands differ between them.',
+          'DLOAD, DSAVE, DIRECTORY and the other disk keywords need BASIC 4.0.',
+          'Monochrome screen. No SOUND or PLAY: one beep, from the VIA.',
+          'Disk and printer are IEEE-488 devices with device numbers, not the serial bus of the C64.',
+        ],
+      },
+      memory: [
+        { range: '$0000-$03FF', what: 'Zero page, stack and BASIC work area.', verify: true },
         {
-          "range": "$0800-$0BFF",
-          "what": "Colour RAM (text)"
+          range: '$0400-$7FFF',
+          what: 'User RAM: BASIC program and variables. Size depends on the board (4 to 32 KB).',
+          verify: true,
         },
-        {
-          "range": "$0C00-$0FFF",
-          "what": "Screen RAM 40×25"
-        },
-        {
-          "range": "$1000-$3FFF",
-          "what": "BASIC program (16 KB machine)"
-        },
-        {
-          "range": "$8000-$BFFF",
-          "what": "BASIC 3.5 ROM (TED CS0)"
-        },
-        {
-          "range": "$C000-$FFFF",
-          "what": "KERNAL ROM (TED CS1)"
-        },
-        {
-          "range": "$FD00-$FD0F",
-          "what": "6551 ACIA (Plus/4)"
-        },
-        {
-          "range": "$FD10",
-          "what": "6529 user port (Plus/4)"
-        },
-        {
-          "range": "$FD30",
-          "what": "6529 keyboard column latch"
-        },
-        {
-          "range": "$FF00-$FF3F",
-          "what": "TED registers"
-        },
-        {
-          "range": "$FF3E / $FF3F",
-          "what": "ROM in / RAM in (write to switch)"
-        }
-      ]
-    }
+        { range: '$8000-$83FF', what: 'Screen RAM (2114), the video memory at $8000.' },
+        { range: '$A000-$DFFF', what: 'BASIC and EDITOR ROMs.', verify: true },
+        { range: '$E000-$E7FF', what: 'KERNAL ROM (I/O and IEEE-488 routines).', verify: true },
+        { range: '$E800-$E8FF', what: 'I/O page.' },
+        { range: '$E810-$E81F', what: 'PIA1: keyboard rows, cassette 1, retrace IRQ.' },
+        { range: '$E820-$E82F', what: 'PIA2: IEEE-488 data port.' },
+        { range: '$E840-$E84F', what: 'VIA: user port, cassette 2, IEEE-488 handshake, timers, CB2 beep.' },
+        { range: '$E880-$E88F', what: 'CRTC 6545 on later boards.', verify: true },
+        { range: '$FFFA-$FFFF', what: 'Vectors: NMI, RESET, IRQ.', verify: true },
+      ],
+    },
+    c128: {
+      firstLook: [
+        '8502 is the normal CPU; the Z80 runs CP/M. The 8722 MMU picks which one drives the bus.',
+        'Dead in every mode points at the 8502, the MMU or the PLA.',
+        'The 8563 VDC (80-column) runs hot and is a known failure. It has its own video RAM.',
+        'RGBI for the 80-column port; composite for the 40-column port.',
+        'The square power plug is shared with the Plus/4.',
+      ],
+      keys: [
+        { keys: 'RUN/STOP', does: 'Break a running program.' },
+        { keys: 'RUN/STOP + RESTORE', does: 'Warm reset, memory kept.', verify: true },
+        { keys: '40/80 DISPLAY key', does: 'Switch between 40- and 80-column screen.', verify: true },
+        { keys: 'SHIFT + CLR/HOME', does: 'Clear screen.', verify: true },
+        { keys: 'C= + SHIFT', does: 'Toggle upper / lower case.', verify: true },
+        { keys: 'HELP', does: 'Show the line that errored.', verify: true },
+      ],
+      basic: {
+        dialect: 'Commodore BASIC 7.0 (C128)',
+        essentials: [
+          { cmd: 'GRAPHIC 1,1 / GRAPHIC 0', does: 'Hi-res screen on (clear) / back to text.', verify: true },
+          { cmd: 'SPRITE n,1 / SPRITE n,0', does: 'Sprite on / off.', verify: true },
+          { cmd: 'MOVSPR n,x,y', does: 'Move a sprite.', verify: true },
+          { cmd: 'COLOR s,c[,l]', does: 'Set the colour source.' },
+          { cmd: 'PLAY "..."', does: 'Music from a note string.' },
+          { cmd: 'VOL n', does: 'Volume 0-8.' },
+          { cmd: 'DO ... LOOP WHILE / UNTIL', does: 'Structured loop; EXIT leaves it.' },
+          { cmd: 'FAST / SLOW', does: 'Run the 8502 at 2 MHz / 1 MHz.' },
+          { cmd: 'GO64', does: 'Switch to C64 mode (asks to confirm).', verify: true },
+          { cmd: 'DLOAD "name" / DSAVE "name"', does: 'Short disk load and save.' },
+          { cmd: 'DIRECTORY', does: 'Show the disk directory.' },
+          { cmd: 'GETKEY v$', does: 'Wait for one key.' },
+          { cmd: 'TRAP n / RESUME', does: 'Error handling.' },
+          { cmd: 'LOAD "name",8', does: 'Load from disk (device 8).' },
+        ],
+        groups: [
+          {
+            group: 'Graphics (7.0)',
+            items: [
+              'GRAPHIC m[,c] (0 text, 1 hi-res, 2 split, 3 multi)',
+              'COLOR s,c[,l]',
+              'DRAW c,x,y TO x,y',
+              'CIRCLE c,x,y,rx,ry',
+              'BOX c,x1,y1,x2,y2',
+              'PAINT c,x,y',
+              'CHAR c,r,col,"text"',
+              'LOCATE x,y',
+              'SSHAPE / GSHAPE',
+              'SCNCLR',
+            ],
+          },
+          { group: 'Sprites (C128 only)', items: ['SPRITE', 'MOVSPR', 'SPRDEF', 'COLLISION'] },
+          { group: 'Sound (7.0)', items: ['VOL n', 'PLAY "..."', 'ENVELOPE', 'FILTER'] },
+          {
+            group: 'Structure',
+            items: [
+              'DO..LOOP WHILE / UNTIL / EXIT',
+              'IF..THEN..ELSE',
+              'GETKEY',
+              'TRAP n / RESUME',
+              'Multi-statement lines: separate with :',
+            ],
+          },
+          { group: 'Modes', items: ['GO64 (C64 mode)', 'FAST / SLOW (2 MHz / 1 MHz)'] },
+          {
+            group: 'Disk (3.5/7.0 and PET 4.0 keywords)',
+            items: ['DLOAD / DSAVE', 'SCRATCH', 'DIRECTORY', 'HEADER', 'RENAME', 'COPY', 'COLLECT'],
+          },
+        ],
+        quirks: [
+          'The 80-column screen uses the VDC\'s own video RAM, not the main 128 KB.',
+          'FAST runs the 8502 at 2 MHz. Use SLOW when loading from tape or serial.',
+          'Sprite, graphics and sound commands are C128 only; C64 programs need POKEs.',
+          'The 40/80 key must match the monitor: RGBI for 80 columns, composite for 40.',
+        ],
+      },
+      memory: [
+        { range: '$0000-$FFFF', what: 'Banked RAM and ROM, selected by the 8722 MMU.' },
+        { range: '$0000-$00FF', what: 'Zero page (bank 0).', verify: true },
+        { range: '$0100-$01FF', what: 'Stack.', verify: true },
+        { range: '$1C01-$3FFF', what: 'BASIC 7.0 program and variables.', verify: true },
+        { range: '$D000-$D3FF', what: 'VIC-IIe registers.', verify: true },
+        { range: '$D400-$D7FF', what: 'SID registers (8580).', verify: true },
+        { range: '$D800-$DBFF', what: 'Colour RAM.', verify: true },
+        { range: '$DC00-$DCFF', what: 'CIA1: keyboard and joysticks.', verify: true },
+        { range: '$DD00-$DDFF', what: 'CIA2: serial bus and user port.', verify: true },
+        { range: '$FF00-$FF04', what: 'MMU configuration registers.', verify: true },
+        { range: 'ROM', what: 'BASIC 7.0, KERNAL, C64 mode and character ROMs (32 KB+).' },
+      ],
+    },
   },
-  "resources": [
+  resources: [
     {
-      "name": "zimmers.net CBM archive",
-      "url": "http://www.zimmers.net/anonftp/pub/cbm/",
-      "what": "Schematics, chip datasheets, ROM images, manuals."
+      name: 'zimmers.net CBM archive',
+      url: 'http://www.zimmers.net/anonftp/pub/cbm/',
+      what: 'Schematics, chip datasheets, ROM images, manuals.',
     },
     {
-      "name": "Plus/4 World",
-      "url": "https://plus4world.powweb.com/",
-      "what": "Everything 264 series: software, hardware, docs."
+      name: 'Plus/4 World',
+      url: 'https://plus4world.powweb.com/',
+      what: 'Everything 264 series: software, hardware, docs.',
+    },
+    { name: 'C64-Wiki', url: 'https://www.c64-wiki.com/', what: 'Hardware and BASIC reference.' },
+    {
+      name: 'Ray Carlsen repair pages',
+      url: 'http://personalpages.tds.net/~rcarlsen/',
+      what: 'Field-tested repair notes for every Commodore.',
+      verify: true,
+    },
+    { name: 'Lemon64 forums', url: 'https://www.lemon64.com/forum/', what: 'Active repair community.' },
+    {
+      name: 'C64-Wiki: Power Supply Connector',
+      url: 'https://www.c64-wiki.com/wiki/Power_Supply_Connector',
+      what: 'C64 power DIN-7 pinout and 9 V AC notes.',
+      verify: true,
     },
     {
-      "name": "C64-Wiki",
-      "url": "https://www.c64-wiki.com/",
-      "what": "Hardware and BASIC reference."
+      name: 'C64-Wiki: User Port',
+      url: 'https://www.c64-wiki.com/wiki/User_Port',
+      what: 'C64 user port pinout, letters and numbers.',
     },
     {
-      "name": "Ray Carlsen repair pages",
-      "url": "http://personalpages.tds.net/~rcarlsen/",
-      "what": "Field-tested repair notes for every Commodore.",
-      "verify": true
+      name: 'C64-Wiki: Control Port',
+      url: 'https://www.c64-wiki.com/wiki/Control_Port',
+      what: 'DE-9 joystick and paddle pinout.',
     },
     {
-      "name": "Lemon64 forums",
-      "url": "https://www.lemon64.com/forum/",
-      "what": "Active repair community."
-    }
-  ]
+      name: 'pinouts.ru: C128 RGBI',
+      url: 'https://old.pinouts.ru/Video/C128Rgbi.shtml',
+      what: 'C128 RGBI 9-pin pinout (sources agree on the pins; pin 7 varies).',
+      verify: true,
+    },
+    {
+      name: 'PET Communication with the Outside World',
+      url: 'https://trailingedge.com/cbm8/Pet%20Communication%20with%20the%20Outside%20World.pdf',
+      what: 'Commodore contact list for the PET IEEE-488 edge.',
+      verify: true,
+    },
+    {
+      name: 'pinouts.ru: VIC-20 video',
+      url: 'https://old.pinouts.ru/Video/Vic20Video.shtml',
+      what: 'VIC-20 5-pin DIN video and audio (sources disagree on pins 4 and 5).',
+      verify: true,
+    },
+  ],
 });
