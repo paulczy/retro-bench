@@ -70,6 +70,47 @@
   const MZD = 'https://minuszerodegrees.net';
   const S = (label, url) => ({ label, url });
 
+  // ---------- features 1 to 6 sources (docs/data-schema.md, last section) ----------
+  // Sams CSCS2 (IBM 5150, 9-84) with CSCS2-A (MDA), CSCS2-B (CGA) and CSCS2-C (disk) bound in one scan; nN = scan leaf.
+  const SAMS = n => 'https://archive.org/details/Sams_IBM_5150/page/n' + n;
+  const SM = (label, n) => ({ label: 'Sams CSCS2 IBM 5150, ' + label, url: SAMS(n), sams: true });
+  const HMS20 = 'https://minuszerodegrees.net/hms/HMS%20-%206280087%20-%20Maps%20-%200020.pdf';
+  const S_HMS_PG = S('IBM Hardware Maintenance Service 6280087 (1986), MAP 0020 Power (PC) step 005, p. 0020-2', HMS20 + '#page=4');
+  const S_HMS_V = S('IBM Hardware Maintenance Service 6280087 (1986), MAP 0020 Power (PC) step 007, system board voltages, p. 0020-3', HMS20 + '#page=5');
+  const JRHMS = 'https://minuszerodegrees.net/manuals/IBM/IBM%204860%20(PCjr)%20-%20Hardware%20Maintenance%20and%20Service%20-%20SEP83.pdf';
+  const S_MDC = S('minuszerodegrees.net, IBM 5150/5155/5160 minimum diagnostic configuration', MZD + '/5150_5160/MDC/minimum_diag_config.htm');
+  const RN = p => 'https://www.renesas.com/us/en/document/dst/' + p + '-datasheet';
+  const DS84 = 'Intel 8284A data sheet p. 3-237 (VOL 0.45 V; VOH 4 V on CLK, 2.4 V on OSC and PCLK; CLK 1/3 duty, PCLK 50 percent, p. 3-235)';
+  const DS_CLK = tr => ({ label: DS84 + '; frequency from ' + tr, url: IH + '#page=417' });
+
+  // XT-class board (5160, and the early 5160 board in the 5155): clock test points and clock tree
+  const S_XT_CLK = S('IBM PC XT Technical Reference (Apr 1984), I/O channel description (CLK), p. 1-19', XTTR + '#page=38');
+  const S_XT_OSC = S('IBM PC XT Technical Reference (Apr 1984), I/O channel description (OSC), p. 1-21', XTTR + '#page=40');
+  const xtClockTPs = [
+    { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz, 33 percent duty',
+      scope: { f: '4.7727 MHz', low: '0.45 V', high: '4 V', shape: 'square', duty: '33%', basis: 'datasheet', source: DS_CLK('IBM XT TechRef p. 1-19'),
+        note: 'Idealised from the 8284A data sheet levels. HIGH for one third of each 210 ns cycle. A flat line: no clock; check 8284A pin 8.' } },
+    { tp: 'CPU reset', where: '8088 pin 21', expect: 'HIGH for about 300 ms at power-up, then LOW' },
+    { tp: 'Reset in (Power Good)', where: '8284A pin 11', expect: 'LOW at switch-on, HIGH after 100 to 500 ms' },
+    { tp: 'Oscillator', where: '8284A pin 12', expect: '14.31818 MHz',
+      scope: { f: '14.31818 MHz', low: '0.45 V', high: '2.4 V', shape: 'square', duty: '50%', basis: 'datasheet', source: DS_CLK('IBM XT TechRef p. 1-21'),
+        note: 'OSC is a TTL-level output; the data sheet guarantees 2.4 V high, most chips swing higher. Count it here, not on the crystal pins.' } },
+    { tp: 'PCLK', where: '8284A pin 2', expect: '2.386 MHz',
+      scope: { f: '2.3864 MHz', low: '0.45 V', high: '2.4 V', shape: 'square', duty: '50%', basis: 'datasheet', source: DS_CLK('IBM XT TechRef p. 1-19 CLK, halved'),
+        note: 'Half of CLK, 50 percent duty, TTL level.' } },
+    { tp: 'Timer input', where: '8253 pin 9', expect: '1.19318 MHz' },
+  ];
+  const xtClocks = slot => [
+    { name: 'Crystal', where: '8284A pin 16 and pin 17', f: '14.31818 MHz', source: S('IBM PC XT Technical Reference (Apr 1984), system board, p. 1-4', XTTR + '#page=23') },
+    { name: 'OSC', where: `8284A pin 12; ${slot} pin B30`, f: '14.31818 MHz', note: '70 ns, 50 percent duty.', source: S_XT_OSC },
+    { name: 'CLK (CPU and bus)', where: `8284A pin 8; 8088 pin 19; 8288 pin 2; ${slot} pin B20`, f: '4.7727 MHz', note: 'OSC / 3, 33 percent duty.', source: S_XT_CLK },
+    { name: 'PCLK', where: '8284A pin 2', f: '2.3864 MHz', note: 'CLK / 2.', source: S('Intel 8284A data sheet, PCLK, p. 3-235', IH + '#page=415') },
+    { name: 'Timer clock', where: '8253 pins 9, 15, 18', f: '1.19318 MHz', source: S('IBM PC XT Technical Reference (Apr 1984), speaker drive, p. 1-23', XTTR + '#page=42') },
+    { name: 'Timer 0 (IRQ0)', where: '8253 pin 10; 8259A pin 18', f: '18.2 Hz', note: '1.19318 MHz / 65536.', source: S('IBM PC XT Technical Reference (Apr 1984), BIOS listing, timer interrupt, p. 5-101', XTTR + '#page=190') },
+    { name: 'Refresh timer (counter 1)', where: '8253 pin 13', f: '66.3 kHz', note: 'One refresh every 72 clocks, about 15 µs.', source: S('IBM PC XT Technical Reference (Apr 1984), system board, p. 1-13', XTTR + '#page=32') },
+    { name: 'CGA colour reference', where: 'CGA card, from OSC', f: '3.579545 MHz', note: 'OSC / 4.', source: S('IBM PC XT Technical Reference (Apr 1984), system board, p. 1-4', XTTR + '#page=23') },
+  ];
+
   // ---------- 8088 CPU (shared with the HERO 2000 in heathkit.js: keep pin text machine-neutral) ----------
   const cpu8088 = {
     id: 'cpu8088', name: '8088 microprocessor', short: '8088', family: 'Intel x86',
@@ -732,6 +773,44 @@
   // ---------- PCjr ----------
   const jrRear = S('PCjr Technical Reference (Nov 1983), System Board Connector Specifications part 3, p. 2-12', JRTR + '#page=38');
 
+
+  // ---------- replacements (feature 6): parts a tech can buy or has in a drawer ----------
+  cpu8088.replacements = [
+    { part: '8088-2', kind: 'pin-compatible', note: 'The 8 MHz grade of the same chip (the plain 8088 is the 5 MHz grade). It runs at 4.77 MHz here like the original.', source: S('Intel iAPX 88/10 (8088, 8088-2) data sheet, p. 3-79', IH + '#page=259') },
+    { part: 'NEC V20 (uPD70108)', kind: 'pin-compatible', note: 'Faster at the same clock, and adds an 8080 mode. The trap: the BIOS then runs faster than it was written for. minuszerodegrees has an early 5160 with an AST SixPakPlus that stays dead with a V20 until the card is pulled or the last BIOS is fitted. Refit the 8088 before you blame the board.', source: S('minuszerodegrees.net, problems resulting from upgrading an 8088 CPU to a V20', MZD + '/misc/v20_problems.htm') },
+    { part: 'Harris (Intersil) 80C88', kind: 'pin-compatible', note: 'CMOS 8088 with bus-hold on its pins; 80C88 is the 5 MHz grade, 80C88-2 8 MHz. The trap is the clock: it wants CLK HIGH above VCC - 0.8 V (4.2 V at 5 V), and an NMOS 8284A guarantees only 4 V. Pair it with an 82C84A.', source: S('Intersil 80C88 data sheet, D.C. specifications (VIHC), p. 17', RN('80c88') + '#page=17') },
+  ];
+  clk8284.replacements = [
+    { part: '8284A-1', kind: 'pin-compatible', note: 'The 10 MHz grade of the 8284A, same data sheet and pins. Fine at 4.77 MHz.', source: S('Intel 8284A/8284A-1 data sheet, p. 3-234', IH + '#page=414') },
+    { part: '82C84A (Intersil)', kind: 'pin-compatible', note: 'CMOS clock generator for CMOS or NMOS CPUs, crystal 2.4 to 25 MHz. Its CLK swings close to the rails, which an 80C88 needs.', source: S('Intersil 82C84A data sheet, p. 1', RN('82c84a') + '#page=1') },
+  ];
+  bus8288.replacements = [
+    { part: '82C88 (Intersil)', kind: 'pin-compatible', note: 'CMOS version, compatible with the bipolar 8288. Its CLK input wants VCC - 0.8 V (4.2 V) HIGH; an NMOS 8284A guarantees 4 V, so check the clock level if the bus is flaky.', source: S('Intersil 82C88 data sheet, D.C. specifications (VIHC), p. 5', RN('82c88') + '#page=5') },
+  ];
+  pit8253.replacements = [
+    { part: '8254', kind: 'pin-compatible', note: 'Intel calls it a superset of the 8253: same 24-pin package and six modes, inputs to 8 MHz (10 MHz for the 8254-2), plus a status read-back command the PC BIOS does not use.', source: S('Intel 8254 data sheet, p. 6-150', IH + '#page=680') },
+    { part: '82C54 (Intersil)', kind: 'pin-compatible', note: 'CMOS 8254, an enhanced version of the 8253, fully TTL compatible. 8, 10 or 12 MHz grades.', source: S('Intersil 82C54 data sheet, p. 1', RN('82c54') + '#page=1') },
+  ];
+  ppi8255.replacements = [
+    { part: '8255A', kind: 'pin-compatible', note: 'IBM fitted the 8255A-5 (P8255A-5 at U36 in Sams). The plain 8255A has the same pins but slower read and write timing in the same data sheet; prefer the -5.', source: S('Intel 8255A/8255A-5 data sheet, A.C. characteristics, p. 6-183', IH + '#page=713') },
+    { part: '82C55A (Intersil)', kind: 'pin-compatible', note: 'CMOS, pin compatible with the NMOS 8255A. The trap: its ports have bus-hold circuits, so an open input holds its last level instead of floating HIGH.', source: S('Intersil 82C55A data sheet, pin description (bus hold), p. 3', RN('82c55a') + '#page=3') },
+  ];
+  pic8259.replacements = [
+    { part: '8259A-2', kind: 'pin-compatible', note: 'The 8 MHz grade in the same data sheet.', source: S('Intel 8259A/8259A-2/8259A-8 data sheet, p. 2-120', IH + '#page=144') },
+    { part: '82C59A (Intersil)', kind: 'pin-compatible', note: 'CMOS, pin compatible with the NMOS 8259A; 5, 8 and 12.5 MHz grades.', source: S('Intersil 82C59A data sheet, p. 1', RN('82c59a') + '#page=1') },
+  ];
+  dma8237.replacements = [
+    { part: '8237A-4 or 8237A', kind: 'pin-compatible', note: 'Same pins, but too slow: the -4 is a 4 MHz part and the plain 8237A 3 MHz. The PC runs the DMA controller near 4.77 MHz, so fit the 8237A-5 (5 MHz).', source: S('Intel 8237A/8237A-4/8237A-5 data sheet, p. 2-88', IH + '#page=112') },
+    { part: '82C37A-5 (Intersil)', kind: 'pin-compatible', note: 'CMOS, pin compatible with the NMOS 8237A; the -5 is the 5 MHz grade. Its CLK input wants VCC - 0.8 V (4.2 V) HIGH, which a TTL-driven clock may not reach.', source: S('Intersil 82C37A data sheet, D.C. specifications (VIHC), p. 16', RN('82c37a') + '#page=16') },
+  ];
+  fpu8087.replacements = [
+    { part: '8087, 8087-2 or 8087-1', kind: 'pin-compatible', note: 'Any grade rated 5 MHz or faster works (plain 5 MHz, -2 8 MHz, -1 10 MHz); the board still runs it at 4.77 MHz. A C8087 marked 4MHZ is unsuitable. Set SW1 switch 2 OFF after fitting one. It does not speed up software that does not use it.', source: S('minuszerodegrees.net, Intel 8087 math co-processor (speed rating, switch setting)', MZD + '/npu/8087.htm') },
+  ];
+  crtc6845.replacements = [
+    { part: 'HD46505R (Hitachi)', kind: 'pin-compatible', note: 'Hitachi second source of the 6845, TTL compatible, character clock to 3.0 MHz. The IBM cards clock it at about 1.8 MHz.', source: S('Hitachi HD46505R CRT Controller user manual, features p. 6, electrical characteristics p. 22', 'https://bitsavers.org/components/hitachi/_dataSheets/HLN014_HD46505R_CRT_Controller_Users_Manual.pdf#page=22') },
+    { part: 'R6545-1 (Rockwell)', kind: 'pin-compatible', note: 'Rockwell calls it pin-compatible with the MC6845, but the registers differ: non-interlaced only, R8 is a mode register (straight or row/column addressing), a status register and a programmable VS width. IBM BIOS settings may give a wrong picture. The 1P and 1C grades are 1 MHz parts; the MDA and CGA clock the CRTC near 1.8 MHz.', source: S('Rockwell R6545-1 CRT Controller data sheet (Dec 1980), features and pin configuration p. 1, R8 p. 2', 'https://bitsavers.org/components/rockwell/R6545-1_CRT_Controller_DataSheet_Dec1980.pdf') },
+  ];
+
   RCS.add({
     brand: {
       id: 'ibm',
@@ -899,7 +978,7 @@
           verify: false, verifiedAgainst: 'PCjr Technical Reference (Nov 1983), Power Supply connector specifications, p. 2-138',
           summary: 'The external transformer brick plugs in here. It supplies low-voltage AC, not DC: two 17 V AC legs around a centre ground. The power board inside turns it into +5 V, +12 V and -6 V. Pin order follows the manual; the socket face and polarisation were not checked.',
           pads: row(['1', '2', '3'], 50, 25, 75), outline: 'M12 35 H88 V65 H12 Z',
-          pins: [T('1', '17 VAC', 'power', 'Transformer AC leg.', { expect: 'About 17 V AC to pin 2' }), T('2', 'GND', 'ground', 'Transformer centre (ground).'), T('3', '17 VAC', 'power', 'Transformer AC leg.', { expect: 'About 17 V AC to pin 2' })],
+          pins: [T('1', '17 VAC', 'power', 'Transformer AC leg.', { expect: 'About 17 V AC to pin 2', conflict: 'PCjr HMS (Sep 1983) p. 3-020-8 measures 15.0 to 30.0 V AC between pins 1 and 3; the TechRef prints 17 V AC each side of the centre, which would read about 34 V across 1 and 3.' }), T('2', 'GND', 'ground', 'Transformer centre (ground).'), T('3', '17 VAC', 'power', 'Transformer AC leg.', { expect: 'About 17 V AC to pin 2' })],
           sources: [S('PCjr Technical Reference (Nov 1983), power supply connectors, p. 2-138', JRTR + '#page=164')] },
         { id: 'jr-psu', name: 'Power board to system board', kind: '10-contact card edge on the vertical power board', geo: 'custom',
           verify: false, verifiedAgainst: 'PCjr Technical Reference (Nov 1983), Power Supply connector specifications, p. 2-138',
@@ -1092,19 +1171,81 @@
         ],
         testPoints: [
           { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V, 4.80 to 5.25 V' },
-          { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz, 33 percent duty' },
-          { tp: 'CPU reset', where: '8088 pin 21', expect: 'HIGH at power-up, then LOW' },
+          { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz, 33 percent duty',
+            scope: { f: '4.7727 MHz', low: '0 V', high: '8 V', shape: 'square', duty: '33%', basis: 'capture', source: SM('system board schematic p. 57, CLK88 waveform at U99 pin 9', 57),
+              note: 'Sams probed the CLK88 net at U99-9 (74LS04), the net that feeds 8088 pin 19 through R13: 8 V p-p at 0.1 µs/cm, trace bottom 0 V, with ringing on every edge. The 8284A itself guarantees 0.45 V low and 4 V high (data sheet p. 3-237); duty from TechRef p. 1-19. A flat line: no clock, go back to 8284A pin 8.' } },
+          { tp: 'CPU reset', where: '8088 pin 21', expect: 'HIGH for about 0.3 s at power-up, then LOW' },
           { tp: '8284A supply', where: '8284A pin 18', expect: '+5 V' },
           { tp: 'Reset in (Power Good)', where: '8284A pin 11', expect: 'LOW at switch-on, HIGH after 100 to 500 ms' },
-          { tp: 'Clock output', where: '8284A pin 8', expect: '4.77 MHz' },
-          { tp: 'Oscillator', where: '8284A pin 12', expect: '14.31818 MHz (crystal on pins 16 and 17)' },
-          { tp: 'PCLK', where: '8284A pin 2', expect: '2.386 MHz' },
+          { tp: 'Clock output', where: '8284A pin 8', expect: '4.77 MHz',
+            scope: { f: '4.7727 MHz', low: '0.45 V', high: '4 V', shape: 'square', duty: '33%', basis: 'datasheet', source: DS_CLK('IBM PC TechRef p. 1-19'),
+              note: 'HIGH for one third of each 210 ns cycle. The data sheet gives 4.5 V typical on this pin to drive MOS inputs; well under 4 V and the 8088 may not clock reliably.' } },
+          { tp: 'Oscillator', where: '8284A pin 12', expect: '14.31818 MHz (crystal on pins 16 and 17)',
+            scope: { f: '14.31818 MHz', low: '0 V', high: '4.2 V', shape: 'square', duty: '50%', basis: 'capture', source: SM('system board schematic p. 4, OSC waveform at U11 pin 12', 4),
+              note: 'Sams: 4.2 V p-p at 0.1 µs/cm, trace bottom 0 V; 50 percent duty per TechRef p. 1-19. Count it here, not on the crystal pins. Off frequency: trim T1, the colour adjust (Sams troubleshooting p. 15).' } },
+          { tp: 'PCLK', where: '8284A pin 2', expect: '2.386 MHz',
+            scope: { f: '2.3864 MHz', low: '0 V', high: '6 V', shape: 'square', duty: '50%', basis: 'capture', source: SM('system board schematic, keyboard sheet (unnumbered), PCLK waveform at U26 pin 9', 64),
+              note: 'Sams probed the PCLK net at U26-9 (74LS175), after R15: 6 V p-p at 0.2 µs/cm, trace bottom 0 V. PCLK is half of CLK with 50 percent duty (8284A data sheet p. 3-235).' } },
           { tp: 'Timer input', where: '8253 pin 9', expect: '1.19 MHz (PCLK / 2)' },
+          { tp: 'Timer 0 out (time of day)', where: '8253 pin 10; 8259A pin 18', expect: '18.2 Hz on IRQ0',
+            scope: { f: '18.2 Hz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SM('system board schematic, CPU and 8259A sheets (unnumbered), IRQ0 waveform at U2 pin 18, scan n60 to n62', 60),
+              note: 'Sams: 5 V p-p at 10 ms/cm, trace bottom 0 V, probed at 8259A pin 18. 18.2 Hz is 1.19318 MHz / 65536 (TechRef BIOS listing p. A-83). Flat: the BIOS never got as far as setting up timer 0, or the 8253 is dead.' } },
+          { tp: 'Refresh timer (counter 1 out)', where: '8253 pin 13', expect: 'A pulse every 15 µs',
+            scope: { period: '15.08 µs', low: '0 V', high: '4 V', shape: 'pulse', basis: 'capture', source: SM('system board schematic p. 57, waveform at U34 pin 13', 57),
+              note: 'Sams: 4 V p-p at 5 µs/cm, trace bottom 0 V. The period is 72 CPU clocks, about 15 µs (TechRef p. 1-17). No pulses: no DRAM refresh, so memory loses data.' } },
           { tp: 'Refresh request', where: '8237A pin 19', expect: 'A pulse about every 15 µs' },
+          { tp: 'Bus clock (CLK)', where: 'pc-slot pin B20', expect: '4.77 MHz, 33 percent duty',
+            scope: { f: '4.7727 MHz', low: '0 V', high: '6 V', shape: 'square', duty: '33%', basis: 'capture', source: SM('system board schematic p. 59, CLK waveform at U15 pin 7', 59),
+              note: 'Sams probed U15-7 (74LS244), which drives B20 through R20 (27 Ω): 6 V p-p at 0.1 µs/cm, trace bottom 0 V. TechRef p. 1-19: 210 ns period, 33 percent duty, TTL level.' } },
+          { tp: 'MDA dot clock (OSC1)', where: 'MDA card: OSC1 output into U24-6 (74LS153)', expect: '16.257 MHz',
+            scope: { f: '16.257 MHz', low: '0 V', high: '6 V', shape: 'square', basis: 'capture', source: SM('CSCS2-A Monochrome Display and Printer Adapter, schematic p. 16, waveform at U24 pin 6', 100),
+              note: 'Sams: 6 V p-p at 0.1 µs/cm, trace bottom 0 V. The MDA runs from its own 16.257 MHz oscillator module, not the bus OSC (TechRef p. 1-131). Dead module: no sync and no picture.' } },
+          { tp: 'MDA horizontal drive', where: 'MDA DE-9 contact 8 (Sams J3-8)', expect: '18.432 kHz, positive TTL',
+            scope: { f: '18.432 kHz', low: '0 V', high: '5.18 V', shape: 'pulse', basis: 'capture', source: SM('CSCS2-A Monochrome Display and Printer Adapter, schematic p. 3, waveform at J3 pin 8', 86),
+              note: 'Sams: 5.18 V p-p at 20 µs/cm, trace bottom 0 V. Frequency from TechRef p. 1-132. It comes from 6845 HS (pin 39) through the U64 buffer.' } },
+          { tp: 'MDA vertical drive', where: 'MDA DE-9 contact 9 (Sams J3-9)', expect: '50 Hz',
+            scope: { f: '50 Hz', low: '0 V', high: '5.89 V', shape: 'pulse', basis: 'capture', source: SM('CSCS2-A Monochrome Display and Printer Adapter, schematic p. 3, waveform at J3 pin 9', 86),
+              note: 'Sams: 5.89 V p-p at 5 ms/cm, trace bottom 0 V. 50 Hz refresh per TechRef p. 1-132.' } },
+          { tp: 'CGA colour reference', where: 'CGA card: U5-14 (74S174), the 3.58MHz line', expect: '3.58 MHz square',
+            scope: { f: '3.579545 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SM('CSCS2-B Color/Graphics Monitor Adapter, schematic p. 3, waveform on the 3.58MHz line at U5', 106),
+              note: 'Sams: 5 V p-p at 0.1 µs/cm, trace bottom 0 V. It is the bus OSC divided by 4 (TechRef p. 1-4); the card makes the colour burst and the colour phases from it. Clock good but colours wrong: Sams lists U20, U22, U43, U44, U45, U65 and U67.' } },
+        ],
+        firstTen: [
+          { step: 1, check: 'Supply on a load', where: 'Power P8 and P9 to the system board only; no drives, no cards', expect: 'Fan starts and keeps running. TechRef minimum load: 2.3 A on +5 V and 0.4 A on +12 V; a working board alone is normally enough',
+            ifNot: 'Fan still, or it stops after a second: too little load or a short. Both look the same, so try a known load. A shorted tantalum capacitor on the board or a card gives this too.', source: S('IBM PC Technical Reference (Apr 1983), Power Supply, pp. 1-24 to 1-27', PCTR + '#page=32') },
+          { step: 2, check: 'Power Good', where: 'P8-1 to P8-5 at the system board connector', expect: '+2.4 to +5.2 V DC once running; LOW for the first 100 to 500 ms',
+            ifNot: 'Missing: check the rails next. Off for less than 5 s, the supply may not send Power Good again; switch off and wait.', source: S_HMS_PG },
+          { step: 3, check: 'Rails at the board connector', where: 'P9-4 to P9-6 (+5 V), P8-3 (+12 V), P9-3 (-5 V), P8-4 (-12 V), each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
+            ifNot: 'Out of range with only the board connected: the supply (HMS step 008). The TechRef allows +5 V up to 5.25 V; HMS is tighter.', source: S_HMS_V },
+          { step: 4, check: 'Minimum diagnostic configuration', where: 'Board, supply and speaker only; no cards, no keyboard; SW1 switches 5 and 6 OFF', expect: 'One long and two short beeps about 5 s after switch-on',
+            ifNot: 'No beeps: go on with Power Good at the 8284A, the clocks and reset below.', source: S_MDC },
+          { step: 5, check: 'Power Good at the clock chip', where: '8284A pin 11', expect: 'HIGH (above 2.4 V) once running',
+            ifNot: 'LOW with good rails: the P8-1 contact or the supply Power Good driver Q4; the supply may be in shutdown (Sams).', source: SM('troubleshooting, clock generator, p. 15', 15) },
+          { step: 6, check: 'Crystal oscillator', where: '8284A pin 12', expect: '14.31818 MHz on a counter',
+            ifNot: 'Off frequency: trim T1. Dead: +5 V at 8284A pin 18, crystal Y1, trimmer T1, then the 8284A by substitution.', source: SM('troubleshooting, clock generator, p. 15', 15) },
+          { step: 7, check: 'CPU clock', where: '8284A pin 8; 8088 pin 19', expect: '4.77 MHz on a counter at both (Sams: 4.77272 MHz)',
+            ifNot: 'Missing at pin 8: the 8284A. Present at pin 8 but not at pin 19: R13 (27 Ω) or the trace.', source: SM('preliminary service checks, system board (B) and (C), p. VII', 71) },
+          { step: 8, check: 'Reset pulse, then bus activity', where: '8088 pin 21; 8088 pins 2 to 16 and 35 to 39', expect: 'Pin 21 HIGH for about 0.3 s at switch-on, then LOW; then pulses on every address pin',
+            ifNot: 'No reset pulse: the 8284A. An address pin stuck HIGH or LOW: the 8088 or a chip on that line. No pulses at BIOS ROM U33 chip select: decoder U46 (Sams).', source: SM('troubleshooting, microprocessor chip operation, p. 15', 15) },
+        ],
+        clocks: [
+          { name: 'Crystal Y1', where: '8284A pin 16 and pin 17', f: '14.31818 MHz', note: 'Trimmer T1 (5 to 30 pF) pulls it; that is the CGA colour adjust.', source: SM('system board schematic p. 4', 4) },
+          { name: 'OSC', where: '8284A pin 12; pc-slot pin B30', f: '14.31818 MHz', note: '50 percent duty.', source: S('IBM PC Technical Reference (Apr 1983), I/O channel description, p. 1-19', PCTR + '#page=27') },
+          { name: 'CLK (CPU and bus)', where: '8284A pin 8; 8088 pin 19; 8288 pin 2; pc-slot pin B20', f: '4.7727 MHz', note: 'OSC / 3, 33 percent duty, 210 ns.', source: S('IBM PC Technical Reference (Apr 1983), I/O channel description, p. 1-19', PCTR + '#page=27') },
+          { name: 'PCLK', where: '8284A pin 2', f: '2.3864 MHz', note: 'CLK / 2, 50 percent duty.', source: S('Intel 8284A data sheet, PCLK, p. 3-235', IH + '#page=415') },
+          { name: 'Timer clock', where: '8253 pins 9, 15, 18', f: '1.19318 MHz', note: 'One clock feeds all three counters.', source: S('IBM PC Technical Reference (Apr 1983), speaker drive, p. 1-23', PCTR + '#page=31') },
+          { name: 'Timer 0 (IRQ0)', where: '8253 pin 10; 8259A pin 18', f: '18.2 Hz', note: '1.19318 MHz / 65536: the time-of-day tick.', source: S('IBM PC Technical Reference (Apr 1983), BIOS listing, TIMER_INT, p. A-83', PCTR + '#page=419') },
+          { name: 'Refresh timer (counter 1)', where: '8253 pin 13', f: '66.3 kHz', note: 'One DMA refresh every 72 clocks, about 15 µs.', source: S('IBM PC Technical Reference (Apr 1983), I/O channel, p. 1-17', PCTR + '#page=25') },
+          { name: 'CGA colour reference', where: 'CGA card, from OSC on pc-slot pin B30', f: '3.579545 MHz', note: 'OSC / 4.', source: S('IBM PC Technical Reference (Apr 1983), system board, p. 1-4', PCTR + '#page=16') },
+          { name: 'MDA dot clock', where: 'MDA card oscillator OSC1', f: '16.257 MHz', source: S('IBM PC Technical Reference (Apr 1983), Monochrome Display, p. 1-131', PCTR + '#page=139') },
+          { name: 'MDA horizontal', where: '6845 pin 39 on the MDA; MDA DE-9 contact 8', f: '18.432 kHz', source: S('IBM PC Technical Reference (Apr 1983), Monochrome Display, p. 1-132', PCTR + '#page=140') },
+          { name: 'MDA vertical', where: '6845 pin 40 on the MDA; MDA DE-9 contact 9', f: '50 Hz', source: S('IBM PC Technical Reference (Apr 1983), Monochrome Display, p. 1-132', PCTR + '#page=140') },
         ],
         sources: [
           S('IBM PC Technical Reference (Apr 1983), Power Supply, pp. 1-24 to 1-27', PCTR + '#page=32'),
           S('IBM PC Technical Reference (Apr 1983), 16/64K system board logic diagrams, sheets 1, 4 and 8', PCTR + '#page=478'),
+          SM('schematic notes (how waveforms are read), p. 44', 44),
+          S_HMS_PG,
         ],
       },
       xt5160: {
@@ -1134,9 +1275,27 @@
         ],
         testPoints: [
           { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V, 4.80 to 5.25 V' },
-          { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz square wave' },
-          { tp: 'CPU reset', where: '8088 pin 21', expect: 'HIGH at power-up, then LOW' },
+          ...xtClockTPs,
         ],
+        firstTen: [
+          { step: 1, check: 'Supply on a load', where: 'Power P8 and P9 to the system board only; no drives, no cards', expect: 'Fan starts and keeps running. TechRef minimum load: 2.3 A on +5 V and 0.4 A on +12 V; a working board alone is normally enough',
+            ifNot: 'Fan still, or it stops after a second: too little load, an overload or a short. It stays off until the fault is gone and power is cycled.', source: S('IBM PC XT Technical Reference (Apr 1984), XT Power Supply, pp. 3-3 to 3-6', XTTR + '#page=68') },
+          { step: 2, check: 'Power Good', where: 'P8-1 to P8-5 at the system board connector', expect: '+2.4 to +5.2 V DC once running; LOW for the first 100 to 500 ms',
+            ifNot: 'Missing: check the rails next. Leave it off at least 1 s before switching on again.', source: S_HMS_PG },
+          { step: 3, check: 'Rails at the board connector', where: 'P9-4 to P9-6 (+5 V), P8-3 (+12 V), P9-3 (-5 V), P8-4 (-12 V), each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
+            ifNot: 'Out of range with only the board connected: the supply (HMS step 008). The TechRef allows +5 V up to 5.25 V; HMS is tighter.', source: S_HMS_V },
+          { step: 4, check: 'Minimum diagnostic configuration', where: 'Board, supply and speaker only; no cards, no keyboard; SW1 switches 5 and 6 OFF', expect: 'One long and two short beeps about 5 s after switch-on',
+            ifNot: 'No beeps: go on with reset and the clocks below.', source: S_MDC },
+          { step: 5, check: 'Power Good in, reset out', where: '8284A pin 11; 8088 pin 21', expect: 'Pin 11 goes HIGH with Power Good; pin 21 is HIGH for about 300 ms, then LOW',
+            ifNot: 'Pin 11 LOW: Power Good is not reaching the board. Pin 11 HIGH but pin 21 stuck: the 8284A.', source: S('minuszerodegrees.net, IBM 5160 startup sequence, steps 3 to 7 and note 1', MZD + '/5160/motherboard/IBM%205160%20-%20Startup%20sequence.htm') },
+          { step: 6, check: 'Crystal oscillator', where: '8284A pin 12', expect: '14.31818 MHz on a counter, 50 percent duty',
+            ifNot: 'Missing or off: the crystal, then the 8284A.', source: S('IBM PC XT Technical Reference (Apr 1984), I/O channel description (OSC), p. 1-21', XTTR + '#page=40') },
+          { step: 7, check: 'CPU clock', where: '8284A pin 8; 8088 pin 19; 8288 pin 2', expect: '4.77 MHz, 33 percent duty, at all three',
+            ifNot: 'Missing at 8284A pin 8: the 8284A. Present there but not at a chip: the trace or a shorted input on that chip.', source: S('IBM PC XT Technical Reference (Apr 1984), I/O channel description (CLK), p. 1-19', XTTR + '#page=38') },
+          { step: 8, check: 'Bank 0 RAM', where: 'RAM bank 0 (socketed 4164, or 41256 on the 256-640 KB board)', expect: 'POST gets past the memory test and beeps',
+            ifNot: 'Clocks and reset good but dead and silent: a bad chip in the first 16 KB (64-256 KB board) or 64 KB (256-640 KB board) halts POST with no beep. Swap bank 0.', source: S('minuszerodegrees.net, IBM 5160 RAM on a 64-256 KB motherboard', MZD + '/5160/ram/5160_ram_64_256.htm') },
+        ],
+        clocks: xtClocks('xt-slot'),
         sources: [S('IBM PC XT Technical Reference (Apr 1984), XT Power Supply, pp. 3-3 to 3-6', XTTR + '#page=68')],
       },
       portable5155: {
@@ -1167,8 +1326,25 @@
         ],
         testPoints: [
           { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V' },
-          { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz square wave' },
+          ...xtClockTPs,
         ],
+        firstTen: [
+          { step: 1, check: 'Selector and load', where: '115/230 V selector; P8 and P9 on the system board', expect: 'Selector matches the mains. Fan starts and keeps running with the board connected',
+            ifNot: 'It needs a load on +5 V: one IDE drive, some MFM drives or the CRT alone are not enough; a working 5155 board normally is, even with P8 unplugged.', source: S('minuszerodegrees.net, IBM 5155 power supply (start-up loading)', MZD + '/5155/psu/5155_psu.htm') },
+          { step: 2, check: 'Power Good', where: 'P8-1 to P8-5 at the system board connector', expect: '+2.4 to +5.2 V DC once running',
+            ifNot: 'Missing: check the rails. After an overload it stays off until the fault is cleared and it is switched off and on.', source: S_HMS_PG },
+          { step: 3, check: 'Rails at the board connector', where: 'P9-4 to P9-6 (+5 V), P8-3 (+12 V), P9-3 (-5 V), P8-4 (-12 V), each to ground', expect: '+4.8 to +5.2 V; +11.5 to +12.6 V; -4.5 to -5.4 V; -10.8 to -12.9 V',
+            ifNot: 'Out of range with only the board connected: the supply (HMS MAP 0020 covers the Portable).', source: S_HMS_V },
+          { step: 4, check: 'Display supply', where: 'p-disp pin 1 to pin 2', expect: 'About +12 V (Power Good senses 10.8 to 15.6 V); 0.5 to 1.5 A load',
+            ifNot: 'System runs but the screen is dead: no +12 V here means the supply; +12 V present means the display unit or the CGA in slot 1.', source: S('IBM PC XT Technical Reference (Apr 1984), Portable Power Supply, pp. 3-7 to 3-10', XTTR + '#page=74') },
+          { step: 5, check: 'Minimum diagnostic configuration', where: 'Board, supply and speaker only; no cards, no keyboard; SW1 switches 5 and 6 OFF', expect: 'One long and two short beeps about 5 s after switch-on',
+            ifNot: 'No beeps: go on with reset and the clocks below.', source: S_MDC },
+          { step: 6, check: 'Power Good in, reset out', where: '8284A pin 11; 8088 pin 21', expect: 'Pin 11 goes HIGH with Power Good; pin 21 is HIGH for about 300 ms, then LOW',
+            ifNot: 'Pin 11 LOW: Power Good is not reaching the board. Pin 11 HIGH but pin 21 stuck: the 8284A.', source: S('minuszerodegrees.net, IBM 5155 startup sequence (the early 5160 board; see the 5160 page)', MZD + '/5155/motherboard/IBM%205155%20-%20Startup%20sequence.htm') },
+          { step: 7, check: 'CPU clock', where: '8284A pin 8; 8088 pin 19', expect: '4.77 MHz, 33 percent duty',
+            ifNot: 'Missing at 8284A pin 8: check 8284A pin 12 for 14.31818 MHz, then the 8284A.', source: S_XT_CLK },
+        ],
+        clocks: xtClocks('p-slot'),
         sources: [S('IBM PC XT Technical Reference (Apr 1984), Portable Power Supply, pp. 3-7 to 3-10', XTTR + '#page=74')],
       },
       pcjr: {
@@ -1195,7 +1371,32 @@
         ],
         testPoints: [
           { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V' },
-          { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz' },
+          { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz, 33 percent duty',
+            scope: { f: '4.7727 MHz', low: '0.45 V', high: '4 V', shape: 'square', duty: '33%', basis: 'datasheet', source: DS_CLK('PCjr TechRef p. 2-23'),
+              note: 'Idealised from the 8284A data sheet levels. The PCjr runs the 8088 in minimum mode, but the clock is the same: 210 ns, HIGH for one third.' } },
+          { tp: 'Bus clock', where: 'jr-io pin A24', expect: '4.77 MHz, 33 percent duty' },
+          { tp: 'Reset', where: '8088 pin 21; jr-io pin A25', expect: 'HIGH at power-up, then LOW' },
+        ],
+        firstTen: [
+          { step: 1, check: 'Transformer output', where: 'jr-power pin 1 to pin 3, with the cable unplugged from the unit', expect: '15.0 to 30.0 V AC (an AC range, not DC)',
+            ifNot: 'Replace the transformer; its thermal fuse does not reset.', source: S('IBM PCjr Hardware Maintenance and Service (Sep 1983), PIC Power, p. 3-020-8', JRHMS + '#page=62') },
+          { step: 2, check: 'Power board outputs', where: 'jr-psu pins 4, 5, 6, 7 (+5 V) and jr-psu pins 1, 10 (+12 V), to jr-psu pin 2', expect: '+4.75 to +5.25 V; +11.4 to +12.6 V',
+            ifNot: 'Low or missing: the power board. HMS checks it at the diskette power connector on the board (4.7 to 5.3 V, 11.4 to 12.6 V). After a +5 V overcurrent it stays off until switched off for 5 s.', source: S('PCjr Technical Reference (Nov 1983), System Power Supply, pp. 2-135 to 2-139', JRTR + '#page=161') },
+          { step: 3, check: 'Strip to the base unit', where: 'Diskette adapter, drive power and fan cables and internal modem disconnected; nothing on the rear sockets', expect: 'One beep within a minute of switch-on',
+            ifNot: 'Beeps now: refit the items one at a time to find the bad one. Still silent: try without the 64KB memory and display expansion, then the system board.', source: S('IBM PCjr Hardware Maintenance and Service (Sep 1983), PIC Power, pp. 3-020-2 to 3-020-7', JRHMS + '#page=56') },
+          { step: 4, check: 'Reset', where: '8088 pin 21; jr-io pin A25', expect: 'HIGH at power-up, then LOW',
+            ifNot: 'Stuck HIGH: nothing runs. Check what drives 8284A pin 11 (/RES), then the 8284A.', source: S('PCjr Technical Reference (Nov 1983), I/O channel description (RESET), p. 2-23', JRTR + '#page=49') },
+          { step: 5, check: 'Crystal', where: '8284A pin 17', expect: '14.31818 MHz; probe gently, a scope probe can stop a weak crystal',
+            ifNot: 'No oscillation: the crystal, then the 8284A.', source: S('PCjr Technical Reference (Nov 1983), system board, p. 2-6', JRTR + '#page=32') },
+          { step: 6, check: 'CPU clock', where: '8284A pin 8; 8088 pin 19; jr-io pin A24', expect: '4.77 MHz, 33 percent duty, 210 ns',
+            ifNot: 'Missing at 8284A pin 8: the 8284A. Present there but not at the 8088: the trace.', source: S('PCjr Technical Reference (Nov 1983), I/O channel description (CLK), p. 2-23', JRTR + '#page=49') },
+        ],
+        clocks: [
+          { name: 'Crystal', where: '8284A pin 16 and pin 17', f: '14.31818 MHz', source: S('PCjr Technical Reference (Nov 1983), system board, p. 2-6', JRTR + '#page=32') },
+          { name: 'CLK (CPU and I/O channel)', where: '8284A pin 8; 8088 pin 19; jr-io pin A24', f: '4.7727 MHz', note: 'Crystal / 3, 33 percent duty.', source: S('PCjr Technical Reference (Nov 1983), I/O channel description, p. 2-23', JRTR + '#page=49') },
+          { name: 'Colour reference', where: 'Video gate array (pins not captured)', f: '3.579545 MHz', note: 'Crystal / 4.', source: S('PCjr Technical Reference (Nov 1983), system board, p. 2-6', JRTR + '#page=32') },
+          { name: 'Sound generator clock', where: 'SN76496 clock input (pins not captured)', f: '3.579 MHz', source: S('PCjr Technical Reference (Nov 1983), Sound Subsystem, p. 2-89', JRTR + '#page=115') },
+          { name: 'Timer clock', where: '8253 timer (not listed as a PCjr chip here)', f: '1.1925 MHz', source: S('PCjr Technical Reference (Nov 1983), I/O channel, p. 2-35', JRTR + '#page=61') },
         ],
         sources: [S('PCjr Technical Reference (Nov 1983), System Power Supply, pp. 2-135 to 2-139', JRTR + '#page=161')],
       },
