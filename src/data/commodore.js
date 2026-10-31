@@ -581,10 +581,11 @@ RCS.add({
         c16: 'U1',
         plus4: 'U1',
       },
-      summary: 'The heart of the 264 series: 121-colour video, 2-voice sound, DRAM controller (/RAS, /CAS, MUX), ROM chip-selects (a simple MMU), timers and keyboard scan (K0-K7). Runs hot and is the number one failure. The only source of replacements is another 264-series board, so socket it and fit a heatsink.',
+      summary: 'The heart of the 264 series: 121-colour video, 2-voice sound, DRAM controller (/RAS, /CAS, MUX), ROM chip-selects (a simple MMU), timers and keyboard scan (K0-K7). Runs hot and is the number one failure. Replacements are a TED from another 264-series board or the FPGATED below, so socket it and fit a heatsink.',
       fails: ['No picture or garbled picture', 'No sound', 'Dead machine', 'Dead keyboard (shared with 6529)'],
       replacements: [
         { part: '8360', kind: 'pin-compatible', note: 'Functionally the same TED in HMOS-2; most machines have the 8360. Both run hot: fit a heat sink. No 8360 pin table seen to compare.', verify: true, source: CBMF.wiki('TED', 'TED (7360 HMOS-1, 8360 HMOS-2)') },
+        { part: 'FPGATED (István Hegedűs)', kind: 'modern', note: 'Drop-in replacement for the 7360/8360: a Spartan-7 FPGA board on a DIL-48 header. Keeps the chroma/luma output for the RF modulator and adds HDMI and an RGB/VGA header. At 75 x 25 mm it is larger than the chip: fits the C16, the Plus/4 with limits on the HDMI cable; not recommended for the C116 (the keyboard touches the HDMI connector). Built in small batches; the TED core is GPL v3, the rest of the firmware is not open, as of October 2026.', source: { label: 'FPGATED, the MOS 8360 replacement (István Hegedűs, fpgated.hu)', url: 'https://www.fpgated.hu/' } },
       ],
       heat: 'hot',
       verifiedAgainst: 'TED System Hardware Manual (Plus/4 Technical Docs, zimmers.net) 4.3.1; Commodore C16 Service Manual PN 314001-03 (Oct 1984) p. 11',
@@ -1134,6 +1135,7 @@ RCS.add({
       fails: ['Black screen', 'Will not boot', 'Garbage screen or dead keys'],
       replacements: [
         { part: 'C64 only: PLAnkton, SuperPLA, realPLA, PLAtinum, neatPLA, PLA20V8 (GAL) or EPROM-based PLA', kind: 'modern', note: 'C64 only. These replace the C64 906114-01 and are programmed with C64 decoding. Timing is the trap: a part that switches faster than the original can upset some cartridges, and the board may need adjusting.', source: CBMF.wiki('PLA_(C64_chip)', 'PLA (C64 chip), replacement parts') },
+        { part: 'C64 only: neatPLA (CPLD)', kind: 'modern', note: 'C64 only. Open-source DIY board (Xilinx XC9536XL CPLD, 3.6 V regulator) based on dodgyPLA: build it from the gerbers and program the CPLD from the JED/SVF. CASRAM delay raised to 30 ns for the 326298 board and extra output delay for a 250425 with a SwinSID. Long-leg female headers fit leaf-spring sockets only; round-pin headers fit all sockets. As of October 2026.', source: { label: 'neatPLA project README (1c3d1v3r, GitHub)', url: 'https://github.com/1c3d1v3r/neatPLA' } },
         { part: 'C16 / Plus/4 only: PLA264 (programmed for the 251641-02)', kind: 'modern', note: 'C16 and Plus/4 only. Open-source replacement for the 251641-02 PLA of the TED machines.', source: { label: 'PLA264 project (hackup), GitHub', url: 'https://github.com/hackup/PLA264' } },
       ],
       heat: 'hot',
@@ -3659,10 +3661,12 @@ RCS.add({
         name: 'Commodore C64 power supply 902503-02 ("brick")',
         output: '+5 V DC 1.5 A (7.5 VA) and 9 V AC 1 A (9.0 VA)',
         connector: 'c64-power',
-        notes: ['Epoxy-potted brick. The +5 V comes from a 3052P (or 7805-type) regulator with no over-voltage protection: when it fails it can fail HIGH and take out the RAM, PLA, CPU and CIAs.', 'Before plugging an old brick in, measure pin 5 to pin 2 with the brick loaded (a dummy load or an expendable board): anything over about 5.25 V, do not use it.', 'Fuses inside the brick: 5 A on the 5 V return, 2 A on the 9 V AC winding (902503-02 schematic). No 9 V AC on pins 6-7: no sound on any board, and no picture on the boards whose VIC-II +12 V comes from it (all but the 250469).', 'Pins 1, 3 and 4 are unconnected on the brick. A modern replacement must provide both the +5 V DC and the 9 V AC.'],
+        notes: ['Epoxy-potted brick. The +5 V comes from a 3052P (or 7805-type) regulator with no over-voltage protection: when it fails it can fail HIGH and take out the RAM, PLA, CPU and CIAs.', 'Before plugging an old brick in, measure pin 5 to pin 2 with the brick loaded (a dummy load or an expendable board): anything over about 5.25 V, do not use it.', 'Fuses inside the brick: 5 A on the 5 V return, 2 A on the 9 V AC winding (902503-02 schematic). No 9 V AC on pins 6-7: no sound on any board, and no picture on the boards whose VIC-II +12 V comes from it (all but the 250469).', 'Pins 1, 3 and 4 are unconnected on the brick. A modern replacement must provide both the +5 V DC and the 9 V AC.', 'Modern replacement brick: the AMI64 C64 PSU gives a stabilised +5 V 2.0 A DC and a transformer 9 V 1.1 A AC on the original DIN-7 pinout, with over-voltage and over-current protection and fuses on both sides. AMI64 lists the UK model as always in stock, as of October 2026.', 'Rebuild instead: the PowerUP! 64W PRO V2 (The Dark Forest) is a switching 9 V AC to 5 V DC board that replaces the regulator board inside the beige wedge brick (902503-06, -11), not this potted one. Calibrated to 5.15 V (adjustable 5.0-5.3 V); the case must be forced open and the board soldered in; measure 5 V and polarity before connecting. Retired on Tindie as of October 2026.'],
         sources: [
           { label: 'Commodore C64 power supply 902503-02 schematic (zimmers.net)', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/c64/c64_external_power_supply_902503-02.png' },
           { label: 'C64/C64C Service Manual, power supply circuit theory, p. 4', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/c64/servicemanuals/C64-C64C_Service_Manual_314001-03_(1992_Mar).pdf#page=8' },
+          { label: 'AMI64, Commodore 64 power supply unit (product page)', url: 'https://www.ami64.com/product-page/commodore-64-power-supply-unit-psu-uk-eu-au-usa-new-design-1' },
+          { label: 'The Dark Forest, PowerUP! 64W PRO V2 (Tindie, retired listing)', url: 'https://www.tindie.com/products/thedarkforest/powerup-64w-pro-v2/' },
         ],
       },
       sources: [

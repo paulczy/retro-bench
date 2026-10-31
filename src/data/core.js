@@ -311,5 +311,9 @@ window.RCS = (() => {
      boards: ['id', ...] apply only to those boards; untagged records apply to all (docs/data-schema.md). */
   R.boards = {};
   R.addBoards = by => { for (const [mid, list] of Object.entries(by || {})) R.boards[mid] = [...(R.boards[mid] || []), ...list]; };
+  /* Known-good ROM hashes per machine, from src/data/roms.js: [{ part?, name, version?, chip?, loc?, boards?, size,
+     crc32, sha1, source, also?, note?, verify? }] (docs/data-schema.md, "ROM images"). Hashes only, never images. */
+  R.roms = {};
+  R.addRoms = by => { for (const [mid, list] of Object.entries(by || {})) R.roms[mid] = [...(R.roms[mid] || []), ...list]; };
   return R;
 })();

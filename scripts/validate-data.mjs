@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = path.join(root, 'src', 'data');
-const order = ['core', 'commodore', 'apple', 'atari', 'coleco', 'sinclair', 'timex', 'ti', 'tandy', 'heathkit', 'ibm', 'amstrad', 'acorn', 'dragon', 'msx', 'oric', 'schematics', 'photos', 'video'];
+const order = ['core', 'commodore', 'apple', 'atari', 'coleco', 'sinclair', 'timex', 'ti', 'tandy', 'heathkit', 'ibm', 'amstrad', 'acorn', 'dragon', 'msx', 'oric', 'schematics', 'photos', 'video', 'roms'];
 const only = process.argv.slice(2);
 
 const window = {};
@@ -417,6 +417,34 @@ for (const [mid, list] of Object.entries(R.photos || {})) {
   });
 }
 /* video.js: the #/video reference. Every signal row needs a source that resolves to a sources entry. */
+/* roms.js: known-good ROM hashes (docs/data-schema.md, "ROM images"). Hashes and metadata only. */
+const ROM_KEYS = new Set(['part', 'name', 'version', 'chip', 'loc', 'boards', 'size', 'sizeNote', 'crc32', 'sha1', 'source', 'also', 'note', 'verify', 'conflict']);
+for (const [mid, list] of Object.entries(R.roms || {})) {
+  const f = `roms ${mid}`, m = R.machines[mid], seen = new Set();
+  if (!m) { err('roms', `unknown machine ${mid}`); continue; }
+  if (!Array.isArray(list) || !list.length) { err(f, 'must be a non-empty array'); continue; }
+  list.forEach((r, i) => {
+    const at = `${r && r.name ? r.name : 'entry'}${r && r.part ? ' ' + r.part : ''}${r && r.version ? ' ' + r.version : ''} (#${i + 1})`;
+    if (!r || typeof r !== 'object') { err(f, `#${i + 1} is not an object`); return; }
+    for (const k of Object.keys(r)) if (!ROM_KEYS.has(k)) err(f, `${at} unknown field ${k}`);
+    if (!r.name) err(f, `${at} needs name`);
+    if (!/^[0-9a-f]{8}$/.test(r.crc32 || '')) err(f, `${at} crc32 must be 8 lower-case hex digits: ${r.crc32}`);
+    if (!/^[0-9a-f]{40}$/.test(r.sha1 || '')) err(f, `${at} sha1 must be 40 lower-case hex digits: ${r.sha1}`);
+    if (!Number.isInteger(r.size) || r.size <= 0) err(f, `${at} size must be a positive whole number of bytes`);
+    else if ((r.size & (r.size - 1)) !== 0 && !r.sizeNote) err(f, `${at} size ${r.size} is not a power of two: say why in sizeNote`);
+    if (!r.source) err(f, `${at} needs source`); else checkSources(f, [r.source]);
+    if (r.also != null) { if (!Array.isArray(r.also) || !r.also.length) err(f, `${at} also must be a non-empty array of sources`); else checkSources(f, r.also); }
+    if (r.chip != null) {
+      if (!R.chips[r.chip]) err(f, `${at} chip ${r.chip} is not in RCS.chips`);
+      else if (!(m.chips || []).includes(r.chip)) err(f, `${at} chip ${r.chip} is not fitted in ${mid}`);
+      else { const cb = m.chipBoards && m.chipBoards[r.chip]; if (cb && Array.isArray(r.boards) && r.boards.some(b => !cb.includes(b))) err(f, `${at} boards ${r.boards.join(',')} put ${r.chip} on a board chipBoards leaves it off`); }
+    }
+    if (r.boards != null) checkBoards(f, mid, at, r.boards);
+    if (r.verify != null && r.verify !== true) err(f, `${at} verify must be true or absent`);
+    const key = `${r.sha1}|${(r.boards || []).join()}`;
+    if (seen.has(key)) err(f, `${at} repeats a SHA-1 already listed for ${mid}`); seen.add(key);
+  });
+}
 if (R.video) {
   const V = R.video, f = 'video', GROUPS = new Set(['levels', 'line', 'field', 'rgbi', 'rgb', 'yc', 'rf', 'mod']);
   for (const k of ['standards', 'signals', 'sources']) if (!Array.isArray(V[k])) err(f, `${k} must be an array`);

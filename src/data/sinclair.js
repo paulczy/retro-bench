@@ -522,8 +522,8 @@ RCS.add({
         { part: '6C001E-7', kind: 'pin-compatible', verify: true, note: 'The only ULA documented for every 48K board, Issue 1 to 6A, and the one Issue 4A and later boards need (their RAM timing changes go with it).', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
         { part: '6C001E-5 / 6C001E-6', kind: 'pin-compatible', verify: true, note: 'Issue 1, 2 and 3 boards only; not for 4A/4B, 5 or 6A. The -5 moves the whole picture one character left and lets the EAR bit float until warm, which breaks software that reads the keyboard without masking.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
         { part: '5C102E / 5C112E', kind: 'pin-compatible', verify: true, note: 'Issue 1 and 2 boards. A 5C102E needs the "cockroach" 74LS00 mod; a 5C112E in an Issue 1 board needs the cockroach removed.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
-        { part: 'vLA82 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement for a 6C001E-7 or earlier, with 6C001E-7 behaviour; low enough for a rubber-key case. Some sockets only take very thin pins: fit the optional turned-pin socket if it will not seat.', source: S('Tindie, vLA82 Spectrum 48K ULA replacement', 'https://www.tindie.com/products/charlieingley/vla82-spectrum-48k-ula-replacement/') },
-        { part: 'Nebula (Retroleum)', kind: 'modern', note: 'Plug-in ULA replacement module. The pins are fragile. In a rubber-key case solder in any socketed IC3, IC4, IC24, IC25 under it. On Issue 2 boards set VR1 and VR2 again after fitting.', source: S('Retroleum, Nebula fitting notes (PDF)', 'https://www.retroleum.co.uk/files/spectrum-nebula-fitting-narrow-pins.pdf') }
+        { part: 'vLA82 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement for a 6C001E-7 or earlier, with 6C001-7 behaviour, in a 40-pin DIL footprint low enough for a rubber-key case. Works with lower RAM replacement modules. Some sockets only take very thin pins: fit the turned-pin socket the designer offers if it will not seat. On sale from the designer as of October 2026.', source: S('vRetro Design (Charlie Ingley), vLA82 Spectrum 48K ULA replacement', 'https://vdrivezx.com/vla82/') },
+        { part: 'Nebula (Retroleum)', kind: 'modern', note: 'CPLD module that plugs into the ULA socket of UK 16/48K boards, issues 2 to 6. Behaves as a 6Cxxx ULA, same YUV output to the modulator; no NTSC version planned. In a rubber-key case solder in any socketed IC3, IC4, IC24, IC25 under it. On Issue 2 boards set VR1 and VR2 again after fitting. Hand-made in small numbers; out of stock in the Retroleum shop as of October 2026.', source: S('Retroleum (Phil Ruston), Nebula Spectrum ULA chip replacement module', 'http://blog.retroleum.co.uk/electronics-articles/nebula-spectrum-ula-chip-replacement-module/') }
       ],
       datasheets: [
         S('ZX Spectrum Issue 3 circuit diagram, IC1 ULA 6C001', ISS3),
@@ -542,6 +542,9 @@ RCS.add({
       datasheets: [
         S('Spectrum 128 Service Manual, parts list (socket ULA 48 pin), p. 6.0', SM128(44)),
         S('Spectrum +2A/+3 Service Manual (HTML), circuit diagram with the 40077 gate array', P3SM)
+      ],
+      replacements: [
+        { part: 'vLA128 (Charlie Ingley)', kind: 'modern', note: 'Spectrum 128 and grey +2 only: replaces the 7K010E-5 or Amstrad 40056 ULA. The page does not cover the +2A/+3 40077. Fits the 48-pin socket outline with narrow pins; in most cases the existing socket is OK. On sale from the designer (Tindie) as of October 2026.', source: S('vRetro Design (Charlie Ingley), vLA128 Spectrum 128K ULA replacement', 'https://vdrivezx.com/vla128/') }
       ]
     }
   },

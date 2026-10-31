@@ -953,7 +953,7 @@ RCS.add({
       verifiedAgainst: 'Electron Service Manual 0405001 issue 2, ch. 6 and main PCB circuit diagram (issue 4 board, IC1 all 68 pins), 8.2-8.10; Electron Advanced User Guide Appendix G (issue 6 board, all 68 pins agree)',
       datasheets: [S('Electron Service Manual, 6 The uncommitted logic array (pin functions), p. 8', ESM(14)), S('Electron Service Manual, main PCB circuit diagram, IC1 pin numbers, pp. 31-32', ESM(37)), S('Electron Service Manual, 8.3 ULA (supply, clock, RAS/CAS test pins), p. 11', ESM(17)), S('Electron Advanced User Guide, Appendix G main board circuit diagram issue 6 (IC1 12C021)', EAUG(285)), S('Electron Advanced User Guide, 14.1 The ULA and its registers, pp. 211-224', EAUG(212)), S('Acorn Application Note 015 (NMI and IRQ pull-ups in the ULA), p. 4', AN15(4))],
       replacements: [
-        { part: 'JamSoft Electron ULA (iCE40 FPGA)', kind: 'modern', note: 'Open project: an iCE40 FPGA board on a socket adapter in place of the ULA. The 68-pin socket must be replaced with a good PGA socket or SIL headers. It ignores NMI, so peripherals that use it crash; the author has stopped development.', source: S('JamSoftElectronULA README (GitHub)', JAMULA) }
+        { part: 'JamSoft Electron ULA (iCE40 FPGA)', kind: 'modern', note: 'Open-source DIY (GPL-3.0): an iCE40 FPGA board on a socket adapter in place of the ULA. Replace the 68-pin socket with a good PGA socket or turned-pin SIL headers. It ignores NMI, so peripherals that use it crash; adds a turbo mode and optional Mode 7. Supplied as-is: the author says it may be more sensitive to a weak supply than the original ULA. Still updated as of October 2026.', source: S('JamSoftElectronULA README (GitHub)', JAMULA) }
       ],
       pins: (() => {
         const t = {

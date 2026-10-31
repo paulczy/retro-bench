@@ -156,12 +156,19 @@
   .legend .k { font-family: var(--font-mono); color: var(--copper); white-space: nowrap; }
   .legend .k.silk { color: var(--silk); }
   .legend .v b { font-weight: 500; }
+  .legend .v { min-width: 0; overflow-wrap: anywhere; }
   .legend.tri { grid-template-columns: max-content fit-content(45%) 1fr; }
   .legend.tri > :nth-child(-n+3) { border-top: 0; }
   .legend.tri .v3 { padding-right: 0; }
   /* replacement part names are long lists: let them wrap so a phone never scrolls sideways */
   .legend.repl { grid-template-columns: minmax(0, 16rem) max-content minmax(0, 1fr); }
   .legend.repl .k { white-space: normal; overflow-wrap: anywhere; }
+  /* ROM images: a hash per line in mono with its copy button; a SHA-1 may wrap on a phone, never scroll sideways */
+  .legend.roms .k { white-space: normal; max-width: 9rem; }
+  .roms .hash { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; }
+  .roms .hash .hk { font: 12px/16px var(--font-mono); letter-spacing: .1em; color: var(--tin); min-width: 3.4rem; }
+  .roms .hash code { font-size: 15px; color: var(--silk); overflow-wrap: anywhere; min-width: 0; flex: 0 1 auto; }
+  .btn.cp { min-height: 44px; padding: 4px 10px; font-size: 13px; }
 
   .chk { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; border: 1px solid var(--tin); color: var(--tin); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; text-transform: uppercase; }
   .hot { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; color: var(--pwr); border: 1px solid var(--pwr); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; }
@@ -232,7 +239,7 @@
   .door.off .j { color: var(--tin); }
   /* machine board: footprints wrap at --fpw; the bus sits one gap left of the first column, so the same
      gap-wide stub that joins footprints in a row also joins the first one to the bus */
-  .board-grid { --gx: 18px; --fpw: 196px; position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--fpw), 1fr)); gap: 22px var(--gx); padding: 14px 0 0 calc(8px + var(--gx)); margin-top: 6px; }
+  .board-grid { --gx: 18px; --fpw: 196px; position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--fpw), 1fr)); gap: 22px var(--gx); padding: 14px 12px 0 calc(8px + var(--gx)); margin-top: 6px; }
   .board-grid::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 45px; width: 2px; background: var(--copper); }
   .board-grid::after { content: ''; position: absolute; left: 4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--copper); }
   .bcell { display: block; min-width: 0; color: var(--silk); }
@@ -243,7 +250,7 @@
   .bcell .des { font-size: 14px; letter-spacing: .08em; color: var(--copper); }
   .bcell .flag { font-size: 10px; letter-spacing: .12em; color: var(--tin); flex-shrink: 1000; }   /* gives way before the designator */
   .bcell .flag.pwr { color: var(--pwr); flex: none; }
-  .bcell .pn { font-size: 12px; color: var(--silk-70); margin-left: auto; flex: none; }
+  .bcell .pn { font-size: 12px; color: var(--silk-70); margin-left: auto; flex: 0 1 auto; min-width: 0; text-align: right; overflow-wrap: anywhere; }
   .bcell .bfp { display: block; position: relative; }
   .bcell .bfp::before { content: ''; position: absolute; top: calc(50% - .75px); left: calc(-1 * var(--gx)); width: var(--gx); height: 1.5px; background: var(--copper); }
   .bcell svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -461,7 +468,7 @@
   .btag { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .06em; color: var(--copper); border: 1px dashed var(--copper); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; white-space: normal; text-transform: none; }
   .btag.on { border-style: solid; text-transform: uppercase; }
   .legend.brevs .k.on { color: var(--copper); }
-  .mtabs { display: flex; gap: 0 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .mtabs { display: flex; min-width: 0; max-width: 100%; gap: 0 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
   .mtabs::-webkit-scrollbar { display: none; }
   .mtabs a { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font: 15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk-70); border-bottom: 3px solid transparent; }
   .mtabs a:hover { color: var(--silk); }
@@ -767,13 +774,13 @@
     .hd .des { font-size: 34px; }
     .hd h1 { font-size: 28px; }
     .blk { padding: 18px 12px 14px; }
-    .legend { grid-template-columns: 1fr; }
+    .legend { grid-template-columns: minmax(0, 1fr); }
     .legend > * { padding: 2px 0; border-top: 0; }
     .legend > .k { padding-top: 10px; border-top: 1px solid var(--silk-12); }
     .legend > .k:first-child { border-top: 0; }
     .legend > .v { padding-bottom: 10px; }
-    .legend.tri { grid-template-columns: max-content 1fr; }
-    .legend.tri > .k { padding-right: 12px; }
+    .legend.tri { grid-template-columns: minmax(0, max-content) minmax(0, 1fr); }
+    .legend.tri > .k { padding-right: 12px; max-width: 40vw; white-space: normal; overflow-wrap: anywhere; }
     .legend.tri > .v { padding-top: 10px; border-top: 1px solid var(--silk-12); padding-bottom: 2px; }
     .legend.tri > .v:nth-child(2) { border-top: 0; }
     .legend.tri > .v3 { grid-column: 1 / -1; text-align: left; padding: 0 0 10px; color: var(--tin); }
@@ -796,7 +803,7 @@
     .mname .nm, .brev, .mbar .region .h, .mbar .region > .tin { display: none; }
     .mbar .region button { min-height: 28px; padding: 2px 8px; font-size: 12px; }
     .bsel select { min-height: 28px; max-width: 9.5rem; padding: 2px 20px 2px 6px; font-size: 12px; background-position: right 6px center; }
-    .mtabs { position: sticky; top: 0; z-index: 25; margin: 0 -12px; padding: 0 6px; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
+    .mtabs { position: sticky; top: 0; z-index: 25; margin: 0; padding: 0 6px; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
     .mtabs a { min-height: 40px; padding: 0 10px; font-size: 14px; }
     .hd { margin-top: 10px; }
     /* chip toolbar: short labels, one line */

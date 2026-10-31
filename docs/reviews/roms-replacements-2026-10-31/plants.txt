@@ -1,0 +1,4 @@
+1. C64 KERNAL 901227-03 SHA-1 last chars ...781df1bb -> ...781dfb1b
+2. C64 char 901225-01 CRC32 ec4272ee -> ec4272ef
+3. C64 KERNAL rev 3 part shown as 901227-02 (true -03)
+4. vLA128 note claims +2A/+3 40077 coverage (true: not covered)

@@ -1250,6 +1250,7 @@ function viewMachine(m) {
       ${sy.data && arr(sy.data).length ? sy.data.map(s => `<div class="symrow"><div><div class="s">${esc(s.symptom)}${vmark(s)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}${conflictNote(s)}</div><div class="u">${arr(s.suspects).map(id => { const c = D.chips[id]; if (!c) return ''; const l = [boardDes(c, m), c.short].filter(Boolean).join(' '); return c.pins && fits(m, id) ? `<a href="${chipPath(m, c)}">${esc(l)}</a>` : `<span title="Pinout not captured">${esc(l)}</span>`; }).join('')}</div></div>`).join('') + sharedNote(sy.shared)
         : `<p class="note mt-0">No symptom table yet for this machine.</p>`}
     </section>
+    ${romBlock(m)}
     ${noteBlock('m', m.id, m.name)}
     ${boardsBlock(m)}
     ${printCard(m)}`;
@@ -1272,6 +1273,57 @@ function boardsBlock(m) {
     ${revBlk}${mine.length ? `${revs.length ? '<div class="h4">Drawings</div>' : ''}${legend(mine)}` : b ? `<p class="note mt-0">No drawings linked for the ${esc(b.name)}.</p>` : ''}
     ${other.length ? `<details class="fold"><summary>Other boards<span class="s">${other.length} document${other.length === 1 ? '' : 's'}</span></summary>${legend(other)}</details>` : ''}
     ${all.length ? '<p class="note">Links open the archive that holds the drawing; nothing is copied into the app. Check the assembly number printed on your board against the list.</p>' : ''}</section>`;
+}
+
+/* ---------- ROM images (src/data/roms.js): known-good CRC32 and SHA-1 so a dumped ROM can be checked. Board
+   filtering as elsewhere; a chip page lists the records for that chip (or, with no chip id, for its designator). ---------- */
+const isRomChip = c => /\b(?:E?P?ROMs?|GROM)\b/.test(`${c.name || ''} ${c.role || ''}`);
+const romsOf = m => arr(D.roms && D.roms[m.id]).filter(r => r && r.sha1 && onBoard(r, m));
+/* the designators a record's loc names ("UAB4 on the long board, UB3 on the short boards" -> UAB4, UB3) */
+const romDes = (r, m) => (r.loc ? desAll({ location: { [m.id]: r.loc } }, { id: m.id }) : []);
+function romsForChip(m, c) {
+  const des = new Set(desAll(c, m)), cb = chipBoardIds(c, m);
+  return romsOf(m).filter(r => r.chip ? r.chip === c.id
+    : romDes(r, m).some(d => des.has(d)) && !(cb && Array.isArray(r.boards) && !r.boards.some(b => cb.includes(b))));
+}
+const romSize = n => (n >= 1024 && n % 1024 === 0 ? `${n / 1024} KB` : `${n} bytes`);
+const copyBtn = (v, what) => `<button type="button" class="btn cp" data-act="copy" data-v="${esc(v)}" aria-label="Copy ${esc(what)}">Copy</button>`;
+function romRows(list, m) {
+  return `<div class="legend tri roms">${list.map(r => {
+    const label = [r.name, r.part, r.version].filter(Boolean).join(' '), ds = romDes(r, m), k = ds.length ? ds.join(' ') : r.loc || '—';
+    return `<div class="k">${esc(k)}</div>
+      <div class="v"><b>${esc(r.name)}</b>${vmark(r)}${recTag(r, m)}${r.part ? `<br><span class="mono">${esc(r.part)}</span>` : ''}${r.version ? `<br><span class="sm">${esc(r.version)}</span>` : ''}
+        <br><span class="tin sm">${esc(romSize(r.size))}${r.loc && r.loc !== k ? `, ${esc(r.loc)}` : ''}${r.chip && D.chips[r.chip] ? `, ${D.chips[r.chip].pins && fits(m, r.chip) ? `<a class="plink" href="${chipPath(m, D.chips[r.chip])}">${esc(D.chips[r.chip].short)}</a>` : esc(D.chips[r.chip].short)}` : ''}</span>
+        ${r.sizeNote ? `<br><span class="tin sm">${esc(r.sizeNote)}</span>` : ''}${r.note ? `<br><span class="tin sm">${esc(r.note)}</span>` : ''}${disagree(r)}</div>
+      <div class="v3"><div class="hash"><span class="hk">CRC32</span><code class="mono">${esc(r.crc32)}</code>${copyBtn(r.crc32, `CRC32 of ${label}`)}</div>
+        <div class="hash"><span class="hk">SHA-1</span><code class="mono">${esc(r.sha1)}</code>${copyBtn(r.sha1, `SHA-1 of ${label}`)}</div>
+        <ul class="ds">${[r.source, ...arr(r.also)].filter(Boolean).map(d => `<li>${srcLink(d)}</li>`).join('')}</ul></div>`;
+  }).join('')}</div>`;
+}
+const ROM_NOTE = 'Read the chip with a programmer, save the whole chip as a binary file and compare its CRC32 or SHA-1. A match means the dump is good; a mismatch on one chip of a set points at that chip. The file name and hashes come from the linked source; the socket, board and version come from the board data for this machine.';
+function romBlock(m) {
+  const all = arr(D.roms && D.roms[m.id]), list = romsOf(m), hasRom = chipsOf(m).some(isRomChip);
+  if (!all.length && !hasRom) return '';
+  const b = boardOf(m);
+  return `<section class="blk" id="roms"><span class="lbl"><span class="d">CRC</span>ROM images</span>
+    ${list.length ? romRows(list, m) : `<p class="note mt-0">${all.length && b ? `No published hash for the ${esc(b.name)}.` : 'No published hash for this machine yet.'}</p>`}
+    ${list.length ? `<p class="note">${ROM_NOTE}</p>` : ''}</section>`;
+}
+function chipRomBlock(m, c) {
+  if (!isRomChip(c) && !romsForChip(m, c).length) return '';
+  const list = romsForChip(m, c);
+  return `<section class="blk" id="roms"><span class="lbl"><span class="d">CRC</span>ROM images on the ${esc(m.name)}</span>
+    ${list.length ? romRows(list, m) + `<p class="note">${ROM_NOTE}</p>` : `<p class="note mt-0">No published hash for this chip on the ${esc(boardOf(m) ? boardOf(m).name : m.name)}.</p>`}</section>`;
+}
+async function copyText(btn) {
+  const v = btn.dataset.v || '';
+  let ok = false;
+  try { await navigator.clipboard.writeText(v); ok = true; } catch (e) {
+    const t = document.createElement('textarea'); t.value = v; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select(); try { ok = document.execCommand('copy'); } catch (e2) {} t.remove();
+  }
+  btn.textContent = ok ? 'Copied' : 'Select it'; btn.classList.toggle('on', ok);
+  clearTimeout(btn._t); btn._t = setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('on'); }, 1600);
 }
 
 /* ---------- board photos (src/data/photos.js). The photo is shown unaltered; the chip outlines are HTML boxes
@@ -1406,6 +1458,7 @@ function viewChip(m, chip) {
       </div>
       ${datasheets(chip)}
     </section>
+    ${chipRomBlock(m, chip)}
     ${chipPhoto(m, chip)}
     ${replacementsBlock(chip)}
     ${noteBlock('c', chip.id, chip.name)}`;
@@ -2315,6 +2368,7 @@ document.addEventListener('click', e => {
   else if (a === 'install' && net.prompt) { const p = net.prompt; p.prompt(); p.userChoice.finally(() => { net.prompt = null; paintNet(); }); }
   else if (a === 'reload') location.reload();
   else if (a === 'print') { noteFlush(); window.print(); }
+  else if (a === 'copy') copyText(act);
   else if (a === 'photo-loc') photoLocate(act.dataset.chip);
   else if (a === 'photo-tab') { state.ph.i = Number(act.dataset.i); $('#photo-body').innerHTML = photoBody(state.ctx.machine); const t = $(`[data-act="photo-tab"][data-i="${act.dataset.i}"]`); if (t) t.focus(); }
   else if (a === 'photo-big') { state.ph.big = !state.ph.big; $('#photo-body').innerHTML = photoBody(state.ctx.machine); $('[data-act="photo-big"]').focus(); if (state.ph.sel) photoLocate(state.ph.sel); }
