@@ -104,7 +104,7 @@ const zxEdgePins = romcs => [
   P('A22', '/M1', 'ctrl', 'Z80 /M1.', { activeLow: true }),
   P('A23', '/RFSH', 'ctrl', 'Z80 /RFSH.', { activeLow: true }),
   P('B1', '+5V', 'power', '+5 V from the 7805.', { expect: '+5 V' }),
-  P('B2', '+9V', 'power', 'Unregulated input straight from the power jack (k1 calls it Uss).', { expect: '+7 to +11 V DC on load' }),
+  P('B2', '+9V', 'power', 'Unregulated input straight from the power jack (k1 calls it Uss).', { expect: romcs ? '+7 to +11 V DC on load' : '+9 to +11 V DC on load' }),
   P('B3', 'KEYWAY', 'nc', 'Keyway slot cut in the board. No contact.'),
   P('B4', '0V', 'ground', 'Ground.', { expect: '0 V' }),
   P('B5', '0V', 'ground', 'Ground.', { expect: '0 V' }),
@@ -169,13 +169,13 @@ const SPEC_EDGE_SUMMARY = 'Side A is the UNDERSIDE (solder side) and side B the 
 /* +3 manual chapter 10, Joystick sockets (Sinclair wiring, not Atari) */
 const sinclairJoyPins = () => [
   P(1, 'N/C', 'nc', 'Not used.'),
-  P(2, 'COMMON', 'ground', 'Common return for the switches.', { expect: '0 V' }),
+  P(2, 'COMMON', 'kbd', 'Common return for the switches: a scanned keyboard line shared with pin 8, not ground. Grounding it can hold a keyboard scan line LOW.'),
   P(3, 'N/C', 'nc', 'Not used.'),
   P(4, 'FIRE', 'io', 'Fire button to common.'),
   P(5, 'UP', 'io', 'Up switch to common.'),
   P(6, 'RIGHT', 'io', 'Right switch to common.'),
   P(7, 'LEFT', 'io', 'Left switch to common.'),
-  P(8, 'COMMON', 'ground', 'Common return for the switches.', { expect: '0 V' }),
+  P(8, 'COMMON', 'kbd', 'Common return for the switches: the same scanned keyboard line as pin 2, not ground.'),
   P(9, 'DOWN', 'io', 'Down switch to common.')
 ];
 
@@ -233,7 +233,7 @@ RCS.add({
         { n: 3, name: 'A13', type: 'addr', dir: 'out', desc: 'Address bit 13.', terms: ['tristate'] },
         { n: 4, name: 'A14', type: 'addr', dir: 'out', desc: 'Address bit 14.', terms: ['tristate'] },
         { n: 5, name: 'A15', type: 'addr', dir: 'out', desc: 'Address bit 15. Top bit of the 64K map.', terms: ['tristate'] },
-        { n: 6, name: 'CLK', type: 'clock', dir: 'in', desc: 'Single-phase MOS-level clock input. The machine\'s clock circuit sets the rate.', terms: ['clock'], probe: 'Square wave at the CPU clock rate with a full 0-5 V swing. No clock, no machine.' },
+        { n: 6, name: 'CLK', type: 'clock', dir: 'in', desc: 'Single-phase MOS-level clock input. The machine\'s clock circuit sets the rate.', terms: ['clock'], probe: 'Square wave at the CPU clock rate (see the machine clocks). No clock, no machine.' },
         { n: 7, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bit 4.', terms: ['tristate'] },
         { n: 8, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bit 3.', terms: ['tristate'] },
         { n: 9, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bit 5.', terms: ['tristate'] },
@@ -243,17 +243,17 @@ RCS.add({
         { n: 13, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bit 7.', terms: ['tristate'] },
         { n: 14, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bit 0.', terms: ['tristate'] },
         { n: 15, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bit 1.', terms: ['tristate'] },
-        { n: 16, name: '/INT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Maskable interrupt request. Honoured at the end of an instruction when interrupts are enabled. Video chips often pulse it once per frame.', terms: ['irq'], probe: 'HIGH when idle; short LOW pulses if the machine uses a frame interrupt.' },
-        { n: 17, name: '/NMI', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Non-maskable interrupt, negative-edge triggered. Forces a restart at $0066 whatever the interrupt mask.', terms: ['nmi'], probe: 'HIGH when idle. A machine that times its display with NMI shows a steady pulse train.' },
-        { n: 18, name: '/HALT', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW after a HALT instruction until an interrupt. The CPU keeps running NOPs for refresh.', probe: 'HIGH unless a HALT is running.' },
+        { n: 16, name: '/INT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Maskable interrupt request. Honoured at the end of an instruction when interrupts are enabled.', terms: ['irq'], probe: 'HIGH when idle; LOW while a device requests an interrupt (see the machine test points).' },
+        { n: 17, name: '/NMI', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Non-maskable interrupt, negative-edge triggered. Forces a restart at $0066 whatever the interrupt mask.', terms: ['nmi'], probe: 'HIGH when idle; LOW pulses only on a machine that drives it (see the machine test points).' },
+        { n: 18, name: '/HALT', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW after a HALT instruction until an NMI, an enabled maskable interrupt or a reset. The CPU keeps running NOPs for refresh.', probe: 'HIGH unless a HALT is running.' },
         { n: 19, name: '/MREQ', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW when the address bus holds a valid memory address. Tri-state.', terms: ['mreq', 'tristate'], probe: 'Pulses on every memory cycle.' },
-        { n: 20, name: '/IORQ', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW when A7-A0 hold a valid I/O port address; also LOW with /M1 in an interrupt acknowledge. Tri-state.', terms: ['mreq', 'tristate'], probe: 'Pulses on port access only.' },
+        { n: 20, name: '/IORQ', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW when A7-A0 hold a valid I/O port address; also LOW with /M1 in an interrupt acknowledge. Tri-state.', terms: ['mreq', 'tristate'], probe: 'Pulses on port access, and with /M1 on an interrupt acknowledge.' },
         { n: 21, name: '/RD', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW on a memory or I/O read. Tri-state.', terms: ['tristate'], probe: 'Pulses on reads.' },
         { n: 22, name: '/WR', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW when the data bus holds data to write. Tri-state.', terms: ['tristate'], probe: 'Pulses on writes.' },
         { n: 23, name: '/BUSAK', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Bus acknowledge (BUSACK in the Zilog manual): LOW when the CPU has released its buses.', terms: ['busreq'], probe: 'HIGH normally.' },
         { n: 24, name: '/WAIT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'LOW adds wait states so slow memory or I/O can finish. Long waits stop DRAM refresh.', terms: ['wait'], probe: 'HIGH normally.' },
-        { n: 25, name: '/BUSRQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Bus request (BUSREQ in the Zilog manual): LOW floats the CPU buses at the end of the machine cycle. Needs a pull-up.', terms: ['busreq'], probe: 'HIGH normally.' },
-        { n: 26, name: '/RESET', type: 'ctrl', dir: 'in', activeLow: true, desc: 'LOW for at least three clocks resets the CPU: PC, I and R cleared, interrupts off, mode 0.', terms: ['reset'], probe: 'LOW at power-on, then HIGH. Stuck LOW = dead.' },
+        { n: 25, name: '/BUSRQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Bus request (BUSREQ in the Zilog manual): LOW floats the CPU buses at the end of the machine cycle. A wired-OR bus request needs an external pull-up.', terms: ['busreq'], probe: 'HIGH normally.' },
+        { n: 26, name: '/RESET', type: 'ctrl', dir: 'in', activeLow: true, desc: 'LOW for at least three clocks resets the CPU: PC, I and R cleared, interrupts off, mode 0.', terms: ['reset'], probe: 'HIGH while running. Stuck LOW holds the CPU in reset.' },
         { n: 27, name: '/M1', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW during each opcode fetch; with /IORQ it marks an interrupt acknowledge.', probe: 'Pulses on every instruction.' },
         { n: 28, name: '/RFSH', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW with /MREQ in the refresh half of each opcode fetch; A6-A0 then hold a refresh address.', terms: ['rfsh'], probe: 'Pulses on every opcode fetch.' },
         { n: 29, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V' },
@@ -291,10 +291,10 @@ RCS.add({
         { n: 9, name: '/MREQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Memory request, direct from the Z80.', terms: ['mreq'] },
         { n: 10, name: '/M1', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Opcode fetch marker, direct from the Z80.' },
         { n: 11, name: 'A14', type: 'addr', dir: 'in', desc: 'CPU address bit 14 (direct).' },
-        { n: 12, name: '/RAMCS', type: 'ctrl', dir: 'out', activeLow: true, desc: 'RAM select, through 680 ohm (R2) to the RAM and edge pin A2.', terms: ['cs'], probe: 'Pulses LOW on RAM access. Stuck HIGH = no RAM.' },
+        { n: 12, name: '/RAMCS', type: 'ctrl', dir: 'out', activeLow: true, desc: 'RAM select, through 680 ohm (R2) to the RAM and edge pin A2.', terms: ['cs'], probe: 'Pulses LOW on access to the internal RAM.' },
         { n: 13, name: '/ROMCS', type: 'ctrl', dir: 'out', activeLow: true, desc: 'ROM select (/MREQ OR A14), through 680 ohm (R28) to ROM pin 20 and edge pin B23.', terms: ['cs'], probe: 'Pulses LOW on ROM access.' },
         { n: 14, name: '/CLK', type: 'clock', dir: 'out', activeLow: true, desc: 'CPU clock out, the inverse of the internal clock (6.5 MHz / 2). TR2 drives Z80 pin 6 from it.', terms: ['clock'], probe: '3.25 MHz square wave. Missing = dead machine.' },
-        { n: 15, name: '/NMI', type: 'ctrl', dir: 'out', activeLow: true, desc: 'NMI to the Z80, used to time the display.', terms: ['nmi'], probe: 'Pulses LOW while the display runs.' },
+        { n: 15, name: '/NMI', type: 'ctrl', dir: 'out', activeLow: true, desc: 'NMI to the Z80, used to time the display.', terms: ['nmi'], probe: 'Pulses LOW while the NMI generator is on (SLOW mode; OUT $FE turns it on, OUT $FD off).' },
         { n: 16, name: 'TV/TAPE', type: 'video', dir: 'out', desc: 'Composite video and the tape (MIC) output on one pin; feeds the modulator.' },
         { n: 17, name: '/HALT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'HALT from the Z80. While a HALT runs the ULA loads no character data (Rea).' },
         { n: 18, name: 'A15', type: 'addr', dir: 'in', desc: 'CPU address bit 15 (direct).' },
@@ -314,7 +314,7 @@ RCS.add({
         { n: 32, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bit 0.', terms: ['tristate'] },
         { n: 33, name: 'KBD0', type: 'kbd', dir: 'in', desc: 'Keyboard line 0.' },
         { n: 34, name: '0V', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V' },
-        { n: 35, name: 'OSC', type: 'clock', dir: 'in', desc: 'Oscillator pin: the 6.5 MHz ceramic resonator X1 (CERAM OSC on the diagram) is the only part of the oscillator on the board.', terms: ['crystal'], probe: 'About 6.5 MHz. No oscillation, no display.' },
+        { n: 35, name: 'OSC', type: 'clock', dir: 'in', desc: 'Oscillator pin for the 6.5 MHz ceramic resonator X1 (CERAM OSC on the diagram). C6 100 pF, C7 47 pF and R4 18k complete the external network.', terms: ['crystal'], probe: 'About 6.5 MHz. No oscillation, no display.' },
         { n: 36, name: "A3'", type: 'addr', dir: 'bidir', desc: "ROM-side address line A3'. Driven with the character code during display refresh cycles; whether the ULA also reads it is not stated in the sources.", verify: true },
         { n: 37, name: "A4'", type: 'addr', dir: 'bidir', desc: "ROM-side address line A4'. Character code during display refresh cycles." },
         { n: 38, name: "A5'", type: 'addr', dir: 'bidir', desc: "ROM-side address line A5'. Character code during display refresh cycles." },
@@ -323,7 +323,7 @@ RCS.add({
       ],
       replacements: [
         { part: '2C210E', kind: 'pin-compatible', verify: true, note: 'The later ZX81 ULA, with a video back porch. The 2C184E (and the older 2C158E) has none, and most colour TVs will not lock to it: a blank screen on a 2C184E machine can be a working computer.', source: S('retro.engineer, Sinclair ZX81 A (Issue 1, 2C184E ULA: video incompatible with most colour TVs)', 'https://retro.engineer/projects/2021-03-13_Sinclair_ZX81_A/') },
-        { part: 'vLA81 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement with 2C210E behaviour (back porch). Video level selectable for a 75 ohm monitor or the modulator, and a 50/60 Hz setting: set it to match the machine (60 Hz on a TS1000). Narrow pins fit the existing socket; a soldered-in ULA has to come out first.', source: S('Tindie, vLA81 ZX81 ULA replacement (features)', 'https://www.tindie.com/products/charlieingley/vla81-zx81-ula-replacement/') }
+        { part: 'vLA81 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement with 2C210E behaviour (back porch). Video level selectable for a 75 ohm monitor or the modulator, and a 50/60 Hz setting: set it to match the machine. Narrow pins fit the existing socket; a soldered-in ULA has to come out first.', source: S('Tindie, vLA81 ZX81 ULA replacement (features)', 'https://www.tindie.com/products/charlieingley/vla81-zx81-ula-replacement/') }
       ],
       datasheets: [
         S('ZX81 circuit diagram, drawing SRC 049 (IC1 pin numbers)', ZX81SCH),
@@ -422,14 +422,14 @@ RCS.add({
         { n: 11, name: 'A4', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 4.', terms: ['mux'] },
         { n: 12, name: 'A3', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 3.', terms: ['mux'] },
         { n: 13, name: 'A6', type: 'addr', dir: 'in', desc: 'Multiplexed address bit 6.', terms: ['mux'] },
-        { n: 14, name: 'DOUT', type: 'data', dir: 'out', desc: 'Data out. Valid while /CAS is LOW on a read; high impedance otherwise.', terms: ['tristate'] },
+        { n: 14, name: 'DOUT', type: 'data', dir: 'out', desc: 'Data out. Driven while /CAS is LOW on a read, and in read-modify-write and delayed-write cycles until /CAS goes HIGH. High impedance in an early-write cycle and while /CAS is HIGH.', terms: ['tristate'] },
         { n: 15, name: '/CAS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Column address strobe. Latches the column address and gates DOUT.', terms: ['ras-cas'], probe: 'Pulses LOW on every read or write.' },
         { n: 16, name: 'Vss', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V' }
       ],
       replacements: [
         { part: '4164 / 41256 on a 4116 adapter', kind: 'adapter', note: 'A small board that carries a +5 V-only 4164 or 41256 in a 4116 socket and doubles as the socket. While any original 4116 stays on the board, -5 V must still be right: the Mostek sheet wants Vbb present whenever +12 V is.', source: S('PCBWay shared project, 4116 adapter for 4164/41256', 'https://www.pcbway.com/project/shareproject/4116_adapter_c2a98c0e.html') },
         { part: '4164 with pins 1 and 8 bent out', kind: 'adapter', note: 'Bodge without a board: bend pins 1 and 8 of the 4164 clear of the socket and link its pin 9 (A7) to its pin 8 (VCC). Socket pin 9 (+5 V) then powers it and holds A7 HIGH; socket pins 1 (-5 V) and 8 (+12 V) must not touch it.', source: S('Arcade Collecting, Replacing a 4116 DRAM with a 4164', 'https://www.arcadecollecting.com/info/ram_info/4116to4164/Convert%204164%20to%204116.htm') },
-        { part: 'Lower RAM replacement module (Retroleum)', kind: 'modern', note: 'ZX Spectrum 16/48K only: one low-power SRAM replaces all eight 4116s. Its round pins need turned-pin sockets, not stamped ones. With the 4116s gone the -5 V rail feeds nothing else on the board (sindik.at) but still reaches edge pin B20.', source: S('Retroleum, Spectrum chips: Lower RAM replacement module for ZX Spectrum', RETRO_CHIPS) }
+        { part: 'Lower RAM replacement module (Retroleum)', kind: 'modern', note: 'ZX Spectrum 16/48K only: one low-power SRAM replaces all eight 4116s. Its round pins need turned-pin sockets, not stamped ones.', source: S('Retroleum, Spectrum chips: Lower RAM replacement module for ZX Spectrum', RETRO_CHIPS) }
       ],
       datasheets: [
         S('Mostek MK4116(J/N/E)-2/3 data sheet, pin connections, 1980 Memory Data Book PDF p. 98', MOSTEK80(98)),
@@ -495,7 +495,7 @@ RCS.add({
         { n: 16, name: 'V', type: 'video', dir: 'out', desc: 'Colour difference signal V, to the LM1889 through a level shifter.' },
         { n: 17, name: '/Y', type: 'video', dir: 'out', activeLow: true, desc: 'Inverted luminance including sync.', terms: ['luma-chroma'] },
         { n: 18, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bit 0, isolated from the CPU by R1-R8 so the ULA can read RAM while the CPU runs.', terms: ['tristate'] },
-        { n: 19, name: 'KB0', type: 'kbd', dir: 'in', desc: 'Keyboard row input KB0 (ribbon KB1), pulled up by R64-R68. A pressed key pulls it LOW while its address line is LOW.' },
+        { n: 19, name: 'KB0', type: 'kbd', dir: 'in', desc: 'Keyboard row input KB0 (ribbon KB1), pulled up by R65-R69 on the Issue 3 diagram. A pressed key pulls it LOW while its address line is LOW.', conflict: 'The Issue 3 circuit diagram puts the keyboard pull-ups at R65-R69; the service manual prose says R64-R68.' },
         { n: 20, name: 'KB1', type: 'kbd', dir: 'in', desc: 'Keyboard row input KB1.' },
         { n: 21, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bit 1.', terms: ['tristate'] },
         { n: 22, name: 'D2', type: 'data', dir: 'bidir', desc: 'Data bit 2.', terms: ['tristate'] },
@@ -523,7 +523,7 @@ RCS.add({
         { part: '6C001E-5 / 6C001E-6', kind: 'pin-compatible', verify: true, note: 'Issue 1, 2 and 3 boards only; not for 4A/4B, 5 or 6A. The -5 moves the whole picture one character left and lets the EAR bit float until warm, which breaks software that reads the keyboard without masking.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
         { part: '5C102E / 5C112E', kind: 'pin-compatible', verify: true, note: 'Issue 1 and 2 boards. A 5C102E needs the "cockroach" 74LS00 mod; a 5C112E in an Issue 1 board needs the cockroach removed.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
         { part: 'vLA82 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement for a 6C001E-7 or earlier, with 6C001E-7 behaviour; low enough for a rubber-key case. Some sockets only take very thin pins: fit the optional turned-pin socket if it will not seat.', source: S('Tindie, vLA82 Spectrum 48K ULA replacement', 'https://www.tindie.com/products/charlieingley/vla82-spectrum-48k-ula-replacement/') },
-        { part: 'Nebula (Retroleum)', kind: 'modern', note: 'Plug-in module for Issue 2 to 6 boards, 6C001E-7 behaviour, supplied with a new socket. The pins are fragile. In a rubber-key case solder in any socketed IC3, IC4, IC24, IC25 under it. On Issue 2 boards set VR1 and VR2 again after fitting.', source: S('Retroleum, Nebula fitting notes (PDF)', 'https://www.retroleum.co.uk/files/spectrum-nebula-fitting-narrow-pins.pdf') }
+        { part: 'Nebula (Retroleum)', kind: 'modern', note: 'Plug-in ULA replacement module. The pins are fragile. In a rubber-key case solder in any socketed IC3, IC4, IC24, IC25 under it. On Issue 2 boards set VR1 and VR2 again after fitting.', source: S('Retroleum, Nebula fitting notes (PDF)', 'https://www.retroleum.co.uk/files/spectrum-nebula-fitting-narrow-pins.pdf') }
       ],
       datasheets: [
         S('ZX Spectrum Issue 3 circuit diagram, IC1 ULA 6C001', ISS3),
@@ -578,7 +578,7 @@ RCS.add({
     // Spectrum 128: service manual section 4 basic checks (the symptomatic fault table was never filled in: "TBD").
     spectrum128: [
       { symptom: 'No menu, no picture', suspects: ['ula_128', 'cpuz80'], note: 'Service manual 2.3: +9 V ±2 V at C50, +5 V ±0.25 V at C34 and IC15 pin 8, 17.73447 MHz at IC37 pin 6 (oscillogram C), 3.54689 MHz at Z80A pin 6 (oscillogram D).' },
-      { symptom: 'RS232, MIDI and keypad dead', suspects: [], note: '+12 V at IC33 pin 14 and -12 V at IC34 pin 1 come from the TR4/TR5 inverter and its charge pump; a dead inverter loses both and the -5 V (service manual 2.3, 6.1).' },
+      { symptom: 'RS232, MIDI and keypad dead', suspects: [], note: '+12 V at IC33 pin 14 and -12 V at IC33 pin 1 (the manual prints IC34) come from the TR4/TR5 inverter and its charge pump; a dead inverter loses both and the -5 V (service manual 2.3, 6.1).' },
       { symptom: 'No colour or wrong colour', suspects: ['ula_128'], note: '8.8 MHz with no jitter on ULA pins 46 and 47 (colour encoder clocks), then the RGB connector outputs and LUMO at IC36 pin 7, oscillogram G (service manual 2.3-2.4).' },
       { symptom: 'Picture but no sound on the TV', suspects: [], note: 'Sound carrier at IC38 pin 4: 6.0 MHz UK or 5.5 MHz Europe, within 2 kHz; adjust per Setting Up (service manual 2.4 g). There is no speaker, and most monitors have no sound (Introduction p. 2).' },
       { symptom: 'Crashes or garbage after reset', suspects: ['cpuz80', 'ula_128'], note: 'Service manual 2.4: /RD, /WR, /MREQ, data and address active after reset; /RAS and /CAS at uncontended RAM IC15-IC22 and contended RAM IC6-IC13 (oscillograms E, F); ROM IC5 selected by a LOW on pin 20; bank register outputs LOW after reset.' },
@@ -705,12 +705,12 @@ RCS.add({
       { id: 'spectrum128-mic', name: 'MIC (tape out, sound out)', kind: '3.5 mm mono jack', geo: 'ts',
         verifiedAgainst: 'Spectrum 128 Service Manual parts list and 5.3',
         summary: 'Tape output, on the left side. With a monitor the sound is taken from this socket (service manual 5.3).',
-        pins: [P('T', 'MIC', 'audio', 'Tape out and sound out.'), P('S', '0V', 'ground', 'Ground.', { expect: '0 V' })],
+        pins: [P('T', 'MIC', 'audio', 'Tape out and sound out.', { verify: true }), P('S', '0V', 'ground', 'Ground.', { expect: '0 V', verify: true })],
         sources: [S('Spectrum 128 Service Manual, parts list, p. 5.4', SM128(39)), S('Spectrum 128 Service Manual 5.3 TV picture and sound (sound via MIC socket)', SM128(14))], terms: [] },
       { id: 'spectrum128-tv', name: 'TV (UHF RF out)', kind: 'Phono socket, RF', geo: 'rca',
         verifiedAgainst: 'Spectrum 128 Service Manual 2.2',
         summary: 'UHF RF with a modulated sound carrier, so the TV plays the sound (unlike the 48K).',
-        pins: [P('1', 'RF', 'video', 'Modulated UHF picture and sound.'), P('2', 'GND', 'ground', 'Shell, ground.', { expect: '0 V' })],
+        pins: [P('1', 'RF', 'video', 'Modulated UHF picture and sound.', { verify: true }), P('2', 'GND', 'ground', 'Shell, ground.', { expect: '0 V', verify: true })],
         sources: [S('Spectrum 128 Service Manual 2.2 (sound carrier with the composite video), p. 1.1', SM128(4))], terms: [] },
       { id: 'spectrum128-rgb', name: 'RGB monitor', kind: 'DIN 8-pin 270° socket', geo: 'din8-270',
         verifiedAgainst: 'Spectrum 128 Introduction manual, page 3 (RGB pin configuration)',
@@ -728,9 +728,13 @@ RCS.add({
         sources: [S('Spectrum 128 Introduction manual, page 3 (RGB output table)', UM128), S('World of Spectrum FAQ, Pinouts: 128K RGB video', WOSPIN), S('Spectrum 128 Service Manual, parts list (RGB 8-way DIN), p. 5.4', SM128(39))], terms: [] },
       { id: 'spectrum128-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', rowA: 'bottom', verify: true,
         summary: 'Spectrum-compatible expansion edge (service manual 1.3; k1: the same port up to the grey +2). This is the 48K Issue 3 table: the 128 service manual confirms +5 V on 3A, +9 V on 4A, 0 V on 6A, 7A and 14A and -5 V on 20B, but lists +12 V on 23A and pulsed +12 V on 23B (see the conflicts on A23 and B23). ' + SPEC_EDGE_SUMMARY,
-        pins: specEdgePins().map(p => (p.n === 'A23' ? Object.assign({}, p, { conflict: '128 Service Manual 6.4 lists +12 V on pin 23A; the 48K table and k1 have A5 here.' })
-          : p.n === 'B23' ? Object.assign({}, p, { conflict: '128 Service Manual 6.4 lists pulsed +12 V on 23B; the 48K table has -12 V.' }) : p)),
-        sources: [S('Spectrum 128 Service Manual 6.4 (supplies on the expansion connector), p. 1.22', SM128(25)), S('Spectrum 128 Service Manual 1.3 (edge connector compatible with Spectrum), p. 1.1', SM128(4))].concat(SPEC_EDGE_SRC), terms: ['edge-connector'] },
+        pins: specEdgePins().map(p => Object.assign({}, p, {
+          A15: { verify: true }, A16: { verify: true }, A17: { verify: true }, A18: { verify: true },
+          A23: { conflict: '128 Service Manual 6.4 lists +12 V on pin 23A; the 48K table and k1 have A5 here.' },
+          B20: { desc: '-5 V for expansion devices only (service manual 6.1); the 128 RAM is 4164, which does not use it.', expect: '-5 V' },
+          B22: { expect: '+11.5 to +12.5 V' },
+          B23: { conflict: '128 Service Manual 6.4 lists pulsed +12 V on 23B; the 48K table has -12 V.' } }[p.n])),
+        sources: [S('Spectrum 128 Service Manual 6.4 (supplies on the expansion connector), p. 1.22', SM128(25)), S('Spectrum 128 Service Manual 2.3 Basic checks (+12 V ±0.5 V), p. 4.4', SM128(33)), S('Spectrum 128 Service Manual 1.3 (edge connector compatible with Spectrum), p. 1.1', SM128(4))].concat(SPEC_EDGE_SRC), terms: ['edge-connector'] },
       { id: 'spectrum128-keypad', name: 'Keypad socket', kind: 'BT 603A 6-way telephone socket', verify: true,
         summary: 'Front socket for the numeric keypad. The keypad runs a PIC from the +12 V rail and talks RS232-level serial through the AY port (service manual 5.8). Pin table not sourced yet.',
         pins: [], sources: [S('Spectrum 128 Service Manual, parts list (6-way telephone jack, BT 603A), p. 5.4', SM128(39)), S('Spectrum 128 Service Manual 5.8 Keypad scanning, p. 1.19', SM128(22))], terms: [] },
@@ -773,7 +777,19 @@ RCS.add({
         pins: [], sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (ports)', P2REV)], terms: [] },
       { id: 'spectrumplus2-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', rowA: 'bottom', verify: true,
         summary: 'The standard Spectrum edge, "absolutely as normal" (review; k1: the same port up to the grey +2). Table from the 48K Issue 3 diagram, not checked on a +2 board. ' + SPEC_EDGE_SUMMARY,
-        pins: specEdgePins(), sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (edge connector)', P2REV)].concat(SPEC_EDGE_SRC), terms: ['edge-connector'] }
+        pins: specEdgePins().map(p => Object.assign({}, p, {
+          A3: { expect: '+5 V' }, A4: { expect: '+9 V DC nominal' },
+          A13: { desc: 'ULA port select: /IORQ gated with A0 (TR7 on the +2). LOW only on an I/O cycle to an even port such as $FE.' },
+          A15: { name: 'N/C', type: 'nc', desc: 'Not used on the +2 (circuit diagram: NOT USED).', activeLow: false },
+          A16: { name: 'N/C', type: 'nc', desc: 'Not used on the +2 (circuit diagram: NOT USED).', activeLow: false },
+          A17: { name: 'N/C', type: 'nc', desc: 'Not used on the +2 (circuit diagram: NOT USED).', activeLow: false },
+          A18: { name: 'N/C', type: 'nc', desc: 'Not used on the +2 (circuit diagram: NOT USED).', activeLow: false },
+          A25: { desc: 'ROM select. An add-on (Interface 1) pulls it HIGH to switch the internal ROM out; R24 (680 ohm) isolates the ULA output on the +2.' },
+          B13: { expect: 'LOW pulse once per frame' },
+          B20: { desc: '-5 V for expansion devices; the +2 RAM is 4164, which does not use it.', expect: '-5 V' },
+          B22: { expect: '+12 V' },
+          B23: { name: '12V AC', desc: 'Pulsed +12 V from the DC-DC converter (the circuit diagram labels it 12V AC). Not a steady negative rail.' } }[p.n])),
+        sources: [S('Spectrum +2 Service Manual, circuit diagram (expansion connector), p. 7', P2SM(5)), S('Sinclair ZX Archive, ZX Spectrum +2 review (edge connector)', P2REV)].concat(SPEC_EDGE_SRC), terms: ['edge-connector'] }
     ],
     spectrumplus3: [
       { id: 'spectrumplus3-power', name: 'PSU in', kind: 'DIN 6-pin socket', verify: true,
@@ -880,13 +896,13 @@ RCS.add({
           P('U21', '+12V', 'power', '+12 V.', { expect: '+12 V' }), P('U22', '-12V', 'power', '-12 V.', { expect: '-12 V' }),
           P('U23', '/M1', 'ctrl', 'Z80 /M1.', { activeLow: true }), P('U24', '/RFSH', 'ctrl', 'Z80 /RFSH.', { activeLow: true }),
           P('U25', 'A8', 'addr', 'Address bit 8.'), P('U26', 'A10', 'addr', 'Address bit 10.'), P('U27', 'RESET', 'ctrl', 'RESET (printed without an overbar in the manual).'),
-          P('L1', 'A14', 'addr', 'Address bit 14.'), P('L2', 'A12', 'addr', 'Address bit 12.'), P('L3', '+5V', 'power', '+5 V.', { expect: '+5 V' }), P('L4', 'N/C', 'nc', 'Not used (+9 V on the 48K).'),
+          P('L1', 'A14', 'addr', 'Address bit 14.'), P('L2', 'A12', 'addr', 'Address bit 12.'), P('L3', '+5V', 'power', '+5 V.', { expect: '+5 V' }), P('L4', 'N/C', 'nc', 'Not used.'),
           P('L5', 'GND', 'ground', 'Ground.', { expect: '0 V' }), P('L6', 'GND', 'ground', 'Ground.', { expect: '0 V' }), P('L7', 'CK', 'clock', 'CPU clock.'),
           P('L8', 'A0', 'addr', 'Address bit 0.'), P('L9', 'A1', 'addr', 'Address bit 1.'), P('L10', 'A2', 'addr', 'Address bit 2.'), P('L11', 'A3', 'addr', 'Address bit 3.'),
           P('L12', 'N/C', 'nc', 'Not used.'), P('L13', 'GND', 'ground', 'Ground.', { expect: '0 V' }),
           P('L14', '/ROM2 OE', 'ctrl', 'ROM 2 output enable.', { activeLow: true }), P('L15', '/DISK RD', 'ctrl', 'Disk controller read.', { activeLow: true }),
           P('L16', '/DISK WR', 'ctrl', 'Disk controller write.', { activeLow: true }), P('L17', '/MOTOR ON', 'ctrl', 'Disk motor on.', { activeLow: true }),
-          P('L18', '/BUSRQ', 'ctrl', 'Z80 /BUSRQ.', { activeLow: true }), P('L19', '/RESET', 'ctrl', 'Z80 /RESET.', { activeLow: true, expect: 'LOW at power-on, then HIGH' }),
+          P('L18', '/BUSRQ', 'ctrl', 'Z80 /BUSRQ.', { activeLow: true }), P('L19', '/RESET', 'ctrl', 'Z80 /RESET.', { activeLow: true }),
           P('L20', 'A7', 'addr', 'Address bit 7.'), P('L21', 'A6', 'addr', 'Address bit 6.'), P('L22', 'A5', 'addr', 'Address bit 5.'), P('L23', 'A4', 'addr', 'Address bit 4.'),
           P('L24', 'N/C', 'nc', 'Not used.'), P('L25', 'BUSACK', 'ctrl', 'Z80 bus acknowledge (printed without an overbar).'), P('L26', 'A9', 'addr', 'Address bit 9.'), P('L27', 'A11', 'addr', 'Address bit 11.')
         ],
@@ -904,7 +920,7 @@ RCS.add({
         ],
         sources: [S('ZX80 Operating Manual, Getting Started, p. 6', ZX80OM), S('Sinclair ZX Archive, ZX80 Connectors (power)', ZX80CONN)] },
       rails: [
-        { rail: '+9 V DC in', expect: '9 V nominal, unregulated', where: 'Power jack tip; zx80-edge pin B2', note: 'Input to the 7805 (IC22).' },
+        { rail: '+9 V DC in', expect: '9 V nominal, unregulated', where: 'Power jack; zx80-edge pin B2', note: 'Input to the 7805 (IC22).' },
         { rail: '+5 V', expect: '+5 V', where: '7805 (IC22) output; Z80A pin 11; 2114 pin 18' },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; 2114 pin 9; zx80-edge pins B4, B5' }
       ],
@@ -913,12 +929,12 @@ RCS.add({
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW at power-on, then HIGH.' }
       ],
       firstTen: [
-        { step: 1, check: 'Supply', where: 'Power in (9V DC IN) pin T to pin S', expect: '+9 V DC on load, tip positive; about 14 V with no load', ifNot: 'Wrong polarity or no output: replace the supply before you plug it in.', source: S('ZX80 Operating Manual, Getting Started (9 V DC 600 mA, tip positive), p. 6', ZX80OMP(6)) },
+        { step: 1, check: 'Supply', where: 'Power in (9V DC IN) pin T to pin S', expect: '+9 V DC on load, tip positive', ifNot: 'Wrong polarity or no output: replace the supply before you plug it in.', source: S('ZX80 Operating Manual, Getting Started (9 V DC 600 mA, tip positive), p. 6', ZX80OMP(6)) },
         { step: 2, check: 'Plug in the right socket', where: 'Power in (9V DC IN)', expect: 'Power plug in 9V DC IN, not MIC or EAR', ifNot: 'In the wrong socket the ZX80 does not start; no damage.', source: S('ZX80 Operating Manual, Getting Started, p. 6', ZX80OMP(6)) },
-        { step: 3, check: '+5 V', where: 'Z80A pin 11', expect: '+5 V from the 7805 (IC22)', ifNot: 'Low or missing: the 7805 or a short on the 5 V rail.', source: S('ZX80 circuit diagram (7805 at IC22)', ZX80SCH) },
+        { step: 3, check: '+5 V', where: 'Z80A pin 11', expect: '+5 V from the 7805 (IC22)', ifNot: 'Low or missing: the 7805 or a short on the 5 V rail.', source: S('ZX80 circuit diagram (7805 at IC22)', ZX80SCH), verify: true },
         { step: 4, check: 'CPU clock', where: 'Z80A pin 6', expect: 'About 3.25 MHz (6.5 MHz crystal X1 / 2)', ifNot: 'Flat: crystal X1 and its divider.', source: S('ZX80 circuit diagram (X1 6.5 MHz)', ZX80SCH) },
         { step: 5, check: 'Picture', where: 'TV (UHF RF out)', expect: 'Inverse K cursor at the bottom left after tuning to about UHF channel 36', ifNot: 'Turn the TV brightness up; a grey mess means it is not tuned yet.', source: S('ZX80 Operating Manual, Getting Started, pp. 6-7', ZX80OMP(7)) },
-        { step: 6, check: 'Keyboard and BASIC', where: 'Keyboard', expect: 'Q gives NEW; NEW then NEWLINE clears', ifNot: 'No response with the K cursor showing: the keyboard.', source: S('ZX80 Operating Manual, the keyboard, p. 17', ZX80OMP(17)) }
+        { step: 6, check: 'Keyboard and BASIC', where: 'Keyboard', expect: 'Q gives NEW; NEW then NEWLINE clears', ifNot: 'No response with the K cursor showing: suspect the keyboard.', source: S('ZX80 Operating Manual, the keyboard, p. 17', ZX80OMP(17)), verify: true }
       ],
       clocks: [
         { name: 'Crystal X1', where: 'X1', f: '6.5 MHz', source: S('ZX80 circuit diagram (X1 6.5 MHz)', ZX80SCH) },
@@ -937,8 +953,8 @@ RCS.add({
         ],
         sources: [S('ZX81 Service and Assembly Manual, 9 Power supply, p. 7', ZX81SAM(8)), S('ZX81 Service and Assembly Manual, 6 Fault finding, p. 4', ZX81SAM(5)), S('Sinclair ZX Archive, ZX81 Connectors (power)', ZX81CONN), S('World of Spectrum FAQ, Pinouts: Power Supplies table', WOSPIN)] },
       rails: [
-        { rail: '+9 V DC in', expect: '+7 to +11 V DC on load', where: 'Power jack tip; C3 (22 uF) at the regulator input; zx81-edge pin B2', note: 'Below about 7 V the 7805 drops out.' },
-        { rail: '+5 V', expect: '+5 V (7805)', where: 'regulator output; Z80A pin 11; ULA pin 40; 2114 pin 18; ROM pin 24', note: 'A sagging +5 V with a hot 7805 means a shorted part. Check the ULA and the Z80 before swapping the regulator.' },
+        { rail: '+9 V DC in', expect: '+7 to +11 V DC on load', where: 'Power jack; C3 (22 uF) at the regulator input; zx81-edge pin B2', note: 'The circuit diagram marks the input +7 V to 11 V DC.' },
+        { rail: '+5 V', expect: '+5 V (7805)', where: 'regulator output; Z80A pin 11; ULA pin 40; 2114 pin 18; ROM pin 24' },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 34; 2114 pin 9; ROM pin 12', note: 'Common return.' }
       ],
       testPoints: [
@@ -954,23 +970,23 @@ RCS.add({
           ifNot: 'Replace or fix the pack. Rolling black and white bars on a working machine: the pack is poorly smoothed or too low (6e).', source: S('ZX81 Service and Assembly Manual, 9 Power supply, p. 7', ZX81SAM(8)) },
         { step: 2, check: 'Regulator warm after two minutes', where: '7805 body', expect: 'Warm to the touch, not too hot to hold.',
           ifNot: 'Cold: no input. Check the pack and that the plug is in the socket nearest the keyboard (6a). Very hot and cutting out: the 7805 is not bolted to its heatsink properly (6b).', source: S('ZX81 Service and Assembly Manual, 6 Fault finding (a), (b), p. 4', ZX81SAM(5)) },
-        { step: 3, check: '+5 V on the chips', where: 'Z80A pin 11; ULA pin 40; ROM pin 24', expect: '+4.75 to +5.25 V (Z80A: 5 V ±5%).',
-          ifNot: 'Low with a hot 7805: a shorted chip or solder bridge; feel for the hot chip, check the ULA and the Z80A first.', source: S('ZX81 circuit diagram SRC 049 (supply pins)', ZX81SCH) },
-        { step: 4, check: '6.5 MHz resonator', where: 'ULA pin 35', expect: 'About 6.5 MHz. The resonator X1 is the only oscillator part outside the ULA.',
-          ifNot: 'No oscillation: resonator X1, then the ULA.', source: S('Andy Rea, ZX81 ULA notes (osc pin 35)', ZX81ULA) },
+        { step: 3, check: '+5 V on the chips', where: 'Z80A pin 11; ULA pin 40; ROM pin 24', expect: '+5 V.',
+          ifNot: 'Low with a hot 7805: a shorted chip or solder bridge; feel for the hot chip, check the ULA and the Z80A first.', source: S('ZX81 circuit diagram SRC 049 (supply pins)', ZX81SCH), verify: true },
+        { step: 4, check: '6.5 MHz resonator', where: 'ULA pin 35', expect: 'About 6.5 MHz.',
+          ifNot: 'No oscillation: resonator X1 and C6, C7, R4, then the ULA.', source: S('Andy Rea, ZX81 ULA notes (osc pin 35)', ZX81ULA), verify: true },
         { step: 5, check: 'CPU clock', where: 'ULA pin 14 to Z80A pin 6', expect: '3.25 MHz square wave at Z80A pin 6.',
-          ifNot: 'Present at ULA pin 14 but not at Z80A pin 6: TR2 and its filter network. Missing at pin 14 with the resonator running: ULA.', source: S('Andy Rea, ZX81 ULA notes (/clkout pin 14 to TR2 via filter network)', ZX81ULA) },
+          ifNot: 'Present at ULA pin 14 but not at Z80A pin 6: TR2 and its filter network. Missing at pin 14 with the resonator running: ULA.', source: S('Andy Rea, ZX81 ULA notes (/clkout pin 14 to TR2 via filter network)', ZX81ULA), verify: true },
         { step: 6, check: 'Reset', where: 'Z80A pin 26', expect: 'LOW at power-on, then HIGH.',
-          ifNot: 'Stuck LOW holds the CPU in reset: dead machine. Check the parts on the /RESET line, then the Z80A.', source: S('Zilog Z80 CPU User Manual UM0080, /RESET pin function', UM0080) },
+          ifNot: 'Stuck LOW holds the CPU in reset: dead machine. Check the parts on the /RESET line, then the Z80A.', source: S('Zilog Z80 CPU User Manual UM0080, /RESET pin function', UM0080), verify: true },
         { step: 7, check: 'NMI from the ULA', where: 'ULA pin 15 to Z80A pin 17', expect: 'A steady train of LOW pulses while the picture is drawn (SLOW mode).',
-          ifNot: 'CPU running but no NMI and no picture: ULA.', source: S('Andy Rea, ZX81 ULA notes (NMI generator, /NMI pin 15 direct to CPU)', ZX81ULA) },
+          ifNot: 'CPU running but no NMI and no picture: the NMI generator may be off (FAST mode or a crash); otherwise the ULA.', source: S('Andy Rea, ZX81 ULA notes (NMI generator, /NMI pin 15 direct to CPU)', ZX81ULA), verify: true },
         { step: 8, check: 'ROM select', where: 'ULA pin 13 to ROM pin 20', expect: 'Pulses LOW on ROM access.',
           ifNot: 'Stuck HIGH: remove every add-on from the edge (one can pull /ROMCS HIGH through B23), check R28 (680 ohm), then the ULA.', source: S('ZX81 circuit diagram SRC 049 (ULA pin 13, R28, ROM pin 20, edge B23)', ZX81SCH) }
       ],
       clocks: [
         { name: 'Resonator X1', where: 'ULA pin 35', pal: '6.5 MHz', ntsc: '6.5 MHz', source: S('ZX81 circuit diagram SRC 049 (X1 ceramic 6.5 MHz)', ZX81SCH) },
-        { name: 'CPU clock', where: 'ULA pin 14 to Z80A pin 6', pal: '3.25 MHz', ntsc: '3.25 MHz', source: S('Andy Rea, ZX81 ULA notes (clock out = oscillator / 2)', ZX81ULA) },
-        { name: 'Field rate', where: 'ULA pin 22 (USA/UK strap)', pal: '50 Hz', ntsc: '60 Hz', source: S('ZX81 circuit diagram SRC 049 (ULA pin 22 USA/UK)', ZX81SCH) }
+        { name: 'CPU clock', where: 'ULA pin 14 to Z80A pin 6', pal: '3.25 MHz', ntsc: '3.25 MHz', source: S('Andy Rea, ZX81 ULA notes (clock out = oscillator / 2)', ZX81ULA), verify: true },
+        { name: 'Field rate', where: 'ULA pin 22 (USA/UK strap)', pal: '50 Hz', ntsc: '60 Hz', source: S('ZX81 circuit diagram SRC 049 (ULA pin 22 USA/UK)', ZX81SCH), verify: true }
       ],
       sources: [S('ZX81 circuit diagram SRC 049 (regulator, +7 V to 11 V DC input, IC1-IC4)', ZX81SCH), S('Andy Rea, ZX81 ULA notes (clock out, NMI, selects)', ZX81ULA)]
     },
@@ -989,9 +1005,9 @@ RCS.add({
       rails: [
         { rail: '+9 V DC in', expect: '+9 V ±2 V (7 to 11 V)', where: 'C50 positive side; spectrum-edge pin A4', note: 'Below +7 V the 7805 does not regulate.' },
         { rail: '+5 V', expect: '+4.75 to +5.25 V, no visible ripple', where: 'C34 positive side; 4116 pin 9 (IC6); ULA pin 14; Z80A pin 11; spectrum-edge pin A3', note: 'The ULA and the Z80 both draw from +5 V. Switch-mode drop-ins for the 7805 (Traco, Murata) need no heatsink; on an Issue 2 board in a rubber-key case only a horizontal-mount version fits (Retroleum).' },
-        { rail: '+12 V', expect: '+10.8 to +13.2 V', where: 'DC-DC converter (D5/C44); 4116 pin 8 (IC6); spectrum-edge pin B22', note: 'Made by TR4/TR5, not the 7805. A low +12 V kills the lower RAM.' },
+        { rail: '+12 V', expect: '+10.8 to +13.2 V', where: 'DC-DC converter (D5/C44); 4116 pin 8 (IC6); spectrum-edge pin B22', note: 'Made by TR4/TR5, not the 7805. Out-of-range converter rails can damage the 4116s (Retroleum).' },
         { rail: '+12 VA', expect: '+10.8 to +13.2 V', where: 'LT side of C52, to IC14 (LM1889) only', note: 'Filtered by R62/C45 for the colour circuits.' },
-        { rail: '-5 V', expect: '-4 V to -5.5 V', where: 'DC-DC converter; 4116 pin 1 (IC6); spectrum-edge pin B20', note: 'A missing -5 V gives a dead lower 16K and endangers the 4116s.' },
+        { rail: '-5 V', expect: '-4 V to -5.5 V', where: 'DC-DC converter; 4116 pin 1 (IC6); spectrum-edge pin B20', note: 'Out-of-range converter rails can damage the 4116s (Retroleum).' },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 40; 4116 pin 16; 23128 pin 14 (ROM IC5)', note: 'Common return.' }
       ],
       testPoints: [
@@ -1001,13 +1017,13 @@ RCS.add({
             note: 'Shape and level from the service manual, rate from the 14 MHz crystal divided by 4 (WoS 48K reference: 3.5 MHz). Low amplitude: check R25, then TR3 (6.3.2). Short stops while the ULA reads the screen are normal. The 5.3.1 table prints "14MHz" on this row; 6.3.2 gives 3 MHz at IC1 pin 32 and 14 MHz at pin 39.' } },
         { tp: 'Luminance and sync (Y)', where: 'ULA pin 17', expect: 'Line-rate pulses between about +1 V and +3.5 V, one line every 64 µs.',
           scope: { period: '64 µs', low: '1 V', high: '3.5 V', shape: 'pulse', basis: 'capture', source: S('ZX Spectrum Service Manual 6.2.4 No video input at IC14 pin 12: IC1 pins 15, 16 and 17 waveforms, p. 31', SM48(31)),
-            note: 'Service-manual drawing: +1 V base, stepping to +3.5 V each line. The drawing marks the period "65nS", a misprint: a Spectrum line is 224 T-states at 3.5 MHz = 64 µs (WoS 48K reference). Missing or flat with +5 V present: change the ULA.' } },
+            note: 'Service-manual drawing: +1 V base, stepping to +3.5 V each line. The drawing marks the period "65nS"; the 64 µs line period here is from the WoS 48K reference (224 T-states, see Clocks). Missing or flat with +5 V present: change the ULA.' } },
         { tp: 'Colour difference (U)', where: 'ULA pin 15', expect: 'Rests at +2 V with short +3 V pulses each line.',
           scope: { period: '64 µs', low: '2 V', high: '3 V', shape: 'pulse', basis: 'capture', source: S('ZX Spectrum Service Manual 6.2.4, IC1 pin 15 waveform, p. 31', SM48(31)),
-            note: 'Service-manual drawing, with the Sinclair logo screen. Wrong here but +5 V good: ULA. Right here but no colour: VR1/VR2 on Issue 1 and 2 boards, then IC14.' } },
+            note: 'Service-manual drawing; line period from the WoS 48K reference (see Clocks). Wrong here but +5 V good: ULA. Right here but no colour: VR1/VR2 on Issue 1 and 2 boards, then IC14.' } },
         { tp: 'Colour difference (V)', where: 'ULA pin 16', expect: 'Rests at +2 V with a pulse up to +3 V and a dip to +1 V each line.',
           scope: { period: '64 µs', low: '1 V', high: '3 V', shape: 'pulse', basis: 'capture', source: S('ZX Spectrum Service Manual 6.2.4, IC1 pin 16 waveform, p. 31', SM48(31)),
-            note: 'Service-manual drawing: +2 V rest, +3 V pulse, then a dip to +1 V later in the line. The app draws a plain pulse between the two extremes.' } },
+            note: 'Service-manual drawing: +2 V rest, +3 V pulse, then a dip to +1 V later in the line; line period from the WoS 48K reference (see Clocks). The app draws a plain pulse between the two extremes.' } },
         { tp: 'Interrupt', where: 'ULA pin 12 (/INT)', expect: 'Pulses LOW once per frame, every 20 ms.' },
         { tp: 'Idle control lines', where: 'Z80A pins 17, 24, 25', expect: '/NMI, /WAIT and /BUSRQ HIGH.' },
         { tp: 'Reset', where: 'Z80A pin 26 (/RESET)', expect: 'LOW at power-on, then HIGH.' },
@@ -1018,28 +1034,28 @@ RCS.add({
       ],
       firstTen: [
         { step: 1, check: 'Supply on load', where: 'Power in (9V DC) pin 2 to pin 1; C50 positive side', expect: '+9 V ±2 V DC (7 to 11 V). From a 9 V bench supply a 48K draws 700-900 mA, a 16K 500-700 mA (3.1.4).',
-          ifNot: 'Below +7 V the 7805 does not regulate: try another pack (centre negative). Far more current than 900 mA means a short: stop and find it first.', source: S('ZX Spectrum Service Manual 5.3.1 Basic checks, p. 26', SM48(26)) },
+          ifNot: 'Below +7 V the 7805 does not regulate: try another pack.', source: S('ZX Spectrum Service Manual 5.3.1 Basic checks, p. 26', SM48(26)) },
         { step: 2, check: '+5 V from the 7805', where: 'C34 positive side; ULA pin 14; Z80A pin 11', expect: '+4.75 to +5.25 V, no visible ripple.',
-          ifNot: 'Check the drop across R64, the 7805 output and input, and that the PWR socket is not shorted (6.2.3). A pack plugged in with the wrong polarity usually kills the 7805 (Retroleum).', source: S('ZX Spectrum Service Manual 5.3.1 and 6.2.3, pp. 26 and 31', SM48(26)) },
+          ifNot: 'Check the drop across R64, the 7805 output and input, and that the PWR socket is not shorted (6.2.3).', source: S('ZX Spectrum Service Manual 5.3.1 and 6.2.3, pp. 26 and 31', SM48(26)) },
         { step: 3, check: '-5 V from the DC-DC converter', where: '4116 pin 1', expect: '-4 V to -5.5 V.',
-          ifNot: 'No coil buzz and no -5 V: TR4 has gone. Check TR5 and the coil too, and change TR4 and TR5 together if TR4 blows again (6.1). Do not fit new 4116s until -5 V is back: they die without it.', source: S('ZX Spectrum Service Manual 3.1.2 Voltage check, p. 17', SM48(17)) },
-        { step: 4, check: '+12 V from the DC-DC converter', where: '4116 pin 8', expect: '+10.8 to +13.2 V.',
-          ifNot: 'More than 1 V out after new TR4/TR5: check the converter diodes, the 5V1 zener and the 15 ohm resistors under the board, then lift 4116s one at a time; one shorted chip can pull a rail down.', source: S('Retroleum, Repairing a ZX Spectrum (lower RAM voltages, TR4/TR5)', RETRO_REPAIR) },
+          ifNot: 'No -5 V: check TR4 and TR5, and change them together if TR4 blows again (6.1). Get -5 V back before fitting new 4116s.', source: S('ZX Spectrum Service Manual 3.1.2 Voltage check, p. 17', SM48(17)) },
+        { step: 4, check: '+12 V from the DC-DC converter', where: '4116 pin 8', expect: '+12 V; investigate if more than 1 V out (outside 11 to 13 V).',
+          ifNot: 'Keep powered checks short: new TR4/TR5 can burn out again. More than 1 V out after new TR4/TR5: check the converter diodes, the 5V1 zener and the 15 ohm resistors under the board, then lift 4116s one at a time; one shorted chip can pull a rail down.', source: S('Retroleum, Repairing a ZX Spectrum (lower RAM voltages, TR4/TR5)', RETRO_REPAIR) },
         { step: 5, check: '14 MHz crystal', where: 'ULA pin 39', expect: 'About 14 MHz.',
           ifNot: 'Check crystal X1, then the ULA (6.3.2).', source: S('ZX Spectrum Service Manual 6.3.2 No 3 MHz at IC2 pin 6, p. 32', SM48(32)) },
-        { step: 6, check: 'CPU clock', where: 'ULA pin 32 to Z80A pin 6', expect: '3.5 MHz square wave with a full 0-5 V swing at Z80A pin 6.',
+        { step: 6, check: 'CPU clock', where: 'ULA pin 32 to Z80A pin 6', expect: '3.5 MHz (WoS 48K reference) square wave with a full 0-5 V swing at Z80A pin 6.', verify: true,
           ifNot: 'Low amplitude: R25, then TR3. Nothing at ULA pin 32 with 14 MHz present: ULA. The manual also asks for +3 V at ULA pin 13 (6.3.2).', source: S('ZX Spectrum Service Manual 6.3.2 No 3 MHz at IC2 pin 6, p. 32', SM48(32)) },
         { step: 7, check: 'Reset and idle control lines', where: 'Z80A pin 26; Z80A pins 17, 24, 25', expect: '/RESET LOW at power-on, then HIGH. /NMI, /WAIT and /BUSRQ HIGH.',
-          ifNot: 'A line held LOW: unplug everything from the edge connector, then compare each line at the Z80A and at its source with a good board (5.3.1.1).', source: S('ZX Spectrum Service Manual 5.3.1.1 Z80A control lines, p. 26', SM48(26)) },
+          ifNot: 'A line held LOW: unplug everything from the edge connector, then compare each line at the Z80A and at its source with a good board (5.3.1.1).', source: S('ZX Spectrum Service Manual 5.3.1.1 Z80A control lines, p. 26', SM48(26)), verify: true },
         { step: 8, check: 'Frame interrupt and lower RAM strobes', where: 'ULA pin 12; ULA pins 35, 1', expect: '/INT a short LOW pulse every 20 ms; /RAS and /CAS pulsing.',
-          ifNot: 'All present but no boot: isolate the upper 32K by lifting +5 V from IC25 pin 16, then change IC13 down to IC6, then the ULA, then the Z80A, powering up after each change (5.3.1).', source: S('ZX Spectrum Service Manual 5.3.1 RAM isolation and IC change order, p. 27', SM48(27)) }
+          ifNot: 'All present but no boot: isolate the upper 32K by lifting +5 V from IC25 pin 16, then change IC13 down to IC6, then the ULA, then the Z80A, powering up after each change (5.3.1).', source: S('ZX Spectrum Service Manual 5.3.1 RAM isolation and IC change order, p. 27', SM48(27)), verify: true }
       ],
       clocks: [
         { name: 'Crystal X1', where: 'ULA pin 39', f: '14 MHz', source: S('ZX Spectrum Service Manual 1.6 (external 14 MHz crystal X1), p. 13', SM48(13)) },
-        { name: 'Pixel clock', where: 'Inside the ULA (no pin)', f: '7 MHz', source: S('World of Spectrum, 48K reference: one pixel every half T-state', WOS48) },
-        { name: 'CPU clock', where: 'ULA pin 32 to Z80A pin 6', f: '3.5 MHz', source: S('World of Spectrum, 48K reference: 3.5 MHz / 69888 T-states per frame', WOS48) },
-        { name: 'Line rate', where: 'ULA pin 17 (sync in Y)', f: '15.625 kHz', source: S('World of Spectrum, 48K reference: 224 T-states per line (64 µs)', WOS48) },
-        { name: 'Frame interrupt', where: 'ULA pin 12', f: '50.08 Hz', source: S('World of Spectrum, 48K reference: 3.5 MHz / 69888 = 50.08 Hz', WOS48) },
+        { name: 'Pixel clock', where: 'Inside the ULA (no pin)', f: '7 MHz', source: S('World of Spectrum, 48K reference: one pixel every half T-state', WOS48), verify: true },
+        { name: 'CPU clock', where: 'ULA pin 32 to Z80A pin 6', f: '3.5 MHz', source: S('World of Spectrum, 48K reference: 3.5 MHz / 69888 T-states per frame', WOS48), verify: true },
+        { name: 'Line rate', where: 'ULA pin 17 (sync in Y)', f: '15.625 kHz', source: S('World of Spectrum, 48K reference: 224 T-states per line (64 µs)', WOS48), verify: true },
+        { name: 'Frame interrupt', where: 'ULA pin 12', f: '50.08 Hz', source: S('World of Spectrum, 48K reference: 3.5 MHz / 69888 = 50.08 Hz', WOS48), verify: true },
         { name: 'Colour subcarrier X2', where: 'IC14 (LM1889) leg 17', f: '4.433619 MHz', source: S('ZX Spectrum Service Manual 3.1.4 Sub-carrier oscillator (4.433619 MHz ±50 Hz), p. 18', SM48(18)) }
       ],
       sources: [S('ZX Spectrum Service Manual 3.1.2 Voltage check, p. 17', SM48(17)), S('ZX Spectrum Service Manual 5.3.1 Basic checks, p. 26', SM48(26)), S('ZX Spectrum Issue 3 circuit diagram', ISS3), S('ZX Spectrum Service Manual (scans), appended repair notes 3 and 5 (no coil buzz from inverter), PDF p. 64', SM48SCAN(64)), S('Retroleum, Repairing a ZX Spectrum', RETRO_REPAIR), S('Retroleum, Spectrum chips (switch-mode 7805 replacements and their fit)', RETRO_CHIPS)]
@@ -1064,21 +1080,21 @@ RCS.add({
         { tp: 'Master clock', where: 'Analogue section crystal', expect: '17.7 MHz (service manual 2.2)' },
         { tp: 'Crystal oscillator', where: 'IC37 (74S04) leg 6', expect: '17.73447 MHz with no jitter (oscillogram C).',
           scope: { f: '17.73447 MHz', shape: 'square', basis: 'capture', source: S('Spectrum 128 Service Manual, Fig. 4.1(a) test oscillograms, C (IC37 pin 6), p. 4.7', SM128(36)),
-            note: 'Storage-scope photo at 2 V/div, 100 ns/div; the manual gives no levels. Jitter or no signal: X1, then IC37.' } },
+            note: 'Storage-scope photo at 2 V/div, 100 ns/div; the manual gives no levels.' } },
         { tp: 'CPU clock', where: 'TR3 collector to Z80A pin 6', expect: '3.54689 MHz with no jitter (oscillogram D), +5 V amplitude.',
           scope: { f: '3.54689 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: S('Spectrum 128 Service Manual, Fig. 4.1(a) test oscillograms, D (TR3 collector), p. 4.7', SM128(36)),
-            note: 'Photo at 2 V/div, 100 ns/div; the +5 V swing is from 3.8 (TR3 makes the clock +5 V rather than a TTL level). Low swing: TR3. Missing with the crystal running: ULA.' } },
+            note: 'Photo at 2 V/div, 100 ns/div; the +5 V swing is from 3.8 (TR3 makes the clock +5 V rather than a TTL level).' } },
         { tp: 'DC-DC converter', where: 'TR4 collector and base', expect: 'Switching waveform about 23 V on the collector at 10 µs/div (oscillograms A and B; the photo does not give the rate).' },
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW at power-on, then HIGH.' }
       ],
       firstTen: [
-        { step: 1, check: 'Regulator input', where: 'C50 positive side', expect: '+9 V ±2 V DC.', ifNot: 'Below +7 V the 7805 may not regulate: check the pack and the socket.', source: S('Spectrum 128 Service Manual 2.3 Basic checks, p. 4.3', SM128(32)) },
-        { step: 2, check: 'Regulator output', where: 'C34 positive side; Z80A pin 11', expect: '+5 V ±0.25 V, no visible ripple (also at IC15 leg 8).', ifNot: 'Low with a hot 7805: a shorted chip. Zero: 7805 or its input.', source: S('Spectrum 128 Service Manual 2.3 Basic checks, p. 4.3', SM128(32)) },
+        { step: 1, check: 'Regulator input', where: 'C50 positive side', expect: '+9 V ±2 V DC.', ifNot: 'Below +7 V the 7805 may not regulate.', source: S('Spectrum 128 Service Manual 2.3 Basic checks, p. 4.3', SM128(32)) },
+        { step: 2, check: 'Regulator output', where: 'C34 positive side; Z80A pin 11', expect: '+5 V ±0.25 V, no visible ripple (also at IC15 leg 8).', ifNot: 'Low with a hot 7805: a shorted chip. Zero: 7805 or its input.', source: S('Spectrum 128 Service Manual 2.3 Basic checks, p. 4.3', SM128(32)), verify: true },
         { step: 3, check: '+12 V from the inverter', where: 'IC33 leg 14 (RS232 driver)', expect: '+12 V ±0.5 V.', ifNot: 'Compare TR4 collector and base with oscillograms A and B; a dead TR4/TR5 inverter loses +12 V, -12 V and -5 V together.', source: S('Spectrum 128 Service Manual 2.3 Basic checks (on-board supply outputs), p. 4.4', SM128(33)) },
-        { step: 4, check: '-12 V charge pump', where: 'IC34 leg 1', expect: '-12 V (printed tolerance +3 V / -7 V).', ifNot: 'Inverter running but no -12 V: charge pump C111/C112 and D28/D29 (6.3).', source: S('Spectrum 128 Service Manual 2.3 Basic checks, p. 4.4', SM128(33)) },
+        { step: 4, check: '-12 V charge pump', where: 'IC33 pin 1 (1488 VCC-)', verify: true, conflict: 'Service manual 2.3 (p. 4.4) prints IC34 pin 1, but IC34 is the 1489 receiver (parts list) and the -12 V goes to the 1488 driver IC33 (6.1), whose pin 1 is VCC- (TI MC1488 data sheet p. 1).', expect: '-12 V (printed tolerance +3 V / -7 V).', ifNot: 'Inverter running but no -12 V: charge pump C111/C112 and D28/D29 (6.3).', source: S('Spectrum 128 Service Manual 2.3 Basic checks, p. 4.4', SM128(33)) },
         { step: 5, check: '-5 V for the expansion port', where: 'D19 anode', expect: '-5 V DC.', ifNot: '-12 V good but no -5 V: zener D19 and its feed.', source: S('Spectrum 128 Service Manual 2.3 Basic checks, p. 4.4', SM128(33)) },
-        { step: 6, check: 'Crystal oscillator', where: 'IC37 (74S04) leg 6', expect: '17.73447 MHz, no jitter (oscillogram C).', ifNot: 'X1, then IC37.', source: S('Spectrum 128 Service Manual 2.3 Basic checks (clock pulses), p. 4.4', SM128(33)) },
-        { step: 7, check: 'CPU clock', where: 'Z80A pin 6', expect: '3.54689 MHz, no jitter (oscillogram D at TR3 collector).', ifNot: 'Low swing: TR3. Missing with the crystal running: ULA.', source: S('Spectrum 128 Service Manual 2.3 Basic checks (clock pulses), p. 4.4', SM128(33)) },
+        { step: 6, check: 'Crystal oscillator', where: 'IC37 (74S04) leg 6', expect: '17.73447 MHz, no jitter (oscillogram C).', ifNot: 'X1, then IC37.', verify: true, source: S('Spectrum 128 Service Manual 2.3 Basic checks (clock pulses), p. 4.4', SM128(33)) },
+        { step: 7, check: 'CPU clock', where: 'Z80A pin 6', expect: '3.54689 MHz, no jitter (oscillogram D at TR3 collector).', ifNot: 'Low swing: TR3. Missing with the crystal running: ULA.', verify: true, source: S('Spectrum 128 Service Manual 2.3 Basic checks (clock pulses), p. 4.4', SM128(33)) },
         { step: 8, check: 'Bus activity after reset', where: 'Z80A pins 21, 22, 19', expect: '/RD, /WR and /MREQ active straight after reset; ROM IC5 enabled by a LOW on its select; bank register outputs LOW after reset (2.4).', ifNot: 'Compare the contended-RAM /RAS and /CAS with oscillograms E and F (press RESET for a clear trace).', source: S('Spectrum 128 Service Manual 2.4 further checks, p. 4.4', SM128(33)) }
       ],
       clocks: [
@@ -1102,9 +1118,9 @@ RCS.add({
         { tp: 'CPU clock', where: 'Z80A pin 6', expect: '3.5469 MHz', scope: z80clk('3.5469 MHz', '3.54690 MHz from the +2 service manual specification') }
       ],
       firstTen: [
-        { step: 1, check: 'TV tuned', where: 'TV (RF out)', expect: 'UHF channel 36, volume up', ifNot: 'Hold BREAK and press RESET for the test screen, then tune for bars and tone (user manual p. 12).', source: P2SM_FLOW },
+        { step: 1, check: 'TV tuned', where: 'TV (RF out)', expect: 'UHF channel 36, volume up', ifNot: 'Hold BREAK and press RESET for the test screen, then tune the TV.', source: P2SM_FLOW },
         { step: 2, check: 'Power lamp', where: 'Power in', expect: 'Red LED lights when the 9 V lead goes in with BREAK held', ifNot: 'The mains fuse, then the LED and its PCB connector.', source: P2SM_FLOW },
-        { step: 3, check: 'Test screen', where: 'TV (RF out)', expect: 'Colour bars and a repeating tone', ifNot: 'No picture: modulator and DC-DC converter. No sound: modulator sound coil. Garbled with sound: ULA, CPU, RAM, TEA2000.', source: P2SM_FLOW },
+        { step: 3, check: 'Test screen', where: 'TV (RF out)', expect: 'A picture and sound', ifNot: 'No picture: modulator and DC-DC converter. No sound: modulator sound coil. Garbled with sound: ULA, CPU, RAM, TEA2000.', source: P2SM_FLOW },
         { step: 4, check: 'CPU clock', where: 'Z80A pin 6', expect: '3.5469 MHz', ifNot: 'Look at crystal X1, 35.4690 MHz on the parts list (ten times the CPU clock).', source: P2SM_SPEC },
         { step: 5, check: 'Menu', where: 'RESET button', expect: 'Opening menu after RESET', ifNot: 'The ROM (IC8).', source: P2SM_FLOW },
         { step: 6, check: 'Keyboard', where: 'Cursor down key', expect: 'Menu bar moves; then every key in 128 BASIC', ifNot: 'The keyboard connectors, then the ULA.', source: P2SM_FLOW },
@@ -1129,20 +1145,20 @@ RCS.add({
         { tp: 'AY clock', where: 'AY-3-8912 pin 15', expect: '1.7734 MHz' }
       ],
       firstTen: [
-        { step: 1, check: 'TV tuned', where: 'TV (UHF RF out)', expect: 'UHF channel 36, volume up', ifNot: 'Hold BREAK and press RESET for the test screen, then tune for bars and tone (manual chapter 2).', source: P3SM_FLOW },
+        { step: 1, check: 'TV tuned', where: 'TV (UHF RF out)', expect: 'UHF channel 36, volume up', ifNot: 'Hold BREAK and press RESET for the test screen, then tune the TV.', source: P3SM_FLOW },
         { step: 2, check: 'Power lamp', where: 'PSU in', expect: 'Red LED lights when the PSU lead goes in with BREAK held', ifNot: 'The mains fuse, then the LED and its PCB connector.', source: P3SM_FLOW },
-        { step: 3, check: 'Test screen', where: 'TV (UHF RF out)', expect: 'Colour bars and a repeating tone', ifNot: 'No picture: modulator and DC-DC converter. No sound: modulator sound coil. Garbled with sound: gate array, CPU, RAM, TEA2000.', source: P3SM_FLOW },
+        { step: 3, check: 'Test screen', where: 'TV (UHF RF out)', expect: 'A picture and sound', ifNot: 'No picture: modulator and DC-DC converter. No sound: modulator sound coil. Garbled with sound: gate array, CPU, RAM, TEA2000.', source: P3SM_FLOW },
         { step: 4, check: 'CPU clock', where: 'Z80A pin 6', expect: '3.5469 MHz', ifNot: 'Look at crystal X1, 35.4690 MHz on the parts list (ten times the CPU clock).', source: P3SM_SPEC },
-        { step: 5, check: 'Menu', where: 'RESET button', expect: 'Opening menu; drives A: and M: listed', ifNot: 'The ROMs (IC7, IC8).', source: P3SM_FLOW },
+        { step: 5, check: 'Menu', where: 'RESET button', expect: 'Opening menu', ifNot: 'The ROMs (IC7, IC8).', source: P3SM_FLOW },
         { step: 6, check: 'Keyboard', where: 'Cursor down key', expect: 'Menu bar moves; then every key in +3 BASIC', ifNot: 'The keyboard connectors, then the gate array.', source: P3SM_FLOW },
-        { step: 7, check: 'Service diagnostics', where: 'BREAK held during RESET, then Q A Z M L P held', expect: 'Test card, then the diagnostic title and on-screen steps', ifNot: 'No test card: use the RAM test report (fault address and bank).', source: S('Spectrum +2A/+3 Service Manual, self-test activation', P3SM) }
+        { step: 7, check: 'Service diagnostics', where: 'BREAK held during RESET, then Q A Z M L P held', expect: 'Test card, then the diagnostic title and on-screen steps', ifNot: 'No test card: the built-in diagnostics cannot start. Use the separate service-ROM test: read the border colour (steady or flashing) against its chip table; fault addresses and banks appear only once that test program runs.', source: S('Spectrum +2A/+3 Service Manual, self-test activation and self diagnostic tests', P3SM), verify: true }
       ],
       clocks: [
         { name: 'Crystal X1', where: 'X1', f: '35.469 MHz', source: P3SM_PARTS },
         { name: 'Ceramic resonator X2', where: 'X2', f: '16 MHz', source: P3SM_PARTS },
         { name: 'Ceramic resonator X3', where: 'X3', f: '6 MHz', source: P3SM_PARTS },
-        { name: 'CPU clock', where: 'Z80A pin 6', f: '3.5469 MHz', source: S('Spectrum +3 manual, chapter 8 part 30 (Z80A 3.5469 MHz)', 'https://worldofspectrum.org/ZXSpectrum128+3Manual/chapter8pt30.html') },
-        { name: 'AY clock', where: 'AY-3-8912 pin 15', f: '1.7734 MHz', source: S('Spectrum +3 manual, chapter 8 part 30 (AY clock 1.7734 MHz)', 'https://worldofspectrum.org/ZXSpectrum128+3Manual/chapter8pt30.html') }
+        { name: 'CPU clock', where: 'Z80A pin 6', f: '3.5469 MHz', source: S('Spectrum +3 manual, chapter 8 part 30 (Z80A 3.5469 MHz)', 'https://worldofspectrum.org/ZXSpectrum128+3Manual/chapter8pt30.html'), verify: true },
+        { name: 'AY clock', where: 'AY-3-8912 pin 15', f: '1.7734 MHz', source: S('Spectrum +3 manual, chapter 8 part 30 (AY clock 1.7734 MHz)', 'https://worldofspectrum.org/ZXSpectrum128+3Manual/chapter8pt30.html'), verify: true }
       ],
       sources: [S('Spectrum +3 manual, chapter 8 part 30 (Z80A 3.5469 MHz, AY clock 1.7734 MHz)', 'https://worldofspectrum.org/ZXSpectrum128+3Manual/chapter8pt30.html'), S('Spectrum +2A/+3 Service Manual, technical specification', P3SM)]
     }

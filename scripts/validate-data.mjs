@@ -56,6 +56,12 @@ for (const [cid, c] of Object.entries(R.chips)) {
   if (!HEAT.has(c.heat)) err(f, `heat ${c.heat}`);
   for (const mid of c.machines || []) if (!R.machines[mid]) err(f, `unknown machine ${mid}`);
   if (c.location) for (const mid of Object.keys(c.location)) if (!c.machines.includes(mid)) warn(f, `location for ${mid} but not fitted there`);
+  /* pin1: 'corner' numbers a square package from its top-left corner (docs/data-schema.md, chip) */
+  if (c.pin1 != null) {
+    const sq = /^(PLCC|QIL)-(\d+)$/i.exec(String(c.pkg || '').trim()), n = sq ? +sq[2] : 0;
+    if (c.pin1 !== 'corner') err(f, `pin1 "${c.pin1}" (only 'corner')`);
+    else if (!(n >= 20 && n % 4 === 0)) err(f, `pin1 'corner' needs a square package (PLCC-n or QIL-n, n a multiple of 4 from 20), not ${c.pkg}`);
+  }
   if (c.pins === null) continue;
   if (!Array.isArray(c.pins)) { err(f, 'pins must be an array or null'); continue; }
   const n = Number((c.pkg || '').match(/(\d+)/)?.[1]);
@@ -212,6 +218,14 @@ for (const [mid, pw] of Object.entries(R.power)) {
     if (pw.supply.connector && !(R.connectors[mid] || []).some(c => c.id === pw.supply.connector)) err(f, `supply.connector ${pw.supply.connector} is not a connector of ${mid}`);
     if (pw.supply.external && !pw.supply.connector) warn(f, 'external supply without a connector pinout');
     checkSources(f, pw.supply.sources);
+    const notes = pw.supply.notes;
+    if (notes != null && !Array.isArray(notes)) err(f, 'supply.notes must be an array');
+    else (notes || []).forEach((n, i) => {
+      const ok = typeof n === 'string' || (n && typeof n === 'object' && !Array.isArray(n) && typeof n.text === 'string' && n.text
+        && Object.keys(n).every(k => ['text', 'verify', 'conflict'].includes(k))
+        && (n.verify === undefined || typeof n.verify === 'boolean') && (n.conflict === undefined || (typeof n.conflict === 'string' && n.conflict)));
+      if (!ok) err(f, `supply note ${i + 1} must be a string or { text: string, verify?: boolean, conflict?: string }`);
+    });
   }
   checkSources(f, pw.sources);
   /* features 1, 3, 4 (docs/data-schema.md, last section): scope blocks, firstTen, clocks */

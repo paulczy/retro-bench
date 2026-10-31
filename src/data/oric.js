@@ -10,8 +10,14 @@ const O1M = (label) => ({ label: `Oric-1 BASIC Programming Manual (John Scriven,
 const WB = 'https://web.archive.org/web/2025/https://wiki.defence-force.org/';
 const SCH1 = { label: 'Oric-1 48K circuit diagram, Oric Products International, issue 7 (24-2-84), sheet 1: CPU, ULA, VIA, AY, PSU, video, cassette, printer, keyboard (Defence Force wiki, archived)', url: WB + 'lib/exe/fetch.php?media=oric:hardware:oric1-1s.gif' };
 const SCH2 = { label: 'Oric-1 48K circuit diagram, issue 7, sheet 2: DRAM, ROM IC9/IC10, PAL colour circuit, expansion PL2 (Defence Force wiki, archived)', url: WB + 'lib/exe/fetch.php?media=oric:hardware:oric1-2s.gif' };
+const SCH1M = { label: 'Oric-1 48K circuit diagram, issue 7, sheet 1 (uni-regensburg.de mirror)', url: 'https://homepages.uni-regensburg.de/~hep09515/oric1/oric1-1s.gif' };
+const SCH2M = { label: 'Oric-1 48K circuit diagram, issue 7, sheet 2 (uni-regensburg.de mirror)', url: 'https://homepages.uni-regensburg.de/~hep09515/oric1/oric1-2s.gif' };
 const OO5 = { label: 'Oric Owner issue 5, circuit diagram pull-out (Oric-1, earlier issue, sharper scan), p. 44', url: 'https://library.defence-force.org/books/content/oric_owner/OricOwner_05.pdf#page=44' };
 const OSM = { label: 'Service Manual for the Oric-1 and Oric Atmos, expansion socket PL2 signals, pp. 12-13 (Defence Force library)', url: 'https://library.defence-force.org/books/content/service_manual_for_the_oric1_and_oric_atmos_microcomputers.pdf#page=12' };
+const OSM65 = { label: 'Service Manual for the Oric-1 and Oric Atmos, parts list: PL1 20 way and PL2 34 way IDC plug, right angle, PDF p. 65 (Defence Force library)', url: 'https://library.defence-force.org/books/content/service_manual_for_the_oric1_and_oric_atmos_microcomputers.pdf#page=65' };
+/* 2-row IDC pin header seen from the rear: odd row at the bottom, even row on top, pin 1 at the left (Atmos manual Appendix 11 drawing) */
+const idc = n => Array.from({ length: n }, (_, i) => ({ n: i + 1, x: Math.round((4 + Math.floor(i / 2) * (92 / (n / 2 - 1))) * 10) / 10, y: i % 2 ? 47 : 53 }));
+const IDC_OUTLINE = 'M0 42 H100 V58 H0 Z';
 const SIG = 'https://oric.signal11.org.uk/files/pub/';
 const CHK = { label: 'Mike Brown, Oric/Atmos Mainboard Repair Checksheet v1.0 (signal11)', url: SIG + 'repairguide/OricRepairChecklist1-00.pdf' };
 const DIAG = { label: 'Mike Brown, Quick User Guide for the Oric Diagnostic ROM v1.08k (signal11)', url: SIG + 'diag-rom/OricDiagROM1-08.pdf' };
@@ -30,44 +36,44 @@ const V5 = '+4.95 to +5.05 V DC';
 
 /* ---------- connectors (ids differ per machine) ---------- */
 const expansion = (mid, src, vf) => ({
-  id: `${mid}-exp`, name: 'Expansion port (rear)', kind: '34-way 0.1 in PCB edge (17 + 17), odd/even numbering', geo: 'edge-17x17-odd-even', rowA: 'bottom', gender: 'male',
+  id: `${mid}-exp`, name: 'Expansion port (rear)', kind: '34-way right-angle IDC pin header PL2 (2 x 17), odd/even numbering', geo: 'custom', pads: idc(34), outline: IDC_OUTLINE, gender: 'male',
   verifiedAgainst: vf,
-  summary: 'The 6502 bus on bare PCB fingers at the rear. Looking at the back of the machine, the odd row (1-33) is the lower row and the even row (2-34) the upper one, 1 and 2 at the left (Atmos manual Appendix 11). Used by the Microdisc, Cumana and Jasmin drives and the diagnostic ROM board. /MAP (1) swaps the ROM at $C000-$FFFF for the RAM under it, /ROMDIS (2) turns the BASIC ROM off, I/O CONTROL (6) disables the internal VIA so a card can answer in $0310-$03FF; /I/O (5) goes low for any access to $0300-$03FF. Pin 33 is the computer\'s own +5 V. A dirty edge gives random crashes or a dead disc interface.' + (mid === 'oric1' ? ' No Oric-1 drawing of this edge was found: the row layout is taken from the Atmos drawing (verify).' : ''),
+  summary: 'The 6502 bus on a 34-way right-angle IDC pin header (PL2) at the rear, not a card edge. Looking at the back of the machine, the odd row (1-33) is the lower row and the even row (2-34) the upper one, 1 and 2 at the left (Atmos manual Appendix 11). Used by the Microdisc, Cumana and Jasmin drives and the diagnostic ROM board. /MAP (1) swaps the ROM at $C000-$FFFF for the RAM under it, /ROMDIS (2) turns the BASIC ROM off, I/O CONTROL (6) disables the internal VIA so a card can answer in $0310-$03FF; /I/O (5) goes low for any access to $0300-$03FF. Pin 33 is the computer\'s own +5 V. Dirty or bent header pins give random crashes or a dead disc interface.' + (mid === 'oric1' ? ' No Oric-1 drawing of this header was found: the row layout is taken from the Atmos drawing (verify).' : ''),
   ...(mid === 'oric1' ? { verify: true } : {}),
   pins: [
     c(1, '/MAP', 'ctrl', 'Input. Low maps RAM in place of the ROM at $C000-$FFFF (ULA pin 26, 2K2 pull-up).', { expect: '+5 V (held high by RP1)' }),
     c(2, '/ROMDIS', 'ctrl', 'Input. Low disables the BASIC ROM (IC9 pin 27, 2K2 pull-up).', { expect: '+5 V (held high by RP1)' }),
     c(3, 'PHI2', 'clock', '6502 phase 2 clock out (6502 pin 39).', { expect: '1 MHz square wave' }),
     c(4, '/RESET', 'ctrl', 'System reset: 6502 /RES (pin 40) and VIA /RES (pin 34). Also an input: an expansion device may pull it LOW to reset the machine.', { expect: '+5 V; LOW during power-on reset or while a device holds reset' }),
-    c(5, '/I/O', 'ctrl', 'Output from ULA pin 25: low whenever $0300-$03FF is addressed.', { expect: 'Short low pulses while the VIA is in use' }),
-    c(6, 'I/O CONTROL', 'ctrl', 'Input to VIA CS1 (pin 24). Pull low to disable the internal VIA for an external device in page 3.', { expect: '+5 V (pulled up)' }),
+    c(5, '/I/O', 'ctrl', 'Output from ULA pin 25: low whenever $0300-$03FF is addressed.', { expect: 'Short low pulses while the VIA is in use', verify: true }),
+    c(6, 'I/O CONTROL', 'ctrl', 'Input to VIA CS1 (pin 24). Pull low to disable the internal VIA for an external device in page 3.', { expect: '+5 V (pulled up)', verify: true }),
     c(7, 'R/W', 'ctrl', '6502 read/write: high = read, low = write.'),
-    c(8, '/IRQ', 'ctrl', 'Interrupt request into the 6502 (pin 4), shared with the VIA.', { expect: '+5 V, pulled low by the VIA or a card' }),
+    c(8, '/IRQ', 'ctrl', 'Interrupt request into the 6502 (pin 4), shared with the VIA.', { expect: '+5 V, pulled low by the VIA or a card', verify: true }),
     c(9, 'D2', 'data', 'Data bit 2.'), c(10, 'D0', 'data', 'Data bit 0.'), c(11, 'A3', 'addr', 'Address bit 3.'), c(12, 'D1', 'data', 'Data bit 1.'),
     c(13, 'A0', 'addr', 'Address bit 0.'), c(14, 'D6', 'data', 'Data bit 6.'), c(15, 'A1', 'addr', 'Address bit 1.'), c(16, 'D3', 'data', 'Data bit 3.'),
     c(17, 'A2', 'addr', 'Address bit 2.'), c(18, 'D4', 'data', 'Data bit 4.'), c(19, 'D5', 'data', 'Data bit 5.'), c(20, 'A4', 'addr', 'Address bit 4.'),
     c(21, 'A5', 'addr', 'Address bit 5.'), c(22, 'D7', 'data', 'Data bit 7.'), c(23, 'A6', 'addr', 'Address bit 6.'), c(24, 'A15', 'addr', 'Address bit 15.'),
     c(25, 'A7', 'addr', 'Address bit 7.'), c(26, 'A14', 'addr', 'Address bit 14.'), c(27, 'A8', 'addr', 'Address bit 8.'), c(28, 'A13', 'addr', 'Address bit 13.'),
     c(29, 'A9', 'addr', 'Address bit 9.'), c(30, 'A12', 'addr', 'Address bit 12.'), c(31, 'A10', 'addr', 'Address bit 10.'), c(32, 'A11', 'addr', 'Address bit 11.'),
-    c(33, '+5 V', 'power', 'Computer +5 V rail (the same rail as the DC jack centre pin). Light loads only.', { expect: '+5 V DC' }),
+    c(33, '+5 V', 'power', 'Computer +5 V rail (the same rail as the DC jack centre pin).', { expect: '+5 V DC', verify: true }),
     c(34, 'GND', 'ground', GND, { expect: '0 V' })
   ],
-  sources: [...src, W_EXP, OSM], terms: ['edge-connector', 'reset', 'irq']
+  sources: [...src, W_EXP, OSM, OSM65], terms: ['reset', 'irq']
 });
 
 const printer = (mid, src, vf) => ({
-  id: `${mid}-printer`, name: 'Printer port (rear)', kind: '20-way 0.1 in PCB edge (10 + 10), Centronics-style parallel, odd/even numbering', geo: 'edge-10x10-odd-even', rowA: 'bottom', gender: 'male',
+  id: `${mid}-printer`, name: 'Printer port (rear)', kind: '20-way right-angle IDC pin header PL1 (2 x 10), Centronics-style parallel, odd/even numbering', geo: 'custom', pads: idc(20), outline: IDC_OUTLINE, gender: 'male',
   verifiedAgainst: vf,
-  summary: 'Eight-bit Centronics output from the VIA: data is VIA port A, STROBE is PB4, ACK comes back on CA1. Looking at the back, odd signals (1-19) are the lower row and the even grounds (2-20) the upper row, 1 at the left. Port A is shared with the AY-3-8912 data bus, so the pins toggle during sound and keyboard scans even with no printer; a printer must latch on STROBE. LPRINT and LLIST use it; the Oric MCP-40 is the matching printer.' + (mid === 'oric1' ? ' No Oric-1 drawing of this edge was found: the row layout is taken from the Atmos drawing (verify).' : ''),
+  summary: 'Eight-bit Centronics output from the VIA on a 20-way right-angle IDC pin header (PL1), not a card edge: data is VIA port A, STROBE is PB4, ACK comes back on CA1. Looking at the back, odd signals (1-19) are the lower row and the even grounds (2-20) the upper row, 1 at the left. Port A is shared with the AY-3-8912 data bus, so the pins toggle during sound and keyboard scans even with no printer; a printer must latch on STROBE. LPRINT and LLIST use it; the Oric MCP-40 is the matching printer.' + (mid === 'oric1' ? ' No Oric-1 drawing of this header was found: the row layout is taken from the Atmos drawing (verify).' : ''),
   ...(mid === 'oric1' ? { verify: true } : {}),
   pins: [
-    c(1, '/STROBE', 'ctrl', 'Data strobe to the printer, VIA PB4 (pin 14). Normally high, pulses low.', { expect: '+5 V, low pulse per byte' }),
-    c(3, 'D0', 'data', 'Data bit 0, VIA PA0 (pin 2).'), c(5, 'D1', 'data', 'Data bit 1, VIA PA1.'), c(7, 'D2', 'data', 'Data bit 2, VIA PA2.'), c(9, 'D3', 'data', 'Data bit 3, VIA PA3.'),
-    c(11, 'D4', 'data', 'Data bit 4, VIA PA4.'), c(13, 'D5', 'data', 'Data bit 5, VIA PA5.'), c(15, 'D6', 'data', 'Data bit 6, VIA PA6.'), c(17, 'D7', 'data', 'Data bit 7, VIA PA7 (pin 9).'),
-    c(19, '/ACK', 'ctrl', 'Acknowledge from the printer into VIA CA1 (pin 40).'),
+    c(1, '/STROBE', 'ctrl', 'Data strobe to the printer, VIA PB4 (pin 14). Normally high, pulses low.', { expect: '+5 V, low pulse per byte', verify: true }),
+    c(3, 'D0', 'data', 'Data bit 0, VIA PA0 (pin 2).', { verify: true }), c(5, 'D1', 'data', 'Data bit 1, VIA PA1.'), c(7, 'D2', 'data', 'Data bit 2, VIA PA2.'), c(9, 'D3', 'data', 'Data bit 3, VIA PA3.'),
+    c(11, 'D4', 'data', 'Data bit 4, VIA PA4.'), c(13, 'D5', 'data', 'Data bit 5, VIA PA5.'), c(15, 'D6', 'data', 'Data bit 6, VIA PA6.'), c(17, 'D7', 'data', 'Data bit 7, VIA PA7 (pin 9).', { verify: true }),
+    c(19, '/ACK', 'ctrl', 'Acknowledge from the printer into VIA CA1 (pin 40).', { verify: true }),
     ...[2, 4, 6, 8, 10, 12, 14, 16, 18, 20].map(n => c(n, 'GND', 'ground', 'Ground return.', { expect: '0 V' }))
   ],
-  sources: src, terms: ['edge-connector', 'strobe']
+  sources: [...src, OSM65], terms: ['strobe']
 });
 
 const rgb = (mid, src, vf, order) => ({
@@ -95,12 +101,12 @@ const tape = (mid, src, vf) => ({
   verifiedAgainst: vf,
   summary: 'Tape out from VIA PB7 through R12/R13 and C7; tape in through the LM358 (IC3) and TR1 to VIA CB1; a relay (RL1, driven from VIA PB6 by TR3) closes pins 6-7 to run the recorder motor. Pins 4 and 5 carry the AY sound output for an amplifier. The manual drawing uses the standard DIN numbering. A 3-pin DIN lead works; the Oric-1 manual warns that a 5-pin DIN lead usually has its outer pairs shorted and will not work.',
   pins: [
-    c(1, 'TAPE OUT', 'audio', 'To the recorder MIC/record input, from VIA PB7 (pin 17).', { expect: 'Tone bursts while CSAVE runs' }),
+    c(1, 'TAPE OUT', 'audio', 'To the recorder MIC/record input, from VIA PB7 (pin 17).', { expect: 'Tone bursts while CSAVE runs', verify: true }),
     c(2, 'GND', 'ground', GND, { expect: '0 V' }),
-    c(3, 'TAPE IN', 'audio', 'From the recorder EAR output, to the LM358 shaper and VIA CB1 (pin 18).'),
+    c(3, 'TAPE IN', 'audio', 'From the recorder EAR output, to the LM358 shaper and VIA CB1 (pin 18).', { verify: true }),
     c(4, 'SOUND', 'audio', 'AY-3-8912 mixed output (pins 1, 4, 5).', { verify: true }),
     c(5, 'SOUND', 'audio', 'Joined to pin 4 on the board.', { verify: true }),
-    c(6, 'RELAY', 'ctrl', 'Motor relay contact (RL1).'),
+    c(6, 'RELAY', 'ctrl', 'Motor relay contact (RL1).', { verify: true }),
     c(7, 'RELAY', 'ctrl', 'Motor relay contact, other side.')
   ],
   sources: src, terms: []
@@ -121,7 +127,7 @@ const rf = (mid, src, vf) => ({
   id: `${mid}-tv`, name: 'TV (RF) output', kind: 'Phono socket from the UHF modulator', geo: 'rca', gender: 'female',
   verifiedAgainst: vf,
   summary: 'PAL UHF from the modulator, about channel 36. The colour comes from the 8.867 MHz crystal circuit (XT2, IC23 PROM, IC24-IC27), not from the ULA directly. Under the case, RV1 (slotted, lozenge hole) sets the modulator bias: turn until yellow starts to fade to white, then back off. CV1 (brass, round hole) trims the colour: set for least shimmer once warm. The phono socket type is read from the Atmos rear-panel drawing.',
-  pins: [c(1, 'RF', 'video', 'UHF RF out, centre contact.'), c(2, 'GND', 'ground', 'Shell.', { expect: '0 V' })],
+  pins: [c(1, 'RF', 'video', 'UHF RF out, centre contact.'), c(2, 'GND', 'ground', 'Shell.', { expect: '0 V', verify: true })],
   sources: src, terms: []
 });
 
@@ -141,7 +147,7 @@ const keyboard = (mid, src, vf, extra = {}) => Object.assign({
 }, extra);
 
 /* sources per machine */
-const S1 = [SCH1, SCH2, OO5];
+const S1 = [SCH1, SCH1M, SCH2, SCH2M, OO5];
 const SA = [atm('Appendix 11 ATMOS I/O Connections, p. 284 (expansion and printer)', 289), atm('Appendix 11, p. 285 (RGB and cassette DINs)', 290)];
 const SAIO = atm('ch. 11 Input/Output, p. 223-225', 228);
 const VF1 = 'Oric-1 48K circuit diagram issue 7 (SK1, SK2, SK3, PL1, PL2, PL3); Oric Owner issue 5 circuit diagram';
@@ -154,15 +160,15 @@ const ULAG4 = { label: 'Mike Brown, The Oric-1/Atmos Unofficial ULA Guide v1.02,
 const ULAG5 = { label: 'Mike Brown, The Oric-1/Atmos Unofficial ULA Guide v1.02, vertical count: 312 lines (50 Hz) or 260 lines (60 Hz), p. 5', url: SIG + 'ula1/OricAtmosUnofficialULAGuide-1.02.pdf#page=5' };
 const MOS6500 = { label: 'MOS 6500 Microprocessors data sheet (Nov 1985), electrical characteristics: 6502 clock input (Φ0) HIGH min VSS + 2.4 V, LOW max VSS + 0.4 V, p. 3', url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=3' };
 const firstTen = [
-  { step: 1, check: 'Adapter polarity and voltage, before it goes near the board (the 7905 trap)', where: '9 V DC power socket pin 1 to pin 2', expect: 'Centre (pin 1) positive, about 9 V DC to the sleeve; more unloaded. Never 12 V.',
-    ifNot: 'Do not plug it in. The 7905 sits in the negative leg: board 0 V is its output, not the jack sleeve. Never tie the adapter negative, a bench-supply negative or a scope ground clip on the sleeve to board 0 V, and never use a centre-negative adapter (there is no protection diode).', source: CHK1 },
-  { step: 2, check: 'Rail resistance, unpowered, ULA and ROM out of their sockets', where: '6502 pin 8 to pin 21', expect: 'About 225 Ω from +5 V to 0 V; under 50 Ω is a short',
-    ifNot: 'Do not power it. Check C8 by the jack, then cut the 0 V feeds to the DRAMs, CPU, VIA and AY in turn as the checklist shows (a bad 4164 draws over 100 mA at pin 16).', source: CHK1 },
+  { step: 1, check: 'Adapter polarity and voltage, before it goes near the board (the 7905 trap)', where: '9 V DC power socket pin 1 to pin 2', expect: 'Centre positive, about 9 V DC to the sleeve',
+    ifNot: 'Do not plug it in. The 7905 sits in the negative leg: board 0 V is its OUT leg and +5 V its COM leg, so the jack sleeve is not board 0 V.', source: CHK1 },
+  { step: 2, check: 'Rail resistance, unpowered, ULA and ROM out of their sockets', where: '6502 pin 8 to pin 21', expect: 'About 225 Ω from +5 V to 0 V (as a known-good board); under 50 Ω, do not power up',
+    ifNot: 'Do not power it. Check C8 by the jack, then cut the 0 V feeds to the DRAMs, CPU, VIA and AY in turn as the checklist shows (a 4164 drawing over 100 mA at pin 16 is suspect; confirm out of circuit, over 80 mA is bad).', source: CHK1 },
   { step: 3, check: '+5 V from a current-limited 9 V supply (700 mA limit)', where: '6502 pin 8 to pin 21', expect: '+4.95 to +5.05 V; under 600 mA once the ULA is back in',
     ifNot: 'C8 first, then lift the 7905 OUT leg: +5 V must appear between OUT and COM, or the 7905 is bad (unbolt it to change it).', source: CHK1 },
   { step: 4, check: '12 MHz master clock', where: 'ULA pin 7', expect: '12 MHz from IC21 pin 2',
     ifNot: 'XT1, IC21, or the ULA loading the line: cut the track to tell which. Fit modification 63b (220 Ω in the feed, 560 Ω pull-up on ULA pin 7) if start-up is erratic.', source: CHK3 },
-  { step: 5, check: '1 MHz CPU clock from the ULA', where: 'ULA pin 14 to 6502 pin 37', expect: '1 MHz (asymmetric)',
+  { step: 5, check: '1 MHz CPU clock from the ULA', where: 'ULA pin 14 to 6502 pin 37', expect: '1 MHz',
     ifNot: 'With 12 MHz present: the ULA, or the 6502 loading the line. Cut the track and see which side loses the clock.', source: CHK3 },
   { step: 6, check: 'Φ1 and Φ2 out of the 6502', where: '6502 pin 3 to AY-3-8912 pin 15; 6502 pin 39 to VIA pin 25', expect: '1 MHz on both',
     ifNot: 'Pin 37 good but nothing here: the 6502. A shorted AY or VIA can pull its clock down: cut and retest.', source: CHK3 },
@@ -170,14 +176,15 @@ const firstTen = [
     ifNot: 'No SYNC: the CPU, the ROM, or a stuck address or data line (the service manual pp. 35-37, per the checklist). The diagnostic ROM narrows it down.', source: CHK3 },
 ];
 const clocks = [
-  { name: 'Master crystal XT1 (PAL machine; the ULA also has a 60 Hz mode)', where: 'ULA pin 7 (fed from IC21)', f: '12 MHz', source: CHK3 },
+  { name: 'Master clock (crystal oscillator)', where: 'ULA pin 7 (fed from IC21)', f: '12 MHz', source: CHK3 },
   { name: 'Dot clock (12 MHz / 2, inside the ULA)', where: 'ULA (internal)', f: '6 MHz', source: ULAG4 },
-  { name: 'CPU clock (12 MHz / 12, asymmetric)', where: 'ULA pin 14 to 6502 pin 37', f: '1 MHz', source: ULAG4 },
+  { name: 'CPU clock (12 MHz / 12, asymmetric)', where: 'ULA pin 14', f: '1 MHz', source: ULAG4 },
+  { name: 'CPU clock in', where: 'ULA pin 14 to 6502 pin 37', f: '1 MHz', source: CHK3 },
   { name: 'Φ1, to the sound chip', where: '6502 pin 3 to AY-3-8912 pin 15', f: '1 MHz', source: CHK3 },
   { name: 'Φ2, to the VIA', where: '6502 pin 39 to VIA pin 25', f: '1 MHz', source: CHK3 },
   { name: 'Line rate (64 µs lines)', where: 'ULA pin 16', f: '15.625 kHz', source: ULAG4 },
   { name: 'Frame rate', where: 'ULA pin 16', f: '50 Hz (312 lines; 60 Hz mode: 260 lines)', source: ULAG5 },
-  { name: 'Colour crystal XT2 (TV colour circuit)', where: 'XT2 and IC25', f: '8.86 MHz', source: CHK3 },
+  { name: 'Colour crystal (TV colour circuit)', where: 'IC25', f: '8.86 MHz', source: CHK3 },
 ];
 
 /* ---------- power ---------- */
@@ -190,7 +197,7 @@ const supplyNotes = [
   'The schematic shows no reverse-polarity diode: a centre-negative adapter can destroy the board. Check polarity with a meter before connecting.',
   'The 7905 is bolted down (the checklist says unbolt it to replace it).'
 ];
-const supplySrc = [SCH1, OO5, CHK, W_REP];
+const supplySrc = [SCH1, SCH1M, OO5, CHK, W_REP];
 const rails = [
   { rail: '+5 V', expect: '4.95-5.05 V', where: '6502 pin 8; ULA pin 24; VIA pin 20; AY-3-8912 pin 3; 4164 pin 8; 23128 pin 28', note: 'The jack centre pin. Measure to board 0 V, never to the jack sleeve.' },
   { rail: '0 V (regulated by the 7905)', expect: '0 V reference', where: '6502 pin 1; 6502 pin 21; ULA pin 6; VIA pin 1; AY-3-8912 pin 6; 4164 pin 16', note: 'The 7905 output. The adapter negative is about 4 V below this.' }
@@ -199,7 +206,7 @@ const testPoints = [
   { tp: 'Master clock', where: 'ULA pin 7', expect: '12 MHz (XT1 with IC21 inverters; source IC21 pin 2)' },
   { tp: 'CPU clock from the ULA', where: 'ULA pin 14', expect: '1 MHz, asymmetric; arrives at 6502 pin 37',
     scope: { f: '1 MHz', low: '0.4 V', high: '2.4 V', shape: 'square', basis: 'datasheet', source: MOS6500,
-      note: 'Idealised from the 6502 clock-input limits, not a capture: no Oric service-manual waveform was available. Rate 12 MHz / 12 (ULA guide, p. 4). The real clock is asymmetric, the ULA taking more than half of each cycle (why a 2 MHz 6502A is fitted); the guide gives no duty, so none is drawn.' } },
+      note: 'Levels idealised from the 6502 clock-input limits (the cited data sheet), not a capture: no Oric service-manual waveform was available. Pin 14, the 1 MHz rate (12 MHz / 2 / 6), the asymmetry and the 2 MHz part all come from Mike Brown\'s Unofficial ULA Guide v1.02, p. 4, the source of the CPU clock row below. The guide gives no duty, so none is drawn.' } },
   { tp: 'Phase 1 to the sound chip', where: '6502 pin 3', expect: '1 MHz; arrives at AY-3-8912 pin 15' },
   { tp: 'Phase 2 to the VIA', where: '6502 pin 39', expect: '1 MHz; arrives at VIA pin 25 and expansion pin 3' },
   { tp: 'Opcode fetch', where: '6502 pin 7', expect: 'SYNC pulses from power-on; none = CPU not running' },
@@ -376,7 +383,7 @@ RCS.add({
     oric1: [
       expansion('oric1', [...S1, atm('Appendix 11, p. 284', 289)], `${VF1}; Atmos manual Appendix 11 (same numbering)`),
       printer('oric1', [...S1, SAIO], VF1),
-      rgb('oric1', [...S1, SA[1], DIAG], VF1, 'bgr'),
+      rgb('oric1', [...S1, SA[1], DIAG, ULAG4, ULAG5], VF1, 'bgr'),
       tape('oric1', [...S1, SA[1], O1M('ch. 11 Saving programs on tape, p. 105-107'), DIAG], `${VF1}; Atmos manual Appendix 11`),
       powerIn('oric1', [SCH1, OO5, CHK], 'Oric-1 48K circuit diagram (SK3, IC1 7905); repair checklist (centre positive)'),
       rf('oric1', [SCH2, OO5, atm('ch. 1 Getting the ATMOS together, p. 3-4', 8), CHK], 'Oric-1 circuit diagram (modulator); Atmos manual ch. 1 and Appendix 11 drawing'),
@@ -385,7 +392,7 @@ RCS.add({
     atmos: [
       expansion('atmos', [...SA, SAIO], VFA),
       printer('atmos', [...SA, SAIO], VFA),
-      rgb('atmos', [...SA, SCH1, OO5], VFA, 'rgb'),
+      rgb('atmos', [...SA, SCH1, OO5, ULAG4, ULAG5], VFA, 'rgb'),
       tape('atmos', [...SA, atm('ch. 6 Tapes and Data, p. 62-65', 67)], VFA),
       powerIn('atmos', [atm('ch. 1 Getting the ATMOS together, p. 3', 8), CHK, SCH1, OO5], 'Atmos manual ch. 1 (9 V DC, socket at the left rear); repair checklist (7905, centre positive, Oric/Atmos boards)'),
       rf('atmos', [...SA, atm('ch. 1 Getting the ATMOS together, p. 3-4', 8)], 'Atmos manual ch. 1 and Appendix 11 rear-panel drawing'),
@@ -395,11 +402,11 @@ RCS.add({
   power: {
     oric1: {
       supply: { external: true, name: 'Oric 9 V DC adapter (unregulated)', output: '9 V DC unregulated, 600 mA (schematic rating)', connector: 'oric1-power', notes: supplyNotes, sources: supplySrc },
-      rails, testPoints, firstTen, clocks, sources: [SCH1, SCH2, OO5, CHK, DIAG]
+      rails, testPoints, firstTen, clocks, sources: [SCH1, SCH1M, SCH2, SCH2M, OO5, CHK, DIAG]
     },
     atmos: {
       supply: { external: true, name: 'Oric Atmos 9 V DC adapter (unregulated)', output: '9 V DC unregulated (current rating not given in the Atmos manual; the Oric-1 schematic gives 600 mA)', connector: 'atmos-power', notes: supplyNotes, sources: [atm('ch. 1 Getting the ATMOS together, p. 3', 8), ...supplySrc] },
-      rails, testPoints, firstTen, clocks, sources: [CHK, DIAG, SCH1, OO5]
+      rails, testPoints, firstTen, clocks, sources: [CHK, DIAG, SCH1, SCH1M, OO5]
     }
   },
   quickref: {
@@ -407,7 +414,7 @@ RCS.add({
       firstLook: [
         'Sign-on: Oric Extended BASIC V1.0; no power switch, so plugging in the 9 V lead is power-on.',
         'Keywords must be typed in capitals (CTRL + T toggles CAPS).',
-        'Storage is tape only (300 or 2400 baud) until a Microdisc or other drive interface goes on the expansion edge.',
+        'Storage is tape only (300 or 2400 baud) until a Microdisc or other drive interface goes on the expansion port.',
         'The reset button underneath is an NMI warm start: the program survives.',
         'TV output is PAL UHF around channel 36; RGB on the 5-pin DIN.',
         'The 48K board actually has 64K of DRAM; the top 16K sits under the ROM for disc systems.'

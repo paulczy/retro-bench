@@ -275,7 +275,7 @@ RCS.add({
       { id: 'ts1000-tv', name: 'TV RF output', kind: 'RCA phono (Cinch), VHF', geo: 'rca', gender: 'female',
         verifiedAgainst: 'TS1000 User Manual ch. 1; k1.spdns.de TS1000 Connectors',
         summary: 'VHF RF out on channel 2 or 3, set by a switch on the underside. Feed the TV through the supplied cable and switch box.',
-        pins: [c(1, 'RF', 'video', 'Modulated NTSC video.', { expect: 'VHF channel 2 (55.25 MHz) or 3 (61.25 MHz) carrier' }), c(2, 'GND', 'ground', 'Shield.', { expect: '0 V' })],
+        pins: [c(1, 'RF', 'video', 'Modulated NTSC video.', { expect: 'VHF channel 2 or 3 carrier' }), c(2, 'GND', 'ground', 'Shield.', { expect: '0 V' })],
         sources: [UM1000, K1_1000], terms: [] },
       { id: 'ts1000-edge', name: 'Rear edge connector (2 x 23)', kind: 'PCB card edge, 23 + 23 contacts, slot at 3', geo: 'edge-23x23-ab', pin1: 'right', keys: [2, 3],
         verifiedAgainst: 'TS2068 Technical Manual Figure 2.4.1-2 and schematic P1 (positions 4-26 marked TS1000 compatible); k1.spdns.de TS1000 expansion port drawing',
@@ -287,7 +287,7 @@ RCS.add({
           c('A12', '/NMI', 'ctrl', 'Non-maskable interrupt.'), c('A13', '/HALT', 'ctrl', 'CPU halt.'), c('A14', '/MREQ', 'ctrl', 'Memory request.'), c('A15', '/IORQ', 'ctrl', 'I/O request.'),
           c('A16', '/RD', 'ctrl', 'Read.'), c('A17', '/WR', 'ctrl', 'Write.'), c('A18', '/BUSAK', 'ctrl', 'Bus acknowledge.'), c('A19', '/WAIT', 'ctrl', 'Wait.'),
           c('A20', '/BUSRQ', 'ctrl', 'Bus request.'), c('A21', '/RESET', 'ctrl', 'CPU reset.'), c('A22', '/M1', 'ctrl', 'Opcode fetch.'), c('A23', '/RFSH', 'ctrl', 'Refresh.'),
-          c('B1', '+5 V', 'power', 'Regulated +5 V.', { expect: '+4.9 to +5.2 V' }), c('B2', '+9 V', 'power', 'Unregulated input straight from the power jack (Uss).', { expect: '+8 to +14 V DC' }), c('B3', 'SLOT', 'nc', 'Polarising slot, no contact.'),
+          c('B1', '+5 V', 'power', 'Regulated +5 V.', { expect: '+5 V' }), c('B2', '+9 V', 'power', 'Unregulated input straight from the power jack (Uss).', { expect: 'About +9 V DC (about 14 V unloaded)' }), c('B3', 'SLOT', 'nc', 'Polarising slot, no contact.'),
           c('B4', '0 V', 'ground', GND, { expect: '0 V' }), c('B5', '0 V', 'ground', GND, { expect: '0 V' }), c('B6', '/CLK', 'ctrl', 'CPU clock.'),
           c('B7', 'A0', 'addr', 'Address bit 0.'), c('B8', 'A1', 'addr', 'Address bit 1.'), c('B9', 'A2', 'addr', 'Address bit 2.'), c('B10', 'A3', 'addr', 'Address bit 3.'),
           c('B11', 'A15', 'addr', 'Address bit 15.'), c('B12', 'A14', 'addr', 'Address bit 14.'), c('B13', 'A13', 'addr', 'Address bit 13.'), c('B14', 'A12', 'addr', 'Address bit 12.'),
@@ -418,9 +418,9 @@ RCS.add({
         ],
         sources: [UM1000, ZX81SM, K1_1000] },
       rails: [
-        { rail: 'Power in', expect: '8-12 V DC on load, about 14 V unloaded', where: 'Power jack tip; rear edge B2', note: 'Unregulated, tip positive.' },
-        { rail: '+5 V', expect: '4.9-5.2 V', where: 'regulator output; Z80A pin 11; ULA pin 40; 6116 pin 24', note: 'Same 7805 arrangement as the ZX81.', verify: true },
-        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 34; 6116 pin 12', note: 'Common return.' }
+        { rail: 'Power in', expect: 'About 9 V DC on load, about 14 V unloaded', where: 'Power jack tip; rear edge B2', note: 'Unregulated, tip positive.', verify: true },
+        { rail: '+5 V', expect: '+5 V', where: 'regulator output; Z80A pin 11; ULA pin 40; 6116 pin 24', note: 'Same 7805 arrangement as the ZX81.', verify: true },
+        { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 34; 6116 pin 12', note: 'Common return.', verify: true }
       ],
       testPoints: [
         { tp: 'Crystal', where: 'ULA pin 35 (OSC)', expect: 'About 6.5 MHz.', verify: true },
@@ -428,22 +428,22 @@ RCS.add({
         { tp: 'Reset', where: 'Z80A pin 26 (/RESET)', expect: 'LOW at power-on, then HIGH.' }
       ],
       firstTen: [
-        { step: 1, check: 'Adapter on load', where: 'Power in (9V DC IN) pin T to pin S', expect: '+8 to +12 V DC on load, tip positive; about 14 V unloaded.',
-          ifNot: 'Replace or fix the adapter. Rolling bars on a working machine: a poorly smoothed or weak adapter.', source: ZX81SM },
+        { step: 1, check: 'Adapter on load', where: 'Power in (9V DC IN) pin T to pin S', expect: 'About +9 V DC on load, tip positive; about 14 V unloaded.',
+          ifNot: 'Replace or fix the adapter. Rolling bars on a working machine: a poorly smoothed or weak adapter.', source: ZX81SM, verify: true },
         { step: 2, check: 'Regulator warm after two minutes', where: 'Regulator body', expect: 'Warm, not too hot to hold.',
-          ifNot: 'Cold: no input (check the plug is in the power socket, not EAR or MIC). Very hot and cutting out: regulator not bolted to its heatsink properly.', source: ZX81SM6 },
-        { step: 3, check: '+5 V on the chips', where: 'Z80A pin 11; ULA pin 40; 6116 pin 24', expect: '+4.75 to +5.25 V.',
-          ifNot: 'Low with a hot regulator: a shorted chip or solder bridge; check the ULA and the Z80A first.', source: ZX81SCH },
-        { step: 4, check: '6.5 MHz resonator', where: 'ULA pin 35', expect: 'About 6.5 MHz.', ifNot: 'Resonator X1, then the ULA.', source: REA },
-        { step: 5, check: 'CPU clock', where: 'ULA pin 14 to Z80A pin 6', expect: '3.25 MHz square wave.', ifNot: 'At ULA pin 14 but not at Z80A pin 6: TR2 and its filter network. Missing at pin 14: ULA.', source: REA },
-        { step: 6, check: 'Reset', where: 'Z80A pin 26', expect: 'LOW at power-on, then HIGH.', ifNot: 'Stuck LOW holds the CPU in reset: check the /RESET parts, then the Z80A.', source: { label: 'Zilog Z80 CPU User Manual UM0080, /RESET pin function', url: 'https://www.zilog.com/docs/z80/um0080.pdf#page=19' } },
-        { step: 7, check: 'NMI from the ULA', where: 'ULA pin 15 to Z80A pin 17', expect: 'A steady train of LOW pulses while the picture is drawn (SLOW mode).', ifNot: 'CPU running but no NMI and no picture: ULA. A US ULA needs pin 22 tied to 0 V for 60 Hz.', source: REA },
-        { step: 8, check: 'ROM select', where: 'ULA pin 13 to ROM pin 20', expect: 'Pulses LOW on ROM access.', ifNot: 'Stuck HIGH: remove the RAM pack and any add-on, then check the 680 ohm series resistor and the ULA.', source: REA }
+          ifNot: 'Cold: no input (check the plug is in the power socket, not EAR or MIC). Very hot and cutting out: regulator not bolted to its heatsink properly.', source: ZX81SM6, verify: true },
+        { step: 3, check: '+5 V on the chips', where: 'Z80A pin 11; ULA pin 40; 6116 pin 24', expect: '+5 V.',
+          ifNot: 'Low with a hot regulator: a shorted chip or solder bridge; check the ULA and the Z80A first.', source: ZX81SCH, verify: true },
+        { step: 4, check: '6.5 MHz resonator', where: 'ULA pin 35', expect: 'About 6.5 MHz.', ifNot: 'Resonator X1, then the ULA.', source: REA, verify: true },
+        { step: 5, check: 'CPU clock', where: 'ULA pin 14 to Z80A pin 6', expect: '3.25 MHz square wave.', ifNot: 'At ULA pin 14 but not at Z80A pin 6: TR2 and its filter network. Missing at pin 14: ULA.', source: REA, verify: true },
+        { step: 6, check: 'Reset', where: 'Z80A pin 26', expect: 'LOW at power-on, then HIGH.', ifNot: 'Stuck LOW holds the CPU in reset: check the /RESET parts, then the Z80A.', source: { label: 'Zilog Z80 CPU User Manual UM0080, /RESET pin function', url: 'https://www.zilog.com/docs/z80/um0080.pdf#page=19' }, verify: true },
+        { step: 7, check: 'NMI from the ULA', where: 'ULA pin 15 to Z80A pin 17', expect: 'A steady train of LOW pulses while the picture is drawn (SLOW mode).', ifNot: 'CPU running but no NMI and no picture: ULA. A US ULA needs pin 22 tied to 0 V for 60 Hz.', source: REA, verify: true },
+        { step: 8, check: 'ROM select', where: 'ULA pin 13 to ROM pin 20', expect: 'Pulses LOW on ROM access.', ifNot: 'Stuck HIGH: remove the RAM pack and any add-on, then check the 680 ohm series resistor and the ULA.', source: REA, verify: true }
       ],
       clocks: [
         { name: 'Resonator X1', where: 'ULA pin 35', ntsc: '6.5 MHz', source: ZX81SCH, verify: true },
         { name: 'CPU clock', where: 'ULA pin 14 to Z80A pin 6', ntsc: '3.25 MHz', source: REA, verify: true },
-        { name: 'Field rate', where: 'ULA pin 22 (tied to 0 V on a US machine)', ntsc: '60 Hz', source: ZX81SCH }
+        { name: 'Field rate', where: 'ULA pin 22 (tied to 0 V on a US machine)', ntsc: '60 Hz', source: ZX81SCH, verify: true }
       ],
       sources: [ZX81SM, K1_1000, { label: 'TS1000 PCB issue 3 photo (k1.spdns.de, scan by J. Boatwright)', url: 'https://k1.spdns.de/Vintage/Sinclair/80/Timex%20Sinclair%201000/PCB/PCB%20issue%203.jpg' }]
     },
@@ -457,7 +457,7 @@ RCS.add({
         ],
         sources: [UM1500, { label: 'TS1500 PCB issue 1A photo (k1.spdns.de)', url: 'https://k1.spdns.de/Vintage/Sinclair/80/Timex%20Sinclair%201500/TS1500%20PCB%20issue%201A.jpg' }] },
       rails: [
-        { rail: '+5 V', expect: '4.9-5.2 V', where: 'regulator output; Z80A pin 11; 4116 pin 9', note: 'Not sourced for this board.', verify: true },
+        { rail: '+5 V', expect: '+5 V', where: 'regulator output; Z80A pin 11; 4116 pin 9', note: 'Not sourced for this board.', verify: true },
         { rail: '+12 V', expect: 'About +12 V', where: '4116 pin 8', note: 'From the on-board converter. Not sourced for this board.', verify: true },
         { rail: '-5 V', expect: 'About -5 V', where: '4116 pin 1', note: 'From the on-board converter. Not sourced for this board.', verify: true }
       ],
@@ -510,12 +510,12 @@ RCS.add({
         { tp: 'SCLD temperature', where: 'SCLD body', expect: 'Warm is normal; too hot to hold is a fault in the making. Add a heatsink.', verify: true }
       ],
       firstTen: [
-        { step: 1, check: 'AC adapter output', where: 'Power in (AC adapter) pin 2 to pin 1', expect: '20.4 V DC on the board (Sams); 14-25 V DC is in range (Technical Manual).',
+        { step: 1, check: 'AC adapter output', where: 'Power in (AC adapter) pin 2 to pin 1', expect: '20.4 V DC on the board (Sams).',
           ifNot: 'Check the adapter cord for breaks, then replace the adapter: DC, centre negative, at least 1 A.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
         { step: 2, check: 'Input after the switch', where: 'C3 positive end; 78L12 U8 input', expect: '20.4 V DC.',
           ifNot: 'Check the on-off switch SW2, connector J1 and coil L1.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
-        { step: 3, check: '+12 V regulator', where: '78L12 U8 output', expect: '12.0 V (11.5-12.5 V).', ifNot: 'Replace U8.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
-        { step: 4, check: '+5 V switching regulator', where: 'Q1 collector; Z80A pin 11; SCLD pin 43', expect: '5.2 V at Q1 collector (Sams); 4.75-5.25 V at the chips.',
+        { step: 3, check: '+12 V regulator', where: '78L12 U8 output', expect: '12.0 V.', ifNot: 'Replace U8.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
+        { step: 4, check: '+5 V switching regulator', where: 'Q1 collector; Z80A pin 11; SCLD pin 43', expect: '5.2 V at Q1 collector (Sams); about +5 V at the chips.',
           ifNot: 'Check the voltages, waveforms and parts on 78S40 U1 legs 8 to 16, and transistor Q1.', source: CC19('troubleshooting, power supply dead, p. 8', 8) },
         { step: 5, check: 'Reset', where: 'Z80A pin 26', expect: 'LOW at switch-on, then HIGH and stays HIGH.', ifNot: 'Check C21 and R43, then the Z80A (U19).', source: CC19('troubleshooting, microprocessor operation, p. 8', 8) },
         { step: 6, check: 'Master crystal', where: 'SCLD pin 14', expect: '14.112 MHz, about 5 V p-p.', ifNot: 'Check crystal Y1 and trimmer C5, then the SCLD (U3).', source: CC19('troubleshooting, microprocessor operation, p. 8', 8) },

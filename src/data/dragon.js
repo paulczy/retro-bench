@@ -27,13 +27,13 @@ const SAMDS = (n, label) => ({ label: `SN74LS783/MC6883 SAM data sheet (Motorola
 const CPUDS = (n, label) => ({ label: `Motorola MC6809E data sheet, ${label}`, url: `${CCA}/MC6809E%20HMOS%208%20Bit%20Microprocessor%20(Motorola).pdf#page=${n}` });
 const SAM_EQ = SAMDS(2, 'DC characteristics: E and Q outputs VOL 0.5 V max, VOH VCC - 0.75 V min, p. 5-324');
 const SAM_VCLK = SAMDS(2, 'DC characteristics: VClk output VOL 0.6 V max, other outputs VOH 2.7 V min, p. 5-324');
-const XTAL_NOTE = 'The rate is the 14.218 MHz crystal (Dragon 64 CD41505 sheet 2, XL3); the Dragon 32 SA2120 sheet marks XL2 14.32 MHz, which would give 0.895 MHz E and 3.58 MHz VClk. Read the can before trusting either.';
+const XTAL_NOTE = 'The rate is derived from the 14.218 MHz crystal on the Dragon 64 sheet (CD41505 sheet 2, XL3, in this page\'s sources); the Dragon 32 SA2120 sheet marks XL2 14.32 MHz, which would give 0.895 MHz E and 3.58 MHz VClk. Read the can before trusting either.';
 const eScope = () => ({ f: '0.888625 MHz', low: '0.5 V', high: '4.25 V', shape: 'square', basis: 'datasheet', source: SAM_EQ,
-  note: `Idealised from the SAM output limits at 5 V, not a capture: no Dragon service document prints a waveform. The 6809E needs E below 0.4 V and above VCC - 0.75 V (MC6809E data sheet, DC characteristics, p. 2). E = crystal / 16. ${XTAL_NOTE}` });
+  note: `Levels idealised from the SAM output limits at 5 V (the cited data sheet), not a capture: no Dragon service document prints a waveform. E = crystal / 16 (SAM pin table, p. 5-326) in the SLOW mode the SAM selects at reset; FAST mode gives crystal / 8 (1.77725 MHz) and the address-dependent mode switches between the two (SAM p. 5-333). ${XTAL_NOTE}` });
 const qScope = () => ({ f: '0.888625 MHz', low: '0.5 V', high: '4.25 V', shape: 'square', basis: 'datasheet', source: SAM_EQ,
-  note: `Idealised from the SAM output limits. Q rises a quarter cycle before E (MC6809E bus timing, tEQ1 200 ns min, p. 3); the 6809E reads Q as HIGH above 2.0 V and LOW below 0.6 V. ${XTAL_NOTE}` });
+  note: `Levels idealised from the SAM output limits (the cited data sheet), not a capture. Q runs a quarter cycle ahead of E (SAM pin table, p. 5-326). Same rate as E: crystal / 16 in the SLOW mode set at reset, crystal / 8 (1.77725 MHz) in FAST mode, switching between the two in address-dependent mode (SAM p. 5-333). ${XTAL_NOTE}` });
 const vclkScope = () => ({ f: '3.5545 MHz', low: '0.6 V', high: '2.7 V', shape: 'square', basis: 'datasheet', source: SAM_VCLK,
-  note: `Idealised from the SAM output limits. The SAM pin table (p. 5-326) gives VClk as a square wave at crystal / 4. ${XTAL_NOTE}` });
+  note: `Levels idealised from the SAM output limits (the cited data sheet), not a capture. The SAM pin table (p. 5-326) gives VClk as a square wave at crystal / 4. ${XTAL_NOTE}` });
 
 /* Pad layouts for 'custom' drawings, 0-100 box looking into the connector. */
 const rowPads = ns => ns.map((n, i) => ({ n, x: Math.round(8 + i * (84 / Math.max(1, ns.length - 1))), y: 50 }));
@@ -45,15 +45,15 @@ const PRN_OUTLINE = 'M4 32 H96 V68 H4 Z';
 
 /* ---------- connector pin builders (Dragon 32 and 64 share most ports) ---------- */
 const cartPins = [
-  { n: 1, name: '+12 V', type: 'power', desc: '+12 V supply. Pins 1 and 2 are both +12 V on the Dragon. A CoCo 1 pak expects -12 V here.', expect: 'About +12 V' },
+  { n: 1, name: '+12 V', type: 'power', desc: '+12 V supply. Pins 1 and 2 are both +12 V on the Dragon. A CoCo 1 pak expects -12 V here.', expect: 'About +12 V', verify: true },
   { n: 2, name: '+12 V', type: 'power', desc: '+12 V supply, joined to pin 1.', expect: 'About +12 V' },
   { n: 3, name: '/HALT', type: 'ctrl', desc: 'Halt input of the 6809E.', expect: 'HIGH when running' },
   { n: 4, name: '/NMI', type: 'ctrl', desc: 'Non-maskable interrupt input of the 6809E.', expect: 'HIGH when idle' },
   { n: 5, name: '/RESET', type: 'ctrl', desc: 'Main reset and power-up signal.', expect: 'HIGH when running; LOW while RESET is pressed' },
-  { n: 6, name: 'E', type: 'clock', desc: 'Main 6809E clock.', expect: 'About 0.89 MHz square wave' },
+  { n: 6, name: 'E', type: 'clock', desc: 'Main 6809E clock.', expect: 'Crystal / 16 (about 0.89 MHz with a 14.218 MHz crystal)', verify: true },
   { n: 7, name: 'Q', type: 'clock', desc: 'Quadrature clock, leads E by 90 degrees.', expect: 'Same rate as E' },
   { n: 8, name: 'CART', type: 'ctrl', desc: 'Cartridge-detect input to CB1 of the $FF20 PIA. A games pak ties Q to it so the pak autostarts on FIRQ.', expect: 'Q clock present with an autostart pak in' },
-  { n: 9, name: '+5 V', type: 'power', desc: '+5 V supply. Inside the Dragon warns there is little spare current.', expect: '4.75–5.25 V' },
+  { n: 9, name: '+5 V', type: 'power', desc: '+5 V supply. Inside the Dragon warns there is little spare current.', expect: '+5 V' },
   ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => ({ n: 10 + i, name: `D${i}`, type: 'data', desc: `6809E data bit ${i}.` })),
   { n: 18, name: 'R/W', type: 'ctrl', desc: '6809E read/write. HIGH = read.' },
   ...Array.from({ length: 13 }, (_, i) => ({ n: 19 + i, name: `A${i}`, type: 'addr', desc: `6809E address bit ${i}.` })),
@@ -61,7 +61,7 @@ const cartPins = [
   { n: 33, name: 'GND', type: 'ground', desc: 'Signal ground.', expect: '0 V' },
   { n: 34, name: 'GND', type: 'ground', desc: 'Signal ground.', expect: '0 V' },
   { n: 35, name: 'SND', type: 'audio', desc: 'Cartridge sound input (ESND) to the 4529 sound multiplexer, input Y2.' },
-  { n: 36, name: '/P2', type: 'ctrl', desc: 'Spare device select. LOW for $FF40–$FF5F (the DragonDOS controller uses it).' },
+  { n: 36, name: '/P2', type: 'ctrl', desc: 'Spare device select. LOW for $FF40–$FF5F.' },
   { n: 37, name: 'A13', type: 'addr', desc: '6809E address bit 13.' },
   { n: 38, name: 'A14', type: 'addr', desc: '6809E address bit 14.' },
   { n: 39, name: 'A15', type: 'addr', desc: '6809E address bit 15.' },
@@ -86,7 +86,7 @@ const cassPins = [
   { n: 1, name: 'REMOTE', type: 'ctrl', desc: 'Motor relay contact. Pins 1 and 3 close with MOTOR ON. The relay is driven from CA2 of the $FF20 PIA by TR2 (BC182L).', expect: 'Shorted to pin 3 with MOTOR ON (relay clicks)' },
   { n: 2, name: '0 V', type: 'ground', desc: 'Ground.', expect: '0 V' },
   { n: 3, name: 'REMOTE', type: 'ctrl', desc: 'Motor relay contact, the other side.', expect: 'Open with MOTOR OFF' },
-  { n: 4, name: 'CASS IN', type: 'audio', desc: 'From the recorder EAR socket, to the LM393 comparator and PA0 of the $FF20 PIA. Dragon Data fitted 270–470 Ω in series on some boards.', expect: 'Tape audio; the service sheet asks for at least +1 V and -0.5 V peaks' },
+  { n: 4, name: 'CASS IN', type: 'audio', desc: 'From the recorder EAR socket, to the LM393 comparator and PA0 of the $FF20 PIA. To limit the signal, the Dragon Data service sheet recommends fitting 270–470 kΩ in series (cut the track to pin 4 and bridge it).', expect: 'Tape audio; the Dragon 32 service sheet asks for at least +1 V and -0.5 V peaks' },
   { n: 5, name: 'CASS OUT', type: 'audio', desc: 'To the recorder AUX/MIC input. Taken from the 6-bit DAC through R29 (68 kΩ) and R16 (33 kΩ).' },
 ];
 const CASS_SUMMARY = 'Left side, marked TAPE. 5-pin 180° DIN (PL4). Relay contacts on 1 and 3, tape in on 4, tape out on 5. No relay click on MOTOR ON: TR2, the relay or diode D1. Loading faults: IC20 (4529), IC25 (LM393), IC34 (4050) per the Dragon Data service sheet.';
@@ -139,7 +139,7 @@ const acPins = d64 => [
   { n: 1, name: '8 V AC', type: 'power', desc: 'Winding A (8–8.5 V AC, 1.5 A), one end. Through SW1 to the bridge D1, D2, D5, D6 that feeds the +5 V LM309.', expect: '8–8.5 V AC to pin 2 (more unloaded)' },
   { n: 2, name: '8 V AC', type: 'power', desc: 'Winding A, other end.', expect: '8–8.5 V AC to pin 1' },
   { n: 3, name: '14 V AC', type: 'power', desc: 'Winding B (28 V AC centre-tapped, 0.25 A), one end. Through SW1 to D7 and D3: about +18 V and -18 V raw.', expect: 'About 14 V AC to pin 4; 28 V AC to pin 5' },
-  { n: 4, name: '0 V (CT)', type: 'ground', desc: 'Centre tap of winding B. 0 V of the whole computer; tied to mains earth at the transformer.', expect: '0 V' },
+  { n: 4, name: '0 V (CT)', type: 'ground', desc: 'Centre tap of winding B. 0 V of the whole computer.', expect: '0 V' },
   { n: 5, name: '14 V AC', type: 'power', desc: 'Winding B, other end. Through SW1 to D8 and D4.', expect: 'About 14 V AC to pin 4' },
   ...(d64 ? [
     { n: 6, name: '8 V AC', type: 'power', desc: 'Paralleled with pin 1 (Dragon 64 PSU CD41519).', expect: 'Same as pin 1' },
@@ -157,17 +157,17 @@ const acSources = sheet => [
 
 /* PSU board PL10 to CPU board PL6, 9 ways. */
 const psuPins = d64 => [
-  { n: 1, name: '+12 V', type: 'power', desc: `+12 V from REG2 (LM7812). ${d64 ? 'RS-232 drivers, cartridge pins 1 and 2.' : 'RAM VDD (4116 pin 8), cartridge pins 1 and 2.'}`, expect: '+11.5 to +12.5 V' },
-  { n: 2, name: '+5 V', type: 'power', desc: '+5 V from REG1 (LM309), 1.4 A maximum on the Dragon 32 sheet. All logic.', expect: '+4.75 to +5.25 V' },
+  { n: 1, name: '+12 V', type: 'power', desc: `+12 V from REG2 (LM7812). ${d64 ? 'RS-232 drivers, cartridge pins 1 and 2.' : 'RAM VDD (4116 pin 8), cartridge pins 1 and 2.'}`, expect: '+12 V' },
+  { n: 2, name: '+5 V', type: 'power', desc: `+5 V from REG1 (LM309)${d64 ? '' : ', 1.4 A maximum'}. All logic.`, expect: '+5 V' },
   d64
-    ? { n: 3, name: '-12 V', type: 'power', desc: '-12 V from REG3 (LM7912). RS-232 drivers; a 79L05 on the CPU board makes -5 V from it.', expect: '-11.5 to -12.5 V' }
-    : { n: 3, name: '-5 V', type: 'power', desc: '-5 V from REG3 (LM7905), 50 mA. RAM VBB (4116 pin 1) and the video output stage.', expect: '-4.75 to -5.25 V' },
+    ? { n: 3, name: '-12 V', type: 'power', desc: '-12 V from REG3 (LM7912). RS-232 drivers; a 79L05 on the CPU board makes -5 V from it.', expect: '-12 V' }
+    : { n: 3, name: '-5 V', type: 'power', desc: '-5 V from REG3 (LM7905); board output 50 mA maximum. RAM VBB (4116 pin 1) and the video output stage.', expect: '-5 V' },
   { n: 4, name: '0 V', type: 'ground', desc: 'Supply 0 V.', expect: '0 V' },
   { n: 5, name: 'GND', type: 'ground', desc: `Signal ground for the video and modulator${d64 ? ', through a link on the PSU board' : ''}.`, expect: '0 V' },
   { n: 6, name: 'VIDEO', type: 'video', desc: 'Composite video from the CPU board, to monitor DIN pin 3.' },
   { n: 7, name: 'SOUND', type: 'audio', desc: 'Sound from the 4529 mux, to the modulator and monitor DIN pin 1.' },
   { n: 8, name: '+5 V MOD', type: 'power', desc: `+5 V for the modulator${d64 ? ', linked from pin 2 on the CPU card' : ''}.`, expect: 'About +5 V' },
-  { n: 9, name: d64 ? 'COMPOSITE' : 'MOD', type: 'video', desc: 'Video to the UHF modulator. Some boards needed 1 kΩ from here to 0 V (repair notes).' },
+  { n: 9, name: d64 ? 'COMPOSITE' : 'MOD', type: 'video', desc: `Video to the UHF modulator.${d64 ? '' : ' Some boards needed 1 kΩ from here to 0 V (repair notes).'}` },
 ];
 const PSU_SUMMARY = d64 => `The PSU board (rectifiers, regulators, UHF modulator, monitor DIN) feeds the CPU board through PL10 on the PSU board and PL6 on the CPU board. Pin numbers and signals are from the ${d64 ? 'CD41519 and CD41505' : 'SA2121 and SA2120'} sheets; the drawing shows the nine pads in a row because the sheets do not draw the plug. No picture and no sound: check this connector and the voltages on it first (service sheet).`;
 
@@ -175,9 +175,9 @@ const serPins = [
   { n: 1, name: 'GND', type: 'ground', desc: 'Signal ground.', expect: '0 V' },
   { n: 2, name: 'RXD', type: 'serial', desc: 'Received data in. Through R11 (4.7 kΩ) and an LM348 receiver and 4069 inverter to RxD, 6551 pin 12.' },
   { n: 3, name: '+12 V', type: 'power', desc: '+12 V through R10 (4.7 kΩ): a pull-up for the other end\'s handshake.', expect: 'About +12 V open circuit' },
-  { n: 4, name: 'DTR', type: 'serial', desc: 'Data terminal ready out, from 6551 pin 11 through a 4069 and an LM348 driver and R12 (47 Ω).', expect: 'About +10 V when ready' },
+  { n: 4, name: 'DTR', type: 'serial', desc: 'Data terminal ready out, from 6551 pin 11 through a 4069 and an LM348 driver and R12 (47 Ω).', expect: 'Positive when ready (driver on ±12 V)' },
   { n: 5, name: 'CTS', type: 'serial', desc: 'Clear to send in. Through R7 (4.7 kΩ) and a receiver to 6551 pin 9.' },
-  { n: 6, name: 'TXD', type: 'serial', desc: 'Transmitted data out, from 6551 pin 10 through a 4069, an LM348 driver and R8 (47 Ω). 1 start, 8 data, 2 stop bits from BASIC.', expect: 'Swings between about +10 V and -10 V' },
+  { n: 6, name: 'TXD', type: 'serial', desc: 'Transmitted data out, from 6551 pin 10 through a 4069, an LM348 driver and R8 (47 Ω). 1 start, 8 data, 2 stop bits from BASIC.', expect: 'Swings positive and negative (driver on ±12 V)' },
   { n: 7, name: '-12 V', type: 'power', desc: '-12 V through R9 (4.7 kΩ).', expect: 'About -12 V open circuit' },
 ];
 
@@ -285,10 +285,12 @@ const d64Connectors = [
     id: 'dragon-cassette', name: 'Cassette (TAPE, PL4)', kind: '5-pin DIN socket (180°)', geo: 'din5-180',
     verifiedAgainst: 'Dragon 64 CD41505 sheet 1 (PL4 cassette); Dragon 32 Information for Machine Code Users, p. 2',
     summary: CASS_SUMMARY.replace('IC20 (4529), IC25 (LM393), IC34 (4050) per the Dragon Data service sheet', 'IC6 (4529), IC2 (LM393) and IC4 (4050), the Dragon 64 equivalents of the parts on the Dragon 32 service sheet').replace('TR2', 'TR1'),
-    pins: cassPins.map(p => p.n === 1 ? { ...p, desc: p.desc.replace('TR2', 'TR1') } : p),
+    pins: cassPins.map(p => p.n === 1 ? { ...p, desc: p.desc.replace('TR2', 'TR1') }
+      : p.n === 5 ? { ...p, desc: 'To the recorder AUX/MIC input. Taken from the 6-bit DAC through a 68 kΩ series resistor, with R40 (33 kΩ) to 0 V.', conflict: 'CD41505 sheet 1: the 68 kΩ part has been read as R14, but R14 on the same sheet is the 4K7 pull-up by IC4, and the label by PL4 is illegible on this scan. R40 33 kΩ is clear.' } : p),
     sources: [
       { label: 'Dragon 64 CD41505 sheet 1 (PL4 cassette, relay, TR1)', url: D64IO },
       { label: 'Dragon 32 Information for Machine Code Users, Cassette connections, p. 2', url: MCU },
+      { label: 'Dragon Data Service Information RWEW/KA/0080a (Dragon 32), Cassette faults: +1 V / -0.5 V input, 270-470K series resistor', url: SVC(1) },
     ],
   },
   {
@@ -397,38 +399,40 @@ const SVC_A = { label: 'Dragon Data Service Information RWEW/RA/0082a, A. No pic
 const SVC_P = { label: 'Dragon Data Service Information RWEW/KA/0081a, Faults during program operation (IC15, IC17, IC18, IC19, RAM lines)', url: SVC(2) };
 const PSU_WIKI = { label: 'The Dragon Archive wiki, PSU Pictures: transformer labels (8-8.5 V 1.5 A; 28 V CT 0.25 A)', url: WIKI('PSU_Pictures') };
 const firstTen = d64 => [
-  { step: 1, check: 'Transformer winding A, pack plugged in, computer switched off', where: 'Power pack socket (PL9) pin 1 to pin 2', expect: '8-8.5 V AC (a little more unloaded; SW1 is after the socket)',
-    ifNot: 'The pack or its lead: it holds only a transformer, no rectifier. Service sheet step 1, "check transformer".', source: PSU_WIKI },
+  { step: 1, check: 'Transformer winding A, pack plugged in, computer switched off', where: 'Power pack socket (PL9) pin 1 to pin 2', expect: '8-8.5 V AC',
+    ifNot: 'The pack or its lead: it holds only a transformer, no rectifier.', source: PSU_WIKI, verify: true },
   { step: 2, check: 'Transformer winding B', where: 'Power pack socket (PL9) pin 3 to pin 4; pin 5 to pin 4', expect: 'About 14 V AC each (28 V AC from pin 3 to pin 5)',
-    ifNot: `The pack or its lead. Without winding B there is no +12 V and no ${d64 ? '-12 V' : '-5 V'}.`, source: PSU_WIKI },
-  { step: 3, check: '+5 V from the LM309 (REG1), switched on', where: 'PSU board to CPU board (PL10 / PL6) pin 2 to pin 4', expect: '+4.75 to +5.25 V DC',
-    ifNot: d64 ? 'PL10 seated, the 1N5401 bridge, C6 and C9 (4700 µF), then the LM309. Service sheet: check PL10, test voltages, check diodes.' : 'PL10 seated, the bridge D1, D2, D5, D6 (1N4003), C6 (4700 µF), then the LM309. Service sheet: check PL10, test voltages, check diodes.',
+    ifNot: 'The pack or its lead.', source: PSU_WIKI, verify: true },
+  { step: 3, check: '+5 V from the LM309 (REG1), switched on', where: 'PSU board to CPU board (PL10 / PL6) pin 2 to pin 4', expect: '+5 V DC',
+    ifNot: d64 ? 'PL10 seated, the 1N5401 bridge, C6 and C9 (4700 µF), then the LM309.' : 'PL10 seated, the bridge D1, D2, D5, D6 (1N4003), C6 (4700 µF), then the LM309.',
     source: d64 ? { label: 'Dragon 64 power supply CD41519 (REG1 LM309, bridge, PL10)', url: D64PSU } : { label: 'Dragon 32 PSU diagram SA2121 (REG1 LM309 +5 V 1400 mA, D1-D8, PL10)', url: D32PSU } },
   { step: 4, check: d64 ? '+12 V (LM7812) and -12 V (LM7912)' : '+12 V (LM7812) and -5 V (LM7905)', where: 'PSU board to CPU board (PL10 / PL6) pin 1 and pin 3, each to pin 4',
-    expect: d64 ? '+11.4 to +12.6 V on pin 1; -11.4 to -12.6 V on pin 3' : '+11.4 to +12.6 V on pin 1; -4.75 to -5.25 V on pin 3',
-    ifNot: d64 ? 'The regulator, or its raw supply from the 1N4002s and C5. -12 V feeds the RS-232 drivers and the 79L05 that makes -5 V on the CPU board.' : 'The regulator, or its raw +18 V / -18 V from D3, D4, D7, D8. -5 V pulled towards 0 V is usually a shorted 4116: the LM7905 gives only 50 mA.',
-    source: d64 ? { label: 'Dragon 64 power supply CD41519 (LM7812, LM7912, PL10 pin 3 -12 V)', url: D64PSU } : { label: 'Dragon 32 PSU diagram SA2121 (REG2 LM7812 250 mA, REG3 LM7905 50 mA)', url: D32PSU } },
+    expect: d64 ? '+12 V on pin 1; -12 V on pin 3' : '+12 V on pin 1; -5 V on pin 3',
+    ifNot: d64 ? 'The regulator, or its raw supply from the 1N4002s (C8 on the positive side, C5 on the negative). -12 V feeds the RS-232 drivers and, on the CPU board, the 79L05 that makes -5 V.' : 'The regulator, or its raw +18 V / -18 V from D3, D4, D7, D8. The SA2121 output table gives the -5 V board output a 50 mA maximum.',
+    source: d64 ? { label: 'Dragon 64 power supply CD41519 (LM7812, LM7912, PL10 pin 3 -12 V)', url: D64PSU } : { label: 'Dragon 32 PSU diagram SA2121 (REG2 LM7812, REG3 LM7905; output table +12 V 250 mA, -5 V 50 mA maximum)', url: D32PSU } },
   d64
-    ? { step: 5, check: '+5 V at the CPU, SAM and RAM', where: '6809E pin 7; SAM pin 40; 4164 pin 8', expect: '+4.75 to +5.25 V',
-        ifNot: 'A break between PL6 and the chip, or a chip pulling the rail down (feel for a hot one). The 4164s run on +5 V only.', source: { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (CPU, SAM, 4164 supply)', url: D64CPU } }
+    ? { step: 5, check: '+5 V at the CPU, SAM and RAM', where: '6809E pin 7; SAM pin 40; 4164 pin 8', expect: '+5 V',
+        ifNot: 'A break between PL6 and the chip. The 4164s run on +5 V only.', source: { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (CPU, SAM, 4164 supply)', url: D64CPU } }
     : { step: 5, check: 'The three rails at the 4116 RAM, and +5 V at the CPU', where: '4116 pin 9; 4116 pin 8; 4116 pin 1; 6809E pin 7', expect: '+5 V on pin 9, +12 V on pin 8, -5 V on pin 1; +5 V on the 6809E',
-        ifNot: 'A break between PL6 and the RAM. Lose -5 V and the 4116s fail first.', source: { label: 'The Dragon Archive wiki, Dragon 32 - 64K Upgrade (4116 pins 1, 8, 9)', url: WIKI('Dragon_32_-_64K_Upgrade') } },
+        ifNot: 'A break between PL6 and the chip.', source: { label: 'The Dragon Archive wiki, Dragon 32 - 64K Upgrade (4116 pins 1, 8, 9)', url: WIKI('Dragon_32_-_64K_Upgrade') }, verify: true },
   { step: 6, check: 'Reset', where: '6809E pin 37', expect: 'LOW while RESET is held, HIGH within a moment of release',
-    ifNot: 'The RESET button, C23 (1 µF) or R15 (100 kΩ). Service sheet step 3, "check RESET button operation".', source: SVC_A },
+    ifNot: d64 ? 'The RESET button SW1, C55 (33 µF) or R17 (100 kΩ), and diodes D9, D18-D20 in the reset network (CD41505 sheet 2).' : 'The RESET button, C23 (1 µF) or R15 (100 kΩ). Service sheet step 3, "check RESET button operation".', source: d64 ? { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (reset network C55, R17, SW1)', url: D64CPU } : SVC_A, verify: true },
   { step: 7, check: 'Master crystal at the SAM', where: 'SAM pin 5 and pin 6', expect: d64 ? '14.218 MHz (XL3)' : '14.218 MHz (XL2; the SA2120 sheet marks 14.32 MHz)',
     ifNot: `The crystal and its trimmer, then ${d64 ? 'the SAM (IC39)' : 'IC15 (SAM): service sheet steps 4 and 5, reseat IC15, then replace it'}.`,
-    source: d64 ? { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (XL3 14.218 MHz)', url: D64CPU } : SVC_A },
-  { step: 8, check: 'E and Q at the CPU', where: '6809E pin 34; 6809E pin 35', expect: 'About 0.89 MHz square waves, Q a quarter cycle ahead of E',
-    ifNot: d64 ? 'No E or Q with the crystal running: the SAM (IC39). Clocks good but no boot: CPU IC38, then ROMs IC34 and IC37, then the 4164 bank (the Dragon 32 service order).' : 'No E or Q with the crystal running: IC15 (SAM). Clocks good but no boot: the service sheet order IC15, IC17, IC18 (ROMs), IC19 (CPU), then the RAM lines.',
-    source: SVC_P },
+    source: d64 ? { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (XL3 14.218 MHz)', url: D64CPU } : SVC_A, ...(d64 ? {} : { verify: true }) },
+  { step: 8, check: 'E and Q at the CPU', where: '6809E pin 34; 6809E pin 35', expect: 'About 0.89 MHz square waves in the slow mode set at reset (crystal / 16; crystal / 8 in fast mode), Q a quarter cycle ahead of E',
+    ifNot: d64 ? 'No E or Q with the crystal running: the SAM (IC39). Clocks good but no boot, in the Dragon 32 service order (SAM, ROMs, CPU, RAM): the SAM IC39, ROMs IC34 and IC37, CPU IC38, then the 4164 bank.' : 'No E or Q with the crystal running: IC15 (SAM). Clocks good but no boot: the service sheet order IC15, IC17, IC18 (ROMs), IC19 (CPU), then the RAM lines.',
+    source: SVC_P, verify: true },
 ];
 const clocks = d64 => [
-  { name: `Master crystal ${d64 ? 'XL3' : 'XL2'} (PAL only: ${d64 ? 'the NTSC Tano Dragon 64 is not on these sheets' : 'there is no NTSC Dragon 32'})`, where: 'SAM pin 5 and pin 6',
-    f: d64 ? '14.218 MHz' : '14.218 MHz (the SA2120 sheet marks 14.32 MHz)', verify: !d64,
-    source: { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (XL3 14.218 MHz); the Dragon 32 SA2120 sheet 1 marks XL2 14.32 MHz', url: D64CPU } },
-  { name: 'VDG clock (crystal / 4)', where: 'SAM pin 7 to VDG pin 33', f: '3.5545 MHz', source: SAMDS(4, 'pin description table: VClk = crystal / 4 (3.579545 MHz from 14.31818 MHz), p. 5-326') },
-  { name: 'E, CPU clock (crystal / 16)', where: `SAM pin 14 to 6809E pin 34; pia6821 pin 25 (both PIAs)${d64 ? '; 6551 pin 27 (ACIA Φ2, on E per CD41505 sheet 3)' : ''}`, f: '0.888625 MHz', source: SAMDS(4, 'pin description table: E and Q, the MC6809E clocks, 90 degrees apart, p. 5-326') },
-  { name: 'Q, quadrature clock', where: 'SAM pin 13 to 6809E pin 35', f: '0.888625 MHz', source: CPUDS(3, 'bus timing, Q leads E (tEQ1), p. 3') },
+  d64
+    ? { name: 'Master crystal XL3 (PAL board; the NTSC Tano Dragon 64 is not on these sheets)', where: 'SAM pin 5 and pin 6', f: '14.218 MHz',
+      source: { label: 'Dragon 64 CPU 64K (PAL) CD41505 sheet 2 (XL3 14.218 MHz)', url: D64CPU } }
+    : { name: 'Master crystal XL2', where: 'SAM pin 5 and pin 6', f: '14.32 MHz (as the SA2120 sheet marks it; the Dragon 64 sheet has 14.218 MHz)', verify: true,
+      source: { label: 'Dragon 32 circuit diagram SA2120 sheet 1 (XL2 14.32 MHz)', url: D32CPU } },
+  { name: 'VDG clock (crystal / 4)', where: 'SAM pin 7 to VDG pin 33', f: '3.5545 MHz', verify: true, source: SAMDS(4, 'pin description table: VClk = crystal / 4 (3.579545 MHz from 14.31818 MHz), p. 5-326') },
+  { name: 'E, CPU clock (crystal / 16)', where: `SAM pin 14 to 6809E pin 34; pia6821 pin 25 (both PIAs)${d64 ? '; 6551 pin 27 (ACIA Φ2, on E per CD41505 sheet 3)' : ''}`, f: '0.888625 MHz', verify: true, source: SAMDS(4, 'pin description table: E and Q, the MC6809E clocks, 90 degrees apart, p. 5-326') },
+  { name: 'Q, quadrature clock', where: 'SAM pin 13 to 6809E pin 35', f: '0.888625 MHz', verify: true, source: CPUDS(3, 'bus timing, Q leads E (tEQ1), p. 3') },
   ...(d64 ? [] : [{ name: 'PAL colour subcarrier', where: 'LM1889 colour encoder (IC9)', f: '4.433619 MHz', source: { label: 'Dragon 32 circuit diagram SA2120 sheet 3 (LM1889, 4.433619 MHz)', url: D32VID } }]),
   { name: 'Field sync (/FS)', where: 'VDG pin 37', f: '50 Hz', source: { label: 'Inside the Dragon, Appendix 7, PIA summary (CB1 field sync every 20 ms), pp. 343-344', url: ITD(350) } },
   ...(d64 ? [{ name: 'ACIA baud-rate crystal', where: '6551 pin 6 to pin 7', f: '1.8432 MHz', source: { label: 'Dragon 64 CD41505 sheet 3 (6551, 1.8432 MHz crystal)', url: D64VID } }] : []),
@@ -526,7 +530,7 @@ RCS.add({
         { n: 17, name: 'Q7', type: 'data', dir: 'out', desc: 'Data output 7.', terms: ['tristate'] },
         { n: 18, name: 'A11', type: 'addr', dir: 'in', desc: 'Address bit 11.' },
         { n: 19, name: 'A10', type: 'addr', dir: 'in', desc: 'Address bit 10.' },
-        { n: 20, name: '/E', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip enable; latches the address and enables the outputs. The data sheet makes the polarity a mask option; the Dragon sheet draws it active LOW.', terms: ['cs'], probe: 'Pulses LOW while BASIC runs from this chip', conflict: 'Data sheet pin is "E" (polarity mask-programmed); SA2120 sheet 1 draws it with a bar.' },
+        { n: 20, name: '/E', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip enable, active LOW: E falling latches the address and enables the outputs; E HIGH deselects the chip and puts it in power-down. The data sheet prints the name without a bar; its timing is active LOW, as the Dragon sheet draws it.', terms: ['cs'], probe: 'Pulses LOW while BASIC runs from this chip' },
         { n: 21, name: 'A12', type: 'addr', dir: 'in', desc: 'Address bit 12.' },
         { n: 22, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9.' },
         { n: 23, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bit 8.' },
@@ -626,7 +630,7 @@ RCS.add({
           'The brick is only a transformer: no rectifier or regulator inside. Measure 8–8.5 V AC across PL9 pins 1-2 and about 14 V AC from pins 3 and 5 to pin 4 before you open the computer.',
           'On the PSU board, D1, D2, D5, D6 (1N4003) and C6 (4700 µF) feed the LM309; D3, D4, D7, D8 (1N4002) make the raw +18 V and -18 V for the LM7812 and LM7905.',
           'SW1 switches the secondaries only. The transformer is live whenever the mains plug is in.',
-          '4116 RAM needs all three rails: lose -5 V and the RAM fails first. The -5 V regulator is a 50 mA part; a shorted RAM chip pulls it down.',
+          'The SA2121 output table limits the outputs to +5 V 1400 mA, +12 V 250 mA and -5 V 50 mA.',
           'Three PSU boards: MK1 (1286 modulator), MK2 (1233, obsolete; Dragon Data replaced it) and MK3 (1287). Mixing boards needs the resistor changes in the repair notes.',
           'Monitor socket and modulator are on the PSU board, so a video fault can be on either board: check PL10 pins 6, 7 and 9.',
         ],
@@ -641,14 +645,14 @@ RCS.add({
       firstTen: firstTen(false),
       clocks: clocks(false),
       rails: [
-        { rail: '+5 V', expect: '4.75–5.25 V', where: '6809E pin 7; SAM pin 40; 4116 pin 9', note: 'LM309, 1.4 A maximum. The sheet gives the nominal only; the range is the usual ±5 %.' },
-        { rail: '+12 V', expect: '11.4–12.6 V', where: '4116 pin 8; dragon-cart pin 1 (cartridge)', note: 'LM7812, 250 mA. RAM VDD, the relay and the cartridge.' },
-        { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '4116 pin 1', note: 'LM7905, 50 mA. RAM VBB and the video output stage.' },
+        { rail: '+5 V', expect: '+5 V', where: '6809E pin 7; SAM pin 40; 4116 pin 9', note: 'LM309, 1.4 A maximum. The sheet gives the nominal only.' },
+        { rail: '+12 V', expect: '+12 V', where: '4116 pin 8; dragon-cart pin 1 (cartridge)', note: 'LM7812; board output 250 mA maximum. RAM VDD, the relay and the cartridge.' },
+        { rail: '-5 V', expect: '-5 V', where: '4116 pin 1', note: 'LM7905; board output 50 mA maximum. RAM VBB and the video output stage.' },
         { rail: 'Raw', expect: 'About +18 V and -18 V DC', where: 'LM7812 and LM7905 inputs on the PSU board', note: 'Unregulated, from the 28 V CT winding (sheet labels).' },
       ],
       testPoints: [
         { tp: 'Master crystal', where: 'SAM pin 5', expect: '14.218 MHz (XL2; the SA2120 sheet marks it 14.32 MHz)', verify: true },
-        { tp: 'E clock', where: '6809E pin 34', expect: 'About 0.89 MHz (crystal ÷ 16)', scope: eScope() },
+        { tp: 'E clock', where: '6809E pin 34', expect: 'About 0.89 MHz (crystal ÷ 16) in the slow mode set at reset; crystal ÷ 8 in fast mode', scope: eScope() },
         { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead', scope: qScope() },
         { tp: 'VDG clock', where: 'VDG pin 33', expect: 'Crystal ÷ 4 from SAM pin 7, about 3.55 MHz', scope: vclkScope() },
         { tp: 'Horizontal sync', where: 'VDG pin 38', expect: 'Pulses every 63.5 µs (to PIA0 CA1)' },
@@ -687,14 +691,14 @@ RCS.add({
       firstTen: firstTen(true),
       clocks: clocks(true),
       rails: [
-        { rail: '+5 V', expect: '4.75–5.25 V', where: '6809E pin 7; SAM pin 40; 4164 pin 8; 6551 pin 15', note: 'LM309 on the PSU board.' },
-        { rail: '+12 V', expect: '11.4–12.6 V', where: 'dragon-cart pin 1 (cartridge); dragon-serial pin 3 (PL8, through 4.7 kΩ)', note: 'LM7812. RS-232 drivers, relay, cartridge.' },
-        { rail: '-12 V', expect: '-11.4 to -12.6 V', where: 'dragon64-psu pin 3 (PL6); dragon-serial pin 7 (PL8, through 4.7 kΩ)', note: 'LM7912. RS-232 drivers and the 79L05.' },
-        { rail: '-5 V', expect: '-4.75 to -5.25 V', where: '79L05 output on the CPU board', note: 'Video output stage.', verify: true },
+        { rail: '+5 V', expect: '+5 V', where: '6809E pin 7; SAM pin 40; 4164 pin 8; 6551 pin 15', note: 'LM309 on the PSU board.' },
+        { rail: '+12 V', expect: '+12 V', where: 'dragon-cart pin 1 (cartridge); dragon-serial pin 3 (PL8, through 4.7 kΩ)', note: 'LM7812. RS-232 drivers, relay, cartridge.' },
+        { rail: '-12 V', expect: '-12 V', where: 'dragon64-psu pin 3 (PL6); dragon-serial pin 7 (PL8, through 4.7 kΩ)', note: 'LM7912. RS-232 drivers and the 79L05.' },
+        { rail: '-5 V', expect: '-5 V', where: '79L05 output on the CPU board', note: 'Video output stage.', verify: true },
       ],
       testPoints: [
         { tp: 'Master crystal', where: 'SAM pin 5', expect: '14.218 MHz (XL3)' },
-        { tp: 'E clock', where: '6809E pin 34', expect: 'About 0.89 MHz', scope: eScope() },
+        { tp: 'E clock', where: '6809E pin 34', expect: 'About 0.89 MHz in the slow mode set at reset; crystal ÷ 8 in fast mode', scope: eScope() },
         { tp: 'Q clock', where: '6809E pin 35', expect: 'Same rate as E, a quarter cycle ahead', scope: qScope() },
         { tp: 'VDG clock', where: 'VDG pin 33', expect: 'Crystal ÷ 4 from SAM pin 7, about 3.55 MHz', scope: vclkScope() },
         { tp: 'ACIA crystal', where: '6551 pin 6', expect: '1.8432 MHz' },

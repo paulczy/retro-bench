@@ -1,0 +1,3 @@
+data-1: dragon64 reset ifNot C55 33uF/R17 100k changed to 3.3uF/10k (log row added)
+data-2: spectrum128 -12V check IC33 pin 1 changed to IC34 pin 1 (log row added)
+app-1: validator pin1 corner square-package check disabled (no log)

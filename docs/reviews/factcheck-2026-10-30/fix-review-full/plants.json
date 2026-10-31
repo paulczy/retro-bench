@@ -1,0 +1,78 @@
+{
+ "batches": [
+  [
+   "fa-commodore",
+   "a",
+   23,
+   121,
+   "commodore.js"
+  ],
+  [
+   "fa-apple",
+   "a",
+   122,
+   186,
+   "apple.js"
+  ],
+  [
+   "fa-atari-coleco",
+   "a",
+   187,
+   278,
+   "atari.js"
+  ],
+  [
+   "fa-sinclair-rest",
+   "a",
+   279,
+   435,
+   "sinclair.js"
+  ],
+  [
+   "fb-1",
+   "b",
+   1,
+   255,
+   "ibm.js"
+  ],
+  [
+   "fb-2",
+   "b",
+   256,
+   445,
+   "tandy.js"
+  ],
+  [
+   "fb-3",
+   "b",
+   446,
+   635,
+   "amstrad.js"
+  ],
+  [
+   "fb-4",
+   "b",
+   636,
+   825,
+   "acorn.js"
+  ],
+  [
+   "fb-5",
+   "b",
+   826,
+   1013,
+   "heathkit.js"
+  ]
+ ],
+ "plants": {
+  "fa-commodore": "commodore.js cpu7501 pin 5: VCC -> GND",
+  "fa-apple": "apple.js cpu6502 pin 8: Vcc -> GND",
+  "fa-atari-coleco": "atari.js cpu6502c pin 8: Vcc -> GND",
+  "fa-sinclair-rest": "sinclair.js cpuz80 pin 11: VCC -> GND",
+  "fb-1": "ibm.js cpu8088 pin 40: VCC -> GND",
+  "fb-2": "tandy.js cpu6809e pin 7: Vcc -> GND",
+  "fb-3": "amstrad.js pal40030 pin 20: VCC -> GND",
+  "fb-4": "acorn.js cpu65sc12 pin 8: VDD -> GND",
+  "fb-5": "heathkit.js cpu6808 pin 8: VCC -> GND"
+ }
+}

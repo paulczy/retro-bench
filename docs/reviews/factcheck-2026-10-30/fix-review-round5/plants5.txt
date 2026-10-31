@@ -1,0 +1,1 @@
+r5 plants: app flagged() ignores conflict; heathkit sc01a conflict text R515 -> R516 (p. 50)

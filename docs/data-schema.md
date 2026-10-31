@@ -65,6 +65,11 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
   draws a square footprint numbered as JEDEC does, top view: pin 1 in the middle of the top edge, then
   counter-clockwise (left along the top, down the left side, along the bottom, up the right). Any other
   package draws as a DIP.
+- `pin1: 'corner'` (optional, only on a square `PLCC-n` or `QIL-n`, n a multiple of 4 from 20) is for a part whose
+  maker puts pin 1 at a corner, not mid-edge: pin 1 at the top of the left side by the top-left corner, then
+  counter-clockwise as a QFP numbers (1 to n/4 down the left, along the bottom, up the right, back along the top).
+  The Electron ULA uses it: "pin 1 being marked at the top left of the chip, and the other pins following
+  consecutively anti-clockwise" (Electron Service Manual ch. 6, p. 8). A `QIL-n` without it draws as a DIP.
 - `terms` are glossary ids from `core.js`. Add a term there only when it is electronics vocabulary a
   tech might not know; keep `short` to one sentence and `long` to 2–3.
 
@@ -140,7 +145,13 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
 - `supply.external: false` for machines with an internal supply (Apple II, PET, CoCo, IBM PC). Still fill
   `name`, `output` and `notes`, and point `connector` at the internal PSU-to-board connector if you add one to
   `connectors` (IBM P8/P9, Apple II 6-pin). The app says "Internal supply" and draws that connector.
-- `notes` holds the known problems of that supply and what to check before plugging it into a board.
+- `notes` holds the known problems of that supply and what to check before plugging it into a board. A note is
+  a string, or `{ text: '...', verify: true?, conflict: '...'? }` when that one note is unproven.
+- `verify: true` and `conflict: 'text'` work on every power record: `supply`, a supply note, each rail, test
+  point, clock and firstTen step, and a `scope`. The app shows the CHECK stamp (and the amber "Sources disagree"
+  note) on the power page, the machine page's test points, a chip's PIN DETAIL "Expect on this machine" and
+  scope blocks, and search results; a rail's or test point's flag carries to its scope. The print card writes
+  "(unverified)" and "Sources disagree:" in words. Replacement rows take the same two fields.
 - Write `where` as `<chip short> pin <n>` so the app can link it to the drawing. A connector pin uses the
   connector's exact `name` or `id` (see firstTen below). The validator checks the `where` of every rail and test
   point, with or without a `scope`, and warns on a reference it cannot link.

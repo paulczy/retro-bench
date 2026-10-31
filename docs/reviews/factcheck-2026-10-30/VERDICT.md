@@ -191,3 +191,18 @@ source does not state, and 27 HERO 1 pins whose only source, a book on archive.o
 Coverage is now complete: every item of the 2,056 has a decision. Remaining risk is concentrated where the error rate
 was highest: Commodore chip pins (11 %) and card-edge orientation (15 %). Both should be re-checked in full after the
 fixes, not only the sampled items.
+
+## Fix rounds after the full-coverage pass (30 October 2026)
+
+All fixes were reviewed by GPT-6.1 Sol at medium effort (user's choice) before commit, with planted errors in every
+review. Every planted error was caught, except one that was placed outside its reviewer's scope (round 4, noted).
+
+| Round | What was fixed | Review result |
+|---|---|---|
+| Full-coverage fixes | 1,729 ledger rows across all brand files (`docs/verification/factcheck-full-fixes-a.md`, `-b.md`) | 9 batches + diff audit: 7 high errors in the fixes and 2 app gaps found |
+| 3 | 57 data changes, app shows CHECK on every record kind | 4 fixer-vs-reviewer disputes settled from the drawings; IBM Power Good order, Dragon, Acorn found |
+| 4 | IBM HMS order, Dragon wording, Acorn shared text; conflict text in search, scopes, grids, print | 5155 steps, HERO flag, Dragon claim; conflict text missing in grids and pin tables |
+| 5 | 5155 HMS steps, HERO conflict, Dragon claim; one shared flag helper for every renderer | Data clean. App: conflict text missing on sources, keys, BASIC, resources; no "(unverified)" in ordinary print |
+| 6 | Those renderers, print rule, video page; probe hints and PAL caption | Reviewer harness 264/264; real browser print shows "(unverified)" |
+
+Remaining unproven items are shown with CHECK on screen and "(unverified)" in print, never as fact.
