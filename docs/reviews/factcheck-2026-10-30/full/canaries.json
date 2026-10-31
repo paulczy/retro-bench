@@ -1,0 +1,154 @@
+{
+ "0": [
+  "cpu6502 pin 2 shown as \"Φ1 out\" (true: \"RDY\")",
+  "cpu6502 pin 3 shown as \"RDY\" (true: \"Φ1 out\")"
+ ],
+ "1": [
+  "mc3470 pin 1 shown as \"IN B\" (true: \"IN A\")",
+  "mc3470 pin 2 shown as \"IN A\" (true: \"IN B\")"
+ ],
+ "2": [
+  "rom2332 pin 1 shown as \"A6\" (true: \"A7\")",
+  "rom2332 pin 2 shown as \"A7\" (true: \"A6\")"
+ ],
+ "3": [
+  "cpu7501 pin 1 shown as \"RDY\" (true: \"Φ0 IN\")",
+  "cpu7501 pin 2 shown as \"Φ0 IN\" (true: \"RDY\")"
+ ],
+ "4": [
+  "vic20-iec pin 1 shown as \"GND\" (true: \"/SRQ IN\")",
+  "vic20-iec pin 2 shown as \"/SRQ IN\" (true: \"GND\")"
+ ],
+ "5": [
+  "plus4-video pin 1 shown as \"GND\" (true: \"LUM\")",
+  "plus4-video pin 2 shown as \"LUM\" (true: \"GND\")"
+ ],
+ "6": [
+  "1541-xfmr pin 2 shown as \"16 V AC\" (true: \"9 V AC\")",
+  "1541-xfmr pin 4 shown as \"9 V AC\" (true: \"16 V AC\")"
+ ],
+ "7": [
+  "bbcb-uhf pin 1 shown as \"0 V\" (true: \"UHF\")",
+  "bbcb-uhf pin 2 shown as \"UHF\" (true: \"0 V\")"
+ ],
+ "8": [
+  "cpc464-stereo pin T shown as \"RIGHT\" (true: \"LEFT\")",
+  "cpc464-stereo pin R shown as \"LEFT\" (true: \"RIGHT\")"
+ ],
+ "9": [
+  "ii-kbd pin 1 shown as \"STROBE\" (true: \"+5 V\")",
+  "ii-kbd pin 2 shown as \"+5 V\" (true: \"STROBE\")"
+ ],
+ "10": [
+  "glu2c pin 1 shown as \"A0\" (true: \"14M\")",
+  "glu2c pin 2 shown as \"14M\" (true: \"A0\")"
+ ],
+ "11": [
+  "2e-slot pin 1 shown as \"A0\" (true: \"/I/O SELECT\")",
+  "2e-slot pin 2 shown as \"/I/O SELECT\" (true: \"A0\")"
+ ],
+ "12": [
+  "antic pin 2 shown as \"AN1\" (true: \"AN0\")",
+  "antic pin 3 shown as \"AN0\" (true: \"AN1\")"
+ ],
+ "13": [
+  "atari-sio pin 1 shown as \"CLOCK OUT\" (true: \"CLOCK IN\")",
+  "atari-sio pin 2 shown as \"CLOCK IN\" (true: \"CLOCK OUT\")"
+ ],
+ "14": [
+  "hero1-p404 pin 31 shown as \"MOTION IRQ\" (true: \"SONAR RESET\")",
+  "hero1-p404 pin 33 shown as \"SONAR RESET\" (true: \"MOTION IRQ\")"
+ ],
+ "15": [
+  "msx1-printer pin 1 shown as \"PDB0\" (true: \"/PSTB\")",
+  "msx1-printer pin 2 shown as \"/PSTB\" (true: \"PDB0\")"
+ ],
+ "16": [
+  "atari-controller pin 1 shown as \"BACK\" (true: \"FWD\")",
+  "atari-controller pin 2 shown as \"FWD\" (true: \"BACK\")"
+ ],
+ "17": [
+  "atari-sio pin 1 shown as \"CLOCK OUT\" (true: \"CLOCK IN\")",
+  "atari-sio pin 2 shown as \"CLOCK IN\" (true: \"CLOCK OUT\")"
+ ],
+ "18": [
+  "hero1-p201 pin 1 shown as \"LOW LOGIC BATT\" (true: \"LOGIC GND\")",
+  "hero1-p201 pin 2 shown as \"LOGIC GND\" (true: \"LOW LOGIC BATT\")"
+ ],
+ "19": [
+  "m4-iobus pin 1 shown as \"GND\" (true: \"XDB0\")",
+  "m4-iobus pin 2 shown as \"XDB0\" (true: \"GND\")"
+ ],
+ "20": [
+  "dram4164 pin 1 shown as \"DIN\" (true: \"NC\")",
+  "dram4164 pin 2 shown as \"NC\" (true: \"DIN\")"
+ ],
+ "21": [
+  "fdc1771 pin 2 shown as \"/CS\" (true: \"/WE\")",
+  "fdc1771 pin 3 shown as \"/WE\" (true: \"/CS\")"
+ ],
+ "22": [
+  "rom2764 pin 2 shown as \"A7\" (true: \"A12\")",
+  "rom2764 pin 3 shown as \"A12\" (true: \"A7\")"
+ ],
+ "23": [
+  "sc02 pin 1 shown as \"TP1\" (true: \"AO\")",
+  "sc02 pin 3 shown as \"AO\" (true: \"TP1\")"
+ ],
+ "24": [
+  "pc-kbd pin 1 shown as \"+KBD DATA\" (true: \"+KBD CLOCK\")",
+  "pc-kbd pin 2 shown as \"+KBD CLOCK\" (true: \"+KBD DATA\")"
+ ],
+ "25": [
+  "xt-slot pin A1 shown as \"D7\" (true: \"-I/O CH CK\")",
+  "xt-slot pin A2 shown as \"-I/O CH CK\" (true: \"D7\")"
+ ],
+ "26": [
+  "electron-expansion pin 1 shown as \"AC RETURN\" (true: \"18V AC\")",
+  "electron-expansion pin 3 shown as \"18V AC\" (true: \"AC RETURN\")"
+ ],
+ "27": [
+  "rom9464-cv pin 1 shown as \"A7\" (true: \"NC\")",
+  "rom9464-cv pin 3 shown as \"NC\" (true: \"A7\")"
+ ],
+ "28": [
+  "gime-tcc1014 pin 2 shown as \"XTAL\" (true: \"EXTAL\")",
+  "gime-tcc1014 pin 3 shown as \"EXTAL\" (true: \"XTAL\")"
+ ],
+ "29": [
+  "mc10-expansion pin 1 shown as \"D0\" (true: \"GND\")",
+  "mc10-expansion pin 3 shown as \"GND\" (true: \"D0\")"
+ ],
+ "30": [
+  "vdp9918 pin 1 shown as \"AD7\" (true: \"/RAS\")",
+  "vdp9918 pin 3 shown as \"/RAS\" (true: \"AD7\")"
+ ],
+ "31": [
+  "spectrumplus2-rgb pin 2 shown as \"BRIGHT\" (true: \"0V\")",
+  "spectrumplus2-rgb pin 3 shown as \"0V\" (true: \"BRIGHT\")"
+ ],
+ "32": [
+  "spectrum-power pin 1 shown as \"+9V\" (true: \"0V\")",
+  "spectrum-power pin 2 shown as \"0V\" (true: \"+9V\")"
+ ],
+ "33": [
+  "spectrum128-power pin 1 shown as \"+9V\" (true: \"0V\")",
+  "spectrum128-power pin 2 shown as \"0V\" (true: \"+9V\")"
+ ],
+ "34": [
+  "duo-db25 pin 1 shown as \"GND\" (true: \"NC\")",
+  "duo-db25 pin 2 shown as \"NC\" (true: \"GND\")"
+ ],
+ "35": [
+  "ula10017 pin 1 shown as \"MA5\" (true: \"MUX\")",
+  "ula10017 pin 2 shown as \"MUX\" (true: \"MA5\")"
+ ],
+ "36": [
+  "atmos-exp pin 2 shown as \"PHI2\" (true: \"/ROMDIS\")",
+  "atmos-exp pin 3 shown as \"/ROMDIS\" (true: \"PHI2\")"
+ ],
+ "37": [
+  "lm324 pin 1 shown as \"1IN+\" (true: \"1OUT\")",
+  "lm324 pin 3 shown as \"1OUT\" (true: \"1IN+\")"
+ ]
+}

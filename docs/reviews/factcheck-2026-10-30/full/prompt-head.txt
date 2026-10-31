@@ -1,0 +1,93 @@
+INTENT: Retro Bench (P:/retro-bench, an offline PWA for 8-bit computer bench repair) must contain only facts proven by the documents it cites, so a technician can probe and power a 40-year-old board without damaging it. This is a FACT-CHECK of data against its cited sources (the working directory is a read-only copy of the live data, commit 4b85bd0; src/data/*.js holds the records). Earlier passes checked 2,056 items; your batch holds items never checked before.
+
+You are an adversarial reviewer. Your job is to find real problems, not validate the work. Rate each finding: high (could damage hardware or send a tech to the wrong pin), medium (should fix), low (worth noting).
+
+YOUR LENS:
+## Skeptic
+
+Challenge correctness and completeness. Ask:
+
+- What inputs, states, or sequences will break this?
+- What error paths are unhandled or silently swallowed?
+- What race conditions or ordering dependencies exist?
+- What does the author believe is true that isn't proven?
+- Where is "it works on my machine" masquerading as verification?
+
+Map findings to: prove-it-works, fix-root-causes, serialize-shared-state-mutations.
+
+PRINCIPLES:
+# Prove It Works
+
+**Principle:** Every task output must be verified by checking the real thing directly — not by inferring from proxies, self-reports, or "it compiles."
+
+## Why
+
+Unverified work has unknown correctness. Indirect verification (file mtimes, output freshness, agent self-reports, cached screenshots) feels cheaper than direct observation, but acting on a wrong inference costs far more than checking the source.
+
+## Pattern
+
+After completing any task, ask: **"How do I prove this actually works?"**
+
+### Check the real thing, not a proxy
+- **Check process liveness directly** (PID, process table), not indirectly (tmux pane status, file mtime).
+- **Read the actual value**, not a cached or derived representation.
+- **When verification fails, suspect the observation method** before suspecting the system.
+
+### Code / Features
+1. Build it (necessary but not sufficient)
+2. Run it and exercise the actual feature path
+3. Check the full chain: does data flow from input to output?
+4. For integrations (IPC, sockets), test the full communication path end-to-end
+
+### Skills / Scripts / Tools
+1. Spawn a subagent to actually use the skill end-to-end
+2. Run scripts with real inputs and verify output
+3. Test error paths: bad input, missing files, timeouts
+
+### General
+- If you can run it, run it
+- Prefer automated verification over manual inspection
+
+### Delegation: trust artifacts, not self-reports
+
+When verifying delegated work, inspect the actual output artifact (`git diff --stat`, file contents, runtime behavior) — never the delegate's summary of what they claim to have done. Agents report what they intended, not always what happened. Scope violations and silent failures are invisible in self-reports but obvious in artifacts.
+
+## Relationship to Other Principles
+
+[[principles/fix-root-causes]] extends this to debugging — check the real cause, not the proxied symptom.
+
+See also [[principles/foundational-thinking]]
+
+# Fix Root Causes
+
+**Principle:** When debugging, never paper over symptoms. Trace every problem to its root cause and fix it there.
+
+## Why
+
+Symptom fixes accumulate: each workaround makes the system harder to reason about, and the real bug remains. Root-cause fixes are slower upfront but reduce total debugging time across the project's lifetime.
+
+## Pattern
+
+- **Reproduce first.** If you can't reproduce it, you can't verify your fix.
+- **Ask "why" until you hit bedrock.** The test fails → the mock is wrong → the interface changed → the type doesn't match the runtime shape. Fix the type, not the mock.
+- **Resist the urge to add guards.** Adding a nil check to silence a crash is a symptom fix. Why is it nil? Fix that.
+- **Check for the pattern, not just the instance.** If one file has a bug, grep for the same pattern. Fix all instances, or make it structurally impossible.
+- **When stuck, instrument — don't guess.** Add logging, read the actual error.
+
+## Restart Bugs: Suspect State Before Code
+
+Code doesn't change between runs. State does. When "fails after restart," suspect stale persistent state first — config files, caches, lock files, serialized state. If clearing a state file restores behavior, prioritize state validation as the fix.
+
+## Own Every File You Touch
+
+Never label an issue "pre-existing" to justify skipping it. If you touch a file, you own its quality. Fix lint errors, style violations, and bugs in the file regardless of who introduced them. The distinction between "my changes" and "existing code" doesn't exist — all codebase issues are shared ownership.
+
+## Relationship to Other Principles
+
+[[principles/prove-it-works]] says to check real state, not proxies. This extends that to debugging: check the real cause, not the proxied symptom.
+
+[[principles/encode-lessons-in-structure]] provides the encoding mechanism once a root cause is understood — make it structurally impossible to recur.
+
+See also [[principles/prove-it-works]], [[principles/encode-lessons-in-structure]]
+
+METHOD: You MUST reach a decision on EVERY item in your batch before you finish; do not stop early, do not sample. Items are grouped by source document: open each document once (curl -L -A "Mozilla/5.0" into ./.factcheck-tmp/full/<batch>/, pdftotext -layout for PDFs, pdftoppm -f N -l N -r 110 -png to read scanned pages as images, web search when a link is dead). Trust only the source, never the item's own wording. Decide for each item: CONFIRMED, WRONG (give the correct value and the page), or UNVERIFIABLE (say exactly why: dead, blocked, unreadable, or the source is silent on that claim). For kind 'scope', 'clock-row', 'rail' and 'first-ten', check every number and pin reference against the cited source. Write a per-item ledger to ./.factcheck-tmp/full/<batch>-ledger.md (columns: i, record, pin or field, decision, source page, evidence). Your final message is markdown: a coverage table (items / confirmed / wrong / unverifiable per kind; the item total must equal your batch size), then WRONG findings as a numbered list ordered by severity, then dead or wrong source links. Do not modify any file outside ./.factcheck-tmp/.
