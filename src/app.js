@@ -32,6 +32,7 @@ const REDUCE_MQ = matchMedia('(prefers-reduced-motion: reduce)');
 const state = {
   maskPick: MASKS.includes(LS.get('rb-mask', null)) ? LS.get('rb-mask', null) : null,
   recents: arr(LS.get('rb-recent', [])),
+  chipRecents: arr(LS.get('rb-recent-chips', [])),   /* [{ c, m }]: chip id and the machine it was opened under */
   flip: false, filter: null, pin: null, chipId: null, compact: null, stack: false,
   cview: CVIEWS.includes(LS.get('rb-cview', null)) ? LS.get('rb-cview', null) : 'socket',
   conn: null,   /* { id, pin } the selected connector pad on the ports or power page */
@@ -52,6 +53,30 @@ function setMask(m) {
 }
 LIGHT_MQ.addEventListener('change', () => { if (!state.maskPick) { applyMask(); renderStrip(); } });
 applyMask();
+
+/* ---------- keep awake: a Screen Wake Lock on the chip, ports and power pages while the user wants one.
+   The browser drops the lock when the tab is hidden; it is taken again when the page comes back. ---------- */
+const WAKE = 'wakeLock' in navigator;
+const wake = { want: LS.get('rb-wake', false) === true, lock: null, asking: false };
+const wakeView = () => !!(state.ctx.chip || state.ctx.conns);
+const wakeOn = () => WAKE && wake.want && wakeView() && !document.hidden;
+function syncWake() {
+  if (wakeOn() && !wake.lock && !wake.asking) {
+    wake.asking = true;
+    navigator.wakeLock.request('screen').then(l => {
+      wake.asking = false; wake.lock = l;
+      l.addEventListener('release', () => { if (wake.lock === l) wake.lock = null; });
+      syncWake();   /* the page may have changed while the browser was asked */
+    }, () => { wake.asking = false; });
+  } else if (!wakeOn() && wake.lock) { const l = wake.lock; wake.lock = null; l.release().catch(() => {}); }
+}
+const wakeBtn = () => (WAKE ? `<button type="button" class="btn${wake.want ? ' on' : ''}" data-act="wake" aria-pressed="${wake.want}" title="Keep the screen on while this page is open">Keep awake: ${wake.want ? 'On' : 'Off'}</button>` : '');
+function setWake(on) {
+  wake.want = on; LS.set('rb-wake', on);
+  for (const b of $$('[data-act="wake"]')) b.outerHTML = wakeBtn();
+  syncWake();
+}
+document.addEventListener('visibilitychange', syncWake);
 
 /* ---------- offline and install: sw.js precaches the whole app; the strip reports what is true ---------- */
 const SW = /^https?:$/.test(location.protocol) && 'serviceWorker' in navigator ? navigator.serviceWorker : null;
@@ -163,6 +188,10 @@ const sharedNote = s => (s ? `<p class="note">Printed from the ${esc(s.name)} sh
 function touchRecent(id) {
   const r = [id, ...state.recents.filter(x => x !== id)].slice(0, 5);
   if (r.join() !== state.recents.join()) { state.recents = r; LS.set('rb-recent', r); }
+}
+function touchRecentChip(c, m) {
+  const r = [{ c, m }, ...state.chipRecents.filter(x => x && !(x.c === c && x.m === m))].slice(0, 5);
+  if (JSON.stringify(r) !== JSON.stringify(state.chipRecents)) { state.chipRecents = r; LS.set('rb-recent-chips', r); }
 }
 const currentMachine = () => state.ctx.machine || state.recents.map(id => D.machines[id]).find(Boolean) || null;
 const termLinks = (ids, title = 'Terms') => {
@@ -572,6 +601,9 @@ const mark = (t, x, y) => t === 'power' ? `<rect class="mk pwr" x="${x - 4}" y="
   : t === 'reset' ? `<path class="mk rst" d="M ${x} ${y - 5} l 5.5 9.5 h -11 z"/>`
   : t === 'ground' ? `<path class="mk gnd" d="M ${x - 5} ${y - 3} h 10 M ${x - 3} ${y + 1} h 6 M ${x - 1} ${y + 5} h 2"/>` : '';
 const markIcon = t => `<svg viewBox="-7 -7 14 14" aria-hidden="true">${mark(t, 0, 0) || '<circle class="mk ring" r="4.5"/>'}</svg>`;
+/* every lead stub is tinted by its pin's class (src/input.css, .lead.pwr ...); the marks stay, so colour is never the only cue */
+const LEAD = { power: 'pwr', ground: 'gnd', clock: 'clk', reset: 'rst', addr: 'bus', data: 'bus', ctrl: 'ctl', nc: 'nc' };
+const leadOf = p => LEAD[isReset(p) ? 'reset' : p.type] || '';
 function dipGeom(chip, compact) {
   const half = Math.ceil(chip.pins.length / 2);
   const nameW = Math.ceil(Math.max(3, ...chip.pins.map(p => String(p.name).length)) * CHAR);
@@ -603,7 +635,8 @@ function dipSVG(chip) {
     const y = TOP + row * PT + PT / 2, sel = state.pin === p.n, dim = state.filter && !pinIs(p, state.filter);
     const padX = left ? pl : W - pl, mkX = left ? G.markX : W - G.markX, nameX = left ? G.nameEnd : W - G.nameEnd;
     const pad = p.n === 1 ? `<rect class="pad" x="${padX - 9}" y="${y - 9}" width="18" height="18"/>` : `<circle class="pad" cx="${padX}" cy="${y}" r="9"/>`;
-    const lead = left ? `<line class="lead" x1="${padX + 9}" y1="${y}" x2="${bodyX}" y2="${y}"/>` : `<line class="lead" x1="${W - bodyX}" y1="${y}" x2="${padX - 9}" y2="${y}"/>`;
+    const lc = `lead ${leadOf(p)}`;
+    const lead = left ? `<line class="${lc}" x1="${padX + 9}" y1="${y}" x2="${bodyX}" y2="${y}"/>` : `<line class="${lc}" x1="${W - bodyX}" y1="${y}" x2="${padX - 9}" y2="${y}"/>`;
     g += `<g class="pin${dim ? ' dim' : ''}${sel ? ' sel' : ''}" data-pin="${p.n}" data-side="${left ? 'l' : 'r'}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="Pin ${p.n}, ${esc(p.name)}, ${esc(ptype(p.type).label)}">
       <rect class="hit" x="${left ? 1 : W - bodyX + 1}" y="${y - PT / 2}" width="${bodyX - 2}" height="${PT}" rx="3"/>
       ${lead}${pad}${mark(isReset(p) ? 'reset' : p.type, mkX, y)}
@@ -673,7 +706,8 @@ function plccSVG(chip) {
     if (p.n === 1) dot = v ? [a, o(bodyX + 40)] : [o(bodyX + 40), a];
     const [px, py] = v ? [a, o(padX)] : [o(padX), a];
     const pad = p.n === 1 ? `<rect class="pad" x="${px - 9}" y="${py - 9}" width="18" height="18"/>` : `<circle class="pad" cx="${px}" cy="${py}" r="9"/>`;
-    const lead = v ? `<line class="lead" x1="${a}" y1="${o(padX + 9)}" x2="${a}" y2="${o(bodyX)}"/>` : `<line class="lead" x1="${o(padX + 9)}" y1="${a}" x2="${o(bodyX)}" y2="${a}"/>`;
+    const lc = `lead ${leadOf(p)}`;
+    const lead = v ? `<line class="${lc}" x1="${a}" y1="${o(padX + 9)}" x2="${a}" y2="${o(bodyX)}"/>` : `<line class="${lc}" x1="${o(padX + 9)}" y1="${a}" x2="${o(bodyX)}" y2="${a}"/>`;
     const hit = v ? `<rect class="hit" x="${a - PT / 2}" y="${far ? W - bodyX + 1 : 1}" width="${PT}" height="${bodyX - 2}" rx="3"/>`
       : `<rect class="hit" x="${far ? W - bodyX + 1 : 1}" y="${a - PT / 2}" width="${bodyX - 2}" height="${PT}" rx="3"/>`;
     const num = v ? `<text class="num" x="${a}" y="${far ? W - bodyX - 9 : bodyX + 18}" text-anchor="middle">${p.n}</text>`
@@ -746,7 +780,7 @@ function render() {
         html = c === 'ports' ? viewPorts(m) : viewPower(m);
       }
       else if (chip) {
-        ctx.chip = chip;
+        ctx.chip = chip; touchRecentChip(chip.id, m.id);
         if (state.chipId !== chip.id) { state.chipId = chip.id; state.pin = null; state.filter = null; state.flip = false; }
         const pn = Number(r.q.pin);
         if (r.q.pin && chip.pins.some(p => p.n === pn)) state.pin = pn;
@@ -766,7 +800,7 @@ function render() {
   closePop(); closePalette();
   window.scrollTo(0, 0);
   if (ctx.chip || state.conn) { renderPanel(); drawWire(); } else closePanel();
-  watchDip();
+  watchDip(); syncWake();
   if (a === 'glossary' && r.q.term) { const el = document.getElementById('term-' + r.q.term); if (el) el.scrollIntoView({ block: 'center' }); }
   if (c === 'ports' && r.q.c) { const el = document.getElementById('conn-' + r.q.c); if (el) el.scrollIntoView({ block: 'start' }); }
   if (c === 'power' && r.q.c) { const el = $('#supply'); if (el) el.scrollIntoView({ block: 'start' }); }
@@ -811,6 +845,7 @@ const emptyBlk = (label, text) => `<div class="empty"><b>${esc(label)}</b>${text
 
 function viewHome() {
   const recents = state.recents.map(id => D.machines[id]).filter(Boolean);
+  const chipRecents = state.chipRecents.map(x => x && [D.chips[x.c], D.machines[x.m]]).filter(x => x && x[0] && x[0].pins && x[1] && fits(x[1], x[0].id));
   const ready = Object.values(D.machines).filter(m => m.status === 'ready' && !isDrive(m)).length;
   const drives = Object.values(D.machines).filter(m => m.status === 'ready' && isDrive(m)).length;
   const drawn = Object.values(D.chips).filter(c => c.pins).length;
@@ -820,6 +855,7 @@ function viewHome() {
         <div class="big">Retro Bench<small>REV A, 8-BIT REPAIR REFERENCE</small></div>
         <div class="meta"><span>${ready}</span> machines${drives ? ` and <span>${drives}</span> drives` : ''} fitted, <span>${drawn}</span> chips drawn pin by pin<br><span>${Object.keys(D.terms).length}</span> glossary terms, tap any dotted word</div>
         ${recents.length ? `<div class="recent mt-4.5"><div class="h4 mt-0 mb-0">Last on the bench</div>${recents.map(m => `<a href="${mPath(m)}"><span>${esc(mDes(m))}</span>${esc(m.name)}</a>`).join('')}</div>` : ''}
+        ${chipRecents.length ? `<div class="recent mt-3"><div class="h4 mt-0 mb-0">Recent chips</div>${chipRecents.map(([c, m]) => `<a href="${chipPath(m, c)}" aria-label="${esc(c.name)} on the ${esc(m.name)}"><span>${esc(c.short)}</span>${esc(mDes(m))}</a>`).join('')}</div>` : ''}
       </div>
       <div>
         ${edgeField('', 'q-home')}
@@ -1001,9 +1037,10 @@ function viewChip(m, chip) {
     <div class="flex flex-wrap gap-2.5 items-center mt-4">
       <button type="button" class="btn${state.flip ? ' on' : ''}" data-act="flip" aria-pressed="${state.flip}">View: ${state.flip ? 'Bottom' : 'Top'}</button>
       ${state.filter ? `<button type="button" class="btn" data-act="filter" data-t="">Show all pins</button>` : ''}
-      <span class="flex-1"></span><span class="tin sm max-sm:hidden">Tap a pad, or Tab to it and press Enter</span>
+      ${wakeBtn()}
+      <span class="flex-1"></span><span class="tin sm max-sm:hidden">Tap a pad, or Tab to it and press Enter; arrow keys step pins</span>
     </div>
-    <div class="types" role="group" aria-label="Pin types, tap to filter">${present.map(t => `<button type="button" data-act="filter" data-t="${esc(t)}" class="${state.filter === t ? 'on' : ''}" aria-pressed="${state.filter === t}">${markIcon(t)}${t === 'reset' ? 'Reset' : esc(ptype(t).label)} <span class="c">${count(t)}</span></button>`).join('')}</div>
+    <div class="types" role="group" aria-label="Pin types, tap to filter">${present.map(t => `<button type="button" data-act="filter" data-t="${esc(t)}" class="${state.filter === t ? 'on' : ''}" aria-pressed="${state.filter === t}">${LEAD[t] ? `<span class="lsw ${LEAD[t]}" aria-hidden="true"></span>` : ''}${markIcon(t)}${t === 'reset' ? 'Reset' : esc(ptype(t).label)} <span class="c">${count(t)}</span></button>`).join('')}</div>
     <div class="stage${state.stack ? ' stack' : ''}" id="stage">
       <svg class="wire" id="wire" aria-hidden="true"></svg>
       <div><div class="dipwrap" id="dipwrap">${isPLCC(chip) ? plccSVG(chip) : dipSVG(chip)}</div>
@@ -1039,8 +1076,9 @@ function replacementsBlock(chip) {
 function detailBox(chip, m) {
   const p = state.pin != null && chip.pins.find(x => x.n === state.pin);
   if (!p) return `<section class="blk"><span class="lbl">Pin detail</span>
-    <dl class="kv mt-0"><dt>Package</dt><dd class="mono">${esc(chip.pkg || '')}</dd>${chip.family ? `<dt>Family</dt><dd>${esc(chip.family)}</dd>` : ''}${chip.heat ? `<dt>Heat</dt><dd>${HEAT[chip.heat] || esc(chip.heat)}</dd>` : ''}${locOf(chip, m) ? `<dt>Location</dt><dd class="mono">${esc(locOf(chip, m))}</dd>` : ''}</dl>
-    <p class="note">Tap a pad on the footprint, or Tab to it and press Enter. Its detail replaces this, joined to the pad by a copper trace.</p></section>`;
+    <p class="pempty">Select a pin to inspect</p>
+    <dl class="kv"><dt>Package</dt><dd class="mono">${esc(chip.pkg || '')}</dd>${chip.family ? `<dt>Family</dt><dd>${esc(chip.family)}</dd>` : ''}${chip.heat ? `<dt>Heat</dt><dd>${HEAT[chip.heat] || esc(chip.heat)}</dd>` : ''}${locOf(chip, m) ? `<dt>Location</dt><dd class="mono">${esc(locOf(chip, m))}</dd>` : ''}</dl>
+    <p class="note">Tap a pad on the footprint, Tab to it and press Enter, or step with the arrow keys. Its detail replaces this, joined to the pad by a copper trace.</p></section>`;
   return `<section class="blk"><span class="lbl">Pin detail</span>${pinDetail(chip, p, m)}</section>`;
 }
 function pinDetail(chip, p, m) {
@@ -1115,8 +1153,12 @@ function connDetail(c, p, des) {
 }
 const connDetailBox = c => {
   const s = selConn();
-  return s && s.c === c ? `<section class="blk"><span class="lbl">Pin detail</span>${connDetail(s.c, s.p, s.des)}</section>` : '';
+  /* always there, so the first tap fills the box instead of pushing the table down */
+  return s && s.c === c ? `<section class="blk"><span class="lbl">Pin detail</span>${connDetail(s.c, s.p, s.des)}</section>`
+    : '<section class="blk dashed"><span class="lbl">Pin detail</span><p class="pempty">Select a pin to inspect</p></section>';
 };
+/* the keep-awake toggle on the ports and power pages */
+const wakeRow = () => (WAKE ? `<div class="flex flex-wrap gap-2.5 items-center mt-4">${wakeBtn()}</div>` : '');
 /* labels: a pin field written beside each pad (the power page shows `expect`). Round, single and custom
    drawings grow sideways with labels, so on a phone they are left to the table. */
 function connBody(c, o = {}) {
@@ -1147,7 +1189,7 @@ function viewPorts(m) {
   const unknown = arr(list).some(c => arr(c.pins).some(p => p.n === '?'));
   const top = head(mDes(m), 'Ports and connectors', `${esc(m.name)}. Drawn looking into the socket on the machine; tap a pad or a row for its detail.${unknown ? ' "?" means no source gives that contact&#39;s position yet.' : ''}`);
   if (!list || !arr(list).length) return top + emptyBlk('NOT CAPTURED', `No connector pinouts for the ${esc(m.name)} in the app yet.`);
-  return top + list.map((c, i) => {
+  return top + wakeRow() + list.map((c, i) => {
     const b = connBody(c);
     return `<section class="blk cblk${b.wide ? ' wide' : ''} scroll-mt-4" id="conn-${esc(c.id)}"><span class="lbl"><span class="d">J${i + 1}</span>${esc(c.name)}</span>
       <div class="tin sm mono">${esc(c.kind || '')}${vmark(c)}</div>${conflictNote(c)}
@@ -1182,7 +1224,7 @@ function viewPower(m) {
   const probes = chipsOf(m).filter(c => c.pins).flatMap(c => c.pins.filter(p => p.probe).map(p => ({ c, p })));
   const scope = x => (x.scope ? `<div class="tpscope">${scopeBlock(x.scope, '', x)}</div>` : '');
   const ften = arr(pw.firstTen), probeBlk = probes.length ? `<section class="blk"><span class="lbl">Probe hints</span><div class="legend">${probes.slice(0, 8).map(({ c, p }) => `<div class="k"><a class="lnk" href="${chipPath(m, c)}?pin=${p.n}">${esc(c.short)}.${p.n} ${esc(p.name)}</a></div><div class="v sm">${esc(p.probe)}${vmark(p)}${disagree(p)}</div>`).join('')}</div></section>` : '';
-  return top + (pw.supply ? supplyBlock(m, pw.supply) : '') + `
+  return top + wakeRow() + (pw.supply ? supplyBlock(m, pw.supply) : '') + `
     <section class="blk"><span class="lbl">Rails</span>
       <div class="legend tri">${arr(pw.rails).map(r => `<div class="k">TP${i++}</div><div class="v"><b class="mono">${esc(r.rail)}</b>${vmark(r)}<br><span class="tin sm">${linkPins(r.where || '', m)}</span>${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}${conflictNote(r)}</div><div class="v3 mono">${esc(r.expect || '')}</div>${scope(r)}`).join('')}</div>
     </section>
@@ -1586,6 +1628,29 @@ function selectConnPin(id, n) {
   if (PANEL_MQ.matches) padIntoView();
   drawWire();
 }
+/* arrow keys: the next or previous pin in number order, wrapping, inside the pin filter when one is set.
+   A focused pad is the starting point. Connectors step in table order, on the connector that is selected or
+   holds focus. False: nothing to step. */
+function stepPin(d) {
+  const ae = document.activeElement, onPad = ae && ae.closest && ae.closest('svg.dip .pin, svg.conn .cpin');
+  let el;
+  if (state.ctx.chip) {
+    const list = state.ctx.chip.pins.filter(p => !state.filter || pinIs(p, state.filter)).sort((a, b) => a.n - b.n);
+    if (!list.length) return false;
+    const cur = onPad && onPad.dataset.pin ? Number(onPad.dataset.pin) : state.pin ?? (d > 0 ? -Infinity : Infinity);
+    const p = d > 0 ? list.find(x => x.n > cur) || list[0] : list.findLast(x => x.n < cur) || list[list.length - 1];
+    selectPin(p.n); el = $(`svg.dip .pin[data-pin="${p.n}"]`);
+  } else if (state.ctx.conns) {
+    const st = ae && ae.closest && ae.closest('.cblk') && ae.closest('.cblk').querySelector('.cstage');
+    const id = (st && st.dataset.conn) || (state.conn && state.conn.id), c = id && state.ctx.conns.find(x => x.id === id);
+    const pins = c ? realPins(c) : []; if (!pins.length) return false;
+    const at = onPad && onPad.dataset.conn === id ? onPad.dataset.cpin : state.conn && state.conn.id === id ? state.conn.pin : null, i = pins.findIndex(p => String(p.n) === at);
+    const p = pins[i < 0 ? (d > 0 ? 0 : pins.length - 1) : (i + d + pins.length) % pins.length];
+    selectConnPin(c.id, String(p.n)); el = $(`svg.conn .cpin[data-conn="${CSS.escape(c.id)}"][data-cpin="${CSS.escape(String(p.n))}"]`);
+  } else return false;
+  if (el && onPad) el.focus(); else if (el && !PANEL_MQ.matches) el.scrollIntoView({ block: 'nearest' });
+  return true;
+}
 /* SOCKET / PLUG: redraw the page where it stands, keep focus on the toggle that was pressed */
 function refreshConns(focusId) {
   const y = scrollY, m = state.ctx.machine;
@@ -1830,6 +1895,7 @@ document.addEventListener('click', e => {
   else if (a === 'flip') { state.flip = !state.flip; refreshChip(); $('[data-act="flip"]').focus(); }
   else if (a === 'cview') { state.cview = state.cview === 'socket' ? 'plug' : 'socket'; LS.set('rb-cview', state.cview); refreshConns(act.dataset.conn); }
   else if (a === 'filter') { const t = act.dataset.t; state.filter = (!t || state.filter === t) ? null : t; refreshChip(); const f = $(`[data-act="filter"][data-t="${CSS.escape(t)}"]`) || $('[data-act="flip"]'); if (f) f.focus(); }
+  else if (a === 'wake') { setWake(!wake.want); const b = $('[data-act="wake"]'); if (b) b.focus(); }
   else if (a === 'close-panel') closePanel();
   else if (a === 'close-pop') closePop();
   else if (a === 'install' && net.prompt) { const p = net.prompt; p.prompt(); p.userChoice.finally(() => { net.prompt = null; paintNet(); }); }
@@ -1895,6 +1961,7 @@ document.addEventListener('keydown', e => {
     const act = $('#results .it.act'); if (act) act.scrollIntoView({ block: 'nearest' });
     return;
   }
+  if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && /^Arrow(Up|Down|Left|Right)$/.test(e.key) && stepPin(/Down|Right/.test(e.key) ? 1 : -1)) { e.preventDefault(); return; }
   if (e.key === 'Escape') {
     if ($('#pop').dataset.open) { const a = $('#pop')._anchor; closePop(); if (a && a.isConnected) a.focus(); return; }
     if ($('#panel').classList.contains('open')) { closePanel(); return; }
