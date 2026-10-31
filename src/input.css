@@ -101,17 +101,24 @@
   .hole.tl { top: 8px; left: 8px; } .hole.tr { top: 8px; right: 8px; } .hole.bl { bottom: 8px; left: 8px; } .hole.br { bottom: 8px; right: 8px; }
 
   /* title strip */
-  .strip { display: grid; grid-template-columns: auto 1fr auto; gap: 24px; align-items: center; padding: 6px 10px 14px; border-bottom: var(--w) solid var(--silk-25); }
-  .strip.no-edge .edge { display: none; }
-  .strip .tools { grid-column: 3; display: flex; gap: 14px; align-items: center; justify-self: end; }
-  .title { display: flex; gap: 14px; align-items: baseline; color: var(--silk); }
-  .title:hover { color: var(--silk); }
+  .strip { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 24px; align-items: center; padding: 6px 10px 14px; border-bottom: var(--w) solid var(--silk-25); }
+  .strip.no-edge .edge { visibility: hidden; }
+  .strip .tools { grid-column: 4; display: flex; gap: 14px; align-items: center; justify-self: end; }
+  .title { display: flex; gap: 12px; align-items: baseline; color: var(--silk); white-space: nowrap; }
+  .title a { color: var(--silk); }
   .title b { font: 600 26px/1 var(--font-sans); letter-spacing: .06em; text-transform: uppercase; }
-  .title .rev { font: 15px var(--font-mono); color: var(--silk-70); }
+  .title .ver { font: 13px var(--font-mono); color: var(--tin); padding: 12px 0; margin: -12px 0; }
+  .title .ver:hover { color: var(--copper-hi); }
+  /* tablet and desktop page links beside the search box; the phone has the bottom bar instead */
+  .hnav { grid-column: 3; display: flex; gap: 2px; white-space: nowrap; }
+  .hnav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; font: 14px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk-70); border-bottom: 2px solid transparent; }
+  .hnav a:hover { color: var(--silk); }
+  .hnav a.on { color: var(--copper); border-bottom-color: var(--copper); }
   .title .offline { font: 15px var(--font-mono); color: var(--tin); }
   .tog { font: 15px var(--font-mono); color: var(--silk-70); border: var(--w) solid var(--silk-45); border-radius: var(--radius-silk); padding: 7px 10px; min-height: 44px; text-transform: uppercase; white-space: nowrap; }
   .tog b { color: var(--copper); font-weight: 400; }
   .tog:hover { border-color: var(--silk); }
+  .tog.on { border-color: var(--copper); }
 
   /* the search field drawn as an edge connector: gold fingers under the input */
   .edge { position: relative; width: min(100%, 420px); }
@@ -232,6 +239,7 @@
   .bcell:hover { color: var(--silk); }
   .bcell .bl { display: flex; align-items: baseline; gap: 8px; height: 20px; margin-bottom: 4px; white-space: nowrap; font-family: var(--font-mono); }
   .bcell .bl > span { overflow: hidden; text-overflow: ellipsis; }
+  .bcell .bl .btag { white-space: nowrap; margin-left: 0; vertical-align: 0; }
   .bcell .des { font-size: 14px; letter-spacing: .08em; color: var(--copper); }
   .bcell .flag { font-size: 10px; letter-spacing: .12em; color: var(--tin); flex-shrink: 1000; }   /* gives way before the designator */
   .bcell .flag.pwr { color: var(--pwr); flex: none; }
@@ -442,6 +450,17 @@
   .mname:hover .nm { color: var(--copper-hi); }
   .brev { display: inline-flex; align-items: center; min-height: 44px; font: 14px var(--font-mono); color: var(--tin); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .brev:hover { color: var(--copper-hi); }
+  /* board revision on the bench: a native select dressed as silkscreen; a down arrow drawn in the background */
+  .bsel { display: inline-flex; align-items: center; min-width: 0; }
+  .bsel select { appearance: none; min-height: 44px; max-width: 18rem; min-width: 0; padding: 6px 26px 6px 10px; font: 14px var(--font-mono); color: var(--silk-70); background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0h10L5 6z' fill='%23999'/%3E%3C/svg%3E") no-repeat right 9px center; border: var(--w) solid var(--silk-45); border-radius: var(--radius-silk); text-overflow: ellipsis; cursor: pointer; }
+  .bsel select:hover { color: var(--silk); border-color: var(--silk); }
+  .bsel select:focus-visible { outline: none; border-color: var(--copper); color: var(--silk); }
+  .bsel select option { background: var(--mask-deep); color: var(--silk); }
+  .bsel .chk { margin-left: 4px; }
+  /* a record only on some boards, with all boards shown */
+  .btag { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .06em; color: var(--copper); border: 1px dashed var(--copper); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; white-space: normal; text-transform: none; }
+  .btag.on { border-style: solid; text-transform: uppercase; }
+  .legend.brevs .k.on { color: var(--copper); }
   .mtabs { display: flex; gap: 0 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
   .mtabs::-webkit-scrollbar { display: none; }
   .mtabs a { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font: 15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk-70); border-bottom: 3px solid transparent; }
@@ -699,11 +718,17 @@
   .edgebar { display: none; }
 
   /* ---------- tablet ---------- */
+  /* below 1280 the search and the page links take a second row */
+  @media (width < 1280px) {
+    .strip { grid-template-columns: minmax(0, 1fr) auto; row-gap: 12px; }
+    .strip .tools { grid-column: 2; grid-row: 1; }
+    .strip .edge { grid-column: 1; grid-row: 2; width: 100%; }
+    .hnav { grid-column: 2; grid-row: 2; }
+    .strip.no-edge .edge { display: none; }
+    .strip.no-edge .hnav { grid-column: 1 / -1; }
+  }
   @media (width < 1024px) {
     .board { padding: 14px 18px 60px; }
-    .strip { grid-template-columns: 1fr auto; row-gap: 12px; }
-    .strip .tools { grid-column: 2; }
-    .strip .edge { grid-column: 1 / -1; grid-row: 2; width: 100%; }
     .stage { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 22px; }
   }
 
@@ -728,7 +753,10 @@
     .hole { width: 10px; height: 10px; }
     .hole.bl, .hole.br { display: none; }
     .strip { gap: 10px; padding: 4px 6px 10px; }
-    .strip .edge { display: none; }
+    .strip .edge, .hnav { display: none; }
+    .strip .tools { gap: 8px; }
+    .tog { padding: 6px 6px; font-size: 12px; letter-spacing: 0; }
+    .title .ver { display: none; }
     .edge .hint { display: none; }
     .edge input { padding-right: 12px; }
     .title { gap: 10px; }
@@ -764,9 +792,10 @@
     .mbar { display: contents; }
     .mbar .ctx { gap: 8px; margin-top: 2px; }
     .mname { gap: 8px; min-height: 40px; }
-    .mname .des, .brev, .mbar .region .h, .mbar .region > .tin { display: none; }
-    .mname .nm { font-size: 18px; }
+    /* phone: the machine's short code stands in for its name */
+    .mname .nm, .brev, .mbar .region .h, .mbar .region > .tin { display: none; }
     .mbar .region button { min-height: 28px; padding: 2px 8px; font-size: 12px; }
+    .bsel select { min-height: 28px; max-width: 9.5rem; padding: 2px 20px 2px 6px; font-size: 12px; background-position: right 6px center; }
     .mtabs { position: sticky; top: 0; z-index: 25; margin: 0 -12px; padding: 0 6px; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
     .mtabs a { min-height: 40px; padding: 0 10px; font-size: 14px; }
     .hd { margin-top: 10px; }
@@ -830,6 +859,7 @@
   .pc-h { display: flex; flex-wrap: wrap; gap: 2pt 10pt; align-items: baseline; border-bottom: .75pt solid #000; padding-bottom: 3pt; }
   .pc-h .pc-d { font: 18pt/1 var(--font-mono); }
   .pc-h h1 { font: 600 16pt/1 var(--font-sans); text-transform: uppercase; letter-spacing: .04em; }
+  .pc-h .pc-bd { font: 500 10pt var(--font-mono); text-transform: none; letter-spacing: 0; margin-left: 6pt; }
   .pc-h .pc-s { margin-left: auto; font: 7pt var(--font-mono); color: #444; }
   .pc-b { margin-top: 5pt; }
   .pc-b h2 { font: 7pt var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: #000; border-bottom: .5pt solid #555; padding-bottom: 1pt; margin-bottom: 3pt; }

@@ -10,7 +10,7 @@
 
   RCS.addPhotos({
     c64: [{
-      board: 'Assy 250407', rev: 'Rev B',
+      board: 'Assy 250407', boards: ['250407'], rev: 'Rev B',
       file: 'photos/c64-250407.webp', w: 1600, h: 837, side: 'component', rotate: 0,
       author: 'Sven.petersen', licence: 'CC BY-SA 4.0', licenceUrl: BYSA('4.0'),
       source: src('0430 - C64 Mainboard ASSY250407 RevB.jpg'),
@@ -61,7 +61,7 @@
       note: 'The CIA box is U4; the second CIA (U1) is at the lower right, next to the Z80. The file page template says CC BY-SA 2.5; the author\'s text on the same page says CC BY 2.5. Treated as BY-SA (the stricter reading).' }],
 
     c1541: [{
-      board: 'Assy 250442, 250446 (1541A, 1541A-2)', rev: 'Assy 250442, PCB 251830 Rev A',
+      board: 'Assy 250442, 250446 (1541A, 1541A-2)', boards: ['250442'], rev: 'Assy 250442, PCB 251830 Rev A',
       file: 'photos/c1541-250442.webp', w: 1600, h: 1150, side: 'component', rotate: 0,
       author: 'Evan-Amos', licence: 'Public domain (PD-self)', licenceUrl: PDSELF,
       source: src('Commodore-64-1541-Floppy-Drive-Motherboard-01.jpg'),
@@ -84,7 +84,7 @@
       note: 'The board prints function labels (6502, ROM-F8 to ROM-D0, RAM) and a row/column grid. RAM rows C, D and E. The keyboard encoder (MM5740) is on the keyboard PCB, not shown.' }],
 
     apple2e: [{
-      board: 'IIe main board 820-0087-C', rev: '607-0187-C, 1986 (enhanced, 65C02)',
+      board: 'IIe main board 820-0087-C', boards: ['enhcf'], rev: '607-0187-C, 1986 (enhanced, 65C02)',
       file: 'photos/apple2e-820-0087.webp', w: 1280, h: 1600, side: 'component', rotate: 0,
       author: 'Nicolasfoster', licence: 'CC0 1.0', licenceUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
       source: src('Apple IIe 1986 Mobo.png'),
@@ -143,7 +143,7 @@
       note: 'The VDP (U9) is under its clip-on heatsink; only the pins show. The LS138 box is U6; the second LS138 (U5) is below the Z80.' }],
 
     spectrum: [{
-      board: 'Issue 4A/4B', rev: 'Issue 4B',
+      board: 'Issue 4A/4B', boards: ['issue4b'], rev: 'Issue 4B',
       file: 'photos/spectrum-issue4b.webp', w: 1600, h: 964, side: 'component', rotate: 0,
       author: 'AUIC Oficial - (c) Fernando Sáenz - Public Domain Work', licence: 'Public Domain Mark 1.0 (Flickr)', licenceUrl: 'https://creativecommons.org/publicdomain/mark/1.0/',
       source: src('Sinclair ZX Spectrum Issue 4B Motherboard.jpg'),

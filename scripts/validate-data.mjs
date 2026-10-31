@@ -238,11 +238,17 @@ for (const [mid, pw] of Object.entries(R.power)) {
     else pw.firstTen.forEach((s, i) => {
       const at = `firstTen step ${s && s.step != null ? s.step : i + 1}`;
       for (const k of ['step', 'check', 'where', 'expect']) if (!s || s[k] == null || s[k] === '') err(f, `${at} needs ${k}`);
-      if (s && s.step != null && Number(s.step) !== i + 1) warn(f, `${at} is entry ${i + 1}; steps should run 1, 2, 3...`);
+      if (s && s.step != null && Number(s.step) !== i + 1 && !(R.boards && R.boards[mid])) warn(f, `${at} is entry ${i + 1}; steps should run 1, 2, 3...`);
       if (s && s.source) checkSources(`${f} ${at}`, [s.source]); else warn(f, `${at} has no source`);
       if (s && s.where) checkWhere(f, mid, `${at} where`, s.where);
     });
-    if (Array.isArray(pw.firstTen) && (pw.firstTen.length < 6 || pw.firstTen.length > 8)) warn(f, `firstTen has ${pw.firstTen.length} steps (6 to 8 wanted)`);
+    /* with board revisions, check each board's own view: steps run 1, 2, 3... with board variants of one step sharing its number */
+    const views = R.boards && R.boards[mid] ? R.boards[mid].map(b => [b.id, pw.firstTen.filter(s => s && (!s.boards || s.boards.includes(b.id)))]) : [[null, pw.firstTen]];
+    if (Array.isArray(pw.firstTen)) for (const [bid, list] of views) {
+      const on = bid ? ` on board ${bid}` : '';
+      if (bid) list.forEach((s, i) => { if (Number(s.step) !== i + 1) warn(f, `firstTen step ${s.step} is entry ${i + 1}${on}; steps should run 1, 2, 3...`); });
+      if (list.length < 6 || list.length > 8) warn(f, `firstTen has ${list.length} steps${on} (6 to 8 wanted)`);
+    }
   }
   if (pw.clocks != null) {
     if (!Array.isArray(pw.clocks)) err(f, 'clocks must be an array');
@@ -299,6 +305,61 @@ for (const [mid, list] of Object.entries(R.schematics || {})) {
   for (const s of list) {
     if (!s.board || !s.kind || !s.label || !/^https?:\/\//.test(s.url || '')) err(`schematics ${mid}`, `entry needs board, kind, label and http url: ${JSON.stringify(s).slice(0, 90)}`);
     if (!SCH_KINDS.has(s.kind)) err(`schematics ${mid}`, `kind ${s.kind} (schematic, layout, manual, parts)`);
+  }
+}
+/* Board revisions (docs/data-schema.md, "Board revisions"): RCS.boards[mid] lists the boards; any machine-scoped
+   record may carry boards: [ids], and machines may carry chipBoards / locByBoard. Every id must be a board of that machine. */
+const BOARD_ID = /^[a-z0-9][a-z0-9-]*$/;
+for (const [mid, list] of Object.entries(R.boards || {})) {
+  const f = `boards ${mid}`, seen = new Set();
+  if (!R.machines[mid]) { err('boards', `unknown machine ${mid}`); continue; }
+  if (!Array.isArray(list) || !list.length) { err(f, 'must be a non-empty array'); continue; }
+  for (const b of list) {
+    if (!b || !BOARD_ID.test(b.id || '')) { err(f, `board id "${b && b.id}" (lower case letters, digits, dashes)`); continue; }
+    if (seen.has(b.id)) err(f, `duplicate board id ${b.id}`); seen.add(b.id);
+    if (!b.name) err(f, `${b.id} needs a name`);
+    for (const k of Object.keys(b)) if (!['id', 'name', 'years', 'note', 'sources', 'verify', 'conflict'].includes(k)) err(f, `${b.id} has unknown field ${k}`);
+    for (const k of ['years', 'note', 'conflict']) if (b[k] != null && (typeof b[k] !== 'string' || !b[k])) err(f, `${b.id} ${k} must be a non-empty string`);
+    if (b.verify != null && b.verify !== true) err(f, `${b.id} verify must be true or left out`);
+    if (!Array.isArray(b.sources) || !b.sources.length) err(f, `${b.id} needs sources`); else checkSources(`${f} ${b.id}`, b.sources);
+  }
+}
+const boardIds = mid => new Set((R.boards[mid] || []).map(b => b && b.id));
+function checkBoards(f, mid, at, ids) {
+  const known = boardIds(mid);
+  if (!Array.isArray(ids) || !ids.length) { err(f, `${at} boards must be a non-empty array of board ids`); return; }
+  if (!known.size) { err(f, `${at} has boards but RCS.boards.${mid} is missing`); return; }
+  if (new Set(ids).size !== ids.length) err(f, `${at} boards repeats an id`);
+  for (const id of ids) if (!known.has(id)) err(f, `${at} board ${id} is not in RCS.boards.${mid}`);
+  if (ids.length === known.size) warn(f, `${at} boards lists every board of ${mid}; leave boards out instead`);
+}
+for (const [mid, pw] of Object.entries(R.power)) for (const k of ['rails', 'testPoints', 'clocks', 'firstTen']) for (const [i, x] of (Array.isArray(pw[k]) ? pw[k] : []).entries())
+  if (x && x.boards != null) checkBoards(`power ${mid}`, mid, `${k} ${x.rail || x.tp || x.name || x.step || i + 1}`, x.boards);
+for (const [mid, list] of Object.entries(R.connectors)) for (const c of list) if (c.boards != null) checkBoards(`connectors ${mid}`, mid, c.id, c.boards);
+for (const [mid, list] of Object.entries(R.schematics || {})) for (const s of list) if (s.boards != null) checkBoards(`schematics ${mid}`, mid, s.label, s.boards);
+for (const [mid, list] of Object.entries(R.photos || {})) for (const p of Array.isArray(list) ? list : []) if (p && p.boards != null) checkBoards(`photos ${mid}`, mid, p.file, p.boards);
+for (const m of Object.values(R.machines)) {
+  const f = `machine ${m.id}`;
+  if (m.chipBoards != null) {
+    if (typeof m.chipBoards !== 'object' || Array.isArray(m.chipBoards)) err(f, 'chipBoards must be an object { chipId: [board ids] }');
+    else for (const [cid, ids] of Object.entries(m.chipBoards)) {
+      if (!(m.chips || []).includes(cid)) err(f, `chipBoards names ${cid}, which is not a chip of ${m.id}`);
+      checkBoards(f, m.id, `chipBoards.${cid}`, ids);
+    }
+  }
+  if (m.locByBoard != null) {
+    if (typeof m.locByBoard !== 'object' || Array.isArray(m.locByBoard)) { err(f, 'locByBoard must be an object { boardId: { chipId: designator } }'); continue; }
+    const known = boardIds(m.id);
+    for (const [bid, locs] of Object.entries(m.locByBoard)) {
+      if (!known.has(bid)) err(f, `locByBoard board ${bid} is not in RCS.boards.${m.id}`);
+      if (!locs || typeof locs !== 'object' || Array.isArray(locs)) { err(f, `locByBoard.${bid} must be an object { chipId: designator }`); continue; }
+      for (const [cid, loc] of Object.entries(locs)) {
+        if (!(m.chips || []).includes(cid)) err(f, `locByBoard.${bid} names ${cid}, which is not a chip of ${m.id}`);
+        if (typeof loc !== 'string' || !loc) err(f, `locByBoard.${bid}.${cid} must be a non-empty string`);
+        const on = m.chipBoards && m.chipBoards[cid];
+        if (on && !on.includes(bid)) err(f, `locByBoard.${bid} places ${cid}, but chipBoards says ${cid} is not on ${bid}`);
+      }
+    }
   }
 }
 /* photos.js: board photos. The app draws the outlines over the unaltered image, so every box must sit inside it

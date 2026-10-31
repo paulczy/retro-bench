@@ -229,6 +229,42 @@ RCS.addSchematics({ c64: [
   assembly-to-document match is not confirmed.
 - Credits: `RCS.addCredits([{ name, url, what }])`: the archive or person, and what of theirs we used.
 
+## Board revisions
+
+A machine whose boards differ (C64 long and short boards, Spectrum issues, Apple IIe revisions, 1541 boards) lists
+them once, in board order, at the end of `src/data/schematics.js`. The app's revision selector filters by them.
+```js
+RCS.addBoards({ c64: [
+  { id: '250407', name: 'Assy 250407 (A, CR)',  // years?: only with a source for the production span
+    note: 'One line on what differs.',                                // optional
+    sources: [{ label: 'C64/C64C Service Manual 314001-03, parts list 250407-04, PDF p. 30', url: '...' }] } ] });
+```
+- `id` is short, lower case, digits and dashes (`250469a`, `issue3b`, `reva`). `name` is what the user picks.
+  `sources` is required: the document that names the board and says how it differs. `verify: true` and
+  `conflict` work as elsewhere.
+- **`boards: ['id', ...]` on a record** means "only on these boards"; a record without `boards` applies to all
+  boards. It works on: each entry of `RCS.power[mid].rails`, `testPoints`, `clocks` and `firstTen`; each
+  `RCS.connectors[mid]` entry; each `RCS.photos[mid]` entry; each `RCS.schematics[mid]` entry (next to its
+  free-text `board`, which stays). `verify` / `conflict` on the record cover the tag too.
+- **Chips** are shared records, so the per-board facts sit on the machine:
+  ```js
+  c64: { ..., chipBoards: { pla82s100: ['326298', '250407', '250425', '250466'] },   // chip only on these boards
+              locByBoard: { '250469a': { cpu6510: 'U6', vic2: 'U7' } } }           // designator differs from the default
+  ```
+  A chip not in `chipBoards` is on every board. `locByBoard` gives only designators that differ from (or are
+  missing in) the chip's `location[mid]`.
+- When two boards need different text for the same check (a rail made by different parts, a reset circuit that
+  differs), write one record per variant, each with its own `boards`. firstTen variants of one step share the
+  step number; the validator checks that each board's own list runs 1, 2, 3...
+- A record that names designators or parts must not be left untagged if a board in the list lacks them: tag it,
+  split it, or name the part per board in the text.
+- `years` on a board or schematic row needs a source for the production span; a drawing or manual date is not one.
+- Tag only what a source states. If it is unclear which boards a record applies to, leave it untagged. Every
+  tag has a row in `docs/verification/board-revisions.md`.
+- The validator checks that every id in `boards`, `chipBoards` and `locByBoard` is in `RCS.boards[mid]`, that
+  each board has sources, that `chipBoards` / `locByBoard` name chips of that machine, and that `locByBoard`
+  does not place a chip on a board `chipBoards` leaves it off. A `boards` list naming every board warns.
+
 ## Test-point waveforms, first ten minutes, clocks, replacements, Sams
 
 Approved features 1 to 6 on docs/roadmap.md add these optional fields. Nothing here may be invented: every

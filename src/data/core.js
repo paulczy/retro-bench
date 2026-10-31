@@ -307,5 +307,9 @@ window.RCS = (() => {
   /* Board photos live in src/data/photos.js, keyed by machine id; images in photos/ (see docs/data-schema.md). */
   R.photos = {};
   R.addPhotos = by => { for (const [mid, list] of Object.entries(by || {})) R.photos[mid] = [...(R.photos[mid] || []), ...list]; };
+  /* Board revisions per machine, in board order: [{ id, name, years?, note?, sources }]. Records tagged
+     boards: ['id', ...] apply only to those boards; untagged records apply to all (docs/data-schema.md). */
+  R.boards = {};
+  R.addBoards = by => { for (const [mid, list] of Object.entries(by || {})) R.boards[mid] = [...(R.boards[mid] || []), ...list]; };
   return R;
 })();

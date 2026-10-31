@@ -1216,7 +1216,9 @@ RCS.add({
         "kbd3600",
         "dram4164"
       ],
-      "tagline": "The long-lived II with MMU and IOU custom chips and an aux slot."
+      "tagline": "The long-lived II with MMU and IOU custom chips and an aux slot.",
+      /* board revisions: RCS.boards.apple2e in schematics.js; the late enhanced board has two 64K x 4 RAMs (docs/verification/board-revisions.md) */
+      "chipBoards": { "dram4164": ["reva", "revb", "enh"] }
     },
     apple2c: {
       id: 'apple2c', brand: 'apple', name: 'Apple IIc', aka: 'Apple //c', year: 1984, status: 'ready',
@@ -2093,7 +2095,7 @@ RCS.add({
         sources: [{ label: 'Apple IIe Technical Reference Manual, Cassette I/O, p. 189', url: IIE(222) }] },
       { id: '2e-kbd', name: 'Keyboard connector (26-pin)', kind: '26-pin ribbon connector', geo: 'custom', pads: header2x(26), outline: HEADER_OUTLINE,
         verifiedAgainst: 'Apple IIe Technical Reference Manual (1987 ed.), Table 7-16, pp. 187-188',
-        summary: 'Raw key matrix from the keyboard: the AY-5-3600 encoder is on the main board, so a dead key is either the switch, this cable, or the encoder. The 1985 TRM lists pin 1 twice and skips 11 and 18; the 1987 edition corrects it (LCNTL on 11, X1 on 18). The drawing assumes a 2 × 13 header with odd pins in one row; confirm pin 1 on the board.',
+        summary: 'Raw key matrix from the keyboard: the encoder (AY-5-3600; a KR9600-PRO on the photographed late board) is on the main board, so a dead key is either the switch, this cable, or the encoder. The 1985 TRM lists pin 1 twice and skips 11 and 18; the 1987 edition corrects it (LCNTL on 11, X1 on 18). The drawing assumes a 2 × 13 header with odd pins in one row; confirm pin 1 on the board.',
         pins: [
           { n: 1, name: 'Y0', type: 'kbd', desc: 'Key-matrix Y0.' },
           { n: 2, name: 'Y1', type: 'kbd', desc: 'Key-matrix Y1.' },
@@ -2263,13 +2265,13 @@ RCS.add({
     apple2: iiPower,
     apple2plus: iiPower,
     apple2e: {
-      supply: { external: false, name: 'Apple IIe switching supply (Astec on early units, Dyna-Comp on later ones)', output: '+5 V 2.5 A; +11.8 V 1.5 A (2.5 A intermittent); -5.2 V 250 mA; -12 V 250 mA. 60 W continuous, 80 W intermittent', connector: '2e-psu',
+      supply: { external: false, name: 'Apple IIe switching supply (Astec or Dyna-Comp)', output: '+5 V 2.5 A; +11.8 V 1.5 A (2.5 A intermittent); -5.2 V 250 mA; -12 V 250 mA. 60 W continuous, 80 W intermittent', connector: '2e-psu',
         notes: [
           'Custom switching supply in a sealed case; parts of it are connected directly to the mains.',
           'It shuts all four rails off when a rail is shorted, the cable to the board is unplugged, or a rail leaves its range, then restarts about every half second. That stop-start is the "dead PSU chirp". Chirping with the board connected means a short: pull the cards, then the board, before you condemn the supply.',
           'Regulation follows the +5 V rail; the others track it.',
           'Line input 107-132 V AC. More than 140 V damages it. Use a grounded three-wire outlet.',
-          'Astec units carry the yellow RIFA X2 line-filter capacitors that crack and burn with smoke and a smell; replace them with X2 film parts. Dyna-Comp units often have other filter caps.',
+          { text: 'Many of these supplies carry yellow RIFA X2 line-filter capacitors that crack and burn with smoke and a smell; replace them with X2 film parts. Not every unit uses RIFA parts.', verify: true },
           'Intermittent rating: up to 20 minutes at the high load, then at least 10 minutes at normal load.',
         ],
         sources: [
@@ -2278,11 +2280,11 @@ RCS.add({
           { label: 'Applefritter: Apple II and IIe power supply RIFA replacements (forum)', url: 'https://www.applefritter.com/node/33594', verify: true },
         ] },
       rails: [
-        { rail: '+5 V', expect: '4.85-5.15 V', where: '2e-psu pin 3 (PSU connector); MMU pin 25; IOU pin 28; 6502 pin 8; 2e-slot pin 25', note: 'The only rail the motherboard logic uses. 2.5 A max.',
+        { rail: '+5 V', expect: '4.85-5.15 V', where: '2e-psu pin 3 (PSU connector); MMU pin 25; IOU pin 28; CPU pin 8; 2e-slot pin 25', note: 'The only rail the motherboard logic uses. 2.5 A max.',
           conflict: 'Sams CC10 (service check 1A) gives 5.3 V at P14 pin 3 with the supply unplugged from the board; Apple\'s 4.85-5.15 V wins. Sams also gives 12.5 V, -11.9 V and -5.0 V on pins 4, 5 and 6.' },
         { rail: '+12 V', expect: '11.1-12.5 V', where: '2e-psu pin 4 (PSU connector); 2e-slot pin 50', note: 'Nominal 11.8 V. Disk II controller and cards; 250 mA for all slots.' },
         { rail: '-5 V', expect: '-4.7 to -5.7 V', where: '2e-psu pin 6 (PSU connector); 2e-slot pin 34', note: 'Nominal -5.2 V. To the slots and to the internal video connector pin 3 (TRM Table 7-15).' },
-        { rail: '-12 V', expect: '-10.8 to -13.2 V', where: '2e-psu pin 5 (PSU connector); 2e-slot pin 33; AY-5-3600 pin 27', note: 'Keyboard encoder VGG and serial cards.' },
+        { rail: '-12 V', expect: '-10.8 to -13.2 V', where: '2e-psu pin 5 (PSU connector); 2e-slot pin 33; AY-5-3600 pin 27 (keyboard encoder; the late CF ROM board photo shows a KR9600-PRO)', note: 'Keyboard encoder VGG and serial cards.' },
       ],
       testPoints: [
         { tp: 'Master clock', where: 'UE1-11 (Sams designator; the same 14M reaches 2e-aux pin 32)', expect: '14.318 MHz',
@@ -2290,9 +2292,9 @@ RCS.add({
             note: 'Sams probes the 14M line at UE1-11, the 74LS125 buffer after the oscillator: 4.2 V p-p at 0.2 µs/cm, trace bottom 0.2 V.' } },
         { tp: '7M', where: 'UC1-6 (74F109 flip-flop, Sams designator)', expect: '7.16 MHz square',
           scope: { f: '7.15909 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: S_CC10_TIM, note: 'Sams: 5 V p-p at 0.2 µs/cm, trace bottom 0 V.' } },
-        { tp: 'PHI0', where: 'MMU pin 3 / IOU pin 26 / 6502 pin 37', expect: '1.023 MHz',
+        { tp: 'PHI0', where: 'MMU pin 3 / IOU pin 26 / CPU pin 37', expect: '1.023 MHz',
           scope: { f: '1.02 MHz', low: '-1 V', high: '4 V', shape: 'square', basis: 'capture', source: S_CC10_CPU,
-            note: 'Sams probes 6502 pin 37, driven by the 74S02 at UB8: 5 V p-p at 0.5 µs/cm, trace bottom -1 V. Sams: clock at UE1 but none here means UC1, the timing HAL UD1, UE1 or UB8.' } },
+            note: 'Sams probes CPU (6502) pin 37, driven by the 74S02 at UB8: 5 V p-p at 0.5 µs/cm, trace bottom -1 V. Sams: clock at UE1 but none here means UC1, the timing HAL UD1, UE1 or UB8.' } },
         { tp: 'PHI1', where: 'UD1-14 (timing HAL, Sams designator)', expect: '1.023 MHz square, PHI0 inverted',
           scope: { f: '1.02 MHz', low: '-1 V', high: '4 V', shape: 'square', basis: 'capture', source: S_CC10_TIM, note: 'Sams: 5 V p-p at 0.5 µs/cm, trace bottom -1 V.' } },
         { tp: 'Q3', where: 'MMU pin 4 / IOU pin 27', expect: '2 MHz asymmetric',
@@ -2304,7 +2306,7 @@ RCS.add({
         { tp: 'Video out', where: 'Q2 emitter, ahead of the 75 Ω resistor R8 (Sams designators)', expect: 'Composite video, about 2.5 V p-p at this point',
           scope: { period: '63.7 µs', low: '0 V', high: '2.5 V', shape: 'video-line', basis: 'capture', source: S_CC10_VID,
             note: 'Sams: 2.5 V p-p at 10 µs/cm, sync tips at 0 V. Line period from Sather Table 3.1 (see Clocks).' } },
-        { tp: 'Reset', where: 'IOU pin 15 / 6502 pin 40', expect: 'HIGH when running; LOW on Control-Reset' },
+        { tp: 'Reset', where: 'IOU pin 15 / CPU pin 40', expect: 'HIGH when running; LOW on Control-Reset' },
         { tp: 'Composite sync', where: 'IOU pin 39', expect: '15.7 kHz horizontal pulses' },
         { tp: 'Speaker', where: 'IOU pin 8', expect: 'Toggles on beep' },
         { tp: 'Keyboard', where: 'IOU pin 32 (KSTRB) / IOU pin 31 (AKD)', expect: 'Pulse on each key / HIGH while a key is held' },
@@ -2325,13 +2327,13 @@ RCS.add({
           ifNot: 'If it runs bare, refit the cards one at a time to find the bad one. If it is still dead, carry on.', source: S_CC10_CHK },
         { step: 4, check: 'Boot beep', where: 'IOU pin 8 (speaker)', expect: 'Beep at power-on and on Control-G',
           ifNot: 'No beep: the CPU is not running, so check reset and clocks. A beep but no picture: go to the video checks.', source: S_CC10_CHK },
-        { step: 5, check: 'Reset', where: '6502 pin 40', expect: 'LOW for a moment at power-on, then HIGH', ifNot: 'Wrong: the IOU, which makes the power-on reset (Sams: check UE5 by substitution).', source: S_CC10_CHK },
+        { step: 5, check: 'Reset', where: 'CPU pin 40', expect: 'LOW for a moment at power-on, then HIGH', ifNot: 'Wrong: the IOU, which makes the power-on reset (Sams: check UE5 by substitution).', source: S_CC10_CHK },
         { step: 6, check: 'Master clock', where: 'UE1-12 (Sams designator)', expect: '14.31818 MHz',
           ifNot: 'Off frequency: crystal Y1. Missing: the oscillator transistor Q4 or the 74LS125 at UE1 (Sams designators).', source: S_CC10_CHK },
-        { step: 7, check: 'CPU clock', where: '6502 pin 37', expect: '1.023 MHz square, 5 V p-p (Sams photo)',
+        { step: 7, check: 'CPU clock', where: 'CPU pin 37', expect: '1.023 MHz square, 5 V p-p (Sams photo)',
           ifNot: 'Clock at UE1 but not here: the 74F109 (UC1), the timing HAL (UD1), UE1 and the 74S02 (UB8), by substitution.', source: S_CC10_CHK },
-        { step: 8, check: 'CPU running', where: '6502 pin 7 (SYNC)', expect: 'Pulses (Sams photo: 4 V p-p at 2 µs/cm)',
-          ifNot: 'Clocks good but dead: swap the 6502, the CD and EF ROMs and the RAMs, then the 74LS244 (UB1), the 74LS245 (UB2), the MMU and the IOU (Sams).', source: S_CC10_CHK },
+        { step: 8, check: 'CPU running', where: 'CPU pin 7 (SYNC)', expect: 'Pulses (Sams photo: 4 V p-p at 2 µs/cm)',
+          ifNot: 'Clocks good but dead: swap the CPU (6502, or 65C02 on enhanced boards), the CD and EF ROMs (one CF ROM on the late enhanced board) and the RAMs, then the 74LS244 (UB1), the 74LS245 (UB2), the MMU and the IOU (Sams).', source: S_CC10_CHK },
       ],
       clocks: [
         { name: 'Crystal', where: 'Y1 (Sams designator)', f: '14.31818 MHz', source: S_CC10_PARTS1 },
@@ -2339,9 +2341,9 @@ RCS.add({
         { name: '7M', where: '2e-slot pin 36', f: '7.15909 MHz', source: SATHERE_T31 },
         { name: '3.58M colour reference', where: '2e-slot pin 35 (slot 7 only); 2e-aux pin 1', f: '3.579545 MHz', source: SATHERE_T31 },
         { name: 'Q3', where: 'MMU pin 4; IOU pin 27; 2e-slot pin 37; 2e-aux pin 53', f: '2.0454 MHz', note: 'Asymmetric; one cycle in 130 is long.', source: SATHERE_T31 },
-        { name: 'Φ0 (PHI0)', where: '6502 pin 37; MMU pin 3; IOU pin 26; 2e-slot pin 40; 2e-aux pin 23', f: '1.0227 MHz', note: 'Every 65th cycle is stretched to 1.117 µs; average 1.0205 MHz.', source: SATHERE_T31 },
+        { name: 'Φ0 (PHI0)', where: 'CPU pin 37; MMU pin 3; IOU pin 26; 2e-slot pin 40; 2e-aux pin 23', f: '1.0227 MHz', note: 'Every 65th cycle is stretched to 1.117 µs; average 1.0205 MHz.', source: SATHERE_T31 },
         { name: 'Φ1 (PHI1)', where: '2e-slot pin 38; 2e-aux pin 36', f: '1.0227 MHz', note: 'Φ0 inverted.', source: SATHERE_T31 },
-        { name: '6502 Φ1 and Φ2 outputs', where: '6502 pin 3; 6502 pin 39', f: '1.0227 MHz', note: 'Φ2 out is in phase with Φ0 on pin 37, Φ1 out 180° out of phase (data sheet). The slot PHI0/PHI1 come from the timing HAL, not from these pins.', verify: true, source: { label: 'MOS 6500 Microprocessors data sheet (Nov 1985), p. 4: 6502 clock timing, Φ1 (OUT) and Φ2 (OUT) follow Φ0 (IN)', url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=4' } },
+        { name: 'CPU Φ1 and Φ2 outputs', where: 'CPU pin 3; CPU pin 39', f: '1.0227 MHz', note: 'Φ2 out is in phase with Φ0 on pin 37, Φ1 out 180° out of phase (data sheet). The slot PHI0/PHI1 come from the timing HAL, not from these pins.', verify: true, source: { label: 'MOS 6500 Microprocessors data sheet (Nov 1985), p. 4: 6502 clock timing, Φ1 (OUT) and Φ2 (OUT) follow Φ0 (IN)', url: 'http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf#page=4' } },
       ],
     },
     apple2c: {

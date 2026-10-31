@@ -164,7 +164,7 @@ const SPEC_EDGE_SRC = [
   S('Sinclair ZX Archive, ZX Spectrum Connectors (expansion bus drawing, side naming note)', SPCONN),
   S('ZX Spectrum Service Manual 1.5.1 (external ROM select on pin 25A), p. 10', SM48(10))
 ];
-const SPEC_EDGE_SUMMARY = 'Side A is the UNDERSIDE (solder side) and side B the component side, as the Issue 3 circuit diagram and the service manual label them (ROMCS on 25A). The drawing puts row A at the bottom to match the socket view. Issue 1 and 2 documents swap the letters (k1). Position 5 is the keyway slot on both sides. Pin 1 is drawn at the right, as in the k1 drawing. Dirty contacts cause crashes: clean and reseat before blaming a chip.';
+const SPEC_EDGE_SUMMARY = 'Side A is the UNDERSIDE (solder side) and side B the component side, as the Issue 3 circuit diagram and the service manual label them (ROMCS on 25A). The drawing puts row A at the bottom to match the socket view. Issue 1 and 2 documents (k1), the Issue 5 circuit diagram and the Timex Issue 6A drawing swap the letters (underside B, component side A): go by the physical side, not the letter. Position 5 is the keyway slot on both sides. Pin 1 is drawn at the right, as in the k1 drawing. Dirty contacts cause crashes: clean and reseat before blaming a chip.';
 
 /* +3 manual chapter 10, Joystick sockets (Sinclair wiring, not Atari) */
 const sinclairJoyPins = () => [
@@ -1005,7 +1005,7 @@ RCS.add({
       rails: [
         { rail: '+9 V DC in', expect: '+9 V ±2 V (7 to 11 V)', where: 'C50 positive side; spectrum-edge pin A4', note: 'Below +7 V the 7805 does not regulate.' },
         { rail: '+5 V', expect: '+4.75 to +5.25 V, no visible ripple', where: 'C34 positive side; 4116 pin 9 (IC6); ULA pin 14; Z80A pin 11; spectrum-edge pin A3', note: 'The ULA and the Z80 both draw from +5 V. Switch-mode drop-ins for the 7805 (Traco, Murata) need no heatsink; on an Issue 2 board in a rubber-key case only a horizontal-mount version fits (Retroleum).' },
-        { rail: '+12 V', expect: '+10.8 to +13.2 V', where: 'DC-DC converter (D5/C44); 4116 pin 8 (IC6); spectrum-edge pin B22', note: 'Made by TR4/TR5, not the 7805. Out-of-range converter rails can damage the 4116s (Retroleum).' },
+        { rail: '+12 V', expect: '+10.8 to +13.2 V', where: 'DC-DC converter (D15/C44); 4116 pin 8 (IC6); spectrum-edge pin B22', note: 'Made by TR4/TR5, not the 7805. Out-of-range converter rails can damage the 4116s (Retroleum).', conflict: 'The service manual prose names the rectifier D5; the Issue 5 and 6A circuit diagrams draw D15 (BA157) into C44, and D5 is a keyboard diode there. Probe D15.' },
         { rail: '+12 VA', expect: '+10.8 to +13.2 V', where: 'LT side of C52, to IC14 (LM1889) only', note: 'Filtered by R62/C45 for the colour circuits.' },
         { rail: '-5 V', expect: '-4 V to -5.5 V', where: 'DC-DC converter; 4116 pin 1 (IC6); spectrum-edge pin B20', note: 'Out-of-range converter rails can damage the 4116s (Retroleum).' },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 40; 4116 pin 16; 23128 pin 14 (ROM IC5)', note: 'Common return.' }
@@ -1030,7 +1030,7 @@ RCS.add({
         { tp: 'Lower RAM strobes', where: 'ULA pins 35, 1', expect: '/RAS and /CAS pulse LOW.' },
         { tp: 'Upper RAM strobes', where: '4532 pins 4, 3, 15 (IC22)', expect: '/RAS, /WE and /CAS pulse LOW on a 48K.' },
         { tp: 'Beeper', where: 'ULA pin 28 (SOUND)', expect: 'Toggles when a BEEP runs.' },
-        { tp: 'ULA temperature', where: 'ULA body', expect: 'Warm is normal; too hot to hold for long is a fault in the making. Socket it.' }
+        { tp: 'ULA temperature', verify: true, where: 'ULA body', expect: 'Warm is normal. The service manual tests faults at raised temperature but gives no touch limit.' }
       ],
       firstTen: [
         { step: 1, check: 'Supply on load', where: 'Power in (9V DC) pin 2 to pin 1; C50 positive side', expect: '+9 V ±2 V DC (7 to 11 V). From a 9 V bench supply a 48K draws 700-900 mA, a 16K 500-700 mA (3.1.4).',
@@ -1048,7 +1048,7 @@ RCS.add({
         { step: 7, check: 'Reset and idle control lines', where: 'Z80A pin 26; Z80A pins 17, 24, 25', expect: '/RESET LOW at power-on, then HIGH. /NMI, /WAIT and /BUSRQ HIGH.',
           ifNot: 'A line held LOW: unplug everything from the edge connector, then compare each line at the Z80A and at its source with a good board (5.3.1.1).', source: S('ZX Spectrum Service Manual 5.3.1.1 Z80A control lines, p. 26', SM48(26)), verify: true },
         { step: 8, check: 'Frame interrupt and lower RAM strobes', where: 'ULA pin 12; ULA pins 35, 1', expect: '/INT a short LOW pulse every 20 ms; /RAS and /CAS pulsing.',
-          ifNot: 'All present but no boot: isolate the upper 32K by lifting +5 V from IC25 pin 16, then change IC13 down to IC6, then the ULA, then the Z80A, powering up after each change (5.3.1).', source: S('ZX Spectrum Service Manual 5.3.1 RAM isolation and IC change order, p. 27', SM48(27)), verify: true }
+          ifNot: 'All present but no boot: isolate the upper 32K by lifting +5 V from IC25 pin 16 (Issues 2 to 4B; on Issues 5 and 6A the ZX8401 IC27 replaces six 74LS chips, so find the upper-RAM logic on the circuit diagram for that issue), then change IC13 down to IC6, then the ULA, then the Z80A, powering up after each change (5.3.1).', source: S('ZX Spectrum Service Manual 5.3.1 RAM isolation and IC change order, p. 27', SM48(27)), verify: true }
       ],
       clocks: [
         { name: 'Crystal X1', where: 'ULA pin 39', f: '14 MHz', source: S('ZX Spectrum Service Manual 1.6 (external 14 MHz crystal X1), p. 13', SM48(13)) },

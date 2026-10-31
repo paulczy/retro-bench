@@ -64,12 +64,11 @@ function setMask(m) {
 LIGHT_MQ.addEventListener('change', () => { if (!state.maskPick) { applyMask(); renderStrip(); } });
 applyMask();
 
-/* ---------- keep awake: a Screen Wake Lock on the chip, ports and power pages while the user wants one.
+/* ---------- keep awake: one header toggle; on, a Screen Wake Lock is held on every page while it is visible.
    The browser drops the lock when the tab is hidden; it is taken again when the page comes back. ---------- */
 const WAKE = 'wakeLock' in navigator;
 const wake = { want: LS.get('rb-wake', false) === true, lock: null, asking: false };
-const wakeView = () => !!(state.ctx.chip || state.ctx.conns);
-const wakeOn = () => WAKE && wake.want && wakeView() && !document.hidden;
+const wakeOn = () => WAKE && wake.want && !document.hidden;
 function syncWake() {
   if (wakeOn() && !wake.lock && !wake.asking) {
     wake.asking = true;
@@ -80,7 +79,7 @@ function syncWake() {
     }, () => { wake.asking = false; });
   } else if (!wakeOn() && wake.lock) { const l = wake.lock; wake.lock = null; l.release().catch(() => {}); }
 }
-const wakeBtn = () => (WAKE ? `<button type="button" class="btn${wake.want ? ' on' : ''}" data-act="wake" aria-pressed="${wake.want}" title="Keep the screen on while this page is open"><span class="max-sm:hidden">Keep </span>awake: ${wake.want ? 'On' : 'Off'}</button>` : '');
+const wakeBtn = () => (WAKE ? `<button type="button" class="tog${wake.want ? ' on' : ''}" data-act="wake" aria-pressed="${wake.want}" title="Keep the screen on while Retro Bench is open">Awake: <b>${wake.want ? 'On' : 'Off'}</b></button>` : '');
 function setWake(on) {
   wake.want = on; LS.set('rb-wake', on);
   for (const b of $$('[data-act="wake"]')) b.outerHTML = wakeBtn();
@@ -97,12 +96,13 @@ const net = { local: location.protocol === 'file:', cached: !!(SW && SW.controll
 const installed = () => STANDALONE_MQ.matches || navigator.standalone === true;
 const netLive = () => !installed() && !net.local && !net.failed && !net.cached && !net.lost;
 const netLost = () => !installed() && !net.local && !net.cached && net.lost;
-const netLabel = () => (installed() ? 'Installed' : net.local || net.cached ? 'Works offline' : net.failed ? '' : net.lost ? 'Offline copy failed' : 'Caching…');
+/* the strip says nothing when all is well; only while saving, or when the offline copy failed */
+const netLabel = () => (installed() || net.local || net.cached || net.failed ? '' : net.lost ? 'Offline copy failed' : 'Saving for offline…');
 const netBtn = (act, label, cls) => `<button type="button" data-act="${act}" class="${cls}">${label}</button>`;
 const COPPER_TXT = 'font-mono text-[15px] uppercase whitespace-nowrap text-copper hover:text-copper-hi min-h-11';
 /* strip actions sit with the mask toggle; on a phone there is no room, so Install lives on the More page
    and the update notice gets its own line under the strip (#net-row) */
-const netAction = (cls = COPPER_TXT + ' max-sm:hidden') => (net.updated ? netBtn('reload', 'Updated, reload', cls) : net.prompt && !installed() ? netBtn('install', 'Install', cls) : '');
+const netAction = (cls = COPPER_TXT + ' max-sm:hidden') => (net.updated ? netBtn('reload', 'Update ready, reload', cls) : net.prompt && !installed() ? netBtn('install', 'Install', cls) : '');
 function netMore() {
   const line = installed() ? 'Installed. Everything is kept on this device.'
     : net.local ? 'Running from local files; nothing to download.'
@@ -114,7 +114,7 @@ function netMore() {
   const act = netAction('btn mt-3');
   return `<p class="mt-0">${line}</p>${act ? `<div>${act}</div>` : ''}${ios}`;
 }
-const netRow = () => (net.updated ? netBtn('reload', 'Updated, reload', COPPER_TXT) : '');
+const netRow = () => (net.updated ? netBtn('reload', 'Update ready, reload', COPPER_TXT) : '');
 function paintNet() {
   const st = $('#net-state'); if (st) { st.textContent = netLabel(); st.classList.toggle('text-copper', netLive()); st.classList.toggle('text-silk', netLost()); }
   const a = $('#net-act'); if (a) a.innerHTML = netAction();
@@ -169,7 +169,35 @@ const pconf = x => disagree(x, 'pc-if');
 /* a supply note is a string, or { text, verify?, conflict? } */
 const noteOf = n => (typeof n === 'string' ? { text: n } : n || {});
 const hotMark = h => (h === 'hot' ? '<span class="hot">HOT</span>' : '');
-const locOf = (c, m) => (c.location && c.location[m.id]) || '';
+/* ---------- board revisions: RCS.boards[mid] = [{ id, name, years?, note?, sources }]. The board picked per machine
+   (rb-board:<mid>; none = all boards) hides records tagged `boards: [ids]` that leave it out, hides chips whose
+   machine.chipBoards leave it out, and reads designators from machine.locByBoard. With all boards a tagged record
+   says which boards it is on. ---------- */
+const boardsOf = m => arr(m && D.boards && D.boards[m.id]).filter(b => b && b.id);
+const boardPick = {};
+function boardOf(m) {
+  if (!m) return null;
+  if (!(m.id in boardPick)) boardPick[m.id] = LS.get(`rb-board:${m.id}`, '');
+  return boardPick[m.id] ? boardsOf(m).find(b => b.id === boardPick[m.id]) || null : null;
+}
+const onBoard = (x, m) => { const b = boardOf(m); return !b || !x || !Array.isArray(x.boards) || x.boards.includes(b.id); };
+const chipBoardIds = (c, m) => (m && m.chipBoards && Array.isArray(m.chipBoards[c.id]) ? m.chipBoards[c.id] : null);
+const chipOnBoard = (c, m) => { const b = boardOf(m), l = chipBoardIds(c, m); return !b || !l || l.includes(b.id); };
+const boardName = (m, id) => (boardsOf(m).find(b => b.id === id) || { name: id }).name;
+/* all boards: "Boards: …" on a record or chip that is only on some; print: the same words in brackets */
+function boardTag(ids, m, print) {
+  if (!Array.isArray(ids) || !ids.length || !boardsOf(m).length || boardOf(m)) return '';
+  const t = `Boards: ${ids.map(id => boardName(m, id)).join(', ')}`;
+  return print ? ` <i class="pc-v">(${esc(t)})</i>` : ` <span class="btag">${esc(t)}</span>`;
+}
+const recTag = (x, m, print) => boardTag(x && x.boards, m, print);
+const chipTag = (c, m, print) => boardTag(chipBoardIds(c, m), m, print);
+/* the picked board's designator for a chip: a string, or { loc, verify?, conflict? } */
+function locOver(c, m) {
+  const b = boardOf(m), t = b && m.locByBoard && m.locByBoard[b.id], v = t && t[c.id];
+  return v == null ? null : typeof v === 'string' ? { loc: v } : v;
+}
+const locOf = (c, m) => { const o = locOver(c, m); return o && o.loc ? String(o.loc) : (c.location && c.location[m.id]) || ''; };
 /* board designator from the sheet's location ("U1", "E6 (near the CPU)"); else the location's words; else the part */
 const boardDes = (c, m) => { const mm = locOf(c, m).match(/^[A-Z]{1,3}\d{1,3}\b/); return mm ? mm[0] : ''; };
 /* every designator a location names: "U403, U406", "IC6-IC13" (a range of one prefix is spelled out), "UC5 (long
@@ -197,16 +225,23 @@ function mDes(m) {
   const tight = short.replace(/\s+/g, '');
   return short.length <= 9 ? short : tight.length <= 9 ? tight : m.id.toUpperCase().slice(0, 7);
 }
-const chipsOf = m => arr(m.chips).map(id => D.chips[id]).filter(Boolean);
+const chipsOf = m => arr(m.chips).map(id => D.chips[id]).filter(c => c && chipOnBoard(c, m));
 const fits = (m, id) => arr(m.chips).includes(id);   /* only a machine's own chips list counts */
 const fittedIn = c => arr(c.machines).map(id => D.machines[id]).filter(m => m && fits(m, c.id));
 const brandMachines = br => arr(br.machines).map(id => D.machines[id]).filter(Boolean);
 /* `kind: 'drive'` (1541, 1571...) are listed under their own "Drives" heading after the computers; no kind = computer */
 const isDrive = m => m.kind === 'drive';
 function dataFor(table, m) {
-  if (table[m.id]) return { data: table[m.id], shared: null };
-  if (m.id === 'plus4' && table.c16) return { data: table.c16, shared: D.machines.c16 };
-  return { data: null, shared: null };
+  const r = table[m.id] ? { data: table[m.id], shared: null } : m.id === 'plus4' && table.c16 ? { data: table.c16, shared: D.machines.c16 } : { data: null, shared: null };
+  if (r.data && boardOf(m)) r.data = boardScope(table, r.data, m);
+  return r;
+}
+/* a board picked: connectors, and the rails, test points, clocks and first-ten steps, on that board only */
+function boardScope(table, data, m) {
+  const keep = list => arr(list).filter(x => onBoard(x, m));
+  if (table === D.connectors) return keep(data);
+  if (table === D.power) { const o = { ...data }; for (const k of ['rails', 'testPoints', 'clocks', 'firstTen']) if (Array.isArray(data[k])) o[k] = keep(data[k]); return o; }
+  return data;
 }
 const sharedNote = s => (s ? `<p class="note">Printed from the ${esc(s.name)} sheet; the 264 series shares this data.</p>` : '');
 function touchRecent(id) {
@@ -468,8 +503,8 @@ function pinExpect(chip, p, m) {
   const src = x => (x.source ? ` ${srcLink(x.source)}` : '');
   const clocks = arr(pw.clocks).filter(hits), recs = [...arr(pw.testPoints).map(t => [t.tp, t]), ...arr(pw.rails).map(r => [r.rail, r]), ...arr(pw.firstTen).map(s => [s.check, s])].filter(([, x]) => hits(x));
   const rows = [
-    ...clocks.map(c => `<li><b class="mono">${clockFreqsR(c) ? esc(clockFreqsR(c)) : `<span class="tin">no ${REGION_CAP[state.region]} value</span>`}</b> ${esc(c.name)}${vmark(c)}${src(c)}${conflictNote(c)}</li>`),
-    ...recs.map(([name, x]) => `<li>${esc(name || '')}: <b>${esc(regionText(x.expect || ''))}</b>${vmark(x)}${x.ifNot ? `<br><span class="tin sm">If not: ${esc(x.ifNot)}</span>` : ''}${src(x)}${conflictNote(x)}</li>`),
+    ...clocks.map(c => `<li><b class="mono">${clockFreqsR(c) ? esc(clockFreqsR(c)) : `<span class="tin">no ${REGION_CAP[state.region]} value</span>`}</b> ${esc(c.name)}${vmark(c)}${recTag(c, m)}${src(c)}${conflictNote(c)}</li>`),
+    ...recs.map(([name, x]) => `<li>${esc(name || '')}: <b>${esc(regionText(x.expect || ''))}</b>${vmark(x)}${recTag(x, m)}${x.ifNot ? `<br><span class="tin sm">If not: ${esc(x.ifNot)}</span>` : ''}${src(x)}${conflictNote(x)}</li>`),
   ];
   const lvl = p.activeLow || String(p.name).startsWith('/') ? 'Active LOW: near 0 V while in reset.' : 'Active HIGH (not marked active low): HIGH while in reset.';
   const gen = rst ? `<div class="probe"><b>Reset check</b>${lvl} It goes active at power-on, then releases. Stuck active holds the chip in reset; never going active means the reset circuit is not firing. Catch it with a logic probe or a scope on single-shot at power-on, and check the circuit that drives it.</div>` : '';
@@ -616,7 +651,7 @@ function buildIndex() {
     ix.push({ group: 'Machines', title: m.name, sub: [m.aka, m.cpu, statusOf(m)].filter(Boolean).join(', '), keys: `${m.id} ${mDes(m)} ${m.aka || ''} ${b ? b.name : ''}`, href: mPath(m), des: mDes(m) });
   }
   for (const c of Object.values(D.chips)) {
-    const ms = fittedIn(c);
+    const ms = fittedIn(c).filter(m => chipOnBoard(c, m));
     const home = ms.find(m => m.status === 'ready') || ms[0];
     if (!home) continue;
     const chref = c.pins ? chipPath(home, c) : `${mPath(home)}/pinouts`, repl = arr(c.replacements).filter(r => r && r.part);
@@ -633,16 +668,16 @@ function buildIndex() {
     for (const r of arr(q.memory)) ix.push({ group: 'Memory', title: `${r.range}  ${r.what}`, sub: m.name, keys: r.what, href: `${mPath(m)}/quickref?tab=memory`, mono: true });
   }
   for (const [id, t] of Object.entries(D.terms)) ix.push({ group: 'Glossary', title: t.term, sub: t.short, keys: id + ' ' + t.long, href: `#/glossary?term=${id}` });
-  for (const [mid, list] of Object.entries(D.connectors)) {
+  for (const mid of Object.keys(D.connectors)) {
     const m = D.machines[mid]; if (!m) continue;
-    arr(list).forEach((c, i) => {
+    arr(dataFor(D.connectors, m).data).forEach((c, i) => {
       const href = `${mPath(m)}/ports?c=${encodeURIComponent(c.id)}`;
       ix.push({ group: 'Connectors', title: c.name, sub: `${m.name}: ${c.kind || ''}`, keys: arr(c.pins).map(p => p.name).join(' '), href, des: `J${i + 1}`, ...flags(c) });
       for (const p of realPins(c)) ix.push({ group: 'Connectors', title: `${c.name} pin ${p.n}  ${p.name || ''}`, sub: `${m.name}: ${p.desc || c.kind || ''}`, keys: `pin ${p.n} ${p.name || ''} ${String(p.name || '').replace('/', '')}`, href: `${href}&pin=${encodeURIComponent(p.n)}`, des: `J${i + 1}.${p.n}`, mono: true, ...flags(p) });
     });
   }
-  for (const [mid, pw] of Object.entries(D.power)) {
-    const m = D.machines[mid]; if (!m || !pw) continue;
+  for (const mid of Object.keys(D.power)) {
+    const m = D.machines[mid], pw = m && dataFor(D.power, m).data; if (!pw) continue;
     for (const c of arr(pw.clocks)) if (c && c.name) ix.push({ group: 'Clocks', title: c.name, tag: clockFreqs(c), sub: `${m.name}${c.where ? ': ' + c.where : ''}`, keys: `clock ${clockFreqs(c)} ${c.where || ''}`, href: `${mPath(m)}/power?at=clocks`, des: mDes(m), ...flags(c) });
   }
   ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' }, { group: 'Pages', title: 'About', sub: 'Version, repository, licence', href: '#/about' },
@@ -747,7 +782,7 @@ function boardGrid(m, chips, onPhoto, print = false) {
   return `<div class="board-grid" role="group" aria-label="Chips on the ${esc(m.name)} board">${chips.map(c => {
     const des = desOf(c, m), nc = !c.pins, role = String(c.role || '').split(/[,(]/)[0].trim();
     const cell = `<a class="bcell${nc ? ' nc' : ''}" href="${nc ? mPath(m) + '/pinouts' : chipPath(m, c)}" aria-label="${esc(des)} ${esc(c.name)}${nc ? ', pinout not captured' : ''}">
-      <span class="bl"><span class="des">${esc(des)}</span>${c.heat === 'hot' ? '<span class="flag pwr">HOT</span>' : ''}${nc ? '<span class="flag">NOT CAPTURED</span>' : ''}${chipFlagged(c) ? (print ? '<span class="flag">(unverified)</span>' : '<span data-chk class="flag">CHECK</span>') : ''}<span class="pn">${esc(c.pkg || '')}</span></span>
+      <span class="bl"><span class="des">${esc(des)}</span>${chipTag(c, m, print)}${c.heat === 'hot' ? '<span class="flag pwr">HOT</span>' : ''}${nc ? '<span class="flag">NOT CAPTURED</span>' : ''}${chipFlagged(c) ? (print ? '<span class="flag">(unverified)</span>' : '<span data-chk class="flag">CHECK</span>') : ''}<span class="pn">${esc(c.pkg || '')}</span></span>
       <span class="bfp"><svg viewBox="0 0 ${BOARD_FW} 46" aria-hidden="true">${dipFootprint(c, m, 0, 0, BOARD_FW, false)}</svg></span>
       <span class="role">${esc(role)}</span>${chipConflicts(c).map(x => disagree(x, 'bcf', 'span')).join('')}</a>`;
     /* a chip outlined on the board photo gets a locate button; hovering or focusing the cell lights its outline */
@@ -1013,7 +1048,7 @@ function render() {
   closePop(); closePalette();
   window.scrollTo(0, 0);
   if (ctx.chip || state.conn) { renderPanel(); drawWire(); } else closePanel();
-  watchDip(); syncWake();
+  watchDip(); syncWake(); watchTabs();
   if (a === 'glossary' && r.q.term) { const el = document.getElementById('term-' + r.q.term); if (el) el.scrollIntoView({ block: 'center' }); }
   if (c === 'ports' && r.q.c) { const el = document.getElementById('conn-' + r.q.c); if (el) el.scrollIntoView({ block: 'start' }); }
   if (c === 'power' && r.q.c) { const el = $('#supply'); if (el) el.scrollIntoView({ block: 'start' }); }
@@ -1033,15 +1068,47 @@ function syncMbar() {
   const on = b && b.querySelector('.mtabs .on'), row = on && on.parentElement;
   if (on && row.scrollWidth > row.clientWidth) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
 }
+/* ---------- tabs that follow the scroll: two tabs share one page (Power and Clocks; Board and Notes). The anchored
+   tab is lit while its section is the one under the sticky bar, or when the page cannot scroll further and the
+   section is in view; the other otherwise. IntersectionObservers only: no scroll listener, nothing animates. ---------- */
+const TAB_ANCHOR = { power: ['power', 'clocks', 'clocks'], '': ['board', 'notes', 'notes'] };
+let tabIO = [];
+const TAB_LINE = 32;   /* px under the bar: a jump to a section lands it within this (scroll padding and margin) */
+function watchTabs() {
+  tabIO.forEach(o => o.disconnect()); tabIO = [];
+  const m = state.ctx.machine, c = state.ctx.route.segs[2] || '', t = TAB_ANCHOR[c];
+  const sec = t && m && document.getElementById(t[2]); if (!sec || !window.IntersectionObserver) return;
+  const tabs = $$('#mbar .mtabs a'), base = tabs[machineTabs(m).findIndex(x => x[0] === t[0])], anc = tabs[machineTabs(m).findIndex(x => x[0] === t[1])];
+  if (!base || !anc) return;
+  const end = document.createElement('div'); end.setAttribute('aria-hidden', 'true'); $('#view').appendChild(end);
+  const sync = () => {
+    const bar = PHONE_MQ.matches ? $('#mbar .mtabs') : $('#mbar'), y = (bar ? bar.getBoundingClientRect().bottom : 0) + TAB_LINE, r = sec.getBoundingClientRect();
+    const atEnd = end.getBoundingClientRect().top <= innerHeight;
+    const on = (r.top <= y && r.bottom > y) || (atEnd && r.top < innerHeight && r.bottom > y);
+    for (const [el, lit] of [[anc, on], [base, !on]]) if (el.classList.contains('on') !== lit) { el.classList.toggle('on', lit); if (lit) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); }
+  };
+  const top = Math.ceil(mbarH() + TAB_LINE);
+  tabIO = [new IntersectionObserver(sync, { rootMargin: `-${top}px 0px -${Math.max(0, innerHeight - top - 2)}px 0px` }), new IntersectionObserver(sync, { threshold: [0, 1] })];
+  tabIO[0].observe(sec); tabIO[1].observe(sec); tabIO[1].observe(end);
+}
+/* a tab for the page already open: jump to its section (or the top) instead of doing nothing */
+function tabJump(e) {
+  const a = e.target.closest && e.target.closest('#mbar .mtabs a'); if (!a || a.getAttribute('href') !== location.hash) return;
+  e.preventDefault();
+  const at = new URLSearchParams(a.getAttribute('href').split('?')[1] || '').get('at'), el = at && document.getElementById(at);
+  if (el) el.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
+}
+document.addEventListener('click', tabJump);
 /* ---------- chrome ---------- */
 const edgeField = (value = '', id = 'q') => `<form class="edge" data-act="search-form" role="search" autocomplete="off"><input id="${id}" type="search" placeholder="Chips, pins, BASIC, keys, terms" value="${esc(value)}" aria-label="Search" spellcheck="false"><span class="hint">/</span></form>`;
 function renderStrip() {
   const a = state.ctx.route.segs[0], m = mask(), next = MASKS[(MASKS.indexOf(m) + 1) % MASKS.length];
   $('#strip').className = 'strip' + (a === 'search' || !a ? ' no-edge' : '');
   $('#strip').innerHTML = `
-    <a class="title" href="#/"><b>Retro Bench</b><span class="rev">REV A</span><span class="offline${netLive() ? ' text-copper' : netLost() ? ' text-silk' : ''}" id="net-state">${netLabel()}</span></a>
+    <div class="title"><a href="#/"><b>Retro Bench</b></a><a class="ver" href="#/about" title="Version and source">${esc(rbVersion().v)}</a><span class="offline${netLive() ? ' text-copper' : netLost() ? ' text-silk' : ''}" id="net-state">${netLabel()}</span></div>
     ${edgeField('', 'q-strip')}
-    <div class="tools"><span id="net-act">${netAction()}</span><button type="button" class="tog" data-act="mask" aria-label="Solder mask ${m}${state.maskPick ? '' : ', following the system'}. Switch to ${next}.">Mask: <b>${m}</b></button></div>
+    ${headNav(a)}
+    <div class="tools"><span id="net-act">${netAction()}</span>${wakeBtn()}<button type="button" class="tog" data-act="mask" aria-label="Solder mask ${m}${state.maskPick ? '' : ', following the system'}. Switch to ${next}.">Mask: <b>${m}</b></button></div>
     <div id="net-row" class="sm:hidden col-span-full"${net.updated ? '' : ' hidden'}>${netRow()}</div>`;
 }
 function renderTrace() {
@@ -1051,11 +1118,17 @@ function renderTrace() {
   tr.innerHTML = parts.map((p, i) => (i ? '<span class="seg" aria-hidden="true"></span>' : '') + (p[1] ? `<a href="${p[1]}">${esc(p[0])}</a>` : `<span class="here" aria-current="page">${esc(p[0])}</span>`)).join('');
 }
 const MORE_PAGES = ['more', 'glossary', 'resources', 'credits', 'video', 'notes', 'about'];
+/* tablet and desktop: the pages the phone's bottom bar and More page reach, beside the search box.
+   More holds Credits, Resources and About. */
+function headNav(a) {
+  const on = { '': !a, search: a === 'search', glossary: a === 'glossary', video: a === 'video', notes: a === 'notes', more: ['more', 'credits', 'resources', 'about'].includes(a) };
+  return `<nav class="hnav" aria-label="Pages">${[['', 'Home'], ['search', 'Search'], ['glossary', 'Glossary'], ['video', 'Video'], ['notes', 'Notes'], ['more', 'More']].map(([id, l]) => `<a href="#/${id}"${on[id] ? ' class="on" aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
+}
 function renderEdgebar() {
   const [a, , c] = state.ctx.route.segs, m = currentMachine();
   const f = (href, label, on, off) => `<a href="${href}" class="${on ? 'on' : ''}${off ? ' off' : ''}"${on ? ' aria-current="page"' : ''}${off ? ' aria-disabled="true" tabindex="-1"' : ''}><span class="fg" aria-hidden="true"></span>${label}</a>`;
   $('#edgebar').innerHTML =
-    f('#/', 'Home', !a || (!['search', ...MORE_PAGES].includes(a) && !['pinouts', 'chip', 'quickref'].includes(c))) +
+    f('#/', 'Home', !a) +
     f(m ? `${mPath(m)}/pinouts` : '#/', 'Chips', c === 'pinouts' || c === 'chip', !m || !chipsOf(m).length) +
     f(m ? `${mPath(m)}/quickref` : '#/', 'Ref', c === 'quickref', !m || !dataFor(D.quickref, m).data) +
     f('#/search', 'Search', a === 'search') +
@@ -1079,13 +1152,18 @@ function machineTabs(m) {
     ['notes', 'Notes', `${mPath(m)}?at=notes`, true],
   ];
 }
+/* the board revision on the bench, when RCS.boards lists the machine's boards */
+function boardSelect(m) {
+  const b = boardOf(m);
+  return `<span class="bsel"><select data-act="board" aria-label="Board revision on the bench" title="Board revision on the bench"><option value="">All boards</option>${boardsOf(m).map(x => `<option value="${esc(x.id)}"${x === b ? ' selected' : ''}>${esc([x.name, x.years].filter(Boolean).join(', '))}</option>`).join('')}</select>${b ? vmark(b) : ''}</span>`;
+}
 function mbar(m, tab) {
   const list = arr(D.schematics[m.id]), boards = [...new Set(list.map(s => s.board))];
   const one = boards.length === 1 ? list.find(s => s.board === boards[0]) : null;
   const bl = !boards.length ? '' : one ? [one.board, one.rev].filter(Boolean).join(', ') : `${boards.length} boards`;
   return `<div class="mbar" id="mbar">
     <div class="ctx"><button type="button" class="mname" data-act="mswitch" aria-label="${esc(m.name)}. Switch machine" title="Switch machine"><span class="des">${esc(mDes(m))}</span><span class="nm">${esc(m.name)}</span><span class="sw" aria-hidden="true">&#9662;</span></button>
-      ${bl ? `<a class="brev" href="${mPath(m)}?at=boards" title="Boards and schematics">${esc(bl)}</a>` : ''}
+      ${boardsOf(m).length ? boardSelect(m) : bl ? `<a class="brev" href="${mPath(m)}?at=boards" title="Boards and schematics">${esc(bl)}</a>` : ''}
       ${machineRegional(m) ? regionBar() : ''}</div>
     <nav class="mtabs" aria-label="${esc(m.name)} sections">${machineTabs(m).map(([id, label, href, ok]) => `<a href="${href}" class="${id === tab ? 'on' : ''}${ok ? '' : ' off'}"${id === tab ? ' aria-current="page"' : ''}${ok ? '' : ' aria-disabled="true" tabindex="-1"'}>${label}</a>`).join('')}</nav>
   </div>`;
@@ -1101,7 +1179,7 @@ function viewHome() {
   return `
     <div class="grid gap-7 items-start lg:grid-cols-[minmax(280px,380px)_1fr]">
       <div class="tblock">
-        <div class="big">Retro Bench<small>REV A, 8-BIT REPAIR REFERENCE</small></div>
+        <div class="big">Retro Bench<small>8-BIT REPAIR REFERENCE</small></div>
         <div class="meta"><span>${ready}</span> machines${drives ? ` and <span>${drives}</span> drives` : ''} fitted, <span>${drawn}</span> chips drawn pin by pin<br><span>${Object.keys(D.terms).length}</span> glossary terms, tap any dotted word</div>
         ${recents.length ? `<div class="recent mt-4.5"><div class="h4 mt-0 mb-0">Last on the bench</div>${recents.map(m => `<a href="${mPath(m)}"><span>${esc(mDes(m))}</span>${esc(m.name)}</a>`).join('')}</div>` : ''}
         ${chipRecents.length ? `<div class="recent mt-3"><div class="h4 mt-0 mb-0">Recent chips</div>${chipRecents.map(([c, m]) => `<a href="${chipPath(m, c)}" aria-label="${esc(c.name)} on the ${esc(m.name)}"><span>${esc(c.short)}</span>${esc(mDes(m))}</a>`).join('')}</div>` : ''}
@@ -1146,7 +1224,7 @@ function viewMachine(m) {
     let i = 1;
     const rows = [...arr(pw.data.rails).map(r => ({ tp: `TP${i++}`, name: r.rail, x: r })), ...arr(pw.data.testPoints).map(t => ({ tp: `TP${i++}`, name: t.tp, x: t }))];
     tp = `<section class="blk"><span class="lbl"><span class="d">TP</span>Test points</span>
-      <div class="legend tri">${rows.map(r => `<div class="k">${r.tp}</div><div class="v"><b>${esc(r.name)}</b>${vmark(r.x)}<br><span class="tin sm">${linkPins(r.x.where || '', m)}</span>${conflictNote(r.x)}</div><div class="v3 mono">${esc(regionText(r.x.expect || ''))}</div>`).join('')}</div>
+      <div class="legend tri">${rows.map(r => `<div class="k">${r.tp}</div><div class="v"><b>${esc(r.name)}</b>${vmark(r.x)}${recTag(r.x, m)}<br><span class="tin sm">${linkPins(r.x.where || '', m)}</span>${conflictNote(r.x)}</div><div class="v3 mono">${esc(regionText(r.x.expect || ''))}</div>`).join('')}</div>
       ${measuredFold(pw.data)}
       <a class="lnk" href="${mPath(m)}/power">All rails and test points</a></section>`;
   }
@@ -1161,7 +1239,7 @@ function viewMachine(m) {
       ${pw.data && arr(pw.data.firstTen).length ? `<a class="lnk col-start-2 lg:col-start-4 -mt-2 mono sm uppercase" href="${mPath(m)}/power?at=first-ten">First ten minutes &rsaquo;</a>` : ''}
     </div>
     <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-3.5"><button type="button" class="btn" data-act="print">Print card</button><span class="tin sm">One page where it fits, two at most, black on white: chips, supply and rail warnings, rails, first checks, clocks, connector pins.</span></div>
-    ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips, onPhoto)}<p class="note">Tap a footprint for its pinout. Designators follow the ${esc(m.name)} board where the sheet records them.${onPhoto.size ? ' The crosshair shows a chip on the board photo below.' : ''}</p></section>`
+    ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips, onPhoto)}<p class="note">Tap a footprint for its pinout. Designators follow the ${boardOf(m) ? esc(boardOf(m).name) : `${esc(m.name)} board`} where the sheet records them.${onPhoto.size ? ' The crosshair shows a chip on the board photo below.' : ''}</p></section>`
       : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} is ${m.status === 'planned' ? 'planned' : 'on paper'}: its chips have not been entered yet.`)}
     ${photoBlock(m)}
     ${qr.data || tp ? `<div class="grid gap-x-[18px] md:grid-cols-2 items-start">
@@ -1180,19 +1258,25 @@ function viewMachine(m) {
 const SCH_KIND = { schematic: 'Schematic', layout: 'Board layout', manual: 'Service manual', parts: 'Parts list' };
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
 function boardsBlock(m) {
-  const list = arr(D.schematics[m.id]);
-  if (!list.length) return '';
-  const boards = [...new Set(list.map(s => s.board))];
+  const all = arr(D.schematics[m.id]), revs = boardsOf(m), b = boardOf(m);
+  if (!all.length && !revs.length) return '';
+  const legend = list => { const boards = [...new Set(list.map(s => s.board))];
+    return `<div class="legend tri">${boards.map(bd => { const rows = list.filter(s => s.board === bd); const first = rows[0];
+      return `<div class="k">${esc(bd)}</div><div class="v">${first.rev || first.years ? `<b>${esc([first.rev, first.years].filter(Boolean).join(', '))}</b>` : ''}${first.note ? `<br><span class="sm">${esc(first.note)}</span>` : ''}</div>
+        <div class="v3"><ul class="ds">${rows.map((s, i) => `<li><a class="lnk" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(SCH_KIND[s.kind] || s.kind)}${s.label ? `: ${esc(s.label)}` : ''}</a>${vmark(s)}${recTag(s, m)} <span class="tin sm mono">${esc(s.host || hostOf(s.url))}</span>${i && s.note ? `<br><span class="tin sm">${esc(s.note)}</span>` : ''}${disagree(s)}</li>`).join('')}</ul></div>`; }).join('')}</div>`; };
+  /* a board picked: its drawings (and those for every board) first, the rest folded away */
+  const mine = all.filter(s => onBoard(s, m)), other = all.filter(s => !onBoard(s, m));
+  const revBlk = revs.length ? `<div class="h4 mt-0">Board revisions</div><div class="legend tri brevs">${revs.map(r => `<div class="k${r === b ? ' on' : ''}">${esc(r.name)}</div><div class="v">${r.years ? `<b>${esc(r.years)}</b>` : ''}${vmark(r)}${r === b ? ' <span class="btag on">On the bench</span>' : ''}${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}${disagree(r)}</div><div class="v3">${arr(r.sources).length ? `<ul class="ds">${r.sources.map(d => `<li>${srcLink(d)}</li>`).join('')}</ul>` : ''}</div>`).join('')}</div>
+    <p class="note">${b ? `Showing the ${esc(b.name)}: parts, designators, rails, clocks, ports and photos for other boards are hidden.` : 'Showing all boards. Pick the one on your bench in the bar at the top; records only on some boards say which.'}</p>` : '';
   return `<section class="blk" id="boards"><span class="lbl"><span class="d">PCB</span>Boards and schematics</span>
-    <div class="legend tri">${boards.map(b => { const rows = list.filter(s => s.board === b); const first = rows[0];
-      return `<div class="k">${esc(b)}</div><div class="v">${first.rev || first.years ? `<b>${esc([first.rev, first.years].filter(Boolean).join(', '))}</b>` : ''}${first.note ? `<br><span class="sm">${esc(first.note)}</span>` : ''}</div>
-        <div class="v3"><ul class="ds">${rows.map((s, i) => `<li><a class="lnk" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">${esc(SCH_KIND[s.kind] || s.kind)}${s.label ? `: ${esc(s.label)}` : ''}</a>${vmark(s)} <span class="tin sm mono">${esc(s.host || hostOf(s.url))}</span>${i && s.note ? `<br><span class="tin sm">${esc(s.note)}</span>` : ''}${disagree(s)}</li>`).join('')}</ul></div>`; }).join('')}</div>
-    <p class="note">Links open the archive that holds the drawing; nothing is copied into the app. Check the assembly number printed on your board against the list.</p></section>`;
+    ${revBlk}${mine.length ? `${revs.length ? '<div class="h4">Drawings</div>' : ''}${legend(mine)}` : b ? `<p class="note mt-0">No drawings linked for the ${esc(b.name)}.</p>` : ''}
+    ${other.length ? `<details class="fold"><summary>Other boards<span class="s">${other.length} document${other.length === 1 ? '' : 's'}</span></summary>${legend(other)}</details>` : ''}
+    ${all.length ? '<p class="note">Links open the archive that holds the drawing; nothing is copied into the app. Check the assembly number printed on your board against the list.</p>' : ''}</section>`;
 }
 
 /* ---------- board photos (src/data/photos.js). The photo is shown unaltered; the chip outlines are HTML boxes
    placed in image fractions over it, so they scale with the image and each one can be a link. ---------- */
-const photosOf = m => arr(D.photos[m.id]).filter(p => p && p.file && p.w > 0 && p.h > 0);
+const photosOf = m => arr(D.photos[m.id]).filter(p => p && p.file && p.w > 0 && p.h > 0 && onBoard(p, m));
 const rotOf = p => (((Number(p.rotate) || 0) % 360) + 360) % 360;
 /* a box [x, y, w, h] in fractions of the stored image, turned with the photo by `rotate` degrees clockwise */
 function rotBox([x, y, w, h], r) {
@@ -1230,7 +1314,7 @@ function photoBody(m) {
     <div class="pview${state.ph.big ? ' big' : ''}" id="pview">${photoFrame(m, p)}</div>
     <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-2.5"><button type="button" class="btn${state.ph.big ? ' on' : ''}" data-act="photo-big" aria-pressed="${state.ph.big}">${state.ph.big ? 'Fit to width' : 'Full size'}</button>
       <span class="tin sm">${nBox ? `${nBox} chip${nBox === 1 ? '' : 's'} outlined. Tap an outline for its pinout${nV ? `; dashed outlines marked CHECK were placed from the layout, not a printed designator` : ''}.` : 'No chips outlined on this photo yet.'}</span></div>
-    <p class="pcap"><b>${esc(photoBoard(p))}</b>${p.side ? `, ${esc(p.side)} side` : ''}${p.note ? `. <span class="tin">${esc(p.note)}</span>` : ''}</p>
+    <p class="pcap"><b>${esc(photoBoard(p))}</b>${recTag(p, m)}${p.side ? `, ${esc(p.side)} side` : ''}${p.note ? `. <span class="tin">${esc(p.note)}</span>` : ''}</p>
     <p class="pcred">${photoCredit(p)}. Resized only; the outlines are drawn by Retro Bench.</p>`;
 }
 const photoBlock = m => (photosOf(m).length ? `<section class="blk photoblk scroll-mt-4" id="photo"><span class="lbl"><span class="d">IMG</span>Board photo</span><div id="photo-body">${photoBody(m)}</div></section>` : '');
@@ -1267,7 +1351,7 @@ function viewPinouts(m) {
   const rows = chips.map(c => {
     const inner = `<svg viewBox="-6 -20 212 100" aria-hidden="true">${dipFootprint(c, m, 0, 0, 200, false)}</svg>
       <div><div class="d">${esc(desOf(c, m))} <span class="tin">${esc(c.pkg || '')}</span>${c.pins ? '' : ' <span class="tin">NOT CAPTURED</span>'}</div>
-        <div class="t">${esc(c.name)}${hotMark(c.heat)}${chipFlagged(c) ? chk() : ''}</div>${chipConflicts(c).map(x => disagree(x)).join('')}
+        <div class="t">${esc(c.name)}${hotMark(c.heat)}${chipFlagged(c) ? chk() : ''}${chipTag(c, m)}</div>${chipConflicts(c).map(x => disagree(x)).join('')}
         <div class="r">${esc(c.role || '')}${c.heat && c.heat !== 'hot' ? `. ${HEAT[c.heat] || ''}.` : ''}</div>
         ${arr(c.fails).length ? `<div class="f">FAILS AS: ${esc(c.fails.join(' / '))}</div>` : ''}</div>`;
     return c.pins ? `<a class="chiprow" href="${chipPath(m, c)}">${inner}</a>` : `<div class="chiprow nc">${inner}</div>`;
@@ -1281,7 +1365,7 @@ function partsList(m, chips) {
   return `<section class="blk scroll-mt-4" id="parts"><span class="lbl">Parts list by designator</span>
     <form class="edge pfilter" role="search" autocomplete="off" data-act="parts-form"><input id="parts-q" type="search" placeholder="Filter: U7, 6510, video" aria-label="Filter the parts list" spellcheck="false"></form>
     <table class="ctab parts" id="parts-t"><thead><tr><th>Designator</th><th>Part</th><th>Role</th></tr></thead>
-    <tbody>${rows.map(({ c, ds }) => `<tr data-q="${esc([...ds, c.short, c.name, c.role].join(' ').toLowerCase())}"><td class="f">${ds.length ? esc(ds.slice(0, 4).join(', ') + (ds.length > 4 ? ` … (${ds.length})` : '')) : '<span class="tin">—</span>'}${ds.length && locOf(c, m) !== ds.join(', ') ? `<div class="tin sm loc">${esc(locOf(c, m))}</div>` : ''}</td><td class="nm">${c.pins ? `<a class="plink" href="${chipPath(m, c)}">${esc(c.short)}</a>` : `${esc(c.short)} <span class="tin sm">not captured</span>`}${vmark(c)}</td><td>${esc(c.role || '')}</td></tr>`).join('')}</tbody></table>
+    <tbody>${rows.map(({ c, ds }) => `<tr data-q="${esc([...ds, c.short, c.name, c.role].join(' ').toLowerCase())}"><td class="f">${ds.length ? esc(ds.slice(0, 4).join(', ') + (ds.length > 4 ? ` … (${ds.length})` : '')) : '<span class="tin">—</span>'}${ds.length && locOf(c, m) !== ds.join(', ') ? `<div class="tin sm loc">${esc(locOf(c, m))}</div>` : ''}</td><td class="nm">${c.pins ? `<a class="plink" href="${chipPath(m, c)}">${esc(c.short)}</a>` : `${esc(c.short)} <span class="tin sm">not captured</span>`}${vmark(c)}${vmark(locOver(c, m))}${chipTag(c, m)}${disagree(locOver(c, m))}</td><td>${esc(c.role || '')}</td></tr>`).join('')}</tbody></table>
     <p class="note" id="parts-n" role="status"></p></section>`;
 }
 
@@ -1292,13 +1376,12 @@ function viewChip(m, chip) {
   const present = [...new Set(chip.pins.map(p => p.type)), ...(chip.pins.some(isReset) ? ['reset'] : [])].sort((a, b) => rank(a) - rank(b));
   const count = t => chip.pins.filter(p => pinIs(p, t)).length;
   const loc = locOf(chip, m);
-  return head(boardDes(chip, m), esc(chip.name), `${esc(chip.role || '')}. ${esc(chip.pkg || '')}${loc ? `, ${esc(loc)} on the ${esc(m.name)}` : ''}. ${HEAT[chip.heat] || ''}.${hotMark(chip.heat)}${vmark(chip)}${disagree(chip)}`, chip.verifiedAgainst ? `Checked against: ${esc(chip.verifiedAgainst)}` : '') + `
+  return head(boardDes(chip, m), esc(chip.name), `${esc(chip.role || '')}. ${esc(chip.pkg || '')}${loc ? `, ${esc(loc)} on the ${esc(m.name)}${boardOf(m) ? ` (${esc(boardOf(m).name)})` : ''}` : ''}. ${HEAT[chip.heat] || ''}.${hotMark(chip.heat)}${vmark(chip)}${vmark(locOver(chip, m))}${chipTag(chip, m)}${disagree(chip)}${disagree(locOver(chip, m))}${chipOnBoard(chip, m) ? '' : `<p class="note">Not on the ${esc(boardOf(m).name)}: the data lists this chip on ${esc(chipBoardIds(chip, m).map(id => boardName(m, id)).join(', '))} only.</p>`}`, chip.verifiedAgainst ? `Checked against: ${esc(chip.verifiedAgainst)}` : '') + `
     <div class="flex flex-wrap gap-2.5 items-center mt-4 ctools-chip">
       <button type="button" class="btn${state.flip ? ' on' : ''}" data-act="flip" aria-pressed="${state.flip}"><span class="max-sm:hidden">View: </span>${state.flip ? 'Bottom' : 'Top'}</button>
       <button type="button" class="btn${state.rot ? ' on' : ''}" data-act="rot" aria-label="Rotate the drawing a quarter turn clockwise, now ${state.rot * 90} degrees. Key R; Shift+R turns back." title="R turns clockwise, Shift+R back"><span class="max-sm:hidden">Rotate: </span><span class="sm:hidden" aria-hidden="true">&#8635; </span>${state.rot * 90}°</button>
       <button type="button" class="btn${state.ptable ? ' on' : ''}" data-act="ptable" aria-pressed="${state.ptable}">Table</button>
       ${state.filter ? `<button type="button" class="btn" data-act="filter" data-t="">Show all pins</button>` : ''}
-      ${wakeBtn()}
       <span class="flex-1"></span><span class="tin sm max-sm:hidden">Tap a pad, or Tab to it and press Enter; arrow keys step pins; R rotates</span>
     </div>
     <div class="types" role="group" aria-label="Pin types, tap to filter">${present.map(t => `<button type="button" data-act="filter" data-t="${esc(t)}" class="${state.filter === t ? 'on' : ''}" aria-pressed="${state.filter === t}">${LEAD[t] ? `<span class="lsw ${LEAD[t]}" aria-hidden="true"></span>` : ''}${markIcon(t)}${t === 'reset' ? 'Reset' : esc(ptype(t).label)} <span class="c">${count(t)}</span></button>`).join('')}</div>
@@ -1433,8 +1516,6 @@ const connDetailBox = c => {
   return s && s.c === c ? `<section class="blk"><span class="lbl">Pin detail</span>${connDetail(s.c, s.p, s.des)}</section>`
     : '<section class="blk dashed"><span class="lbl">Pin detail</span><p class="pempty">Select a pin to inspect</p></section>';
 };
-/* the keep-awake toggle on the ports and power pages */
-const wakeRow = () => (WAKE ? `<div class="flex flex-wrap gap-2.5 items-center mt-4">${wakeBtn()}</div>` : '');
 /* labels: a pin field written beside each pad (the power page shows `expect`). Round, single and custom
    drawings grow sideways with labels, so on a phone they are left to the table. */
 function connBody(c, o = {}) {
@@ -1465,10 +1546,10 @@ function viewPorts(m) {
   const unknown = arr(list).some(c => arr(c.pins).some(p => p.n === '?'));
   const top = head(mDes(m), 'Ports and connectors', `${esc(m.name)}. Drawn looking into the socket on the machine; tap a pad or a row for its detail.${unknown ? ' "?" means no source gives that contact&#39;s position yet.' : ''}`);
   if (!list || !arr(list).length) return top + emptyBlk('NOT CAPTURED', `No connector pinouts for the ${esc(m.name)} in the app yet.`);
-  return top + wakeRow() + list.map((c, i) => {
+  return top + list.map((c, i) => {
     const b = connBody(c);
     return `<section class="blk cblk${b.wide ? ' wide' : ''} scroll-mt-4" id="conn-${esc(c.id)}"><span class="lbl"><span class="d">J${i + 1}</span>${esc(c.name)}</span>
-      <div class="tin sm mono">${esc(c.kind || '')}${vmark(c)}</div>${conflictNote(c)}
+      <div class="tin sm mono">${esc(c.kind || '')}${vmark(c)}${recTag(c, m)}</div>${conflictNote(c)}
       ${c.summary ? `<p class="desc mt-2 text-base">${esc(c.summary)}</p>` : ''}
       ${arr(c.pins).some(p => p && p.type === 'video') ? videoLink('what these pins should measure') : ''}
       ${b.html}
@@ -1487,7 +1568,7 @@ function supplyBlock(m, sup) {
     ${sup.output ? `<div class="out">${esc(sup.output)}</div>` : ''}${conflictNote(sup)}
     ${sup.external ? '' : `<p class="note">Internal supply, inside the case.${c ? ' Drawn below: its connector to the board.' : ''}</p>`}
     ${arr(sup.notes).length ? `<div class="h4">Known problems</div><ul class="bul">${sup.notes.map(noteOf).map(x => `<li>${esc(x.text || '')}${vmark(x)}${conflictNote(x)}</li>`).join('')}</ul>` : ''}
-    ${c ? `<div class="h4">${esc(connDes(list, c))} ${esc(c.name)} <span class="tin">${esc(c.kind || '')}</span>${vmark(c)}</div>${conflictNote(c)}${b.html}${sourceList(c.sources, 'Connector sources', c.verifiedAgainst)}`
+    ${c ? `<div class="h4">${esc(connDes(list, c))} ${esc(c.name)} <span class="tin">${esc(c.kind || '')}</span>${vmark(c)}${recTag(c, m)}</div>${conflictNote(c)}${b.html}${sourceList(c.sources, 'Connector sources', c.verifiedAgainst)}`
       : `<p class="note">No pinout for the ${sup.external ? 'supply plug' : 'supply connector'} yet.</p>`}
     ${sourceList(sup.sources)}
   </section>`;
@@ -1501,13 +1582,13 @@ function viewPower(m) {
   const scope = x => (x.scope ? `<div class="tpscope">${scopeBlock(x.scope, '', x)}</div>` : '');
   const ften = arr(pw.firstTen), probeBlk = probes.length ? `<section class="blk"><span class="lbl">Probe hints</span><div class="legend">${probes.slice(0, 8).map(({ c, p }) => `<div class="k"><a class="lnk" href="${chipPath(m, c)}?pin=${p.n}">${esc(c.short)}.${p.n} ${esc(p.name)}</a></div><div class="v sm">${esc(p.probe)}${vmark(p)}${disagree(p)}</div>`).join('')}</div></section>` : '';
   const meas = measuredFold(pw, 'Conditions');
-  return top + wakeRow() + (pw.supply ? supplyBlock(m, pw.supply) : '') + `
+  return top + (pw.supply ? supplyBlock(m, pw.supply) : '') + `
     ${meas ? `<section class="blk scroll-mt-4" id="measured"><span class="lbl">Measured how</span>${meas}</section>` : ''}
     <section class="blk"><span class="lbl">Rails</span>
-      <div class="legend tri">${arr(pw.rails).map(r => `<div class="k">TP${i++}</div><div class="v"><b class="mono">${esc(r.rail)}</b>${vmark(r)}<br><span class="tin sm">${linkPins(r.where || '', m)}</span>${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}${conflictNote(r)}</div><div class="v3 mono">${esc(regionText(r.expect || ''))}</div>${scope(r)}`).join('')}</div>
+      <div class="legend tri">${arr(pw.rails).map(r => `<div class="k">TP${i++}</div><div class="v"><b class="mono">${esc(r.rail)}</b>${vmark(r)}${recTag(r, m)}<br><span class="tin sm">${linkPins(r.where || '', m)}</span>${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}${conflictNote(r)}</div><div class="v3 mono">${esc(regionText(r.expect || ''))}</div>${scope(r)}`).join('')}</div>
     </section>
     ${arr(pw.testPoints).length ? `<section class="blk"><span class="lbl">Test points</span>
-      <div class="legend tri">${pw.testPoints.map(t => `<div class="k">TP${i++}</div><div class="v"><b>${esc(t.tp)}</b>${vmark(t)}<br><span class="tin sm mono">${linkPins(t.where || '', m)}</span>${conflictNote(t)}</div><div class="v3 mono">${esc(regionText(t.expect || ''))}</div>${scope(t)}`).join('')}</div>
+      <div class="legend tri">${pw.testPoints.map(t => `<div class="k">TP${i++}</div><div class="v"><b>${esc(t.tp)}</b>${vmark(t)}${recTag(t, m)}<br><span class="tin sm mono">${linkPins(t.where || '', m)}</span>${conflictNote(t)}</div><div class="v3 mono">${esc(regionText(t.expect || ''))}</div>${scope(t)}`).join('')}</div>
     </section>` : ''}
     ${clocksBlock(m, arr(pw.clocks))}
     ${arr(pw.sources).length ? `<section class="blk"><span class="lbl">Sources</span>${sourceList(pw.sources, '')}</section>` : ''}
@@ -1520,7 +1601,7 @@ function viewPower(m) {
 function firstTenBlock(m, steps) {
   return `<section class="blk scroll-mt-4" id="first-ten"><span class="lbl">First ten minutes</span>
     <ol class="ften">${steps.map((s, k) => `<li><span class="n">${esc(s.step ?? k + 1)}</span><div>
-      <div class="c">${esc(s.check || '')}${vmark(s)}</div>
+      <div class="c">${esc(s.check || '')}${vmark(s)}${recTag(s, m)}</div>
       ${s.where ? `<div class="w">${linkPins(s.where, m)}</div>` : ''}
       ${s.expect ? `<div class="x">${esc(regionText(s.expect))}</div>` : ''}
       ${s.ifNot ? `<div class="if">If not: ${esc(s.ifNot)}</div>` : ''}
@@ -1540,7 +1621,7 @@ function clocksBlock(m, list) {
     : `<td class="f"${std.length > 1 ? ' colspan="2"' : ''} data-h="f">${esc(c.f || '')}</td>`);
   return `<section class="blk scroll-mt-4" id="clocks"><span class="lbl">Clocks</span>
     <table class="ctab"><thead><tr><th>Clock</th><th>Where</th>${cols.map(h => `<th>${h}</th>`).join('')}<th>Source</th></tr></thead>
-    <tbody>${list.map(c => `<tr><td class="nm">${esc(c.name)}${vmark(c)}${conflictNote(c)}</td><td class="w">${linkPins(c.where || '', m)}</td>${freq(c)}<td class="s">${c.source ? srcLink(c.source) : ''}</td></tr>`).join('')}</tbody></table>
+    <tbody>${list.map(c => `<tr><td class="nm">${esc(c.name)}${vmark(c)}${recTag(c, m)}${conflictNote(c)}</td><td class="w">${linkPins(c.where || '', m)}</td>${freq(c)}<td class="s">${c.source ? srcLink(c.source) : ''}</td></tr>`).join('')}</tbody></table>
     ${samsNote(list.map(c => c.source))}${videoLink('PAL and NTSC line and sync timing')}</section>`;
 }
 
@@ -1582,7 +1663,7 @@ function allSources() {
   if (D.video) push(D.video.sources, 'video signals');
   return out;
 }
-/* build stamp from src/version.js (scripts/version.mjs): v0.0.<YYDDD>.<rev> on the Pages build, "dev" locally */
+/* build stamp from src/version.js (scripts/version.mjs): v0.<YYDDD>.<rev> on the Pages build, "dev" locally */
 const REPO = 'https://github.com/paulczy/retro-bench';
 const rbVersion = () => Object.assign({ v: 'dev', built: '', commit: '' }, window.RB_VERSION || {});
 function viewAbout() {
@@ -1593,7 +1674,7 @@ function viewAbout() {
       <dl class="kv mt-0"><dt>Version</dt><dd class="mono">${esc(V.v)}</dd>
         ${built && !isNaN(built) ? `<dt>Built</dt><dd>${esc(built.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }))}</dd>` : ''}
         ${V.commit ? `<dt>Commit</dt><dd class="mono">${ext(`${REPO}/commit/${V.commit}`, V.commit.slice(0, 7))}</dd>` : ''}
-        <dt>Scheme</dt><dd>v0.0.&lt;YYDDD&gt;.&lt;rev&gt;: the Julian date of the build (two-digit year and day of the year, US Central time) and the count of that day's commits.</dd></dl>
+        <dt>Scheme</dt><dd>v0.&lt;YYDDD&gt;.&lt;rev&gt;: the Julian date of the build (two-digit year and day of the year, US Central time) and the count of that day's commits.</dd></dl>
     </section>
     <section class="blk"><span class="lbl">Source</span>
       <dl class="kv mt-0"><dt>Repository</dt><dd>${ext(REPO, 'github.com/paulczy/retro-bench')}</dd>
@@ -1726,18 +1807,18 @@ function printCard(m) {
   const supNotes = pw && pw.supply ? arr(pw.supply.notes).filter(Boolean).map(noteOf) : [], ps = pw && pw.supply;
   const sup = ps ? `<p class="pc-n">${esc(ps.name || 'Supply')}${ps.output ? `: ${esc(ps.output)}` : ''}${pv(ps)}</p>${pconf(ps)}${supNotes.length ? `<ul class="pc-ul">${supNotes.map(x => `<li>${esc(x.text || '')}${pv(x)}${pconf(x)}</li>`).join('')}</ul>` : ''}` : '';
   const checks = ften.length
-    ? `<ol class="pc-ol">${ften.map((s, k) => `<li><b>${esc(s.step ?? k + 1)}</b> ${esc(s.check || '')}${pv(s)}${s.where ? ` <span class="pc-w">${esc(s.where)}</span>` : ''}${s.expect ? ` <span class="pc-x">${esc(s.expect)}</span>` : ''}${s.ifNot ? `<div class="pc-if"><b>If not:</b> ${esc(s.ifNot)}</div>` : ''}${pconf(s)}</li>`).join('')}</ol>`
+    ? `<ol class="pc-ol">${ften.map((s, k) => `<li><b>${esc(s.step ?? k + 1)}</b> ${esc(s.check || '')}${pv(s)}${recTag(s, m, true)}${s.where ? ` <span class="pc-w">${esc(s.where)}</span>` : ''}${s.expect ? ` <span class="pc-x">${esc(s.expect)}</span>` : ''}${s.ifNot ? `<div class="pc-if"><b>If not:</b> ${esc(s.ifNot)}</div>` : ''}${pconf(s)}</li>`).join('')}</ol>`
     : '<ol class="pc-ol"><li><b>1</b> Rails at the supply pins, with the board loaded.</li><li><b>2</b> Reset goes high after power-on.</li><li><b>3</b> Master clock, then the CPU clock.</li><li><b>4</b> Only then pull the hottest chip.</li></ol>';
   const clk = c => (tv ? (c.pal || c.ntsc ? `<td class="m">${esc(c.pal || '')}</td><td class="m">${esc(c.ntsc || '')}</td>` : `<td class="m" colspan="2">${esc(c.f || '')}</td>`) : `<td class="m">${esc(c.f || '')}</td>`);
   return `<section class="printcard" aria-hidden="true">
-    <header class="pc-h"><span class="pc-d">${esc(mDes(m))}</span><h1>${esc(m.name)}</h1><span class="pc-s">Retro Bench card, ${new Date().toISOString().slice(0, 10)}. Check readings against the sources in the app; "(unverified)" marks one no source has confirmed yet.</span></header>
+    <header class="pc-h"><span class="pc-d">${esc(mDes(m))}</span><h1>${esc(m.name)}${boardsOf(m).length ? ` <span class="pc-bd">${boardOf(m) ? `${esc([boardOf(m).name, boardOf(m).years].filter(Boolean).join(', '))}${pv(boardOf(m))}` : 'All boards'}</span>` : ''}</h1><span class="pc-s">Retro Bench card, ${new Date().toISOString().slice(0, 10)}. Check readings against the sources in the app; "(unverified)" marks one no source has confirmed yet.</span></header>
     ${chips.length ? sec('Chips', boardGrid(m, chips, null, true)) : ''}
     <div class="pc-cols">
       ${!rails.length && sup ? sec('Supply', sup) : ''}
-      ${rails.length ? sec('Rails', `${sup}<table class="pc-t"><thead><tr><th>Rail</th><th>Where</th><th>Expect</th></tr></thead><tbody>${rails.map(r => `<tr><td class="m">${esc(r.rail)}</td><td>${esc(r.where || '')}${r.note ? `<div class="pc-if">${esc(r.note)}</div>` : ''}${pconf(r)}</td><td class="m">${esc(r.expect || '')}${pv(r)}</td></tr>`).join('')}</tbody></table>`, ' pc-flow') : ''}
+      ${rails.length ? sec('Rails', `${sup}<table class="pc-t"><thead><tr><th>Rail</th><th>Where</th><th>Expect</th></tr></thead><tbody>${rails.map(r => `<tr><td class="m">${esc(r.rail)}${recTag(r, m, true)}</td><td>${esc(r.where || '')}${r.note ? `<div class="pc-if">${esc(r.note)}</div>` : ''}${pconf(r)}</td><td class="m">${esc(r.expect || '')}${pv(r)}</td></tr>`).join('')}</tbody></table>`, ' pc-flow') : ''}
       ${sec(ften.length ? 'First ten minutes' : 'Order of checks', checks, ' pc-flow')}
-      ${clocks.length ? sec('Clocks', `<table class="pc-t"><thead><tr><th>Clock</th><th>Where</th>${tv ? '<th>PAL</th><th>NTSC</th>' : '<th>Frequency</th>'}</tr></thead><tbody>${clocks.map(c => `<tr><td>${esc(c.name)}${pv(c)}</td><td>${esc(c.where || '')}${pconf(c)}</td>${clk(c)}</tr>`).join('')}</tbody></table>`) : ''}
-      ${conns.length ? sec('Connectors', conns.map((c, i) => `<div class="pc-c"><b>J${i + 1} ${esc(c.name)}</b> <span class="pc-w">${esc(c.kind || '')}</span>${pv(c)}${pconf(c)}<div class="pc-p">${realPins(c).map(p => `<span><b>${esc(p.n)}</b> ${esc(p.name || '')}${pv(p)} ${disagree(p, 'pc-vc', 'span')}</span>`).join(' ')}</div></div>`).join(''), ' pc-flow') : ''}
+      ${clocks.length ? sec('Clocks', `<table class="pc-t"><thead><tr><th>Clock</th><th>Where</th>${tv ? '<th>PAL</th><th>NTSC</th>' : '<th>Frequency</th>'}</tr></thead><tbody>${clocks.map(c => `<tr><td>${esc(c.name)}${pv(c)}${recTag(c, m, true)}</td><td>${esc(c.where || '')}${pconf(c)}</td>${clk(c)}</tr>`).join('')}</tbody></table>`) : ''}
+      ${conns.length ? sec('Connectors', conns.map((c, i) => `<div class="pc-c"><b>J${i + 1} ${esc(c.name)}</b> <span class="pc-w">${esc(c.kind || '')}</span>${pv(c)}${recTag(c, m, true)}${pconf(c)}<div class="pc-p">${realPins(c).map(p => `<span><b>${esc(p.n)}</b> ${esc(p.name || '')}${pv(p)} ${disagree(p, 'pc-vc', 'span')}</span>`).join(' ')}</div></div>`).join(''), ' pc-flow') : ''}
     </div>
   </section>`;
 }
@@ -1948,6 +2029,17 @@ function setRegion(r, inPanel) {
   const b = $(`${inPanel ? '#panel' : '#main'} [data-act="region"][data-r="${r}"]`); if (b) b.focus({ preventScroll: true });
   drawWire();
 }
+/* the board on the bench: kept per machine; the page is drawn again where it stands, focus stays on the choice */
+function setBoard(m, id) {
+  if (!m || (id && !boardsOf(m).some(b => b.id === id))) return;
+  boardPick[m.id] = id; LS.set(`rb-board:${m.id}`, id);
+  INDEX = null; SIG.clear();
+  const y = scrollY;
+  render();
+  window.scrollTo(0, y);
+  const s = $('[data-act="board"]'); if (s) s.focus({ preventScroll: true });
+  drawWire();
+}
 /* SOCKET / PLUG: redraw the page where it stands, keep focus on the toggle that was pressed */
 function refreshConns(focusId) {
   const y = scrollY, m = state.ctx.machine;
@@ -1955,7 +2047,7 @@ function refreshConns(focusId) {
   window.scrollTo(0, y);
   state.phone = PHONE_MQ.matches;
   const t = focusId && $$('[data-act="cview"]').find(b => b.dataset.conn === focusId); if (t) t.focus({ preventScroll: true });
-  renderPanel(); drawWire(); watchDip();
+  renderPanel(); drawWire(); watchDip(); watchTabs();
 }
 /* phone: keep the selected pad, or the pad keyboard focus lands on, visible above the panel */
 const panelTop = () => { const p = $('#panel'); return innerHeight - parseFloat(getComputedStyle(p).bottom) - p.offsetHeight; };
@@ -2236,6 +2328,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('change', e => {
+  if (e.target.dataset.act === 'board') { setBoard(state.ctx.machine, e.target.value); return; }
   if (e.target.dataset.act !== 'notes-import' || !e.target.files || !e.target.files[0]) return;
   e.target.files[0].text().then(txt => {
     const r = notesImport(txt), n = r.added + r.merged + r.same;
@@ -2340,7 +2433,7 @@ let rt;
 window.addEventListener('resize', () => {
   clearTimeout(rt);
   rt = setTimeout(() => {
-    syncMbar();
+    syncMbar(); watchTabs();
     const { chip, conns } = state.ctx;
     if (chip) {
       if (wantCompact(chip) !== state.compact || wantStack(chip) !== state.stack) refreshChip();

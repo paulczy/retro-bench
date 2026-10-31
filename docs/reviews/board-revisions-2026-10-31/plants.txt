@@ -1,0 +1,8 @@
+1. C64 dram4164 chipBoards adds 250466 (true: 250466 uses two 64K x 4 DRAMs)
+2. 250469a locByBoard cpu6510 U3 (true: U6)
+3. Board 250425 note: clock chip at U13 (true: U31)
+1. C64 250469 reset step: C43 22 uF (true: 220 uF)
+2. 1541 250448 step 4: VR1 (true: VR2)
+3. C64 older-board 9 V AC rail also tagged 250469a (true: older five only)
+1. Spectrum +12 V where: 4116 pin 9 (true: pin 8)
+2. C64 step 8: 8502 on the 250469 (true: 8500)
