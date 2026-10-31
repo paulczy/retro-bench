@@ -26,7 +26,7 @@ RCS.video = (() => {
       { group: 'levels', id: 'black', name: 'Black', ntsc: '+0.054 V (7.5 IRE set-up)', pal: '0 V (no set-up)', note: 'NTSC volts derived from 7.5 / 140.', source: ['smpte-t1', 'bt1700-t2'] },
       { group: 'levels', id: 'blank', name: 'Blanking (reference)', ntsc: '0 V (0 IRE)', pal: '0 V (0 mV)', note: 'NTSC: 0 V nominal in DC-coupled systems.', source: ['smpte-if', 'bt1700-t2'] },
       { group: 'levels', id: 'sync', name: 'Sync tip', ntsc: '−0.286 V (−40 IRE)', pal: '−0.3 V (−300 mV)', source: ['smpte-t1', 'bt1700-t2'] },
-      { group: 'levels', id: 'burst', name: 'Colour burst, peak to peak', ntsc: '0.286 V (40 IRE)', pal: '0.3 V ± 30 mV', note: 'Centred on blanking. PAL: 3/7 of blanking to white.', source: ['smpte-t1', 'bt1700-t2', 'bt470-burstamp'] },
+      { group: 'levels', id: 'burst', name: 'Color burst, peak to peak', ntsc: '0.286 V (40 IRE)', pal: '0.3 V ± 30 mV', note: 'Centered on blanking. PAL: 3/7 of blanking to white.', source: ['smpte-t1', 'bt1700-t2', 'bt470-burstamp'] },
       { group: 'levels', id: 'z', name: 'Source and load impedance', ntsc: '75 Ω', pal: '75 Ω', source: ['smpte-if', 'bt470-n9'] },
 
       /* line timing, measured between half-amplitude points from the leading edge of sync (OH) */
@@ -41,14 +41,14 @@ RCS.video = (() => {
       { group: 'line', name: 'Active line', ntsc: '52.7 µs', pal: '52 µs', note: 'Derived: line period less line blanking.', source: 'bt470-t11' },
       { group: 'line', id: 'bs', name: 'Burst start after sync edge', ntsc: '5.3 µs nominal (19 cycles)', pal: '5.6 ± 0.1 µs', source: ['bt470-burst', 'smpte-t2'] },
       { group: 'line', id: 'bl', name: 'Burst length', ntsc: '9 ± 1 cycles', pal: '10 ± 1 cycles (2.25 ± 0.23 µs)', source: ['smpte-t2', 'bt470-burst'] },
-      { group: 'line', name: 'Colour subcarrier', ntsc: '3.579545 MHz ± 10 Hz', pal: '4.43361875 MHz ± 5 Hz', source: 'bt470-sc' },
+      { group: 'line', name: 'Color subcarrier', ntsc: '3.579545 MHz ± 10 Hz', pal: '4.43361875 MHz ± 5 Hz', source: 'bt470-sc' },
 
       /* field (vertical) timing */
       { group: 'field', name: 'Field period', ntsc: '16.683 ms', pal: '20 ms', source: ['smpte-t3', 'bt470-t12'] },
       { group: 'field', name: 'Field blanking', ntsc: '20 lines + 1.5 µs', pal: '25 lines + line blanking', source: ['smpte-t3', 'bt470-t12'] },
-      { group: 'field', name: 'Equalising pulses, before sync', ntsc: '3 lines, 6 pulses of 2.30 ± 0.10 µs', pal: '2.5 lines, pulses of 2.35 ± 0.1 µs', source: ['smpte-t3', 'bt470-t12'] },
+      { group: 'field', name: 'Equalizing pulses, before sync', ntsc: '3 lines, 6 pulses of 2.30 ± 0.10 µs', pal: '2.5 lines, pulses of 2.35 ± 0.1 µs', source: ['smpte-t3', 'bt470-t12'] },
       { group: 'field', name: 'Vertical sync', ntsc: '3 lines, serrations 4.70 ± 0.10 µs', pal: '2.5 lines, 27.3 µs pulses, 4.7 ± 0.2 µs gaps', source: ['smpte-t3', 'bt470-t12'] },
-      { group: 'field', name: 'Equalising pulses, after sync', ntsc: '3 lines', pal: '2.5 lines', source: ['smpte-t3', 'bt470-t12'] },
+      { group: 'field', name: 'Equalizing pulses, after sync', ntsc: '3 lines', pal: '2.5 lines', source: ['smpte-t3', 'bt470-t12'] },
 
       /* RGBI: IBM direct drive, TTL */
       { group: 'rgbi', name: 'Logic levels', cga: 'Standard TTL', mda: '0.0 to 0.6 V low, +2.4 to 3.5 V high', note: 'The CGA page says only "standard TTL levels"; the voltages are the MDA page\'s.', source: ['ibm-cga', 'ibm-mda'] },
@@ -56,14 +56,14 @@ RCS.video = (() => {
       { group: 'rgbi', name: 'Vertical drive', cga: '60 Hz', mda: '50 Hz, negative (−VERTICAL)', source: ['ibm-5153', 'ibm-5151', 'ibm-mda'] },
       { group: 'rgbi', name: 'Lines', cga: '200', mda: '350', source: ['ibm-5153', 'ibm-5151'] },
       { group: 'rgbi', name: 'DE-9 pins', cga: '1, 2 GND · 3 R · 4 G · 5 B · 6 I · 7 reserved · 8 H · 9 V', mda: '1, 2 GND · 3-5 unused · 6 I · 7 video · 8 H · 9 V', source: ['ibm-cga', 'ibm-mda'] },
-      { group: 'rgbi', name: 'CGA composite jack', cga: 'About 1.5 V p-p', note: 'Approximate, as IBM gives it; colours differ from RGBI.', source: 'ibm-cga' },
+      { group: 'rgbi', name: 'CGA composite jack', cga: 'About 1.5 V p-p', note: 'Approximate, as IBM gives it; colors differ from RGBI.', source: 'ibm-cga' },
 
-      /* analogue RGB, as a display declares it in its EDID */
+      /* analog RGB, as a display declares it in its EDID */
       { group: 'rgb', name: 'Video with sync on green', value: '0.700 V video + 0.300 V sync = 1.000 V p-p', source: 'vesa-edid' },
       { group: 'rgb', name: 'Video with sync, NTSC-style split', value: '0.714 V + 0.286 V = 1.000 V p-p', source: 'vesa-edid' },
-      { group: 'rgb', name: 'Video, sync elsewhere', value: '0.700 V p-p, no sync on the colour lines', source: 'vesa-edid' },
+      { group: 'rgb', name: 'Video, sync elsewhere', value: '0.700 V p-p, no sync on the color lines', source: 'vesa-edid' },
       { group: 'rgb', name: 'Sync types', value: 'Separate H and V; composite sync on H; composite sync on green', source: 'vesa-edid' },
-      { group: 'rgb', name: 'Termination', value: '75 Ω per colour', note: 'Not in the EDID table; same as composite.', verify: true, source: 'smpte-if' },
+      { group: 'rgb', name: 'Termination', value: '75 Ω per color', note: 'Not in the EDID table; same as composite.', verify: true, source: 'smpte-if' },
 
       /* luma and chroma (S-Video style), the C64 example */
       { group: 'yc', name: 'VIC-II SYNC/LUM output', value: 'Open drain, external 500 Ω pull-up', note: 'Carries both syncs and luminance.', source: 'c64-vic' },
@@ -81,7 +81,7 @@ RCS.video = (() => {
 
       /* what a modulator takes in */
       { group: 'mod', name: 'IBM CGA, header P1', value: '1 +12 V · 2 key · 3 composite video · 4 logic ground', note: 'For a user-supplied modulator.', source: 'ibm-cga-p1' },
-      { group: 'mod', name: 'Commodore 64', value: 'Sync/luma to modulator pin 2, colour to pin 3, plus audio', note: 'The modulator mixes them into the TV signal and passes the VIC outputs to the video DIN.', source: 'c64-sm' },
+      { group: 'mod', name: 'Commodore 64', value: 'Sync/luma to modulator pin 2, color to pin 3, plus audio', note: 'The modulator mixes them into the TV signal and passes the VIC outputs to the video DIN.', source: 'c64-sm' },
       { group: 'mod', name: 'Acorn Electron composite out', value: 'Nominal 1 V p-p, 75 Ω', source: 'electron-sm' },
     ],
     sources: [
@@ -89,7 +89,7 @@ RCS.video = (() => {
       { id: 'bt470-n9', short: 'BT.470 T1 n.9', label: 'ITU-R BT.470-6, Table 1 note 9: sync 0, blanking 30, peak white 100 = 1.0 V across a matched 75 Ω, p. 3', url: BT470 + '#page=3' },
       { id: 'bt470-t11', short: 'BT.470 T1-1', label: 'ITU-R BT.470-6, Table 1-1, line synchronizing signals, p. 5', url: BT470 + '#page=5' },
       { id: 'bt470-t12', short: 'BT.470 T1-2', label: 'ITU-R BT.470-6, Table 1-2, field synchronizing signals, p. 8', url: BT470 + '#page=8' },
-      { id: 'bt470-sc', short: 'BT.470 T2', label: 'ITU-R BT.470-6, Table 2, colour sub-carrier frequency, p. 11', url: BT470 + '#page=11' },
+      { id: 'bt470-sc', short: 'BT.470 T2', label: 'ITU-R BT.470-6, Table 2, color sub-carrier frequency, p. 11', url: BT470 + '#page=11' },
       { id: 'bt470-burst', short: 'BT.470 T2', label: 'ITU-R BT.470-6, Table 2, start and duration of the burst, p. 12', url: BT470 + '#page=12' },
       { id: 'bt470-burstamp', short: 'BT.470 T2', label: 'ITU-R BT.470-6, Table 2, burst peak-to-peak value, p. 13', url: BT470 + '#page=13' },
       { id: 'bt470-t3', short: 'BT.470 T3', label: 'ITU-R BT.470-6, Table 3, radiated signals: channel width, carriers, p. 17', url: BT470 + '#page=17' },

@@ -10,7 +10,7 @@
    edge of the drawing, data-rx is where it leaves; the app finishes it down to the PIN DETAIL box. Routes run
    between contacts (row gaps, finger gaps, around the outside of a round shell), never across another pad.
    Hit targets never overlap: where a custom layout is too dense for 44 px each, a pad's target shrinks to
-   half the distance to its nearest neighbour. */
+   half the distance to its nearest neighbor. */
 (() => {
 'use strict';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -26,7 +26,7 @@ const GEO = /^(din3|din4|din5-180|din5-240|din6|din7|din8-262|din8-270|mdin7|mdi
 
    Geometry: the Wikimedia Commons drawings used by Wikipedia "DIN connector" (File:DIN-3_Diagram.svg,
    DIN-4, DIN-5, DIN-5c, DIN-6, DIN-7, DIN-8, DIN-8_262_Diagram.svg): 1.45 mm pins on a 7.0 mm circle in the
-   13.2 mm shell (r = 0.536), spaced 90, 72, 45 or 60 degrees; the 8-pin centre pin sits 0.165 toward the key;
+   13.2 mm shell (r = 0.536), spaced 90, 72, 45 or 60 degrees; the 8-pin center pin sits 0.165 toward the key;
    the two 262-degree horseshoe pins sit outside the circle at x = +-0.536, y = -0.379 (r = 0.657).
 
    Numbering: Lumberg data sheet 0121 (DIN cable socket, female), "Pin configurations, solder side view":
@@ -37,12 +37,12 @@ const GEO = /^(din3|din4|din5-180|din5-240|din6|din7|din8-262|din8-270|mdin7|mdi
    Mirror check, three independent sources that agree: Wikipedia "DIN connector" (female holes are numbered
    1-4-2-5-3 "from left to right (facing the holes)"); the MIDI Association forum table (female, external
    side: 1 4 2 5 3 clockwise from the notch); the C64-wiki drawings of the C64's own female sockets, A/V Jack
-   (5 pin) and Serial Port (6 pin: 1 and 5 beside the key, 3 opposite, 6 in the centre), drawn key up as
+   (5 pin) and Serial Port (6 pin: 1 and 5 beside the key, 3 opposite, 6 in the center), drawn key up as
    fitted and matching these tables turned 180 degrees.
    8 pin 262 degrees (IEC 60574-18): the standard was not available. Numbering from the C64-wiki "A/V Jack"
-   8-pin drawing of the C64's socket: 6 is the pin near the centre, 7 and 8 the two horseshoe pins (7 on
+   8-pin drawing of the C64's socket: 6 is the pin near the center, 7 and 8 the two horseshoe pins (7 on
    pin 1's side, 8 on pin 3's side). Note it differs from the 270-degree 8 pin, where 6 and 7 flank the key
-   on the circle and 8 is in the centre. */
+   on the circle and 8 is in the center. */
 const ARC = 0.536;
 const polar = list => list.map(([n, a, r = ARC]) => [String(n), r * Math.cos(a * Math.PI / 180), r * Math.sin(a * Math.PI / 180)]);
 const D5 = [[1, 180], [4, 135], [2, 90], [5, 45], [3, 0]];
@@ -117,7 +117,7 @@ function round(g, conn, o) {
   } else {
     shell += `<circle class="pc" cx="${cx}" cy="${cy}" r="${r1(ARC * R)}"/><rect class="key" x="${cx - 12}" y="${cy + R - 14}" width="24" height="24" rx="4"/>`;
   }
-  /* trace: pins near the centre step down and aside into the clear lane right of the key; pins over the
+  /* trace: pins near the center step down and aside into the clear lane right of the key; pins over the
      key drop straight down; the rest leave radially and follow the outside of the shell to the bottom */
   const Re = R + 10, lane = 24;
   const route = q => {
@@ -155,7 +155,7 @@ function dsub(spec, conn, o) {
 }
 
 function edge(m, conn, o) {
-  /* bar 14: the rows' centres are 44 px apart, so their 44 px targets meet without overlapping */
+  /* bar 14: the rows' centers are 44 px apart, so their 44 px targets meet without overlapping */
   const nTop = +m[1], nBot = +m[2], scheme = m[3], P = 44, fw = 30, fh = 30, bar = 14, band = o.labels ? 96 : 0;
   const n = Math.max(nTop, nBot), x0 = 36, W = 2 * x0 + (n - 1) * P;
   const yTop = 16 + band, barY = yTop + fh, yBot = barY + bar, H = yBot + fh + band + 34;
@@ -200,16 +200,16 @@ function single(geo, conn, o) {
     const label = (q, text) => ({ x: q.x, y: top - 8, anchor: 'middle', text: fit(text, 12) });
     return { W, H, name: geo === 'trs' ? 'TRS jack (tip, ring, sleeve)' : 'TS jack (tip, sleeve)', shell, pads, route, label, fixed: true, note: 'contacts named on the mating plug' };
   }
-  /* rca, f, barrel: face view, centre contact 1, shell 2 */
+  /* rca, f, barrel: face view, center contact 1, shell 2 */
   const Rs = 50, side = o.labels ? 130 : 30, top = 18, W = 2 * (Rs + side), cx = W / 2, cy = top + Rs + 6, H = cy + Rs + 46;
-  /* the shell's ring first, so the centre contact's target sits on top of it */
+  /* the shell's ring first, so the center contact's target sits on top of it */
   const pads = [{ n: '2', x: cx, y: cy, shape: 'ring', r: 36, sw: 16 }, { n: '1', x: cx, y: cy, shape: 'c', r: geo === 'barrel' ? 9 : 14 }];
   let shell = `<circle class="shell" cx="${cx}" cy="${cy}" r="${Rs}"/>`;
   if (geo === 'f') shell = `<path class="shell" d="${[0, 1, 2, 3, 4, 5].map(i => { const a = Math.PI / 6 + i * Math.PI / 3; return `${i ? 'L' : 'M'} ${r1(cx + (Rs + 6) * Math.cos(a))} ${r1(cy + (Rs + 6) * Math.sin(a))}`; }).join(' ')} Z"/>`;
   const route = q => (q.shape === 'ring' ? { d: `M ${cx + 28} ${cy + 32} L ${cx + 28} ${H}`, rx: cx + 28 } : down(cx, cy + q.r, H));
   const label = (q, text) => ({ x: cx + Rs + 22, y: q.shape === 'ring' ? cy + 22 : cy - 8, anchor: 'start', text: `${q.n}  ${fit(text, 13)}` });
   const name = geo === 'rca' ? 'RCA (phono) jack' : geo === 'f' ? 'F connector (RF)' : 'DC barrel jack';
-  return { W, H, name, shell, pads, route, label, fixed: true, note: 'centre 1, shell 2' };
+  return { W, H, name, shell, pads, route, label, fixed: true, note: 'center 1, shell 2' };
 }
 
 /* bounding box of an outline path in its own units; null when it uses relative commands (then the whole box is kept) */
@@ -253,7 +253,7 @@ function custom(conn, o) {
   const shell = outline ? `<path class="shell" vector-effect="non-scaling-stroke" transform="translate(${r1(X(0))} ${r1(Y(0))}) scale(${r1(k * 100) / 100})" d="${esc(outline)}"/>` : '';
   /* trace: straight down when nothing is below; else sideways at the pad's height into the nearest clear lane
      (a gap between pad columns, or the gutter outside the pads) and down it; else up over the top of the
-     pads and down a gutter. The trace's centre stays CLR from every other pad's centre. mx is the view's
+     pads and down a gutter. The trace's center stays CLR from every other pad's center. mx is the view's
      mirror, so the check runs on the pads as drawn. */
   const CLR = PAD + 5;
   const route = (q, _W, _H, mx = x => x) => {

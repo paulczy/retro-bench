@@ -286,7 +286,7 @@
   .ploc:hover, .bslot:hover .ploc { color: var(--copper-hi); }
 
   /* ---------- board photo: the image unaltered, chip outlines placed over it in image fractions.
-     The outline colours are fixed (not the mask's) because the photo looks the same on every mask. ---------- */
+     The outline colors are fixed (not the mask's) because the photo looks the same on every mask. ---------- */
   .pview { margin-top: 4px; }
   .pview.big { overflow: auto; max-height: 85vh; overscroll-behavior: contain; border: var(--w) solid var(--silk-25); border-radius: var(--radius-silk); }
   .pwrap { position: relative; width: min(100%, calc(75vh * var(--pr))); background: var(--mask-deep); --po: #f0a660; --pd: rgba(0,0,0,.6); }
@@ -430,7 +430,7 @@
   svg.dip .pin.hov .pad { stroke: var(--copper); stroke-width: 2.5; }
   svg.dip .pin.hov .name { fill: var(--copper-hi); }
 
-  /* reading badge: one word a meter or probe shows, from the data. Colour follows the pin marks; the word carries it */
+  /* reading badge: one word a meter or probe shows, from the data. Color follows the pin marks; the word carries it */
   .rd { position: relative; display: inline-flex; align-items: baseline; gap: 6px; align-self: center; font: 14px/18px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk); border: var(--w) solid var(--silk-45); border-radius: 2px; padding: 2px 7px 1px; white-space: nowrap; }
   .rd .f { text-transform: none; letter-spacing: 0; color: var(--silk-70); }
   .rd.v { color: var(--pwr); border-color: var(--pwr); }
@@ -562,7 +562,7 @@
   .ctable .v3 .cfl { display: block; margin-top: 2px; color: var(--silk-70); }
   .ctable .v3 .cfl b { font: 400 13px var(--font-mono); letter-spacing: .1em; color: var(--warn); }
 
-  /* ---------- scope: an idealised trace on a 10 x 8 graticule, the derived settings beside it. Static. ---------- */
+  /* ---------- scope: an idealized trace on a 10 x 8 graticule, the derived settings beside it. Static. ---------- */
   .legend > .tpscope { grid-column: 1 / -1; padding: 0 0 8px; border-top: 0; }
   details.scope { margin-top: 6px; }
   details.scope > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; min-height: 44px; padding: 10px 0; font: 13px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tin); }
@@ -835,7 +835,7 @@
 }
 
 /* ---------- print: black on white, no chrome. A machine page prints its card (.printcard): one page where it fits, else two.
-   Unlayered so it beats the mask tokens and the components. Copper prints black, silkscreen dark grey hairlines. ---------- */
+   Unlayered so it beats the mask tokens and the components. Copper prints black, silkscreen dark gray hairlines. ---------- */
 @media print {
   @page { margin: 9mm; }
   /* every CHECK stamp prints as words, since a stamp's border may not print */

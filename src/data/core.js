@@ -99,7 +99,7 @@ window.RCS = (() => {
   "sram": {
     "term": "SRAM",
     "short": "Static RAM: no refresh, simpler.",
-    "long": "Holds data as long as power is applied. The 2114 (1K x 4) is common for colour RAM. Fails as wrong or flashing colours."
+    "long": "Holds data as long as power is applied. The 2114 (1K x 4) is common for color RAM. Fails as wrong or flashing colors."
   },
   "mask-rom": {
     "term": "Mask ROM",
@@ -167,8 +167,8 @@ window.RCS = (() => {
   },
   "luma-chroma": {
     "term": "LUM / COLOR (Luma, Chroma)",
-    "short": "Separate brightness and colour video signals.",
-    "long": "Commodore video chips output luminance (brightness + sync) and chrominance (colour) separately, like S-Video. The 8-pin video DIN carries both plus composite. No LUM = no picture at all; no COLOR = black and white."
+    "short": "Separate brightness and color video signals.",
+    "long": "Commodore video chips output luminance (brightness + sync) and chrominance (color) separately, like S-Video. The 8-pin video DIN carries both plus composite. No LUM = no picture at all; no COLOR = black and white."
   },
   "vpp": {
     "term": "Vpp",

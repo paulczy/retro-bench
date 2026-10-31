@@ -50,7 +50,7 @@ const L1541 = ['1540008', '1540048', '250442'];
 const LOC1541C = 'UAB4 on the long board 1540008, UB3 on the short boards';
 const LOC1541E = 'UAB5 on the long board 1540008, UB4 on the short boards';
 const GROM = { sizeNote: '6 KB: the GROM holds 6144 bytes in an 8 KB address slot' };
-const A2NOTE = 'MAME notes this dump needs verification against a labelled chip.';
+const A2NOTE = 'MAME notes this dump needs verification against a labeled chip.';
 const COCONOTE = "MAME's coco set covers the Color Computer 1 and 2 and does not say which model shipped which version.";
 
 const spec = {

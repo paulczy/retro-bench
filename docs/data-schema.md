@@ -29,7 +29,7 @@ RCS.add({
 c16: { id: 'c16', brand: 'commodore', name: 'Commodore 16', aka: 'C16 / C116 (264 series)', year: 1984,
   status: 'ready' | 'sheet' | 'planned',     // ready = has chips with pins + quickref + power + connectors + symptoms
   cpu: '7501/8501 @ 0.89/1.76 MHz', ram: '16 KB (12,277 free)', rom: 'BASIC 3.5 + KERNAL (2 × 16 KB)',
-  video: 'TED 7360: 40×25 text, 320×200, 121 colours', sound: 'TED, 2 voices', os: 'Commodore BASIC 3.5',
+  video: 'TED 7360: 40×25 text, 320×200, 121 colors', sound: 'TED, 2 voices', os: 'Commodore BASIC 3.5',
   chips: ['ted7360', 'cpu7501', ...],        // ids; order = display order (hottest first is fine)
   tagline: 'One sentence a tech would say about it.' }
 ```
@@ -101,9 +101,9 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
     The app places each pin by the **standard** number (DIN 41524, 45322, 45326, 45329; mini-DIN as Wikipedia),
     drawn as the female socket from the front, key at the bottom. So enter the standard number, not a position.
     Before you trust a manual's figure, check that it uses the standard numbering. 5 pin 180°: 1 4 2 5 3 left to
-    right over the top. 240° (5 and 6 pin): 1 to 5 clockwise from the left of the key, 6 in the centre. 7 pin 270°:
-    1 4 2 5 3 over the top, 6 and 7 either side of the key. 8 pin 270°: as 7, plus 8 in the centre. 8 pin 262°
-    (C64 A/V): 1 4 2 5 3 over the top, 7 and 8 the horseshoe ends either side of the key, 6 near the centre.
+    right over the top. 240° (5 and 6 pin): 1 to 5 clockwise from the left of the key, 6 in the center. 7 pin 270°:
+    1 4 2 5 3 over the top, 6 and 7 either side of the key. 8 pin 270°: as 7, plus 8 in the center. 8 pin 262°
+    (C64 A/V): 1 4 2 5 3 over the top, 7 and 8 the horseshoe ends either side of the key, 6 near the center.
     A connector whose maker numbers it differently (for example straight round the circle) is `custom`.
   - D-sub: `de9`, `da15`, `db25`. Standard numbering: on the male face, 1 is at upper left, the wide row runs left
     to right, then the narrow row. Set `gender: 'male' | 'female'` for the socket **on the machine**, because it
@@ -120,7 +120,7 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
     machine seen from the rear (default `'top'`). The caption over the drawing says which row is on top.
     Optional `keys: [k, ...]`: key slots cut between contact k and k+1. `edge-12x12-cbm` defaults to `[1, 10]`
     (the Commodore user port); give `keys: []` if a 12+12 edge has none.
-  - single contact: `rca`, `f` (RF F-connector), `barrel` (all three: pin `1` = centre, `2` = shell or sleeve),
+  - single contact: `rca`, `f` (RF F-connector), `barrel` (all three: pin `1` = center, `2` = shell or sleeve),
     `trs` (pins `T`, `R`, `S`), `ts` (pins `T`, `S`)
   - anything else: `custom`, with `pads: [{ n, x, y }]` in a 0–100 box as seen looking into the socket, plus an
     optional `outline: '<svg path d>'` in the same box (Atari SIO, TI power plug, Coleco power, headers). The app
@@ -225,7 +225,7 @@ RCS.addSchematics({ c64: [
 - One entry per document. `board` is the assembly number printed on the PCB (or the maker's board name when
   there is none); the app groups rows by it. `kind` is `schematic`, `layout` (parts placement or silkscreen
   drawing), `manual` (service manual covering that board) or `parts`.
-- `rev` and `years` describe the board, `note` says how to recognise it or what differs. `verify: true` when the
+- `rev` and `years` describe the board, `note` says how to recognize it or what differs. `verify: true` when the
   assembly-to-document match is not confirmed.
 - Credits: `RCS.addCredits([{ name, url, what }])`: the archive or person, and what of theirs we used.
 
@@ -285,9 +285,9 @@ testPoints: [{ tp: 'CPU clock', where: 'CPU pin 37', expect: '1.02 MHz square',
            source: { label: 'Sams CC17 C64, waveform 3, p. 12', url: '...', sams: true },
            note: 'Rounded edges are normal; a flat line means no clock.' } }]
 ```
-The app derives the scope settings and draws an idealised trace labelled "idealised from <basis>":
+The app derives the scope settings and draws an idealized trace labeled "idealized from <basis>":
 - TIME/DIV is the 1-2-5 step whose cycle count across the 10 divisions is closest to 3, within 1.5 to 5 cycles.
-  Neighbouring 1-2-5 steps are at most 2.5 times apart, so a step in that band always exists; 2 to 4 cycles cannot
+  Neighboring 1-2-5 steps are at most 2.5 times apart, so a step in that band always exists; 2 to 4 cycles cannot
   be promised for every period (a 1.118 µs CoCo E clock shows 1.8 cycles at 0.2 µs/div, or 4.5 at 0.5 µs/div).
 - VOLTS/DIV is the smallest 1-2-5 step of at least swing / 5, so the swing fills 2.5 to 5 divisions.
 - DC coupling with the 0 V marker; trigger on the rising edge (falling for `polarity: 'low'`) at 1.4 V for logic
@@ -301,7 +301,7 @@ How the app reads the fields:
   2% (the app uses `period`). Volts must be finite and within ±50 V. `duty` is above 0% and below 100%.
 - `burst`: `f`/`period` is the repetition rate of the group, not of the pulses inside it; the app draws four
   pulses and a gap.
-- `video-line`: `low` is the sync tip, `high` peak white; the picture is drawn as a flat grey midway between black
+- `video-line`: `low` is the sync tip, `high` peak white; the picture is drawn as a flat gray midway between black
   and white. `black` (the blanking level) places the porches; `sync` may stand in for `low` and must equal it when
   both are given. Without `black` the porches sit at the standard 0.3 of the swing above the sync tip and the
   caption says "levels to standard ratio, not to scale".
@@ -318,11 +318,11 @@ How the app reads the fields:
   (`'VIC-II pin 17 to 6510 pin 1'` names both).
 - Reset pins stay `type: 'ctrl'`; the app finds them by the `reset` term or a name like `/RES`, `RESET`, `/RST`,
   `RESIN`, `/POR` (not `MR`, which is Memory Ready on the 6808; tag a master reset with the `reset` term).
-- `square`/`pulse` without `duty`: only the trigger edge is drawn solid, both levels dashed, labelled "duty not in
+- `square`/`pulse` without `duty`: only the trigger edge is drawn solid, both levels dashed, labeled "duty not in
   source". The app never draws an assumed 50% or 25%. `polarity: 'low'` is a line that idles HIGH and pulses LOW;
   `duty` is then the LOW part of the period.
 - `pp` (swing only): use it when the source gives a peak-to-peak value and no DC level. Do not invent `low: '0 V'`.
-  The trace is centred, with no 0 V marker, AC coupling, trigger mid-swing, labelled "no DC level in source".
+  The trace is centered, with no 0 V marker, AC coupling, trigger mid-swing, labeled "no DC level in source".
 - `dc` (a rail): `high` is the level and is required (`'0 V'` is a valid level); `low` may be left out;
   `f`/`period` are not needed; `pp` is not allowed.
 - Leave `low`/`high` (and `pp`) out when the source gives none: the trace is drawn without a volts/div setting.
@@ -421,7 +421,7 @@ RCS.addRoms({ c64: [{
 ## Board photos
 
 `src/data/photos.js` registers freely licensed board photos and where each chip sits on them. Images live in
-`photos/` at the repo root. Licences allowed: public domain / PD mark, CC0, CC BY, CC BY-SA, GFDL (user decision
+`photos/` at the repo root. Licenses allowed: public domain / PD mark, CC0, CC BY, CC BY-SA, GFDL (user decision
 2026-10-30). Photos are shown unaltered apart from resizing; highlights are drawn by the app over the image, never
 baked in.
 ```js
@@ -430,7 +430,7 @@ RCS.addPhotos({ c64: [{
   file: 'photos/c64-250407.webp', w: 1600, h: 1067,       // resized copy, long edge 1600 px, WebP q80
   side: 'component',                                       // which face is shown
   rotate: 0,                                               // degrees the app should rotate it for display (0/90/180/270)
-  author: 'Name as the licence requires', licence: 'CC BY-SA 3.0', licenceUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
+  author: 'Name as the license requires', license: 'CC BY-SA 3.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
   source: { label: 'Wikimedia Commons: File:....jpg', url: 'https://commons.wikimedia.org/wiki/File:....jpg' },
   chips: { cpu6510: [0.412, 0.318, 0.091, 0.142], vic6567: [...] },  // [x, y, w, h] as fractions of the image, chip id -> box
   verify: ['sid6581'],                                     // chip ids whose box was placed without a legible designator
@@ -439,10 +439,10 @@ RCS.addPhotos({ c64: [{
 - Boxes are fractions (0-1) of the displayed image before `rotate`. Every key in `chips` is a chip id listed in that
   machine's `chips`. A chip placed by inference (no legible designator, position from the layout drawing) goes in
   `verify`.
-- `author`, `licence`, `licenceUrl` and `source` are required; the app prints them under the photo and on the credits
+- `author`, `license`, `licenseUrl` and `source` are required; the app prints them under the photo and on the credits
   page.
 - `rotate` is clockwise. `w` and `h` are the stored file's pixel size (the validator reads WebP headers and compares).
-- `licence` is written as one of `PD`, `Public domain`, `CC0`, `CC BY 4.0`, `CC BY-SA 3.0` (any version), or
-  `GFDL 1.2` (with `only` / `or later` if the source says so). A GFDL photo needs the matching licence text in
+- `license` is written as one of `PD`, `Public domain`, `CC0`, `CC BY 4.0`, `CC BY-SA 3.0` (any version), or
+  `GFDL 1.2` (with `only` / `or later` if the source says so). A GFDL photo needs the matching license text in
   `photos/GFDL-<version>.txt`. `photos/LICENSES.md` is written by `npm run build` from this file; do not edit it.
 - Photos are not precached. The service worker keeps each one in a runtime cache the first time it is shown.

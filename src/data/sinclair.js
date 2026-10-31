@@ -3,7 +3,7 @@
    manuals, and the chip data sheets linked on each chip. Log: docs/verification/sinclair.md. */
 (() => {
 Object.assign(RCS.terms, {
-  'ula': { term: 'ULA (uncommitted logic array)', short: 'Sinclair custom gate array: video, keyboard, tape.', long: 'A Ferranti gate array made for Sinclair. The ZX81 ULA makes video sync and character access, scans the keyboard, handles tape and drives NMI. The Spectrum ULA also drives the beeper, the colour outputs and the lower RAM timing, and stops the CPU clock when the CPU and the display both want that RAM. It runs hot; a dead one gives no display or no sound.' },
+  'ula': { term: 'ULA (uncommitted logic array)', short: 'Sinclair custom gate array: video, keyboard, tape.', long: 'A Ferranti gate array made for Sinclair. The ZX81 ULA makes video sync and character access, scans the keyboard, handles tape and drives NMI. The Spectrum ULA also drives the beeper, the color outputs and the lower RAM timing, and stops the CPU clock when the CPU and the display both want that RAM. It runs hot; a dead one gives no display or no sound.' },
   'mreq': { term: '/MREQ and /IORQ', short: 'Z80 memory and I/O request strobes.', long: '/MREQ goes LOW on every memory access and /IORQ goes LOW on every port access. The ULA and the ROM/RAM selects use them to decide what the CPU is talking to.' },
   'rfsh': { term: '/RFSH (refresh)', short: 'Z80 refresh cycle marker.', long: 'Goes LOW during the refresh part of each opcode fetch, with a refresh address on the low address lines. Dynamic RAM needs refresh to hold data. Static RAM (the ZX80 and ZX81 2114s) does not.' },
   'wait': { term: '/WAIT', short: 'Holds the CPU for an extra cycle.', long: 'Pulled LOW by a device that is not ready; the Z80 adds wait states while it is LOW. Held LOW too long it starves DRAM refresh. The 48K Spectrum ULA does not use /WAIT for contention: it stops the CPU clock instead.' },
@@ -11,7 +11,7 @@ Object.assign(RCS.terms, {
   'crystal': { term: 'Crystal oscillator', short: 'Quartz crystal or ceramic resonator that sets the master clock.', long: 'A quartz crystal (or a cheaper ceramic resonator) sets the master oscillator; the machine divides it down for the CPU and the video. No oscillation means no CPU clock and a dead machine. Check it with a scope before blaming the chip that drives it.' },
   'regulator': { term: 'Linear regulator (7805)', short: 'Three-pin part that holds +5 V.', long: 'A 7805 takes the unregulated 9 V input and gives a steady +5 V. It runs warm and needs its heatsink and thermal compound. A shorted load pulls its output down, so check the output with the board unplugged from the load.' },
   'dcdc': { term: 'DC-DC converter', short: 'Switching circuit that makes extra rails.', long: 'A small oscillator and transformer (the coil) that make the +12 V and -5 V rails for the 4116 DRAM from the 9 V input. On the 48K Spectrum it is TR4/TR5. A dead converter gives a dead lower RAM.' },
-  'edge-connector': { term: 'Edge connector', short: 'Gold contacts on the board edge for expansion.', long: 'The row of contacts on the rear edge where RAM packs, printers and the Spectrum peripherals connect. Dirty or oxidised contacts cause crashes and random lines. Clean and reseat before blaming a chip.' }
+  'edge-connector': { term: 'Edge connector', short: 'Gold contacts on the board edge for expansion.', long: 'The row of contacts on the rear edge where RAM packs, printers and the Spectrum peripherals connect. Dirty or oxidized contacts cause crashes and random lines. Clean and reseat before blaming a chip.' }
 });
 
 /* ---------- sources (every URL fetched 2026-10-30) ---------- */
@@ -128,10 +128,10 @@ const specEdgePins = () => [
   P('A9', 'A0', 'addr', 'Address bit 0.'), P('A10', 'A1', 'addr', 'Address bit 1.'), P('A11', 'A2', 'addr', 'Address bit 2.'), P('A12', 'A3', 'addr', 'Address bit 3.'),
   P('A13', '/IORQULA', 'ctrl', 'ULA port select: /IORQ gated with A0 (TR6). LOW only on an I/O cycle to an even port such as $FE.', { activeLow: true }),
   P('A14', '0V', 'ground', 'Ground.', { expect: '0 V' }),
-  P('A15', 'VIDEO', 'video', 'Composite colour video (k1: FBAS).'),
+  P('A15', 'VIDEO', 'video', 'Composite color video (k1: FBAS).'),
   P('A16', '/Y', 'video', 'Inverted luminance with sync, from ULA pin 17.', { activeLow: true }),
-  P('A17', 'V', 'video', 'Colour difference V, from ULA pin 16.'),
-  P('A18', 'U', 'video', 'Colour difference U, from ULA pin 15.'),
+  P('A17', 'V', 'video', 'Color difference V, from ULA pin 16.'),
+  P('A18', 'U', 'video', 'Color difference U, from ULA pin 15.'),
   P('A19', '/BUSRQ', 'ctrl', 'Z80 /BUSRQ.', { activeLow: true }),
   P('A20', '/RESET', 'ctrl', 'Z80 /RESET.', { activeLow: true, expect: 'LOW at power-on, then HIGH' }),
   P('A21', 'A7', 'addr', 'Address bit 7.'), P('A22', 'A6', 'addr', 'Address bit 6.'), P('A23', 'A5', 'addr', 'Address bit 5.'), P('A24', 'A4', 'addr', 'Address bit 4.'),
@@ -196,27 +196,27 @@ RCS.add({
     },
     spectrum: {
       id: 'spectrum', brand: 'sinclair', name: 'ZX Spectrum 48K', aka: 'Spectrum 16K / 48K', year: 1982, status: 'ready',
-      cpu: 'Z80A @ 3.5 MHz', ram: '48 KB (16K 4116 lower, 32K upper)', rom: '16 KB BASIC ROM', video: 'ULA: 256 x 192, 8 colours, attribute clash', sound: 'Beeper (1-bit)', os: 'Sinclair BASIC',
+      cpu: 'Z80A @ 3.5 MHz', ram: '48 KB (16K 4116 lower, 32K upper)', rom: '16 KB BASIC ROM', video: 'ULA: 256 x 192, 8 colors, attribute clash', sound: 'Beeper (1-bit)', os: 'Sinclair BASIC',
       chips: ['ula_spectrum', 'cpuz80', 'dram4116', 'dram4532', 'rom23128'],
       tagline: 'ULA, 4116 lower RAM, multi-rail PSU.'
     },
     spectrum128: {
       id: 'spectrum128', brand: 'sinclair', name: 'ZX Spectrum 128', aka: 'Toastrack 128K', year: 1986, status: 'ready',
-      cpu: 'Z80A @ 3.5 MHz', ram: '128 KB (banked)', rom: 'Two 16 KB ROM banks', video: 'ULA: 256 x 192, 8 colours', sound: 'AY-3-8912 (3 voices) + beeper', os: '128K BASIC',
+      cpu: 'Z80A @ 3.5 MHz', ram: '128 KB (banked)', rom: 'Two 16 KB ROM banks', video: 'ULA: 256 x 192, 8 colors', sound: 'AY-3-8912 (3 voices) + beeper', os: '128K BASIC',
       chips: ['cpuz80', 'ula_128', 'ay8912'],
       tagline: 'The toastrack: 128K, AY sound and a second ROM bank.'
     },
     spectrumplus2: {
-      id: 'spectrumplus2', brand: 'sinclair', name: 'ZX Spectrum +2', aka: 'Spectrum +2 (grey)', year: 1986, status: 'ready',
-      cpu: 'Z80A @ 3.5 MHz', ram: '128 KB (banked)', rom: 'Two 16 KB ROM banks', video: 'Gate array: 256 x 192, 8 colours', sound: 'AY-3-8912 + beeper', os: '128K BASIC, built-in tape deck',
+      id: 'spectrumplus2', brand: 'sinclair', name: 'ZX Spectrum +2', aka: 'Spectrum +2 (gray)', year: 1986, status: 'ready',
+      cpu: 'Z80A @ 3.5 MHz', ram: '128 KB (banked)', rom: 'Two 16 KB ROM banks', video: 'Gate array: 256 x 192, 8 colors', sound: 'AY-3-8912 + beeper', os: '128K BASIC, built-in tape deck',
       chips: ['cpuz80', 'ula_128', 'ay8912', 'dram4164'],
-      tagline: 'The grey 128 with a built-in cassette deck.'
+      tagline: 'The gray 128 with a built-in cassette deck.'
     },
     spectrumplus3: {
-      id: 'spectrumplus3', brand: 'sinclair', name: 'ZX Spectrum +3', aka: 'Spectrum +3 (disc)', year: 1987, status: 'ready',
-      cpu: 'Z80A @ 3.5469 MHz', ram: '128 KB (banked, four 41464)', rom: '64 KB (two 32K ROMs, four 16K pages, +3DOS)', video: 'Gate array: 256 x 192, 8 colours', sound: 'AY-3-8912 + beeper', os: '128K BASIC, +3DOS',
+      id: 'spectrumplus3', brand: 'sinclair', name: 'ZX Spectrum +3', aka: 'Spectrum +3 (disk)', year: 1987, status: 'ready',
+      cpu: 'Z80A @ 3.5469 MHz', ram: '128 KB (banked, four 41464)', rom: '64 KB (two 32K ROMs, four 16K pages, +3DOS)', video: 'Gate array: 256 x 192, 8 colors', sound: 'AY-3-8912 + beeper', os: '128K BASIC, +3DOS',
       chips: ['cpuz80', 'ula_128', 'ay8912', 'dram4464'],
-      tagline: 'The +3: built-in disc drive and an Amstrad-made gate array.'
+      tagline: 'The +3: built-in disk drive and an Amstrad-made gate array.'
     }
   },
   chips: {
@@ -243,7 +243,7 @@ RCS.add({
         { n: 13, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bit 7.', terms: ['tristate'] },
         { n: 14, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bit 0.', terms: ['tristate'] },
         { n: 15, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bit 1.', terms: ['tristate'] },
-        { n: 16, name: '/INT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Maskable interrupt request. Honoured at the end of an instruction when interrupts are enabled.', terms: ['irq'], probe: 'HIGH when idle; LOW while a device requests an interrupt (see the machine test points).' },
+        { n: 16, name: '/INT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Maskable interrupt request. Honored at the end of an instruction when interrupts are enabled.', terms: ['irq'], probe: 'HIGH when idle; LOW while a device requests an interrupt (see the machine test points).' },
         { n: 17, name: '/NMI', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Non-maskable interrupt, negative-edge triggered. Forces a restart at $0066 whatever the interrupt mask.', terms: ['nmi'], probe: 'HIGH when idle; LOW pulses only on a machine that drives it (see the machine test points).' },
         { n: 18, name: '/HALT', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW after a HALT instruction until an NMI, an enabled maskable interrupt or a reset. The CPU keeps running NOPs for refresh.', probe: 'HIGH unless a HALT is running.' },
         { n: 19, name: '/MREQ', type: 'ctrl', dir: 'out', activeLow: true, desc: 'LOW when the address bus holds a valid memory address. Tri-state.', terms: ['mreq', 'tristate'], probe: 'Pulses on every memory cycle.' },
@@ -322,8 +322,8 @@ RCS.add({
         { n: 40, name: '+5V', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+5 V' }
       ],
       replacements: [
-        { part: '2C210E', kind: 'pin-compatible', verify: true, note: 'The later ZX81 ULA, with a video back porch. The 2C184E (and the older 2C158E) has none, and most colour TVs will not lock to it: a blank screen on a 2C184E machine can be a working computer.', source: S('retro.engineer, Sinclair ZX81 A (Issue 1, 2C184E ULA: video incompatible with most colour TVs)', 'https://retro.engineer/projects/2021-03-13_Sinclair_ZX81_A/') },
-        { part: 'vLA81 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement with 2C210E behaviour (back porch). Video level selectable for a 75 ohm monitor or the modulator, and a 50/60 Hz setting: set it to match the machine. Narrow pins fit the existing socket; a soldered-in ULA has to come out first.', source: S('Tindie, vLA81 ZX81 ULA replacement (features)', 'https://www.tindie.com/products/charlieingley/vla81-zx81-ula-replacement/') }
+        { part: '2C210E', kind: 'pin-compatible', verify: true, note: 'The later ZX81 ULA, with a video back porch. The 2C184E (and the older 2C158E) has none, and most color TVs will not lock to it: a blank screen on a 2C184E machine can be a working computer.', source: S('retro.engineer, Sinclair ZX81 A (Issue 1, 2C184E ULA: video incompatible with most color TVs)', 'https://retro.engineer/projects/2021-03-13_Sinclair_ZX81_A/') },
+        { part: 'vLA81 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement with 2C210E behavior (back porch). Video level selectable for a 75 ohm monitor or the modulator, and a 50/60 Hz setting: set it to match the machine. Narrow pins fit the existing socket; a soldered-in ULA has to come out first.', source: S('Tindie, vLA81 ZX81 ULA replacement (features)', 'https://www.tindie.com/products/charlieingley/vla81-zx81-ula-replacement/') }
       ],
       datasheets: [
         S('ZX81 circuit diagram, drawing SRC 049 (IC1 pin numbers)', ZX81SCH),
@@ -491,8 +491,8 @@ RCS.add({
         { n: 12, name: '/INT', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Interrupt to the Z80 once per frame; the ROM scans the keyboard then.', terms: ['irq'], probe: 'Pulses LOW every 20 ms (50 Hz).' },
         { n: 13, name: '+5V', type: 'power', dir: '-', desc: '+5 V (Vcc2 on the diagram). One of the two +5 V pins is fed through an RC low-pass (WoS).', terms: ['vcc'], probe: '+4.75 to +5.25 V', conflict: 'ZX Spectrum Service Manual 6.3.2 and 6.4.7 (p. 32) say to check IC1 pin 13 for +3 V, not +5 V.' },
         { n: 14, name: '+5V', type: 'power', dir: '-', desc: '+5 V (Vcc1 on the diagram). The service manual checks +5 V here.', terms: ['vcc'], probe: '+4.75 to +5.25 V' },
-        { n: 15, name: 'U', type: 'video', dir: 'out', desc: 'Colour difference signal U, to the LM1889 through a level shifter.' },
-        { n: 16, name: 'V', type: 'video', dir: 'out', desc: 'Colour difference signal V, to the LM1889 through a level shifter.' },
+        { n: 15, name: 'U', type: 'video', dir: 'out', desc: 'Color difference signal U, to the LM1889 through a level shifter.' },
+        { n: 16, name: 'V', type: 'video', dir: 'out', desc: 'Color difference signal V, to the LM1889 through a level shifter.' },
         { n: 17, name: '/Y', type: 'video', dir: 'out', activeLow: true, desc: 'Inverted luminance including sync.', terms: ['luma-chroma'] },
         { n: 18, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bit 0, isolated from the CPU by R1-R8 so the ULA can read RAM while the CPU runs.', terms: ['tristate'] },
         { n: 19, name: 'KB0', type: 'kbd', dir: 'in', desc: 'Keyboard row input KB0 (ribbon KB1), pulled up by R65-R69 on the Issue 3 diagram. A pressed key pulls it LOW while its address line is LOW.', conflict: 'The Issue 3 circuit diagram puts the keyboard pull-ups at R65-R69; the service manual prose says R64-R68.' },
@@ -504,7 +504,7 @@ RCS.add({
         { n: 25, name: 'D3', type: 'data', dir: 'bidir', desc: 'Data bit 3 (port $FE write: MIC).', terms: ['tristate'] },
         { n: 26, name: 'KB4', type: 'kbd', dir: 'in', desc: 'Keyboard row input KB4.' },
         { n: 27, name: 'D4', type: 'data', dir: 'bidir', desc: 'Data bit 4 (port $FE write: speaker).', terms: ['tristate'] },
-        { n: 28, name: 'SOUND', type: 'audio', dir: 'bidir', desc: 'One analogue pin for MIC out, EAR in and the beeper (MIC/TAPE on the diagram). Port $FE: write bit 3 = MIC, bit 4 = speaker; read bit 6 = EAR.', probe: 'Toggles during BEEP, SAVE and LOAD.' },
+        { n: 28, name: 'SOUND', type: 'audio', dir: 'bidir', desc: 'One analog pin for MIC out, EAR in and the beeper (MIC/TAPE on the diagram). Port $FE: write bit 3 = MIC, bit 4 = speaker; read bit 6 = EAR.', probe: 'Toggles during BEEP, SAVE and LOAD.' },
         { n: 29, name: 'D5', type: 'data', dir: 'bidir', desc: 'Data bit 5.', terms: ['tristate'] },
         { n: 30, name: 'D6', type: 'data', dir: 'bidir', desc: 'Data bit 6 (port $FE read: EAR).', terms: ['tristate'] },
         { n: 31, name: 'D7', type: 'data', dir: 'bidir', desc: 'Data bit 7.', terms: ['tristate'] },
@@ -522,7 +522,7 @@ RCS.add({
         { part: '6C001E-7', kind: 'pin-compatible', verify: true, note: 'The only ULA documented for every 48K board, Issue 1 to 6A, and the one Issue 4A and later boards need (their RAM timing changes go with it).', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
         { part: '6C001E-5 / 6C001E-6', kind: 'pin-compatible', verify: true, note: 'Issue 1, 2 and 3 boards only; not for 4A/4B, 5 or 6A. The -5 moves the whole picture one character left and lets the EAR bit float until warm, which breaks software that reads the keyboard without masking.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
         { part: '5C102E / 5C112E', kind: 'pin-compatible', verify: true, note: 'Issue 1 and 2 boards. A 5C102E needs the "cockroach" 74LS00 mod; a 5C112E in an Issue 1 board needs the cockroach removed.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
-        { part: 'vLA82 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement for a 6C001E-7 or earlier, with 6C001-7 behaviour, in a 40-pin DIL footprint low enough for a rubber-key case. Works with lower RAM replacement modules. Some sockets only take very thin pins: fit the turned-pin socket the designer offers if it will not seat. On sale from the designer as of October 2026.', source: S('vRetro Design (Charlie Ingley), vLA82 Spectrum 48K ULA replacement', 'https://vdrivezx.com/vla82/') },
+        { part: 'vLA82 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement for a 6C001E-7 or earlier, with 6C001-7 behavior, in a 40-pin DIL footprint low enough for a rubber-key case. Works with lower RAM replacement modules. Some sockets only take very thin pins: fit the turned-pin socket the designer offers if it will not seat. On sale from the designer as of October 2026.', source: S('vRetro Design (Charlie Ingley), vLA82 Spectrum 48K ULA replacement', 'https://vdrivezx.com/vla82/') },
         { part: 'Nebula (Retroleum)', kind: 'modern', note: 'CPLD module that plugs into the ULA socket of UK 16/48K boards, issues 2 to 6. Behaves as a 6Cxxx ULA, same YUV output to the modulator; no NTSC version planned. In a rubber-key case solder in any socketed IC3, IC4, IC24, IC25 under it. On Issue 2 boards set VR1 and VR2 again after fitting. Hand-made in small numbers; out of stock in the Retroleum shop as of October 2026.', source: S('Retroleum (Phil Ruston), Nebula Spectrum ULA chip replacement module', 'http://blog.retroleum.co.uk/electronics-articles/nebula-spectrum-ula-chip-replacement-module/') }
       ],
       datasheets: [
@@ -544,7 +544,7 @@ RCS.add({
         S('Spectrum +2A/+3 Service Manual (HTML), circuit diagram with the 40077 gate array', P3SM)
       ],
       replacements: [
-        { part: 'vLA128 (Charlie Ingley)', kind: 'modern', note: 'Spectrum 128 and grey +2 only: replaces the 7K010E-5 or Amstrad 40056 ULA. The page does not cover the +2A/+3 40077. Fits the 48-pin socket outline with narrow pins; in most cases the existing socket is OK. On sale from the designer (Tindie) as of October 2026.', source: S('vRetro Design (Charlie Ingley), vLA128 Spectrum 128K ULA replacement', 'https://vdrivezx.com/vla128/') }
+        { part: 'vLA128 (Charlie Ingley)', kind: 'modern', note: 'Spectrum 128 and gray +2 only: replaces the 7K010E-5 or Amstrad 40056 ULA. The page does not cover the +2A/+3 40077. Fits the 48-pin socket outline with narrow pins; in most cases the existing socket is OK. On sale from the designer (Tindie) as of October 2026.', source: S('vRetro Design (Charlie Ingley), vLA128 Spectrum 128K ULA replacement', 'https://vdrivezx.com/vla128/') }
       ]
     }
   },
@@ -571,10 +571,10 @@ RCS.add({
     ],
     // ZX80: operating manual pages and the circuit diagram; there is no ZX80 service manual.
     zx80: [
-      { symptom: 'Grey mess on the TV, no K cursor', suspects: [], note: 'Tune the TV to about UHF channel 36 and turn the brightness up until the inverse K shows at the bottom left (operating manual p. 7). Still nothing: do the bench checks.' },
+      { symptom: 'Gray mess on the TV, no K cursor', suspects: [], note: 'Tune the TV to about UHF channel 36 and turn the brightness up until the inverse K shows at the bottom left (operating manual p. 7). Still nothing: do the bench checks.' },
       { symptom: 'Will not start at all', suspects: [], note: 'The power plug also fits MIC and EAR; in the wrong socket the ZX80 just does not start, with no damage (manual p. 6). The supply is 9 V DC, tip positive.' },
       { symptom: 'Dead with the supply good', suspects: ['cpuz80', 'sram2114'], note: '+5 V from the 7805 (IC22) at Z80A pin 11, then about 3.25 MHz at Z80A pin 6 (6.5 MHz crystal X1 / 2; circuit diagram). Then the Z80A (IC1) and the 2114s (IC3, IC4).' },
-      { symptom: 'Locked up, BREAK does nothing', suspects: [], note: 'An endless loop or a failed LOAD leaves the screen grey or black. BREAK is SHIFT + SPACE; if that fails, switch off for a few seconds and the program is lost (manual pp. 8, 74).' },
+      { symptom: 'Locked up, BREAK does nothing', suspects: [], note: 'An endless loop or a failed LOAD leaves the screen gray or black. BREAK is SHIFT + SPACE; if that fails, switch off for a few seconds and the program is lost (manual pp. 8, 74).' },
       { symptom: 'LOAD fails', suspects: [], note: 'Recorder tone to maximum (treble up, bass down), volume 1/2 to 3/4, run the recorder on batteries, then check the MIC and EAR leads (manual pp. 8-9).' },
       { symptom: 'Listing shrinks or vanishes as the program grows', suspects: ['sram2114'], note: 'Normal: each character on screen takes a byte of the 1K RAM, so the display shrinks when RAM runs short (manual Appendix 2, p. 89). Report 4/n means it ran out of space (p. 19).' }
     ],
@@ -582,13 +582,13 @@ RCS.add({
     spectrum128: [
       { symptom: 'No menu, no picture', suspects: ['ula_128', 'cpuz80'], note: 'Service manual 2.3: +9 V ±2 V at C50, +5 V ±0.25 V at C34 and IC15 pin 8, 17.73447 MHz at IC37 pin 6 (oscillogram C), 3.54689 MHz at Z80A pin 6 (oscillogram D).' },
       { symptom: 'RS232, MIDI and keypad dead', suspects: [], note: '+12 V at IC33 pin 14 and -12 V at IC33 pin 1 (the manual prints IC34) come from the TR4/TR5 inverter and its charge pump; a dead inverter loses both and the -5 V (service manual 2.3, 6.1).' },
-      { symptom: 'No colour or wrong colour', suspects: ['ula_128'], note: '8.8 MHz with no jitter on ULA pins 46 and 47 (colour encoder clocks), then the RGB connector outputs and LUMO at IC36 pin 7, oscillogram G (service manual 2.3-2.4).' },
+      { symptom: 'No color or wrong color', suspects: ['ula_128'], note: '8.8 MHz with no jitter on ULA pins 46 and 47 (color encoder clocks), then the RGB connector outputs and LUMO at IC36 pin 7, oscillogram G (service manual 2.3-2.4).' },
       { symptom: 'Picture but no sound on the TV', suspects: [], note: 'Sound carrier at IC38 pin 4: 6.0 MHz UK or 5.5 MHz Europe, within 2 kHz; adjust per Setting Up (service manual 2.4 g). There is no speaker, and most monitors have no sound (Introduction p. 2).' },
       { symptom: 'Crashes or garbage after reset', suspects: ['cpuz80', 'ula_128'], note: 'Service manual 2.4: /RD, /WR, /MREQ, data and address active after reset; /RAS and /CAS at uncontended RAM IC15-IC22 and contended RAM IC6-IC13 (oscillograms E, F); ROM IC5 selected by a LOW on pin 20; bank register outputs LOW after reset.' },
       { symptom: 'No AY music, beeper works', suspects: ['ay8912', 'ula_128'], note: 'The AY (IC32) takes its master clock from the ULA and its register select and data from writes to $FFFD and $BFFD (service manual 5.6). Test in 128 BASIC with LET a$="cdefgab": PLAY a$.' },
-      { symptom: 'TV will not tune in', suspects: [], note: 'Hold BREAK and press RESET for the test screen; tune for the colour bars and the intermittent tone with AFC off, then turn AFC back on (Introduction p. 2).' }
+      { symptom: 'TV will not tune in', suspects: [], note: 'Hold BREAK and press RESET for the test screen; tune for the color bars and the intermittent tone with AFC off, then turn AFC back on (Introduction p. 2).' }
     ],
-    // Grey +2: the service manual flow chart and test software pages, and the user manual check list.
+    // Gray +2: the service manual flow chart and test software pages, and the user manual check list.
     spectrumplus2: [
       { symptom: 'ON lamp not lit', suspects: [], note: 'PSU plug in the 9V DC socket, mains plug and its fuse (user manual p. 13). Service flow chart: mains fuse, then the LED and its PCB connector (service manual p. 3).' },
       { symptom: 'No picture at all', suspects: [], note: 'Service flow chart (p. 3): the modulator and the DC-DC converter.' },
@@ -596,7 +596,7 @@ RCS.add({
       { symptom: 'Picture but no sound', suspects: [], note: 'Service flow chart (p. 3): the modulator and its sound coil tuning.' },
       { symptom: 'No menu after RESET', suspects: [], note: 'Service flow chart (p. 3): the ROM (IC8, 27256).' },
       { symptom: 'Menu bar will not move, dead keys', suspects: ['ula_128'], note: 'Service flow chart (p. 3): the keyboard connectors, then the ULA.' },
-      { symptom: 'Test ROM shows only a coloured border', suspects: ['dram4164'], note: 'Steady border: black IC17, blue IC18, red IC19, magenta IC20, green IC21, cyan IC22, yellow IC23, white IC24. Flashing: black IC32 down to white IC25. A RAM error at address zero is paging hardware, not RAM (service manual p. 4).' },
+      { symptom: 'Test ROM shows only a colored border', suspects: ['dram4164'], note: 'Steady border: black IC17, blue IC18, red IC19, magenta IC20, green IC21, cyan IC22, yellow IC23, white IC24. Flashing: black IC32 down to white IC25. A RAM error at address zero is paging hardware, not RAM (service manual p. 4).' },
       { symptom: 'Tape will not load, or loads with odd results', suspects: ['dram4164', 'ula_128'], note: 'Tape deck connections, clean and check the head, the cassette key switches and the motor. Software that loads but runs oddly: RAM or ULA; damaged tape does not half-load (service manual p. 3).' }
     ],
     // +3: the +2A/+3 service manual (k1 transcription) and the +3 manual chapter 2 check list.
@@ -607,7 +607,7 @@ RCS.add({
       { symptom: 'Picture but no sound', suspects: [], note: 'Service flow chart: the modulator and its sound coil tuning.' },
       { symptom: 'No menu after RESET', suspects: [], note: 'Service flow chart: the ROMs (IC7, IC8).' },
       { symptom: 'Menu bar will not move, dead keys', suspects: ['ula_128'], note: 'Service flow chart: the keyboard connectors, then the gate array.' },
-      { symptom: 'Test ROM shows only a coloured border', suspects: ['dram4464'], note: 'The service manual colour table names IC17-IC32, copied from the +2; the +3 parts list has its RAM at IC3-IC6, so use the RAM test report instead: fault address and bank. Address zero means paging hardware, not RAM.' },
+      { symptom: 'Test ROM shows only a colored border', suspects: ['dram4464'], note: 'The service manual color table names IC17-IC32, copied from the +2; the +3 parts list has its RAM at IC3-IC6, so use the RAM test report instead: fault address and bank. Address zero means paging hardware, not RAM.' },
       { symptom: 'Drive A: not ready', suspects: [], note: 'Usually no disk in the drive (manual chapter 8 part 20). Drive checks: index period 200 ±5 ms (motor speed, VR201), then read and write tests; the mechanism and its PCB (270312) go back to Amstrad, not repaired by agents (service manual).' }
     ]
   },
@@ -669,12 +669,12 @@ RCS.add({
     spectrum: [
       { id: 'spectrum-power', name: 'Power in (9V DC)', kind: '2.1 mm coaxial DC socket', geo: 'barrel',
         verifiedAgainst: 'ZX Spectrum Introduction manual p. 7 (9 V DC 1.4 A); Service Manual 8.7 (2.1 mm co-axial socket); polarity from k1',
-        summary: '9 V DC unregulated, 1.4 A. CENTRE NEGATIVE: centre pin 0 V, sleeve +9 V (k1; the Sinclair manuals do not state the polarity). A centre-positive adapter puts the supply in backwards. Unplugging it is the only reset.',
+        summary: '9 V DC unregulated, 1.4 A. CENTER NEGATIVE: center pin 0 V, sleeve +9 V (k1; the Sinclair manuals do not state the polarity). A center-positive adapter puts the supply in backwards. Unplugging it is the only reset.',
         pins: [
-          P('1', '0V', 'ground', 'Centre pin: 0 V (negative).', { expect: '0 V', verify: true }),
+          P('1', '0V', 'ground', 'Center pin: 0 V (negative).', { expect: '0 V', verify: true }),
           P('2', '+9V', 'power', 'Sleeve: unregulated +9 V to the 7805 and the DC-DC converter.', { expect: '+9 V ±2 V on load (C50); about 15 V with no load (k1)', verify: true })
         ],
-        sources: [S('ZX Spectrum Introduction manual, power supply, p. 7', SPINTRO), S('ZX Spectrum Service Manual 8.7 Connectors (PWR 2.1mm co-axial socket), p. 44', SM48(44)), S('Sinclair ZX Archive, ZX Spectrum Connectors (centre pin Gnd)', SPCONN)], terms: [] },
+        sources: [S('ZX Spectrum Introduction manual, power supply, p. 7', SPINTRO), S('ZX Spectrum Service Manual 8.7 Connectors (PWR 2.1mm co-axial socket), p. 44', SM48(44)), S('Sinclair ZX Archive, ZX Spectrum Connectors (center pin Gnd)', SPCONN)], terms: [] },
       { id: 'spectrum-ear', name: 'EAR (tape in)', kind: '3.5 mm mono jack', geo: 'ts',
         verifiedAgainst: 'ZX Spectrum Service Manual 1.9 and 8.7',
         summary: 'Tape input from the recorder earphone socket. LOAD reads it on port $FE bit 6 through ULA pin 28.',
@@ -697,8 +697,8 @@ RCS.add({
     ],
     spectrum128: [
       { id: 'spectrum128-power', name: 'Power in (9V DC)', kind: '2.1 mm coaxial DC socket', geo: 'barrel', verify: true,
-        summary: '9 V DC unregulated from the Sinclair pack into a 2.1 mm coaxial socket (service manual). The 128 documents found do not state the polarity; the plug is the 48K type, which is centre negative (k1). Measure the pack before connecting.',
-        pins: [P('1', '0V', 'ground', 'Centre pin, 0 V (as the 48K; not confirmed for the 128).', { expect: '0 V', verify: true }), P('2', '+9V', 'power', 'Sleeve, unregulated +9 V (as the 48K; not confirmed for the 128).', { expect: '+9 V nominal', verify: true })],
+        summary: '9 V DC unregulated from the Sinclair pack into a 2.1 mm coaxial socket (service manual). The 128 documents found do not state the polarity; the plug is the 48K type, which is center negative (k1). Measure the pack before connecting.',
+        pins: [P('1', '0V', 'ground', 'Center pin, 0 V (as the 48K; not confirmed for the 128).', { expect: '0 V', verify: true }), P('2', '+9V', 'power', 'Sleeve, unregulated +9 V (as the 48K; not confirmed for the 128).', { expect: '+9 V nominal', verify: true })],
         sources: [S('Spectrum 128 Service Manual, parts list (PWR 2.1mm co-axial socket), p. 5.4', SM128(39)), S('Spectrum 128 Service Manual 6.1 Power supplies, p. 1.22', SM128(25)), S('Sinclair ZX Archive, ZX Spectrum Connectors (48K polarity)', SPCONN)], terms: [] },
       { id: 'spectrum128-ear', name: 'EAR (tape in)', kind: '3.5 mm mono jack', geo: 'ts',
         verifiedAgainst: 'Spectrum 128 Service Manual parts list; Spectrum 128 Introduction manual p. 3',
@@ -730,7 +730,7 @@ RCS.add({
         ],
         sources: [S('Spectrum 128 Introduction manual, page 3 (RGB output table)', UM128), S('World of Spectrum FAQ, Pinouts: 128K RGB video', WOSPIN), S('Spectrum 128 Service Manual, parts list (RGB 8-way DIN), p. 5.4', SM128(39))], terms: [] },
       { id: 'spectrum128-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', rowA: 'bottom', verify: true,
-        summary: 'Spectrum-compatible expansion edge (service manual 1.3; k1: the same port up to the grey +2). This is the 48K Issue 3 table: the 128 service manual confirms +5 V on 3A, +9 V on 4A, 0 V on 6A, 7A and 14A and -5 V on 20B, but lists +12 V on 23A and pulsed +12 V on 23B (see the conflicts on A23 and B23). ' + SPEC_EDGE_SUMMARY,
+        summary: 'Spectrum-compatible expansion edge (service manual 1.3; k1: the same port up to the gray +2). This is the 48K Issue 3 table: the 128 service manual confirms +5 V on 3A, +9 V on 4A, 0 V on 6A, 7A and 14A and -5 V on 20B, but lists +12 V on 23A and pulsed +12 V on 23B (see the conflicts on A23 and B23). ' + SPEC_EDGE_SUMMARY,
         pins: specEdgePins().map(p => Object.assign({}, p, {
           A15: { verify: true }, A16: { verify: true }, A17: { verify: true }, A18: { verify: true },
           A23: { conflict: '128 Service Manual 6.4 lists +12 V on pin 23A; the 48K table and k1 have A5 here.' },
@@ -747,7 +747,7 @@ RCS.add({
     ],
     spectrumplus2: [
       { id: 'spectrumplus2-power', name: 'Power in', kind: 'DC power socket', verify: true,
-        summary: 'Not sourced yet: no grey +2 document with the supply rating or socket was found (the k1 +2 service manual is an image scan). Check the pack label and polarity before connecting.',
+        summary: 'Not sourced yet: no gray +2 document with the supply rating or socket was found (the k1 +2 service manual is an image scan). Check the pack label and polarity before connecting.',
         pins: [], sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (ports)', P2REV)], terms: [] },
       { id: 'spectrumplus2-tv', name: 'TV (RF out)', kind: 'TV socket (RF)', verify: true,
         summary: 'TV connection on the back (review). Socket type and pins not sourced.',
@@ -769,7 +769,7 @@ RCS.add({
         ],
         sources: [S('Spectrum 128 SCART cable pages: +2 RGB differences (community, second source)', P2RGB, { verify: true }), S('Spectrum 128 Introduction manual, page 3 (128 RGB table)', UM128)], terms: [] },
       { id: 'spectrumplus2-joystick', name: 'Joystick 1 and 2', kind: 'DE-9 male (two identical sockets)', geo: 'de9', gender: 'male', verify: true,
-        summary: 'Two ports on the left wired for Sinclair SJS1 joysticks, not Atari ones; software sees them as Interface 2 (review). Table from the +3 manual; no grey +2 document with the pin table was found.',
+        summary: 'Two ports on the left wired for Sinclair SJS1 joysticks, not Atari ones; software sees them as Interface 2 (review). Table from the +3 manual; no gray +2 document with the pin table was found.',
         pins: sinclairJoyPins().map(p => Object.assign(p, { verify: true })),
         sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (joystick ports)', P2REV), S('Spectrum +3 manual, chapter 10, Joystick(s)', P3MAN)], terms: [] },
       { id: 'spectrumplus2-rs232', name: 'RS232 / MIDI', kind: 'BT-style 6-way socket', verify: true,
@@ -779,7 +779,7 @@ RCS.add({
         summary: 'BT-style keypad socket kept from the 128 (review). Pin table not sourced.',
         pins: [], sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (ports)', P2REV)], terms: [] },
       { id: 'spectrumplus2-edge', name: 'Rear edge connector (2 x 28)', kind: 'Card edge, 28 + 28 positions, keyway at 5', geo: 'edge-28x28-ab', keys: [4, 5], pin1: 'right', rowA: 'bottom', verify: true,
-        summary: 'The standard Spectrum edge, "absolutely as normal" (review; k1: the same port up to the grey +2). Table from the 48K Issue 3 diagram, not checked on a +2 board. ' + SPEC_EDGE_SUMMARY,
+        summary: 'The standard Spectrum edge, "absolutely as normal" (review; k1: the same port up to the gray +2). Table from the 48K Issue 3 diagram, not checked on a +2 board. ' + SPEC_EDGE_SUMMARY,
         pins: specEdgePins().map(p => Object.assign({}, p, {
           A3: { expect: '+5 V' }, A4: { expect: '+9 V DC nominal' },
           A13: { desc: 'ULA port select: /IORQ gated with A0 (TR7 on the +2). LOW only on an I/O cycle to an even port such as $FE.' },
@@ -812,16 +812,16 @@ RCS.add({
         sources: [S('Spectrum +3 manual, chapter 10, Cassette unit and Amplifier', P3MAN)], terms: [] },
       { id: 'spectrumplus3-rgb', name: 'RGB/PERITEL', kind: 'DIN 8-pin 270° socket', geo: 'din8-270',
         verifiedAgainst: 'Spectrum +3 manual, chapter 10, VDU Monitor',
-        summary: 'Analogue RGB with composite sync and audio for a monitor or a PERITEL (SCART) TV. Different from the 128 and grey +2: pins 1 and 5 carry +12 V, and there is no composite video. A 128 lead puts +12 V on the monitor\'s composite input.',
+        summary: 'Analog RGB with composite sync and audio for a monitor or a PERITEL (SCART) TV. Different from the 128 and gray +2: pins 1 and 5 carry +12 V, and there is no composite video. A 128 lead puts +12 V on the monitor\'s composite input.',
         pins: [
           P(1, '+12V', 'power', '+12 V (PERITEL switching).', { expect: '+12 V' }),
           P(2, 'GND', 'ground', 'Ground.', { expect: '0 V' }),
           P(3, 'AUDIO', 'audio', 'Audio out.'),
           P(4, '/CSYNC', 'video', 'Composite sync, TTL.', { activeLow: true, expect: 'TTL' }),
           P(5, '+12V', 'power', '+12 V.', { expect: '+12 V' }),
-          P(6, 'GREEN', 'video', 'Green, analogue.', { expect: '1.67 V p-p (WoS)' }),
-          P(7, 'RED', 'video', 'Red, analogue.', { expect: '1.67 V p-p (WoS)' }),
-          P(8, 'BLUE', 'video', 'Blue, analogue.', { expect: '1.67 V p-p (WoS)' })
+          P(6, 'GREEN', 'video', 'Green, analog.', { expect: '1.67 V p-p (WoS)' }),
+          P(7, 'RED', 'video', 'Red, analog.', { expect: '1.67 V p-p (WoS)' }),
+          P(8, 'BLUE', 'video', 'Blue, analog.', { expect: '1.67 V p-p (WoS)' })
         ],
         sources: [S('Spectrum +3 manual, chapter 10, VDU Monitor (RGB/PERITEL socket)', P3MAN), S('World of Spectrum FAQ, Pinouts: +2A/+3 RGB video', WOSPIN)], terms: [] },
       { id: 'spectrumplus3-joystick', name: 'Joystick 1 and 2', kind: 'DE-9 male (two identical sockets)', geo: 'de9', gender: 'male',
@@ -936,7 +936,7 @@ RCS.add({
         { step: 2, check: 'Plug in the right socket', where: 'Power in (9V DC IN)', expect: 'Power plug in 9V DC IN, not MIC or EAR', ifNot: 'In the wrong socket the ZX80 does not start; no damage.', source: S('ZX80 Operating Manual, Getting Started, p. 6', ZX80OMP(6)) },
         { step: 3, check: '+5 V', where: 'Z80A pin 11', expect: '+5 V from the 7805 (IC22)', ifNot: 'Low or missing: the 7805 or a short on the 5 V rail.', source: S('ZX80 circuit diagram (7805 at IC22)', ZX80SCH), verify: true },
         { step: 4, check: 'CPU clock', where: 'Z80A pin 6', expect: 'About 3.25 MHz (6.5 MHz crystal X1 / 2)', ifNot: 'Flat: crystal X1 and its divider.', source: S('ZX80 circuit diagram (X1 6.5 MHz)', ZX80SCH) },
-        { step: 5, check: 'Picture', where: 'TV (UHF RF out)', expect: 'Inverse K cursor at the bottom left after tuning to about UHF channel 36', ifNot: 'Turn the TV brightness up; a grey mess means it is not tuned yet.', source: S('ZX80 Operating Manual, Getting Started, pp. 6-7', ZX80OMP(7)) },
+        { step: 5, check: 'Picture', where: 'TV (UHF RF out)', expect: 'Inverse K cursor at the bottom left after tuning to about UHF channel 36', ifNot: 'Turn the TV brightness up; a gray mess means it is not tuned yet.', source: S('ZX80 Operating Manual, Getting Started, pp. 6-7', ZX80OMP(7)) },
         { step: 6, check: 'Keyboard and BASIC', where: 'Keyboard', expect: 'Q gives NEW; NEW then NEWLINE clears', ifNot: 'No response with the K cursor showing: suspect the keyboard.', source: S('ZX80 Operating Manual, the keyboard, p. 17', ZX80OMP(17)), verify: true }
       ],
       clocks: [
@@ -952,7 +952,7 @@ RCS.add({
           'DC only and well smoothed: 8 V minimum to 12 V maximum on load (manual 9). About 14 V with no load (k1).',
           'Horizontal black and white stripes through the picture point at a weak or poorly smoothed supply (manual 6e).',
           'The 7805 should be warm after a couple of minutes. If it gets very hot and the machine cuts out, it is not bolted to its heatsink properly (manual 6a, 6b).',
-          'The WoS FAQ table lists the ZX81 pack as 9 V, 500 mA, centre positive; the manual asks for at least 600 mA. Use a 9 V pack rated 600 mA or more.'
+          'The WoS FAQ table lists the ZX81 pack as 9 V, 500 mA, center positive; the manual asks for at least 600 mA. Use a 9 V pack rated 600 mA or more.'
         ],
         sources: [S('ZX81 Service and Assembly Manual, 9 Power supply, p. 7', ZX81SAM(8)), S('ZX81 Service and Assembly Manual, 6 Fault finding, p. 4', ZX81SAM(5)), S('Sinclair ZX Archive, ZX81 Connectors (power)', ZX81CONN), S('World of Spectrum FAQ, Pinouts: Power Supplies table', WOSPIN)] },
       rails: [
@@ -996,7 +996,7 @@ RCS.add({
     spectrum: {
       supply: { external: true, name: 'Sinclair ZX power pack (9 V DC unregulated)', output: '9 V DC unregulated, 1.4 A', connector: 'spectrum-power',
         notes: [
-          'CENTRE NEGATIVE: centre pin 0 V, sleeve +9 V, into a 2.1 mm coaxial socket (k1; the Sinclair manuals do not state the polarity). A centre-positive adapter puts the supply in backwards.',
+          'CENTER NEGATIVE: center pin 0 V, sleeve +9 V, into a 2.1 mm coaxial socket (k1; the Sinclair manuals do not state the polarity). A center-positive adapter puts the supply in backwards.',
           'The pack is a mains transformer, full-wave rectifier and smoothing capacitor with a thermal fuse in the primary; nothing is regulated (service manual 1.11). Design limits: at least 7.0 V at 1.4 A on 215 V AC, under 14 V peak at 600 mA on 265 V AC (5.2). About 15 V with no load (k1).',
           'Draw from a 9 V bench supply: 500-700 mA for a 16K, 700-900 mA for a 48K (3.1.4). Much more means a short; set the current limit just above that.',
           'Regulator input (C50 +ve) should read +9 V ±2 V; below +7 V the 7805 does not regulate (5.3.1). A replacement 7805 needs thermal compound and a firm bolt to the heatsink, kept clear of the edge connector (7.2).',
@@ -1009,7 +1009,7 @@ RCS.add({
         { rail: '+9 V DC in', expect: '+9 V ±2 V (7 to 11 V)', where: 'C50 positive side; spectrum-edge pin A4', note: 'Below +7 V the 7805 does not regulate.' },
         { rail: '+5 V', expect: '+4.75 to +5.25 V, no visible ripple', where: 'C34 positive side; 4116 pin 9 (IC6); ULA pin 14; Z80A pin 11; spectrum-edge pin A3', note: 'The ULA and the Z80 both draw from +5 V. Switch-mode drop-ins for the 7805 (Traco, Murata) need no heatsink; on an Issue 2 board in a rubber-key case only a horizontal-mount version fits (Retroleum).' },
         { rail: '+12 V', expect: '+10.8 to +13.2 V', where: 'DC-DC converter (D15/C44); 4116 pin 8 (IC6); spectrum-edge pin B22', note: 'Made by TR4/TR5, not the 7805. Out-of-range converter rails can damage the 4116s (Retroleum).', conflict: 'The service manual prose names the rectifier D5; the Issue 5 and 6A circuit diagrams draw D15 (BA157) into C44, and D5 is a keyboard diode there. Probe D15.' },
-        { rail: '+12 VA', expect: '+10.8 to +13.2 V', where: 'LT side of C52, to IC14 (LM1889) only', note: 'Filtered by R62/C45 for the colour circuits.' },
+        { rail: '+12 VA', expect: '+10.8 to +13.2 V', where: 'LT side of C52, to IC14 (LM1889) only', note: 'Filtered by R62/C45 for the color circuits.' },
         { rail: '-5 V', expect: '-4 V to -5.5 V', where: 'DC-DC converter; 4116 pin 1 (IC6); spectrum-edge pin B20', note: 'Out-of-range converter rails can damage the 4116s (Retroleum).' },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; ULA pin 40; 4116 pin 16; 23128 pin 14 (ROM IC5)', note: 'Common return.' }
       ],
@@ -1021,10 +1021,10 @@ RCS.add({
         { tp: 'Luminance and sync (Y)', where: 'ULA pin 17', expect: 'Line-rate pulses between about +1 V and +3.5 V, one line every 64 µs.',
           scope: { period: '64 µs', low: '1 V', high: '3.5 V', shape: 'pulse', basis: 'capture', source: S('ZX Spectrum Service Manual 6.2.4 No video input at IC14 pin 12: IC1 pins 15, 16 and 17 waveforms, p. 31', SM48(31)),
             note: 'Service-manual drawing: +1 V base, stepping to +3.5 V each line. The drawing marks the period "65nS"; the 64 µs line period here is from the WoS 48K reference (224 T-states, see Clocks). Missing or flat with +5 V present: change the ULA.' } },
-        { tp: 'Colour difference (U)', where: 'ULA pin 15', expect: 'Rests at +2 V with short +3 V pulses each line.',
+        { tp: 'Color difference (U)', where: 'ULA pin 15', expect: 'Rests at +2 V with short +3 V pulses each line.',
           scope: { period: '64 µs', low: '2 V', high: '3 V', shape: 'pulse', basis: 'capture', source: S('ZX Spectrum Service Manual 6.2.4, IC1 pin 15 waveform, p. 31', SM48(31)),
-            note: 'Service-manual drawing; line period from the WoS 48K reference (see Clocks). Wrong here but +5 V good: ULA. Right here but no colour: VR1/VR2 on Issue 1 and 2 boards, then IC14.' } },
-        { tp: 'Colour difference (V)', where: 'ULA pin 16', expect: 'Rests at +2 V with a pulse up to +3 V and a dip to +1 V each line.',
+            note: 'Service-manual drawing; line period from the WoS 48K reference (see Clocks). Wrong here but +5 V good: ULA. Right here but no color: VR1/VR2 on Issue 1 and 2 boards, then IC14.' } },
+        { tp: 'Color difference (V)', where: 'ULA pin 16', expect: 'Rests at +2 V with a pulse up to +3 V and a dip to +1 V each line.',
           scope: { period: '64 µs', low: '1 V', high: '3 V', shape: 'pulse', basis: 'capture', source: S('ZX Spectrum Service Manual 6.2.4, IC1 pin 16 waveform, p. 31', SM48(31)),
             note: 'Service-manual drawing: +2 V rest, +3 V pulse, then a dip to +1 V later in the line; line period from the WoS 48K reference (see Clocks). The app draws a plain pulse between the two extremes.' } },
         { tp: 'Interrupt', where: 'ULA pin 12 (/INT)', expect: 'Pulses LOW once per frame, every 20 ms.' },
@@ -1059,7 +1059,7 @@ RCS.add({
         { name: 'CPU clock', where: 'ULA pin 32 to Z80A pin 6', f: '3.5 MHz', source: S('World of Spectrum, 48K reference: 3.5 MHz / 69888 T-states per frame', WOS48), verify: true },
         { name: 'Line rate', where: 'ULA pin 17 (sync in Y)', f: '15.625 kHz', source: S('World of Spectrum, 48K reference: 224 T-states per line (64 µs)', WOS48), verify: true },
         { name: 'Frame interrupt', where: 'ULA pin 12', f: '50.08 Hz', source: S('World of Spectrum, 48K reference: 3.5 MHz / 69888 = 50.08 Hz', WOS48), verify: true },
-        { name: 'Colour subcarrier X2', where: 'IC14 (LM1889) leg 17', f: '4.433619 MHz', source: S('ZX Spectrum Service Manual 3.1.4 Sub-carrier oscillator (4.433619 MHz ±50 Hz), p. 18', SM48(18)) }
+        { name: 'Color subcarrier X2', where: 'IC14 (LM1889) leg 17', f: '4.433619 MHz', source: S('ZX Spectrum Service Manual 3.1.4 Sub-carrier oscillator (4.433619 MHz ±50 Hz), p. 18', SM48(18)) }
       ],
       sources: [S('ZX Spectrum Service Manual 3.1.2 Voltage check, p. 17', SM48(17)), S('ZX Spectrum Service Manual 5.3.1 Basic checks, p. 26', SM48(26)), S('ZX Spectrum Issue 3 circuit diagram', ISS3), S('ZX Spectrum Service Manual (scans), appended repair notes 3 and 5 (no coil buzz from inverter), PDF p. 64', SM48SCAN(64)), S('Retroleum, Repairing a ZX Spectrum', RETRO_REPAIR), S('Retroleum, Spectrum chips (switch-mode 7805 replacements and their fit)', RETRO_CHIPS)]
     },
@@ -1068,7 +1068,7 @@ RCS.add({
         notes: [
           'On the board: a 7805 makes +5 V, the TR4/TR5 inverter makes +12 V, a charge pump on TR4 makes -12 V (unregulated, -5 V to -12 V), and zener D19 takes -5 V from that rail (service manual 6.1-6.3).',
           '+12 V feeds the RS232 driver IC33 and the keypad, -12 V the RS232 driver, -5 V only the expansion port (6.1). A dead inverter kills RS232 and the keypad first.',
-          'Polarity is not stated in the 128 documents found; the socket is the same 2.1 mm coaxial type as the 48K, whose pack is centre negative (k1). Measure before connecting.'
+          'Polarity is not stated in the 128 documents found; the socket is the same 2.1 mm coaxial type as the 48K, whose pack is center negative (k1). Measure before connecting.'
         ],
         sources: [S('Spectrum 128 Service Manual 6 Power supplies, p. 1.22', SM128(25)), S('Spectrum 128 Service Manual, parts lists (PWR socket, power supply), pp. 5.4 and 6.0', SM128(39)), S('Spectrum 128 Service Manual, accessories list (power supply 9V), p. 6.0', SM128(44))] },
       rails: [
@@ -1080,7 +1080,7 @@ RCS.add({
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; spectrum128-edge pins A6, A7, A14' }
       ],
       testPoints: [
-        { tp: 'Master clock', where: 'Analogue section crystal', expect: '17.7 MHz (service manual 2.2)' },
+        { tp: 'Master clock', where: 'Analog section crystal', expect: '17.7 MHz (service manual 2.2)' },
         { tp: 'Crystal oscillator', where: 'IC37 (74S04) leg 6', expect: '17.73447 MHz with no jitter (oscillogram C).',
           scope: { f: '17.73447 MHz', shape: 'square', basis: 'capture', source: S('Spectrum 128 Service Manual, Fig. 4.1(a) test oscillograms, C (IC37 pin 6), p. 4.7', SM128(36)),
             note: 'Storage-scope photo at 2 V/div, 100 ns/div; the manual gives no levels.' } },
@@ -1103,16 +1103,16 @@ RCS.add({
       clocks: [
         { name: 'Crystal X1', where: 'IC37 (74S04) leg 6', f: '17.73447 MHz', source: S('Spectrum 128 Service Manual 2.3 Basic checks (crystal 17.73447 MHz), p. 4.4', SM128(33)) },
         { name: 'CPU clock', where: 'TR3 collector to Z80A pin 6', f: '3.54689 MHz', source: S('Spectrum 128 Service Manual 2.3 Basic checks (Z80 3.54689 MHz), p. 4.4', SM128(33)) },
-        { name: 'Colour encoder clocks', where: 'ULA (IC1) legs 46 and 47', f: '8.8 MHz', source: S('Spectrum 128 Service Manual 5.3.2 (two 8.8 MHz clocks on pins 46, 47), p. 1.12', SM128(15)) },
+        { name: 'Color encoder clocks', where: 'ULA (IC1) legs 46 and 47', f: '8.8 MHz', source: S('Spectrum 128 Service Manual 5.3.2 (two 8.8 MHz clocks on pins 46, 47), p. 1.12', SM128(15)) },
         { name: 'Sound carrier', where: 'IC38 leg 4', f: '6.0 MHz', source: S('Spectrum 128 Service Manual 2.4 (g) ii (6.0 MHz UK, 5.5 MHz Europe, within 2 kHz), p. 4.5', SM128(34)) },
         { name: 'Keypad PIC', where: 'Keypad LC network', f: '2.556 MHz', source: S('Spectrum 128 Service Manual 5.8.1 (nominal 2.556 MHz, 1.278 to 3.835 MHz by tolerance), p. 1.19', SM128(22)) }
       ],
       sources: [S('Spectrum 128 Service Manual 6 Power supplies, p. 1.22', SM128(25)), S('Spectrum 128 Service Manual 2.2 (17.7 MHz master clock), p. 1.1', SM128(4)), S('Spectrum 128 Service Manual 2.3-2.4 Basic checks and Fig. 4.1 test oscillograms, pp. 4.3-4.8', SM128(32))]
     },
     spectrumplus2: {
-      supply: { external: true, name: 'Grey +2 power pack (rating not sourced)', output: 'Not sourced yet', connector: 'spectrumplus2-power',
+      supply: { external: true, name: 'Gray +2 power pack (rating not sourced)', output: 'Not sourced yet', connector: 'spectrumplus2-power',
         notes: [
-          'No grey +2 document with the supply rating or polarity was found. Read the pack label and measure its polarity before connecting.',
+          'No gray +2 document with the supply rating or polarity was found. Read the pack label and measure its polarity before connecting.',
           'The service manual parts list names the pack only as "Power Adaptor" (172068) and puts an L78S05CV 5 V regulator at PL11 on the board.'
         ],
         sources: [S('Sinclair ZX Archive, ZX Spectrum +2 review (ports)', P2REV), P2SM_PARTS, S('Spectrum +2 user manual, chapter 1 (9V DC socket), p. 8', P2MAN(9))] },
@@ -1154,7 +1154,7 @@ RCS.add({
         { step: 4, check: 'CPU clock', where: 'Z80A pin 6', expect: '3.5469 MHz', ifNot: 'Look at crystal X1, 35.4690 MHz on the parts list (ten times the CPU clock).', source: P3SM_SPEC },
         { step: 5, check: 'Menu', where: 'RESET button', expect: 'Opening menu', ifNot: 'The ROMs (IC7, IC8).', source: P3SM_FLOW },
         { step: 6, check: 'Keyboard', where: 'Cursor down key', expect: 'Menu bar moves; then every key in +3 BASIC', ifNot: 'The keyboard connectors, then the gate array.', source: P3SM_FLOW },
-        { step: 7, check: 'Service diagnostics', where: 'BREAK held during RESET, then Q A Z M L P held', expect: 'Test card, then the diagnostic title and on-screen steps', ifNot: 'No test card: the built-in diagnostics cannot start. Use the separate service-ROM test: read the border colour (steady or flashing) against its chip table; fault addresses and banks appear only once that test program runs.', source: S('Spectrum +2A/+3 Service Manual, self-test activation and self diagnostic tests', P3SM), verify: true }
+        { step: 7, check: 'Service diagnostics', where: 'BREAK held during RESET, then Q A Z M L P held', expect: 'Test card, then the diagnostic title and on-screen steps', ifNot: 'No test card: the built-in diagnostics cannot start. Use the separate service-ROM test: read the border color (steady or flashing) against its chip table; fault addresses and banks appear only once that test program runs.', source: S('Spectrum +2A/+3 Service Manual, self-test activation and self diagnostic tests', P3SM), verify: true }
       ],
       clocks: [
         { name: 'Crystal X1', where: 'X1', f: '35.469 MHz', source: P3SM_PARTS },
@@ -1228,7 +1228,7 @@ RCS.add({
     },
     spectrum: {
       firstLook: [
-        'Attributes: each 8 x 8 cell has one ink, one paper and a bright bit. Colour is per cell, so the attribute clash is normal.',
+        'Attributes: each 8 x 8 cell has one ink, one paper and a bright bit. Color is per cell, so the attribute clash is normal.',
         'Lower 16K is 4116 DRAM and needs -5 V and +12 V. A dead lower RAM is a power-rail problem first.',
         'Keyword-per-key entry. CAPS SHIFT + 2 locks caps; SYMBOL SHIFT gives the red symbols.',
         'The ULA runs hot and does the picture, the beeper and the tape. Check it first.',
@@ -1249,8 +1249,8 @@ RCS.add({
         dialect: 'Sinclair BASIC 48K (Spectrum)',
         essentials: [
           { cmd: 'PRINT AT r,c', does: 'Print at row 0-21, column 0-31.' },
-          { cmd: 'INK n / PAPER n', does: 'Foreground and background colour 0-7. Add 8 for the bright shade.' },
-          { cmd: 'BORDER n', does: 'Border colour 0-7.' },
+          { cmd: 'INK n / PAPER n', does: 'Foreground and background color 0-7. Add 8 for the bright shade.' },
+          { cmd: 'BORDER n', does: 'Border color 0-7.' },
           { cmd: 'BRIGHT 0/1 / FLASH 0/1', does: 'Bright and flash attributes.' },
           { cmd: 'PLOT x,y / DRAW dx,dy', does: 'Plot a point (x 0-255, y 0-175) and draw a line.' },
           { cmd: 'CIRCLE x,y,r', does: 'Draw a circle.' },
@@ -1271,17 +1271,17 @@ RCS.add({
           { group: 'Functions', items: ['ABS SGN INT SQR', 'SIN COS TAN ASN ACS ATN LN EXP PI RND', 'LEN CODE VAL STR$ CHR$', 'PEEK IN ATTR POINT SCREEN$', 'INKEY$ USR BIN FN'] }
         ],
         quirks: [
-          'Colour is per 8 x 8 cell. A sprite that crosses a cell takes the cell colour: the attribute clash.',
+          'Color is per 8 x 8 cell. A sprite that crosses a cell takes the cell color: the attribute clash.',
           'The 16K BASIC ROM is at $0000-$3FFF. Upper RAM starts at $8000 on the 48K.',
-          'BRIGHT adds 8 to the colour value. INK 8 is transparent.',
+          'BRIGHT adds 8 to the color value. INK 8 is transparent.',
           'CLEAR n sets RAMTOP and protects the memory above it.'
         ]
       },
-      sources: [S('Sinclair ZX Spectrum BASIC Programming manual (k1 scan)', SPBASIC), S('ZX Spectrum Introduction manual (k1 scan)', SPINTRO), S('ZX Spectrum Service Manual 1.4 Memory organisation, p. 9', SM48(9))],
+      sources: [S('Sinclair ZX Spectrum BASIC Programming manual (k1 scan)', SPBASIC), S('ZX Spectrum Introduction manual (k1 scan)', SPINTRO), S('ZX Spectrum Service Manual 1.4 Memory organization, p. 9', SM48(9))],
       memory: [
         { range: '$0000-$3FFF', what: '16K BASIC ROM.' },
         { range: '$4000-$57FF', what: 'Display file (pixels), 6144 bytes.' },
-        { range: '$5800-$5AFF', what: 'Attributes (colour), 768 bytes. Address 22528.' },
+        { range: '$5800-$5AFF', what: 'Attributes (color), 768 bytes. Address 22528.' },
         { range: '$5B00-$5BFF', what: 'Printer buffer.' },
         { range: '$5C00+ (23552+)', what: 'System variables. CHARS 23606/7, FRAMES 23672-4, RAMTOP 23730/1.' },
         { range: '$4000-$FFFF', what: 'The 48K RAM. Lower 16K is 4116 DRAM; upper 32K is 4532-class.' }
@@ -1318,11 +1318,11 @@ RCS.add({
           { cmd: 'PRINT a, b; c', does: 'Comma tabs to columns 9, 17, 25.' },
           { cmd: 'PEEK(n) / POKE n,v', does: 'Read / write one byte.' },
           { cmd: 'USR(n)', does: 'Call machine code at n; the result is HL.' },
-          { cmd: 'RANDOMISE n / RND(n)', does: 'Seed / random number 1 to n.' },
+          { cmd: 'RANDOMIZE n / RND(n)', does: 'Seed / random number 1 to n.' },
           { cmd: 'CLS', does: 'Clear the upper screen.' }
         ],
         groups: [
-          { group: 'Statements', items: ['LET', 'PRINT', 'INPUT', 'IF..THEN', 'FOR a=n TO n / NEXT a', 'GO TO / GO SUB / RETURN', 'DIM a(n)', 'REM', 'STOP', 'CLEAR', 'CLS', 'POKE n,v', 'RANDOMISE'] },
+          { group: 'Statements', items: ['LET', 'PRINT', 'INPUT', 'IF..THEN', 'FOR a=n TO n / NEXT a', 'GO TO / GO SUB / RETURN', 'DIM a(n)', 'REM', 'STOP', 'CLEAR', 'CLS', 'POKE n,v', 'RANDOMIZE'] },
           { group: 'Functions', items: ['ABS', 'PEEK', 'CODE', 'CHR$', 'STR$', 'TL$', 'RND', 'USR'] },
           { group: 'Operators', items: ['**  power', '* / + -', '= < >', 'NOT AND OR (bitwise; true is -1)'] },
           { group: 'Reports n/m (m = line)', items: ['0 BREAK, or end of program', '2 variable not found', '4 out of space', '5 no more room on screen', '6 arithmetic overflow', '7 RETURN without GO SUB', '8 INPUT used as a command', '9 STOP executed'] }
@@ -1342,16 +1342,16 @@ RCS.add({
       ]
     },
     spectrum128: {
-      sources: [S('Spectrum 128 Introduction, setting up and the TV test screen, p. 2 (WoS)', UM128P('02')), S('Spectrum 128 Introduction, main menu, p. 4', UM128P('04')), S('Spectrum 128 Introduction, 128 BASIC and the editor, pp. 6-8', UM128P('06')), S('Spectrum 128 Introduction, RAM disk and PLAY, p. 9', UM128P('09')), S('Spectrum 128 Introduction, PLAY strings, pp. 10-14', UM128P('10')), S('Spectrum 128 Service Manual 4.1-4.4 memory organisation and bank register, pp. 1.5-1.6', SM128(6)), S('Spectrum 128 Service Manual 5.5-5.6 ULA sound and programmable sound generator, p. 1.17', SM128(20))],
+      sources: [S('Spectrum 128 Introduction, setting up and the TV test screen, p. 2 (WoS)', UM128P('02')), S('Spectrum 128 Introduction, main menu, p. 4', UM128P('04')), S('Spectrum 128 Introduction, 128 BASIC and the editor, pp. 6-8', UM128P('06')), S('Spectrum 128 Introduction, RAM disk and PLAY, p. 9', UM128P('09')), S('Spectrum 128 Introduction, PLAY strings, pp. 10-14', UM128P('10')), S('Spectrum 128 Service Manual 4.1-4.4 memory organization and bank register, pp. 1.5-1.6', SM128(6)), S('Spectrum 128 Service Manual 5.5-5.6 ULA sound and programmable sound generator, p. 1.17', SM128(20))],
       firstLook: [
         'Switch on or press RESET (left end) for the main menu: Tape Loader, 128 BASIC, Calculator, 48 BASIC, Tape Tester.',
-        'Hold BREAK while pressing RESET or switching on for the TV test screen: colour bars and an intermittent tone.',
+        'Hold BREAK while pressing RESET or switching on for the TV test screen: color bars and an intermittent tone.',
         'No internal speaker: beeper and AY sound go out through the TV or the sound output.',
         'Taped 48K and 16K programs load from 48 BASIC; only RESET gets back to 128 BASIC.',
         'The RAM disk (SAVE! LOAD! CAT! ERASE!) is lost on RESET, switch-off or SPECTRUM.'
       ],
       keys: [
-        { keys: 'BREAK held + RESET', does: 'TV test screen (colour bars and tone) for tuning.' },
+        { keys: 'BREAK held + RESET', does: 'TV test screen (color bars and tone) for tuning.' },
         { keys: 'RESET button', does: 'Back to the main menu; the program is lost.' },
         { keys: 'Cursor keys + ENTER', does: 'Move the menu bar and pick (CMND on the keypad).' },
         { keys: 'EDIT', does: 'Options menu in 128 BASIC: 128 BASIC, Renumber, Screen, Print, Exit.' },
@@ -1397,7 +1397,7 @@ RCS.add({
       sources: [S('Spectrum +2 user manual, chapter 2 operating the +2 and Having problems, pp. 11-16', P2MAN(12)), S('Spectrum +2 user manual, chapters 3-4 loading 128 and 48 software, pp. 17-20', P2MAN(18)), S('Spectrum +2 user manual, chapter 6 using 128 BASIC and the edit menu, pp. 23-28', P2MAN(24)), S('Spectrum +2 Service Manual, test software, p. 4', P2SM(9)), S('Spectrum 128 Introduction, RAM disk and PLAY, p. 9', UM128P('09'))],
       firstLook: [
         'A 128 with a built-in datacorder: the opening menu offers Tape Loader, 128 BASIC, Calculator and 48 BASIC.',
-        'Hold BREAK and press RESET (left side) for the test signal: sixteen colour bars and a repeating tone.',
+        'Hold BREAK and press RESET (left side) for the test signal: sixteen color bars and a repeating tone.',
         'Tape Loader loads 128 software; 48K software loads from 48 BASIC with J, "" and ENTER.',
         'RESET clears memory and returns to the menu. 48 BASIC has no way back except RESET or switch-off.',
         'In 48 BASIC the sound, RS232/MIDI and keypad interfaces cannot be used; the joystick sockets still work.'
@@ -1446,7 +1446,7 @@ RCS.add({
         '3 inch CF-2 disks, one side at a time, label outward; an open write-protect hole means protected.'
       ],
       keys: [
-        { keys: 'BREAK held + RESET', does: 'TV test signal (colour bars and tone).' },
+        { keys: 'BREAK held + RESET', does: 'TV test signal (color bars and tone).' },
         { keys: 'BREAK + RESET, then Q A Z M L P held', does: 'Service diagnostic title; follow the screen.' },
         { keys: 'RESET button', does: 'Opening menu; RAM and the RAMdisk are cleared.' },
         { keys: 'Cursor keys + ENTER', does: 'Move the menu bar and select.' },
@@ -1524,12 +1524,12 @@ RCS.add({
     },
     spectrum128: {
       conditions: [
-        'At switch-on a working machine initialises to a clear screen with "© 1985 Sinclair Research Ltd" at lower left; the manual\'s basic checks are for a machine that does not.',
+        'At switch-on a working machine initializes to a clear screen with "© 1985 Sinclair Research Ltd" at lower left; the manual\'s basic checks are for a machine that does not.',
         'The external supply is specified under load: at 215 V AC in and 1.4 A out its trough must stay at or above 7.0 V; at 265 V AC in and 600 mA out its peak must stay below 13 V.',
         'Scope: a storage oscilloscope with a ×10 probe, 0.02 µs/cm rise time.',
       ],
       sources: [
-        { label: 'Spectrum 128 Service Manual, 2.2 Power supply unit and 2.3 Initialisation, p. 4.3', url: SM128(32) },
+        { label: 'Spectrum 128 Service Manual, 2.2 Power supply unit and 2.3 Initialization, p. 4.3', url: SM128(32) },
         { label: 'Spectrum 128 Service Manual, test equipment list, PDF p. 31', url: SM128(31) },
       ],
     },

@@ -1,14 +1,14 @@
-# Board photo licences
+# Board photo licenses
 
 Written by `npm run build` (scripts/build-photo-licenses.mjs) from `src/data/photos.js`. Do not edit by hand.
 
-The photos in this folder are not covered by the project's MIT (code) or CC BY 4.0 (data) licences. Each one keeps
-the licence its author gave it, listed below. The images are copies of the originals, **resized only**: no crop,
-colour change or retouching. Retro Bench draws the chip outlines over them at runtime; nothing is baked into the files.
+The photos in this folder are not covered by the project's MIT (code) or CC BY 4.0 (data) licenses. Each one keeps
+the license its author gave it, listed below. The images are copies of the originals, **resized only**: no crop,
+color change or retouching. Retro Bench draws the chip outlines over them at runtime; nothing is baked into the files.
 
 The full text of the GNU Free Documentation License is included as [GFDL-1.2.txt](GFDL-1.2.txt).
 
-| File | Machine | Board | Author | Licence | Source |
+| File | Machine | Board | Author | License | Source |
 |---|---|---|---|---|---|
 | c64-250407.webp | c64 | Assy 250407, Rev B | Sven.petersen | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | [Wikimedia Commons: File:0430 - C64 Mainboard ASSY250407 RevB.jpg](https://commons.wikimedia.org/wiki/File:0430_-_C64_Mainboard_ASSY250407_RevB.jpg) |
 | vic20-mainboard.webp | vic20 | VIC-20 main board (assy number not visible), Grid-designator board, PAL | Sven.petersen | [Public domain (PD-self)](https://commons.wikimedia.org/wiki/Template:PD-self) | [Wikimedia Commons: File:4860 - VIC-20 Mainboard.JPG](https://commons.wikimedia.org/wiki/File:4860_-_VIC-20_Mainboard.JPG) |

@@ -140,10 +140,10 @@ const m1CassPins = [
 ];
 /* Model I / EI power DIN (TRH schematic J1; EI schematic sheet 1 J9). */
 const m1PowerPins = [
-  { n: 1, name: '14 V AC', type: 'power', desc: 'One end of the centre-tapped 14 V AC, 1 A winding. To bridge CR8 for the +5 V and -5 V supplies.', expect: 'About 17 V AC to pin 3', conflict: 'Sams CSCS3 (PDF p. 18) reads 18.5 V AC across J1A pins 1 and 3 with the adapter unplugged from the board; the Tandy handbook says about 17 V AC.' },
+  { n: 1, name: '14 V AC', type: 'power', desc: 'One end of the center-tapped 14 V AC, 1 A winding. To bridge CR8 for the +5 V and -5 V supplies.', expect: 'About 17 V AC to pin 3', conflict: 'Sams CSCS3 (PDF p. 18) reads 18.5 V AC across J1A pins 1 and 3 with the adapter unplugged from the board; the Tandy handbook says about 17 V AC.' },
   { n: 2, name: '+19.8 V DC', type: 'power', desc: 'Unregulated DC from the second winding (rectified inside the adapter), about 350 mA. Raw supply for the +12 V regulator.', expect: 'About +20 V DC to pin 4', conflict: 'Sams CSCS3 (PDF p. 18) reads 23.6 V DC from pin 2 to pin 4 with the adapter unplugged from the board; the Tandy handbook gives 19.8 V DC.' },
   { n: 3, name: '14 V AC', type: 'power', desc: 'Other end of the 14 V AC winding.', expect: 'About 17 V AC to pin 1' },
-  { n: 4, name: 'GND', type: 'ground', desc: 'Common: the centre taps and the DC return.', expect: '0 V' },
+  { n: 4, name: 'GND', type: 'ground', desc: 'Common: the center taps and the DC return.', expect: '0 V' },
   { n: 5, name: 'NC', type: 'nc', desc: 'No connection drawn on the schematic.' },
 ];
 const ROW4 = [1, 2, 3, 4].map((n, i) => ({ n, x: 20 + i * 20, y: 50 }));
@@ -204,14 +204,14 @@ const serPins = outExpect => [
   { n: 4, name: 'RS-232 OUT', type: 'serial', desc: 'Serial data output. BASIC prints at 600 baud, 2 stop bits, no parity; 7 data bits before Color BASIC 1.1, 8 from 1.1 on.', expect: outExpect },
 ];
 const rfPins = [
-  { n: 1, name: 'RF', type: 'video', desc: 'Modulated RF on channel 3 or 4 (centre pin), 75 Ω.' },
+  { n: 1, name: 'RF', type: 'video', desc: 'Modulated RF on channel 3 or 4 (center pin), 75 Ω.' },
   { n: 2, name: 'GND', type: 'ground', desc: 'Shell, ground.', expect: '0 V' },
 ];
 Object.assign(RCS.terms, {
   vdg: {
     term: 'VDG (MC6847)',
     short: 'Motorola video display generator. Makes the CoCo and MC-10 picture.',
-    long: 'Builds the text and semigraphics display from screen RAM and a character ROM. It also makes the colour burst and sync. Video-only faults stay in the VDG. It runs warm; a dead VDG gives no picture but the machine still boots.',
+    long: 'Builds the text and semigraphics display from screen RAM and a character ROM. It also makes the color burst and sync. Video-only faults stay in the VDG. It runs warm; a dead VDG gives no picture but the machine still boots.',
   },
   sam: {
     term: 'SAM (MC6883)',
@@ -221,7 +221,7 @@ Object.assign(RCS.terms, {
   gime: {
     term: 'GIME (TCC1014)',
     short: 'The CoCo 3 custom chip: video, MMU, DRAM control, interrupts.',
-    long: 'Replaces the VDG and SAM on the CoCo 3. It supplies the clocks, the 512 K MMU that pages 8 KB banks into the 6809 space, the hi-res and 16-colour video, and the interrupt routing. Almost every CoCo 3 fault routes through it. It is a 68-pin PLCC.',
+    long: 'Replaces the VDG and SAM on the CoCo 3. It supplies the clocks, the 512 K MMU that pages 8 KB banks into the 6809 space, the hi-res and 16-color video, and the interrupt routing. Almost every CoCo 3 fault routes through it. It is a 68-pin PLCC.',
   },
 });
 RCS.add({
@@ -241,7 +241,7 @@ RCS.add({
       cpu: '6809E @ 0.89 MHz',
       ram: '4 to 64 KB (4116 DRAM)',
       rom: 'Color BASIC mask ROM, 8 KB',
-      video: 'MC6847 VDG: 32 × 16 text, PMODE hi-res, 9 colours',
+      video: 'MC6847 VDG: 32 × 16 text, PMODE hi-res, 9 colors',
       sound: '6-bit DAC and single-bit sound via the $FF20 PIA (U4)',
       os: 'Color BASIC (E and D layers add Extended and Disk)',
       chips: ['cpu6809e', 'vdg6847', 'sam6883', 'pia6821', 'dram4116', 'rom-color-basic', 'mux14529'],
@@ -257,7 +257,7 @@ RCS.add({
       cpu: '6809E @ 0.89 MHz',
       ram: '16 to 64 KB (4164 DRAM)',
       rom: 'Color BASIC mask ROM, 16 KB total on the sheet',
-      video: 'MC6847 VDG: 32 × 16 text, PMODE hi-res, 9 colours',
+      video: 'MC6847 VDG: 32 × 16 text, PMODE hi-res, 9 colors',
       sound: '6-bit DAC (U3) and single-bit sound via the $FF20 PIA (U2)',
       os: 'Color BASIC (E and D layers add Extended and Disk)',
       chips: ['cpu6809e', 'vdg6847', 'sam6883', 'pia6821', 'dram4164', 'rom-color-basic'],
@@ -273,7 +273,7 @@ RCS.add({
       cpu: '6809E @ 0.89 or 1.79 MHz',
       ram: '128 or 512 KB (41256 / 4464 DRAM)',
       rom: '32 KB Super Extended Color BASIC',
-      video: 'GIME: 16-colour hi-res (HSCREEN), 40 and 80 column text',
+      video: 'GIME: 16-color hi-res (HSCREEN), 40 and 80 column text',
       sound: '6-bit DAC (IC7) and single-bit sound via the $FF20 PIA (IC4)',
       os: 'Super Extended Color BASIC [3]',
       chips: ['cpu6809e', 'gime-tcc1014', 'pia6821'],
@@ -415,10 +415,10 @@ RCS.add({
     },
     vdg6847: {
       id: 'vdg6847', name: 'MC6847 video display generator', short: 'VDG', family: 'Motorola NMOS video',
-      role: 'Text, semigraphics and colour video from screen RAM. Used in the CoCo 1 and 2, the MC-10 and the Dragon 32 and 64.', pkg: 'DIP-40',
+      role: 'Text, semigraphics and color video from screen RAM. Used in the CoCo 1 and 2, the MC-10 and the Dragon 32 and 64.', pkg: 'DIP-40',
       machines: ['coco1', 'coco2', 'mc10'],
-      summary: 'The 6847 builds the picture from screen RAM and its character ROM, then sends colour and sync to the RF modulator or the composite out. It runs warm. VDG faults are video-only: a dead VDG gives no picture, but the 6809 keeps running. The CoCo 3 has no separate VDG; the GIME does its job. CoCo 1 and 2, Dragon 32 and 64: /HS (pin 38) also feeds SAM pin 9 for DRAM refresh. MC-10: there is no SAM; the 6803 and discrete logic share the video RAM.',
-      fails: ['No picture', 'Garbled characters', 'Wrong colours', 'Black screen with working sound'],
+      summary: 'The 6847 builds the picture from screen RAM and its character ROM, then sends color and sync to the RF modulator or the composite out. It runs warm. VDG faults are video-only: a dead VDG gives no picture, but the 6809 keeps running. The CoCo 3 has no separate VDG; the GIME does its job. CoCo 1 and 2, Dragon 32 and 64: /HS (pin 38) also feeds SAM pin 9 for DRAM refresh. MC-10: there is no SAM; the 6803 and discrete logic share the video RAM.',
+      fails: ['No picture', 'Garbled characters', 'Wrong colors', 'Black screen with working sound'],
       heat: 'warm',
       location: { mc10: 'U11' },
       verifiedAgainst: 'Motorola MC6847/MC6847Y data sheet (DS9823-R1, 1984), Pin Assignment p. 1 and signal description pp. 12-13',
@@ -440,7 +440,7 @@ RCS.add({
         { n: 7, name: 'DD4', type: 'data', dir: 'in', desc: 'Data bit 4 from screen RAM.' },
         { n: 8, name: 'DD5', type: 'data', dir: 'in', desc: 'Data bit 5 from screen RAM.' },
         { n: 9, name: 'CHB', type: 'video', dir: 'out', desc: 'Chroma bias. Analog DC reference matching the quiescent level of ΦA and ΦB, for the MC1372.', terms: ['luma-chroma'] },
-        { n: 10, name: 'ΦB', type: 'video', dir: 'out', desc: 'Chroma output ΦB. Four-level analog; with ΦA and Y picks one of eight colours. Also carries the burst reference.', terms: ['luma-chroma'] },
+        { n: 10, name: 'ΦB', type: 'video', dir: 'out', desc: 'Chroma output ΦB. Four-level analog; with ΦA and Y picks one of eight colors. Also carries the burst reference.', terms: ['luma-chroma'] },
         { n: 11, name: 'ΦA', type: 'video', dir: 'out', desc: 'Chroma output ΦA. Three-level analog.', terms: ['luma-chroma'] },
         { n: 12, name: '/MS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Memory select (three-state control). LOW floats the VDG address lines so the CPU can reach the display RAM.', terms: ['tristate', 'active-low'] },
         { n: 13, name: 'DA5', type: 'addr', dir: 'out', desc: 'Screen RAM address bit 5.' },
@@ -462,14 +462,14 @@ RCS.add({
         { n: 29, name: 'GM1', type: 'ctrl', dir: 'in', desc: 'Graphics mode bit 1.' },
         { n: 30, name: 'GM0', type: 'ctrl', dir: 'in', desc: 'Graphics mode bit 0.' },
         { n: 31, name: '/INT/EXT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Internal or external character generator. LOW = internal ROM.' },
-        { n: 32, name: 'INV', type: 'ctrl', dir: 'in', desc: 'Inverse video. Flips the character colours.' },
-        { n: 33, name: 'CLK', type: 'clock', dir: 'in', desc: 'Clock input, nominally 3.579545 MHz (colour burst), 45-55 % duty.', terms: ['clock'], probe: 'Square wave at the colour-burst rate. No clock, no picture.' },
+        { n: 32, name: 'INV', type: 'ctrl', dir: 'in', desc: 'Inverse video. Flips the character colors.' },
+        { n: 33, name: 'CLK', type: 'clock', dir: 'in', desc: 'Clock input, nominally 3.579545 MHz (color burst), 45-55 % duty.', terms: ['clock'], probe: 'Square wave at the color-burst rate. No clock, no picture.' },
         { n: 34, name: '/A/S', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Alphanumeric (LOW) or semigraphics (HIGH) select. Can change character by character.' },
         { n: 35, name: '/A/G', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Alphanumeric (LOW) or full graphics (HIGH) select.' },
         { n: 36, name: '/RP', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Row preset output. Clears an external character-row counter; pulses only in alpha and semigraphics modes.' },
         { n: 37, name: '/FS', type: 'video', dir: 'out', activeLow: true, desc: 'Field sync output. Falls at the end of the active display; the CPU may use the RAM freely until it rises.', terms: ['luma-chroma'] },
         { n: 38, name: '/HS', type: 'video', dir: 'out', activeLow: true, desc: 'Horizontal sync output, coincident with the TV horizontal sync pulse.', terms: ['luma-chroma'] },
-        { n: 39, name: 'CSS', type: 'ctrl', dir: 'in', desc: 'Colour set select input. Picks one of two colour sets in alpha, semigraphics 6 and full graphics modes.' },
+        { n: 39, name: 'CSS', type: 'ctrl', dir: 'in', desc: 'Color set select input. Picks one of two color sets in alpha, semigraphics 6 and full graphics modes.' },
         { n: 40, name: 'DD7', type: 'data', dir: 'in', desc: 'Data bus bit 7 from screen RAM.' },
       ],
     },
@@ -536,7 +536,7 @@ RCS.add({
       id: 'gime-tcc1014', name: 'GIME TCC1014 (Advanced Color Video Chip)', short: 'GIME', family: 'Tandy custom ASIC',
       role: 'CoCo 3 video, 512 K MMU, DRAM control, clocks and interrupts. Replaces the VDG and SAM.', pkg: 'PLCC-68',
       machines: ['coco3'],
-      summary: 'The GIME replaces the 6847 and the 6883 on the CoCo 3. It runs from a 28.63636 MHz crystal and supplies E and Q, the DRAM strobes and the multiplexed address, the MMU for 128 or 512 KB, the hi-res and 16-colour video (RGB and composite), the device selects and the interrupts. Almost every CoCo 3 fault routes through it, so check its clocks and supply first. It is a 68-pin PLCC (IC6), numbered counter-clockwise from the index corner.',
+      summary: 'The GIME replaces the 6847 and the 6883 on the CoCo 3. It runs from a 28.63636 MHz crystal and supplies E and Q, the DRAM strobes and the multiplexed address, the MMU for 128 or 512 KB, the hi-res and 16-color video (RGB and composite), the device selects and the interrupts. Almost every CoCo 3 fault routes through it, so check its clocks and supply first. It is a 68-pin PLCC (IC6), numbered counter-clockwise from the index corner.',
       fails: ['Dead machine, no boot', 'No video or bad video', 'Bad hi-res only', 'Bad RAM banks'],
       location: { coco3: 'IC6' },
       verifiedAgainst: 'Color Computer 3 Service Manual (26-3334), IC6 TCC1014 internal connections, p. 96; Color Computer 3 Revised Schematic (Ty Sopko), U6',
@@ -892,7 +892,7 @@ RCS.add({
     ],
     coco3: [
       { symptom: 'Dead machine or no video', suspects: ['gime-tcc1014', 'cpu6809e'], note: 'The GIME is the first suspect. Almost everything routes through it.' },
-      { symptom: 'Bad hi-res only', suspects: ['gime-tcc1014'], note: 'The GIME hi-res and 16-colour modes.' },
+      { symptom: 'Bad hi-res only', suspects: ['gime-tcc1014'], note: 'The GIME hi-res and 16-color modes.' },
       { symptom: 'Dead keys', suspects: ['pia6821'], note: 'IC5 PIA at $FF00. Check the flex cable and CN2, IC5 pin 23 (CS2), D8-D11 and IC14.' },
       { symptom: 'No sound or tape', suspects: ['pia6821'], note: 'IC4 PIA at $FF20, the DAC IC7 and the SALT IC8.' },
       { symptom: 'Bad RAM banks', suspects: [], note: 'The 41256 or 4464 DRAM banks. Find the bank in the MMU before swapping chips.' },
@@ -906,7 +906,7 @@ RCS.add({
     model1: [
       { symptom: 'MEMORY SIZE? never appears, garbage, or RAM errors', suspects: ['dram4116', 'cpuz80', 'rom-trs80-model1'], note: 'Check all three RAM rails first: -5 V at the CR2 anode, +12 V at the top of R18, +5 V at R4. Look for RAMs not seated or bent pins, then check RAS, CAS and MUX at the RAMs. After a 4K to 16K change, check that DIP shunt Z3 matches the RAM fitted. Swap the eight RAMs as a set, then put the originals back one at a time (Handbook p. 67).' },
       { symptom: 'Supply dead or crashes: a shorted RAM pulls down a rail', suspects: ['dram4116'], note: 'Pull all RAMs and retest the supplies; refit one at a time until the rail collapses. CR1, a 6.2 V zener, crowbars +5 V if +12 V shorts to it. A dead +12 V bus: check that the heat sink of the pass transistor has not turned and shorted its leads.' },
-      { symptom: 'Lockups, spontaneous reboots and crashes with the Expansion Interface', suspects: [], note: 'All CPU signals run over a short unshielded ribbon cable to tin-plated card edges that oxidise. Clean both edges and the cable sockets, reseat, and keep the cable short. Early EIs needed a buffered cable or the DIN cable modification; the redesigned EI sold from January 1980 does not, and a buffered cable should not be used with it (trs-80.org). Hold BREAK while pressing RESET with the EI attached.' },
+      { symptom: 'Lockups, spontaneous reboots and crashes with the Expansion Interface', suspects: [], note: 'All CPU signals run over a short unshielded ribbon cable to tin-plated card edges that oxidize. Clean both edges and the cable sockets, reseat, and keep the cable short. Early EIs needed a buffered cable or the DIN cable modification; the redesigned EI sold from January 1980 does not, and a buffered cable should not be used with it (trs-80.org). Hold BREAK while pressing RESET with the EI attached.' },
       { symptom: 'Keys repeat or double (keybounce)', suspects: [], note: 'Dirt in the two-piece key contacts makes the Level II ROM read one press as several. Clean the contacts; KBFIX (Radio Shack) adds software debounce, and the last Level II ROM (version 1.3) has debounce built in. Sticking keycaps and a broken keyboard interconnect cable are also common (Handbook p. 67).' },
       { symptom: 'Key appears after the prompt by itself, or the keyboard is dead', suspects: [], note: 'A character after the > prompt is a shorted key or PCB run in the matrix. A completely dead keyboard: no power, a broken interconnect cable, or the address decoder not giving KYBD*.' },
       { symptom: 'Garbled characters, graphics where letters should be', suspects: ['sram2102', 'cg-mcm6670'], note: 'A character wrong in many positions is a video RAM bit (Z45-Z48, Z61-Z63). Every character the wrong shape is the MCM6670 (Z29) or latch Z28. Lowercase never shows on a stock Model I: there are only seven video RAMs.' },
@@ -986,10 +986,10 @@ RCS.add({
         verifiedAgainst: 'Color Computer Technical Reference Manual, System Power Supply, pp. 33-34, and schematic sheet 3',
         summary: 'Four leads from the transformer board: the two ends of the 33.5 V AC winding (E1, E2), the rectified 16.3 V winding for the +5 V regulator (E3) and ground (E4). The drawing numbers the lugs 1 to 4 for E1 to E4; their physical order is not drawn in the manual. The AC line goes in at E6 (neutral), E7 (hot) and E5 or E8 (ground).',
         pins: [
-          { n: 1, name: 'E1', type: 'power', desc: 'One end of the 33.5 V AC centre-tapped winding (0.35 A). To bridge CR11 through the power switch.', expect: '33.5 V AC to E2; about 16.7 V AC to ground', conflict: 'Sams CC13 (PDF p. 17) asks for 36 V AC from pin 1 to pin 2 of connector E; the Tandy manual gives a 33.5 V AC winding.' },
+          { n: 1, name: 'E1', type: 'power', desc: 'One end of the 33.5 V AC center-tapped winding (0.35 A). To bridge CR11 through the power switch.', expect: '33.5 V AC to E2; about 16.7 V AC to ground', conflict: 'Sams CC13 (PDF p. 17) asks for 36 V AC from pin 1 to pin 2 of connector E; the Tandy manual gives a 33.5 V AC winding.' },
           { n: 2, name: 'E2', type: 'power', desc: 'Other end of the 33.5 V AC winding.', expect: '33.5 V AC to E1' },
           { n: 3, name: 'E3', type: 'power', desc: 'Full-wave rectified 16.3 V winding (CR12, CR13), 1 A. Raw supply for the +5 V regulator and C10.', expect: 'About 11 V DC to ground (Sams CC13); 120 Hz ripple' },
-          { n: 4, name: 'E4', type: 'ground', desc: 'Ground. Both centre taps.', expect: '0 V' },
+          { n: 4, name: 'E4', type: 'ground', desc: 'Ground. Both center taps.', expect: '0 V' },
         ],
         sources: [
           { label: 'Color Computer Technical Reference Manual, System Power Supply, pp. 33-34', url: TRM(40) },
@@ -1059,7 +1059,7 @@ RCS.add({
       {
         id: 'coco-joystick', name: 'Joystick ports (JK2 right, JK1 left)', kind: '6-pin DIN socket', geo: 'din6',
         verifiedAgainst: 'Color Computer 3 Service Manual, 5.14 Joysticks and Figure 5-15, p. 52',
-        summary: 'Two identical ports. The CoCo 3 adds a second button on the centre pin 6. Pots and buttons as on the CoCo 1 and 2; the mux is U7 (SC77526).',
+        summary: 'Two identical ports. The CoCo 3 adds a second button on the center pin 6. Pots and buttons as on the CoCo 1 and 2; the mux is U7 (SC77526).',
         pins: joyPins(true),
         sources: [
           { label: 'Color Computer 3 Service Manual, Figure 5-15 Joystick Schematic, p. 52', url: SM3(52) },
@@ -1094,7 +1094,7 @@ RCS.add({
         verifiedAgainst: 'Color Computer 3 Service Manual, 2.1 Technical, Video/Sound Output, p. 25',
         summary: 'Composite video from GIME pin 65 (CVIDEO) through Q2 and Q3. 1 V p-p into 75 Ω.',
         pins: [
-          { n: 1, name: 'VIDEO', type: 'video', desc: 'Composite video (centre pin).', expect: '1 V p-p into 75 Ω: video 0.71 V, sync 0.29 V' },
+          { n: 1, name: 'VIDEO', type: 'video', desc: 'Composite video (center pin).', expect: '1 V p-p into 75 Ω: video 0.71 V, sync 0.29 V' },
           { n: 2, name: 'GND', type: 'ground', desc: 'Shell, ground.', expect: '0 V' },
         ],
         sources: [
@@ -1107,7 +1107,7 @@ RCS.add({
         verifiedAgainst: 'Color Computer 3 Service Manual, 2.1 Technical, Video/Sound Output, p. 25',
         summary: 'Sound out for a monitor or amplifier, from the same SOUND line as the RF and RGB outputs.',
         pins: [
-          { n: 1, name: 'SOUND', type: 'audio', desc: 'Audio (centre pin).', expect: 'Under 1.0 V p-p into 600 Ω' },
+          { n: 1, name: 'SOUND', type: 'audio', desc: 'Audio (center pin).', expect: 'Under 1.0 V p-p into 600 Ω' },
           { n: 2, name: 'GND', type: 'ground', desc: 'Shell, ground.', expect: '0 V' },
         ],
         sources: [{ label: 'Color Computer 3 Service Manual, Video/Sound Output, p. 25', url: SM3(25) }],
@@ -1142,10 +1142,10 @@ RCS.add({
       {
         id: 'coco3-psu', name: 'Transformer to main board (CN7)', kind: '3-pin connector from the transformer secondary', geo: 'custom', pads: rowPads([1, 2, 3]), outline: ROW_OUTLINE,
         verifiedAgainst: 'Color Computer 3 Service Manual, 5.9 SALT Circuitry and Figure 5-12, pp. 44-45',
-        summary: 'The centre-tapped secondary of T1: ends on pins 1 and 3 (through the power switch SW1 to bridge D1 to D4), centre tap on pin 2 (ground). NTSC 16.2 V AC at 2.2 A; PAL 18.52 V AC at 1.0 A. Physical pin order is drawn 1, 3, 2 in the figure; the drawing here shows 1, 2, 3.',
+        summary: 'The center-tapped secondary of T1: ends on pins 1 and 3 (through the power switch SW1 to bridge D1 to D4), center tap on pin 2 (ground). NTSC 16.2 V AC at 2.2 A; PAL 18.52 V AC at 1.0 A. Physical pin order is drawn 1, 3, 2 in the figure; the drawing here shows 1, 2, 3.',
         pins: [
           { n: 1, name: 'AC', type: 'power', desc: 'Secondary end A, to SW1.', expect: '16.2 V AC to pin 3 (NTSC); about 8.1 V AC to pin 2' },
-          { n: 2, name: 'CT', type: 'ground', desc: 'Centre tap, board ground.', expect: '0 V' },
+          { n: 2, name: 'CT', type: 'ground', desc: 'Center tap, board ground.', expect: '0 V' },
           { n: 3, name: 'AC', type: 'power', desc: 'Secondary end B, to SW1.', expect: '16.2 V AC to pin 1 (NTSC)' },
         ],
         sources: [
@@ -1239,13 +1239,13 @@ RCS.add({
       {
         id: 'model1-exp', name: 'Expansion port (rear edge of the CPU board)', kind: '40-pin PCB edge (20 + 20), mates with AMP 88103-1', geo: 'edge-20x20-odd-even', gender: 'male',
         verifiedAgainst: 'TRS-80 Technical Reference Handbook (2nd ed.), Pin Connections for Expansion-Port Edge Card and Figure 22, p. 91',
-        summary: 'The whole Z80 bus plus RAS*, CAS* and MUX for the Expansion Interface RAM. Viewed from the rear of the keyboard unit (Figure 22) the odd pins 1 to 39 run left to right on the upper row and the even pins 2 to 40 below. Every output drives only one TTL load; use buffers. Pin 39 is +5 V on early units and ground on Level II units. The tin-plated edge oxidises: clean it before chasing EI crashes.',
+        summary: 'The whole Z80 bus plus RAS*, CAS* and MUX for the Expansion Interface RAM. Viewed from the rear of the keyboard unit (Figure 22) the odd pins 1 to 39 run left to right on the upper row and the even pins 2 to 40 below. Every output drives only one TTL load; use buffers. Pin 39 is +5 V on early units and ground on Level II units. The tin-plated edge oxidizes: clean it before chasing EI crashes.',
         pins: M1BUS,
         sources: [
           { label: 'TRS-80 Technical Reference Handbook, Pin Connections for Expansion-Port Edge Card, Figure 22, p. 91', url: TRH(92) },
           { label: 'TRS-80 Technical Reference Handbook, Figure 22, p. 91 (same scan, text-layer mirror)', url: TRH_TXT(92) },
           { label: 'TRS-80 Technical Reference Handbook, Explanation of Expansion Port Signals, pp. 90-92', url: TRH(91) },
-          { label: 'trs-80.org, Gold Plug 80 (tin-plated Model I edge connectors oxidise; second source)', url: T80_GOLD },
+          { label: 'trs-80.org, Gold Plug 80 (tin-plated Model I edge connectors oxidize; second source)', url: T80_GOLD },
         ],
       },
       {
@@ -1278,7 +1278,7 @@ RCS.add({
       {
         id: 'model1-power', name: 'Power in (J1, POWER)', kind: '5-pin DIN socket (180°), from the external TRS-80 power supply', geo: 'din5-180',
         verifiedAgainst: 'TRS-80 Technical Reference Handbook, System Power Supply, p. 52, and schematic sheet 2 (J1 front view)',
-        summary: 'The adapter sends AC and raw DC, not regulated rails: about 17 V AC from the 14 V centre-tapped winding on pins 1 and 3, and about 19.8 V DC on pin 2, with the common on pin 4. The board makes +5 V, +12 V and -5 V itself. J1 is the DIN closest to the power switch; the cassette DIN beside it is the same size.',
+        summary: 'The adapter sends AC and raw DC, not regulated rails: about 17 V AC from the 14 V center-tapped winding on pins 1 and 3, and about 19.8 V DC on pin 2, with the common on pin 4. The board makes +5 V, +12 V and -5 V itself. J1 is the DIN closest to the power switch; the cassette DIN beside it is the same size.',
         pins: m1PowerPins,
         sources: [
           { label: 'TRS-80 Technical Reference Handbook, System Power Supply and AC Adapter, p. 52', url: TRH(53) },
@@ -1308,7 +1308,7 @@ RCS.add({
             3: ['DATA 1', 'data', 'Data bit 0 (D0), latched by Z44/Z45.'], 5: ['DATA 2', 'data', 'Data bit 1.'], 7: ['DATA 3', 'data', 'Data bit 2.'], 9: ['DATA 4', 'data', 'Data bit 3. The schematic numbers the data lines DATA 1 to DATA 8.'],
             11: ['DATA 5', 'data', 'Data bit 4.'], 13: ['DATA 6', 'data', 'Data bit 5.'], 15: ['DATA 7', 'data', 'Data bit 6.'], 17: ['DATA 8', 'data', 'Data bit 7.'],
             19: ['NC', 'nc', 'Not connected.'], 21: ['BUSY', 'io', 'Printer busy, read as bit 7 of $37E8 through Z46. HIGH = busy.'], 23: ['OUTPAPER', 'io', 'Paper empty, bit 6 of $37E8.'],
-            25: ['UNIT SELECT', 'io', 'Unit select, bit 5 of $37E8. 4.7 kΩ pull-up.'], 26: ['PRIME', 'ctrl', 'Labelled PRIME on the schematic; no driver drawn.'], 28: ['FAULT', 'io', 'Fault, bit 4 of $37E8. 4.7 kΩ pull-up.'],
+            25: ['UNIT SELECT', 'io', 'Unit select, bit 5 of $37E8. 4.7 kΩ pull-up.'], 26: ['PRIME', 'ctrl', 'Labeled PRIME on the schematic; no driver drawn.'], 28: ['FAULT', 'io', 'Fault, bit 4 of $37E8. 4.7 kΩ pull-up.'],
             29: ['NC', 'nc', 'Not connected.'], 30: ['NC', 'nc', 'Not connected.'], 32: ['NC', 'nc', 'Not connected.'] }[n];
           return m ? { n, name: m[0], type: m[1], desc: m[2] } : { n, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' };
         }),
@@ -1354,7 +1354,7 @@ RCS.add({
         id: 'ei-power', name: 'Expansion Interface: power in (J9)', kind: '5-pin DIN socket (180°), from its own TRS-80 power supply', geo: 'din5-180',
         verifiedAgainst: 'Expansion Interface Service Manual, System Power Supply (J9), pp. 6-7, and schematic sheet 1 (J9 front view)',
         summary: 'Same adapter and same pinout as the keyboard unit J1: about 17 V AC on pins 1 and 3 to bridge CR4, raw DC on pin 2 to the +12 V regulator, common on pin 4. The EI has its own +12 V, +5 V and -5 V regulators (Z51, Z50 and CR1). J9 is the jack closest to the large heat sink; do not plug it into a cassette jack.',
-        pins: m1PowerPins.map(p => p.n === 1 ? { ...p, desc: 'One end of the centre-tapped 14 V AC, 1 A winding. To full-wave rectifier CR4 for the +5 V and -5 V supplies.' } : p),
+        pins: m1PowerPins.map(p => p.n === 1 ? { ...p, desc: 'One end of the center-tapped 14 V AC, 1 A winding. To full-wave rectifier CR4 for the +5 V and -5 V supplies.' } : p),
         sources: [
           { label: 'Expansion Interface Service Manual, AC Adapter and System Power Supply, pp. 6-7', url: EISM(6) },
           { label: 'Expansion Interface Service Manual, Power Supply Checks and Adjustments (J9), p. 8', url: EISM(8) },
@@ -1445,7 +1445,7 @@ RCS.add({
           { n: 1, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
           { n: 2, name: 'NC', type: 'nc', desc: 'Not connected.' },
           { n: 3, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
-          { n: 4, name: 'E304', type: 'video', desc: 'Runs to E304 on the CRT circuit (drawing zone 9A); function not labelled on the schematic.', verify: true },
+          { n: 4, name: 'E304', type: 'video', desc: 'Runs to E304 on the CRT circuit (drawing zone 9A); function not labeled on the schematic.', verify: true },
           { n: 6, name: 'HSYNC', type: 'video', desc: 'Horizontal drive, through C702 to sync transistor Q701.', expect: 'TTL, positive pulses 4-25 µs, 15.6 kHz' },
           { n: 7, name: '+12 V', type: 'power', desc: '+12 V DC for the monitor, through fuse F101 (2 A).', expect: '+12 V DC at about 1 A' },
           { n: 8, name: 'VIDEO', type: 'video', desc: 'Video input to amplifier Q302. Positive = white.', expect: 'TTL, 4 V ±1.5 V' },
@@ -1551,7 +1551,7 @@ RCS.add({
           { n: 1, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
           { n: 2, name: 'NC', type: 'nc', desc: 'Not connected.' },
           { n: 3, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
-          { n: 4, name: 'E304', type: 'video', desc: 'To E304 on the CRT circuit; function not labelled.', verify: true },
+          { n: 4, name: 'E304', type: 'video', desc: 'To E304 on the CRT circuit; function not labeled.', verify: true },
           { n: 6, name: 'HSYNC', type: 'video', desc: 'Horizontal drive.', expect: 'TTL, positive pulses 4-25 µs' },
           { n: 7, name: '+12 V', type: 'power', desc: '+12 V DC through fuse F101.', expect: '+12 V DC at about 1 A' },
           { n: 8, name: 'VIDEO', type: 'video', desc: 'Video in, positive white.', expect: 'TTL, 4 V ±1.5 V' },
@@ -1620,7 +1620,7 @@ RCS.add({
             note: 'Sams: 1.1 V p-p on 1 V at 20 µs/cm. Chroma carries no sync, so it is drawn as a line-rate pulse, not a video line. MC6847 data sheet ΦA levels 1.0, 1.5 and 2.0 V (p. 3, in this page\'s sources). Both feed the MC1372 at U12.' } },
         { tp: 'Chroma ΦB', where: 'VDG pin 10', expect: 'Two-level line-rate signal, 1.0 to 2.1 V; carries the burst reference',
           scope: { period: '63.5 µs', low: '1 V', high: '2.1 V', shape: 'pulse', basis: 'capture', source: S13('schematic waveform at VDG pin 10 (ΦB)', 32),
-            note: 'Sams: 1.1 V p-p on 1 V at 20 µs/cm. MC6847 data sheet ΦB levels 1.0, 1.5 and 2.0 V, burst 1.25 V (p. 3, in this page\'s sources). No colour with a good Y: ΦA/ΦB or the MC1372.' } },
+            note: 'Sams: 1.1 V p-p on 1 V at 20 µs/cm. MC6847 data sheet ΦB levels 1.0, 1.5 and 2.0 V, burst 1.25 V (p. 3, in this page\'s sources). No color with a good Y: ΦA/ΦB or the MC1372.' } },
         { tp: 'CPU reset', where: '6809E pin 37', expect: 'LOW at power-on, then HIGH; LOW while RESET is held' },
       ],
       firstTen: [
@@ -1643,7 +1643,7 @@ RCS.add({
       ],
       clocks: [
         { name: 'Crystal X1', where: 'SAM pins 5, 6', f: '14.31818 MHz', source: S13('schematic, crystal X1', 11) },
-        { name: 'VDG clock (colour reference)', where: 'SAM pin 7 to VDG pin 33', f: '3.579545 MHz', source: S13('Troubleshooting, Color', 18) },
+        { name: 'VDG clock (color reference)', where: 'SAM pin 7 to VDG pin 33', f: '3.579545 MHz', source: S13('Troubleshooting, Color', 18) },
         { name: 'E (CPU clock)', where: 'SAM pin 14 to 6809E pin 34; pia6821 pin 25 (both PIAs)', f: '0.894886 MHz', source: S13('Troubleshooting, Microprocessor (CPU) Operation', 17) },
         { name: 'Q', where: 'SAM pin 13 to 6809E pin 35', f: '0.894886 MHz', source: S13('Troubleshooting, Microprocessor (CPU) Operation', 17) },
       ],
@@ -1660,7 +1660,7 @@ RCS.add({
         name: 'T1 transformer with the SALT U1 regulator and pass transistor Q1 on the main board',
         output: '+5 V ±5 % for the whole computer; -5 V made inside the SALT for the RS-232 driver only',
         notes: [
-          'T1 gives 17.2 V AC centre-tapped, 1.8 A RMS. The primary fuse F1 is 3/10 A slow-blow. Use only Radio Shack replacement parts for the fuse and transformer.',
+          'T1 gives 17.2 V AC center-tapped, 1.8 A RMS. The primary fuse F1 is 3/10 A slow-blow. Use only Radio Shack replacement parts for the fuse and transformer.',
           'CR3 and CR4 make the positive raw supply (C2) for the Q1 collector and SALT pin 16; CR1 and CR2 make the negative raw supply (C1) for SALT pin 15.',
           'The SALT senses current through R1 at pin 2 and folds the output back on a short. A computer that dies only with a cartridge in may be an open rectifier diode: half-wave operation doubles the ripple, cuts the current and heats Q1.',
           'Check +5 V at the end of R2 nearest U1, with no cartridge or I/O attached. Then the negative voltage at U1 pin 15, the DC at the Q1 collector and the AC at the CR3 and CR4 anodes.',
@@ -1688,7 +1688,7 @@ RCS.add({
             note: 'Same photo as E. The quarter-cycle lead of Q over E is from the SAM data sheet (the SAM chip) and Tandy Figure 5-4, not this photo.' } },
         { tp: 'VDG clock', where: 'VDG pin 33; SAM pin 7', expect: '3.579545 MHz, about 4 V p-p',
           scope: { f: '3.579545 MHz', low: '0 V', high: '4 V', shape: 'square', basis: 'capture', source: S15('schematic waveform at SAM pin 7 (V CLK)', 11),
-            note: 'Sams reads 4.0 V p-p from 0 V at both ends. The VDG-side photo (PDF p. 13) is labelled 20 µs/cm but shows five cycles in 7 cm, so it is 0.2 µs/cm as at the SAM. Missing at the VDG: the SAM.' } },
+            note: 'Sams reads 4.0 V p-p from 0 V at both ends. The VDG-side photo (PDF p. 13) is labeled 20 µs/cm but shows five cycles in 7 cm, so it is 0.2 µs/cm as at the SAM. Missing at the VDG: the SAM.' } },
         { tp: 'Horizontal sync', where: 'VDG pin 38; SAM pin 9', expect: 'LOW-going pulse every 63.5 µs',
           scope: { period: '63.5 µs', low: '0 V', high: '4.8 V', shape: 'pulse', basis: 'capture', source: S15('schematic waveform at SAM pin 9 (HS)', 11),
             note: 'Sams: 4.8 V p-p from 0 V at 20 µs/cm. Line period from the Tandy service manual PIA table (63.5 µs, in this page\'s sources). The SAM times DRAM refresh from HS.' } },
@@ -1703,7 +1703,7 @@ RCS.add({
             note: 'Sams: 1.1 V p-p on 1 V at 20 µs/cm. Chroma carries no sync, so it is drawn as a line-rate pulse, not a video line. MC6847 data sheet ΦA levels 1.0, 1.5 and 2.0 V (p. 3, in this page\'s sources).' } },
         { tp: 'Chroma ΦB', where: 'VDG pin 10', expect: 'Two-level line-rate signal, 1.0 to 2.1 V; carries the burst reference',
           scope: { period: '63.5 µs', low: '1 V', high: '2.1 V', shape: 'pulse', basis: 'capture', source: S15('schematic waveform at VDG pin 10 (ΦB)', 13),
-            note: 'Sams: 1.1 V p-p on 1 V at 20 µs/cm. MC6847 data sheet ΦB levels 1.0, 1.5 and 2.0 V, burst 1.25 V (p. 3, in this page\'s sources). No colour with a good Y: ΦA/ΦB or the MC1372.' } },
+            note: 'Sams: 1.1 V p-p on 1 V at 20 µs/cm. MC6847 data sheet ΦB levels 1.0, 1.5 and 2.0 V, burst 1.25 V (p. 3, in this page\'s sources). No color with a good Y: ΦA/ΦB or the MC1372.' } },
         { tp: 'Chroma bias', where: 'VDG pin 9', expect: 'Steady DC between 0 and 2 V, usually 0.75 to 1 V (Tandy). Sources disagree: Sams reads 1.5 V; the 6847 data sheet gives 0.3 × Vcc (1.35 to 1.65 V).' },
         { tp: 'SAM supply', where: 'SAM pin 40', expect: '+4.75 to +5.25 V' },
       ],
@@ -1727,7 +1727,7 @@ RCS.add({
       ],
       clocks: [
         { name: 'Crystal X1 (Y1 on 26-3026)', where: 'SAM pins 5, 6', f: '14.31818 MHz', source: { label: 'Color Computer 2 Service Manual (26-3026), SAM description, p. 30', url: SM2(36) } },
-        { name: 'VDG clock (colour reference)', where: 'SAM pin 7 to VDG pin 33', f: '3.579545 MHz', source: { label: 'Color Computer 2 Service Manual (26-3026), SAM description, p. 30', url: SM2(36) } },
+        { name: 'VDG clock (color reference)', where: 'SAM pin 7 to VDG pin 33', f: '3.579545 MHz', source: { label: 'Color Computer 2 Service Manual (26-3026), SAM description, p. 30', url: SM2(36) } },
         { name: 'E (CPU clock)', where: 'SAM pin 14 to 6809E pin 34; pia6821 pin 25 (both PIAs)', f: '0.894886 MHz', source: S15('Troubleshooting, Microprocessor Operation', 17) },
         { name: 'Q', where: 'SAM pin 13 to 6809E pin 35', f: '0.894886 MHz', source: S15('Troubleshooting, Microprocessor Operation', 17) },
         { name: 'Field sync (IRQ source)', where: 'VDG pin 37', f: '60 Hz', source: { label: 'Color Computer 2 Service Manual (26-3026), PIA description, p. 38', url: SM2(44) } },
@@ -1747,7 +1747,7 @@ RCS.add({
         output: '+5 V ±5 %; +8 V (IC36 78L08) for the RF modulator; -5 V inside the SALT for RS-232 only',
         connector: 'coco3-psu',
         notes: [
-          'T1 gives 16.2 V AC centre-tapped at 2.2 A (NTSC) or 18.52 V AC at 1.0 A (PAL). Mains draw is about 0.2 A at 120 V.',
+          'T1 gives 16.2 V AC center-tapped at 2.2 A (NTSC) or 18.52 V AC at 1.0 A (PAL). Mains draw is about 0.2 A at 120 V.',
           'The SALT IC8 senses current through R19 (0.1 Ω) and folds the output back on a short.',
           'There is no -12 V or +12 V rail on the CoCo 3: the RS-232 driver runs from the SALT -5 V, and pins 1 and 2 of the cartridge slot are not connected.',
           'Check in this order (flowchart): +5 V at TP1, 4.75–5.25 V with under 400 mV ripple; at least -10 V DC at IC8 pin 15; +8 V at the IC36 output (7.6–8.4 V). No -10 V: check the AC at the D3 and D4 cathodes.',
@@ -1816,7 +1816,7 @@ RCS.add({
           'A substitute must be 8 V AC. A DC adapter would still pass the bridge, but the charge pump needs AC, so RS-232 output would lose its negative swing (derived from the circuit, not stated in the manual).',
         ],
         sources: [
-          { label: 'MC-10 Service Manual, Specifications (AC/AC adaptor), p. 8', url: SM10(8) },
+          { label: 'MC-10 Service Manual, Specifications (AC/AC adapter), p. 8', url: SM10(8) },
           { label: 'MC-10 Service Manual, Power Supply, p. 17', url: SM10(17) },
           { label: 'MC-10 Service Manual, Troubleshooting, Power Supply, p. 23', url: SM10(23) },
         ],
@@ -1866,7 +1866,7 @@ RCS.add({
       supply: {
         external: true,
         name: 'TRS-80 Power Supply (UL "AC adapter" with one primary and two secondaries)',
-        output: '14 V AC centre-tapped at 1 A (about 17 V AC at J1 pins 1-3) and 19.8 V DC at about 350 mA (rectified inside the adapter)',
+        output: '14 V AC center-tapped at 1 A (about 17 V AC at J1 pins 1-3) and 19.8 V DC at about 350 mA (rectified inside the adapter)',
         connector: 'model1-power',
         notes: [
           'The adapter makes no regulated rails. The board regulates +5 V (723 Z1 with pass transistors; about 1.2 A, current limit near 1.8 A), +12 V (723 Z2 with Q6; about 350 mA, limit about 480 mA) and -5 V (zener CR2 from CR8; about 1 mA).',
@@ -2108,7 +2108,7 @@ RCS.add({
           { cmd: 'PMODE m,page', does: 'Hi-res mode 0–4 with start page 1–8 (E layer).' },
           { cmd: 'PCLEAR n', does: 'Reserve n graphics pages. Each page is 1536 bytes.' },
           { cmd: 'PCLS [c]', does: 'Clear the hi-res screen.' },
-          { cmd: 'SCREEN t,cs', does: 't 0 = text, 1 = graphics; cs picks the colour set.' },
+          { cmd: 'SCREEN t,cs', does: 't 0 = text, 1 = graphics; cs picks the color set.' },
           { cmd: 'LINE / CIRCLE / PAINT', does: 'Hi-res drawing. Add ,B box or ,BF filled.' },
           { cmd: 'DRAW "..."', does: 'Draw string: U D L R n, E F G H n, M x,y, C n, A n, S n.' },
           { cmd: 'PLAY "..."', does: 'Music string: A to G, O n, L n, T n, V n, P n (E layer).' },
@@ -2122,7 +2122,7 @@ RCS.add({
           { group: 'Program control', items: ['RUN', 'LIST', 'NEW', 'CLEAR n[,top]', 'CONT', 'STOP / END', 'DEL a-b', 'EDIT n', 'RENUM [E]', 'TRON / TROFF [E]', 'EXEC addr'] },
           { group: 'Statements', items: ['PRINT ? ; ,', 'INPUT', 'LINE INPUT [E]', 'LET (optional)', 'REM or \'', 'GOTO GOSUB RETURN', 'ON x GOTO / GOSUB', 'FOR..NEXT', 'IF..THEN..ELSE [E]', 'DATA READ RESTORE', 'DIM', 'POKE a,v'] },
           { group: 'Text and semigraphics', items: ['CLS c', 'PRINT@ p', 'SET(x,y,c)', 'RESET(x,y)', 'POINT(x,y)', 'SOUND t,d', 'AUDIO / MOTOR ON'] },
-          { group: 'PMODE table (E layer)', items: ['PMODE 0: 128×96, 2 colour, 1 page', 'PMODE 1: 128×96, 4 colour, 2 pages', 'PMODE 2: 128×192, 2 colour, 2 pages', 'PMODE 3: 128×192, 4 colour, 4 pages', 'PMODE 4: 256×192, 2 colour, 4 pages', 'All addressed as 256×192. Each page 1536 bytes.'] },
+          { group: 'PMODE table (E layer)', items: ['PMODE 0: 128×96, 2 color, 1 page', 'PMODE 1: 128×96, 4 color, 2 pages', 'PMODE 2: 128×192, 2 color, 2 pages', 'PMODE 3: 128×192, 4 color, 4 pages', 'PMODE 4: 256×192, 2 color, 4 pages', 'All addressed as 256×192. Each page 1536 bytes.'] },
           { group: 'Hi-res graphics (E layer)', items: ['PMODE m,page', 'PCLEAR n', 'PCLS [c]', 'SCREEN t,cs', 'COLOR f,b', 'LINE(x,y)-(x,y),PSET', 'CIRCLE(x,y),r,c,hw', 'PAINT(x,y),c,b', 'PPOINT(x,y)', 'GET / PUT', 'PCOPY s TO d'] },
           { group: 'Strings (E layer)', items: ['DRAW "U D L R n"', 'DRAW "E F G H n"', 'DRAW "M x,y"', 'DRAW "C n A n S n"', 'DRAW "B N"', 'PLAY "A-G # -"', 'PLAY "O n L n T n V n P n"'] },
           { group: 'Disk (D layer)', items: ['DSKINI n', 'DIR n', 'LOAD f,R', 'SAVE f,A', 'RUN f,R', 'LOADM f / SAVEM f,a1,a2,x', 'KILL f', 'RENAME f1 TO f2', 'COPY f1 TO f2', 'BACKUP n TO m', 'VERIFY ON/OFF DRIVE n', 'OPEN / CLOSE / PRINT# / INPUT#'] },
@@ -2132,7 +2132,7 @@ RCS.add({
           'The apostrophe is REM.',
           'PMODE needs PCLEAR first to reserve the pages.',
           'POKE 65495,0 can disturb cassette and disk. POKE 65494,0 puts it back.',
-          'The VDG colour set is the same nine colours for CLS, SET and COLOR.',
+          'The VDG color set is the same nine colors for CLS, SET and COLOR.',
         ],
       },
       memory: [
@@ -2172,7 +2172,7 @@ RCS.add({
           { cmd: 'PMODE m,page', does: 'Hi-res mode 0–4 with start page 1–8 (E layer).' },
           { cmd: 'PCLEAR n', does: 'Reserve n graphics pages. Each page is 1536 bytes.' },
           { cmd: 'PCLS [c]', does: 'Clear the hi-res screen.' },
-          { cmd: 'SCREEN t,cs', does: 't 0 = text, 1 = graphics; cs picks the colour set.' },
+          { cmd: 'SCREEN t,cs', does: 't 0 = text, 1 = graphics; cs picks the color set.' },
           { cmd: 'LINE / CIRCLE / PAINT', does: 'Hi-res drawing. Add ,B box or ,BF filled.' },
           { cmd: 'DRAW "..."', does: 'Draw string: U D L R n, E F G H n, M x,y, C n, A n, S n.' },
           { cmd: 'PLAY "..."', does: 'Music string (E layer).' },
@@ -2186,7 +2186,7 @@ RCS.add({
           { group: 'Program control', items: ['RUN', 'LIST', 'NEW', 'CLEAR n[,top]', 'CONT', 'STOP / END', 'DEL a-b', 'EDIT n', 'RENUM [E]', 'TRON / TROFF [E]', 'EXEC addr'] },
           { group: 'Statements', items: ['PRINT ? ; ,', 'INPUT', 'LINE INPUT [E]', 'LET (optional)', 'REM or \'', 'GOTO GOSUB RETURN', 'ON x GOTO / GOSUB', 'FOR..NEXT', 'IF..THEN..ELSE [E]', 'DATA READ RESTORE', 'DIM', 'POKE a,v'] },
           { group: 'Text and semigraphics', items: ['CLS c', 'PRINT@ p', 'SET(x,y,c)', 'RESET(x,y)', 'POINT(x,y)', 'SOUND t,d', 'AUDIO / MOTOR ON'] },
-          { group: 'PMODE table (E layer)', items: ['PMODE 0: 128×96, 2 colour, 1 page', 'PMODE 1: 128×96, 4 colour, 2 pages', 'PMODE 2: 128×192, 2 colour, 2 pages', 'PMODE 3: 128×192, 4 colour, 4 pages', 'PMODE 4: 256×192, 2 colour, 4 pages', 'All addressed as 256×192. Each page 1536 bytes.'] },
+          { group: 'PMODE table (E layer)', items: ['PMODE 0: 128×96, 2 color, 1 page', 'PMODE 1: 128×96, 4 color, 2 pages', 'PMODE 2: 128×192, 2 color, 2 pages', 'PMODE 3: 128×192, 4 color, 4 pages', 'PMODE 4: 256×192, 2 color, 4 pages', 'All addressed as 256×192. Each page 1536 bytes.'] },
           { group: 'Hi-res graphics (E layer)', items: ['PMODE m,page', 'PCLEAR n', 'PCLS [c]', 'SCREEN t,cs', 'COLOR f,b', 'LINE(x,y)-(x,y),PSET', 'CIRCLE(x,y),r,c,hw', 'PAINT(x,y),c,b', 'PPOINT(x,y)', 'GET / PUT', 'PCOPY s TO d'] },
           { group: 'Strings (E layer)', items: ['DRAW "U D L R n"', 'DRAW "E F G H n"', 'DRAW "M x,y"', 'DRAW "C n A n S n"', 'DRAW "B N"', 'PLAY "A-G # -"', 'PLAY "O n L n T n V n P n"'] },
           { group: 'Disk (D layer)', items: ['DSKINI n', 'DIR n', 'LOAD f,R', 'SAVE f,A', 'RUN f,R', 'LOADM f / SAVEM f,a1,a2,x', 'KILL f', 'RENAME f1 TO f2', 'COPY f1 TO f2', 'BACKUP n TO m', 'VERIFY ON/OFF DRIVE n', 'OPEN / CLOSE / PRINT# / INPUT#'] },
@@ -2196,7 +2196,7 @@ RCS.add({
           'The apostrophe is REM.',
           'PMODE needs PCLEAR first to reserve the pages.',
           'POKE 65495,0 can disturb cassette and disk. POKE 65494,0 puts it back.',
-          'The VDG colour set is the same nine colours for CLS, SET and COLOR.',
+          'The VDG color set is the same nine colors for CLS, SET and COLOR.',
         ],
       },
       memory: [
@@ -2232,28 +2232,28 @@ RCS.add({
         essentials: [
           { cmd: 'HSCREEN m', does: 'Hi-res mode 0–4 (see the HSCREEN table below).' },
           { cmd: 'HCLS [c]', does: 'Clear the hi-res screen.' },
-          { cmd: 'HCOLOR f,b', does: 'Foreground and background colour, slots 0–15.' },
+          { cmd: 'HCOLOR f,b', does: 'Foreground and background color, slots 0–15.' },
           { cmd: 'HLINE(x,y)-(x,y),PSET', does: 'Line. Add ,B box or ,BF filled.' },
           { cmd: 'HCIRCLE / HPAINT', does: 'Circle and flood fill.' },
           { cmd: 'HDRAW "..."', does: 'Hi-res DRAW string.' },
           { cmd: 'HGET / HPUT / HBUFF', does: 'Block copy via buffers.' },
           { cmd: 'HPRINT(c,r),str$', does: 'Text on the hi-res screen.' },
-          { cmd: 'PALETTE s,c', does: 'Slot 0–15 takes colour 0–63.' },
+          { cmd: 'PALETTE s,c', does: 'Slot 0–15 takes color 0–63.' },
           { cmd: 'WIDTH 32 / 40 / 80', does: 'Text columns.' },
-          { cmd: 'LOCATE c,r ATTR f,b', does: 'Text cursor and colour, with blink and underline.' },
+          { cmd: 'LOCATE c,r ATTR f,b', does: 'Text cursor and color, with blink and underline.' },
           { cmd: 'ON BRK / ON ERR GOTO', does: 'Trap BREAK and errors.' },
           { cmd: 'POKE 65497,0', does: 'Stable double speed, 1.79 MHz.' },
           { cmd: 'POKE 65496,0', does: 'Back to 0.89 MHz.' },
         ],
         groups: [
-          { group: 'HSCREEN modes [3]', items: ['HSCREEN 0: text', 'HSCREEN 1: 320×192, 4 colour', 'HSCREEN 2: 320×192, 16 colour', 'HSCREEN 3: 640×192, 2 colour', 'HSCREEN 4: 640×192, 4 colour', '16 active colours chosen from 64 via PALETTE'] },
+          { group: 'HSCREEN modes [3]', items: ['HSCREEN 0: text', 'HSCREEN 1: 320×192, 4 color', 'HSCREEN 2: 320×192, 16 color', 'HSCREEN 3: 640×192, 2 color', 'HSCREEN 4: 640×192, 4 color', '16 active colors chosen from 64 via PALETTE'] },
           { group: 'Hi-res graphics [3]', items: ['HSCREEN m', 'HCLS [c]', 'HCOLOR f,b', 'HLINE', 'HCIRCLE', 'HPAINT', 'HDRAW', 'HGET / HPUT / HBUFF', 'HPRINT(c,r),str$'] },
           { group: 'Text [3]', items: ['WIDTH 32 / 40 / 80', 'LOCATE c,r ATTR f,b', 'RGB and CMP set palette numbering for RGB or composite monitors'] },
           { group: 'Also on the CoCo 1 and 2 layers', items: ['Color BASIC, Extended [E] and Disk [D] commands as on the CoCo 1 and 2', 'PMODE / SCREEN / PCLS (E)', 'DSKINI / DIR / LOAD / SAVE (D)'] },
         ],
         quirks: [
           'Super Extended needs the [3] layer. It is not on the CoCo 1 or 2.',
-          'Hi-res screens are 16 colours from a 64-colour palette set by PALETTE.',
+          'Hi-res screens are 16 colors from a 64-color palette set by PALETTE.',
         ],
       },
       memory: [
@@ -2287,11 +2287,11 @@ RCS.add({
           { cmd: 'RUN / LIST 10-50 / NEW', does: 'Start, list a range, erase the program.' },
           { cmd: 'CLEAR n', does: 'Reserve string space.' },
           { cmd: 'CONT', does: 'Resume after STOP or BREAK.' },
-          { cmd: 'CLS c', does: 'Clear to colour 0–8.' },
+          { cmd: 'CLS c', does: 'Clear to color 0–8.' },
           { cmd: 'PRINT@ p', does: 'Text position 0–511.' },
           { cmd: 'SET(x,y,c)', does: 'Light a cell: x 0–63, y 0–31.' },
           { cmd: 'RESET(x,y)', does: 'Clear a cell.' },
-          { cmd: 'POINT(x,y)', does: 'Colour of a cell.' },
+          { cmd: 'POINT(x,y)', does: 'Color of a cell.' },
           { cmd: 'SOUND t,d', does: 'Tone 1–255 and duration 1–255.' },
           { cmd: 'CSAVE "name"', does: 'Save a BASIC program to tape.' },
           { cmd: 'CLOAD "name"', does: 'Load a program from tape.' },
@@ -2306,7 +2306,7 @@ RCS.add({
           { group: 'Statements', items: ['PRINT ? ; ,', 'INPUT', 'LET (optional)', 'DATA READ RESTORE', 'DIM', 'POKE a,v'] },
           { group: 'Functions', items: ['ABS SGN INT', 'RND(n)', 'PEEK(a) MEM', 'LEN LEFT$ RIGHT$ MID$', 'STR$ VAL ASC CHR$', 'INKEY$', 'VARPTR(v)', 'USR(x)'] },
           { group: 'Cassette', items: ['CSAVE "name"', 'CLOAD "name"', 'CLOAD? "name"', 'CLOADM "name"', 'SKIPF "name"', 'PRINT# -1 / INPUT# -1'] },
-          { group: 'Colours (VDG set, same as CoCo)', items: ['0 Black', '1 Green', '2 Yellow', '3 Blue', '4 Red', '5 Buff', '6 Cyan', '7 Magenta', '8 Orange'] },
+          { group: 'Colors (VDG set, same as CoCo)', items: ['0 Black', '1 Green', '2 Yellow', '3 Blue', '4 Red', '5 Buff', '6 Cyan', '7 Magenta', '8 Orange'] },
         ],
         quirks: [
           'Semigraphics only: no PMODE or hi-res in the stock ROM.',

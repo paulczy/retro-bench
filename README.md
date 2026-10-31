@@ -10,7 +10,7 @@ Open it: **<https://paulczy.com/retro-bench/>**. Add it to your home screen and 
 
 Repairing a Commodore 64 or a BBC Micro means a datasheet in one tab, a service manual PDF in another, a forum post about the power brick in a third, and a meter in your hand. Retro Bench puts the facts a tech reaches for most into one place, sized for an iPad or iPhone propped on the bench: which pin is which, what it should read, where the clock comes from, what fails first, and which part replaces it. Every table links to the document it was checked against.
 
-Counted on 30 October 2026: **62 machines across 15 makers** (50 with full data, 6 of them disk drives), **158 chips, 132 drawn pin by pin**, **472 connectors**, **471 test points**, **166 idealised scope traces**, **328 clock rows**, **336 schematic links**, **141 replacement parts** and **86 glossary terms**. The home page shows the live count.
+Counted on 30 October 2026: **62 machines across 15 makers** (50 with full data, 6 of them disk drives), **158 chips, 132 drawn pin by pin**, **472 connectors**, **471 test points**, **166 idealized scope traces**, **328 clock rows**, **336 schematic links**, **141 replacement parts** and **86 glossary terms**. The home page shows the live count.
 
 ## What it does
 
@@ -30,7 +30,7 @@ Every external port and internal power header is drawn to its real geometry: DIN
 
 ### Test points, scope traces and the first ten minutes
 
-Test points carry an idealised waveform drawn from the sourced frequency, levels and shape, on a 10 by 8 graticule. The scope settings beside it (time/div, volts/div, coupling, trigger) are derived from the sourced numbers, never typed in. **No trace is a real capture**; each one is labelled "idealised from datasheet" or "idealised from capture". Below that, every machine gets a clock table (crystal, every derived clock, PAL and NTSC, the pin it appears on) and a **first ten minutes** checklist: ordered checks with expected values, each linked to the pad to probe.
+Test points carry an idealized waveform drawn from the sourced frequency, levels and shape, on a 10 by 8 graticule. The scope settings beside it (time/div, volts/div, coupling, trigger) are derived from the sourced numbers, never typed in. **No trace is a real capture**; each one is labeled "idealized from datasheet" or "idealized from capture". Below that, every machine gets a clock table (crystal, every derived clock, PAL and NTSC, the pin it appears on) and a **first ten minutes** checklist: ordered checks with expected values, each linked to the pad to probe.
 
 ![Scope block with derived settings, the C64 clock table and the start of the first ten minutes checklist](docs/screenshots/features-power-clocks-firstten-desktop.png)
 
@@ -38,7 +38,7 @@ Test points carry an idealised waveform drawn from the sourced frequency, levels
 
 - **Replacement parts** per chip: pin-compatible equivalents, modern drop-ins and adapters, with the differences that bite.
 - **Boards and schematics**: links to board drawings per board revision, with the hosting archive named.
-- **Video signals** (`#/video`): composite levels, NTSC and PAL line and field timing, RGBI, analogue RGB, luma/chroma, RF channels, drawn as one PAL line and tabled with a source on every row.
+- **Video signals** (`#/video`): composite levels, NTSC and PAL line and field timing, RGBI, analog RGB, luma/chroma, RF channels, drawn as one PAL line and tabled with a source on every row.
 - **Quick reference** per machine: keys and quirks, BASIC essentials, memory map.
 - **Glossary** with tap-to-explain: any dotted term anywhere in the app opens its definition in place.
 - **Search** (`/` or Ctrl+K): a chip, a pin like `/RAS` or `pin 40`, a BASIC keyword, a term.
@@ -112,7 +112,7 @@ All content lives in `src/data/`, one file per maker, in the shape described in 
 - **Every table links to its source.** Chip tables name the datasheet or service manual they were checked against. Connectors, rails, test points, clocks, first-ten steps and replacement rows each carry a link a human can open. The **Sources and credits** page in the app lists every cited document by host.
 - **Nothing is invented.** A fact that could not be checked is left out or marked `verify: true`, which the app shows as `CHECK`. Where two sources disagree, the primary one wins and the other is recorded as a conflict on the pin.
 - **Sams Computerfacts is secondary.** Sams folders supply measured voltages and waveform photos, but Sams redrew the schematics with its own part numbers. Every block that cites Sams says so.
-- **Scope traces are idealised** from sourced numbers and labelled as such. They are never presented as real captures.
+- **Scope traces are idealized** from sourced numbers and labeled as such. They are never presented as real captures.
 
 `node scripts/validate-data.mjs` checks every data file: shapes, cross-references, pin counts against the package, unknown chips and machines, and source conflicts. Run it after every edit; fix every FAIL. The per-maker verification logs are in [docs/verification/](docs/verification/).
 
@@ -128,6 +128,6 @@ Pin tables started from the [retro-computer-cheetsheets](https://github.com/paul
 
 Check against a datasheet before powering anything up. This is a reference, not a guarantee.
 
-## Licence
+## License
 
 Code is MIT ([LICENSE](LICENSE)). The reference data in `src/data/` is CC BY 4.0 ([LICENSE-DATA](LICENSE-DATA)). Product names and trademarks belong to their owners.

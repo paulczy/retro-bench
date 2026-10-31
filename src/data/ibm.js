@@ -90,7 +90,7 @@
   const xtClockTPs = [
     { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz, 33 percent duty',
       scope: { f: '4.7727 MHz', low: '0.45 V', high: '4 V', shape: 'square', duty: '33%', basis: 'datasheet', source: DS_CLK('IBM XT TechRef p. 1-19'),
-        note: 'Idealised from the 8284A data sheet levels. HIGH for one third of each 210 ns cycle. A flat line: no clock; check 8284A pin 8.' } },
+        note: 'Idealized from the 8284A data sheet levels. HIGH for one third of each 210 ns cycle. A flat line: no clock; check 8284A pin 8.' } },
     { tp: 'CPU reset', where: '8088 pin 21', expect: 'HIGH for about 300 ms at power-up, then LOW' },
     { tp: 'Reset in (Power Good)', where: '8284A pin 11', expect: 'LOW at switch-on, HIGH after 100 to 500 ms' },
     { tp: 'Oscillator', where: '8284A pin 12', expect: '14.31818 MHz',
@@ -112,7 +112,7 @@
     { name: 'Timer clock', where: '8253 pins 9, 15, 18', f: '1.19318 MHz', source: S('IBM PC XT Technical Reference (Apr 1984), speaker drive, p. 1-23', XTTR + '#page=42') },
     { name: 'Timer 0 (IRQ0)', where: '8253 pin 10; 8259A pin 18', f: '18.2 Hz', note: '1.19318 MHz / 65536.', source: S('IBM PC XT Technical Reference (Apr 1984), BIOS listing, timer interrupt, p. 5-101', XTTR + '#page=190') },
     { name: 'Refresh timer (counter 1)', where: '8253 pin 13', f: '66.3 kHz', note: 'One refresh every 72 clocks, about 15 µs.', source: S('IBM PC XT Technical Reference (Apr 1984), system board, p. 1-13', XTTR + '#page=32') },
-    { name: 'CGA colour reference', where: 'CGA card, from OSC', f: '3.579545 MHz', note: 'OSC / 4.', source: S('IBM PC XT Technical Reference (Apr 1984), system board, p. 1-4', XTTR + '#page=23') },
+    { name: 'CGA color reference', where: 'CGA card, from OSC', f: '3.579545 MHz', note: 'OSC / 4.', source: S('IBM PC XT Technical Reference (Apr 1984), system board, p. 1-4', XTTR + '#page=23') },
   ];
 
   // ---------- 8088 CPU (shared with the HERO 2000 in heathkit.js: keep pin text machine-neutral) ----------
@@ -151,7 +151,7 @@
       P(19, 'CLK', 'clock', 'in', 'Clock input, 33 percent duty cycle, normally from an 8284A CLK output.', { terms: ['clock'], probe: 'Steady square wave at the system clock, HIGH one third of the time. No clock: check the 8284A and its crystal first.' }),
       P(20, 'GND', 'ground', '-', 'Ground.', { terms: ['gnd'] }),
       P(21, 'RESET', 'ctrl', 'in', 'Reset, active HIGH for at least four clocks. Execution restarts at $FFFF0 when it goes LOW.', { terms: ['reset'], probe: 'HIGH briefly at power-up, then LOW. Stuck HIGH holds the CPU in reset.' }),
-      P(22, 'READY', 'ctrl', 'in', 'Ready, active HIGH, from the addressed memory or I/O through the 8284A synchroniser. LOW adds wait states. Not synchronised inside the CPU.', { terms: ['rdy'], probe: 'HIGH most of the time with short LOW dips. Stuck LOW hangs the bus.' }),
+      P(22, 'READY', 'ctrl', 'in', 'Ready, active HIGH, from the addressed memory or I/O through the 8284A synchronizer. LOW adds wait states. Not synchronized inside the CPU.', { terms: ['rdy'], probe: 'HIGH most of the time with short LOW dips. Stuck LOW hangs the bus.' }),
       P(23, '/TEST', 'ctrl', 'in', 'Tested by the WAIT instruction. LOW lets execution continue; HIGH makes WAIT idle. An 8087 BUSY output drives it in a coprocessor system.', AL),
       P(24, '/INTA (QS1)', 'ctrl', 'out', 'Minimum mode: interrupt-acknowledge read strobe, active LOW. Maximum mode: queue status bit QS1, read by an 8087.', AL),
       P(25, 'ALE (QS0)', 'ctrl', 'out', 'Minimum mode: address latch enable, a HIGH pulse in T1; the address latches on its falling edge. Never floats. Maximum mode: queue status bit QS0 (the 8288 makes ALE).', { terms: ['mux'] }),
@@ -176,31 +176,31 @@
   // ---------- 8284A clock generator ----------
   const clk8284 = {
     id: 'clk8284', name: '8284A clock generator and driver', short: '8284A', family: 'Intel MCS-86 support',
-    role: 'Crystal oscillator, divide-by-3 CPU clock, ready synchroniser and reset for the 8088.',
+    role: 'Crystal oscillator, divide-by-3 CPU clock, ready synchronizer and reset for the 8088.',
     pkg: 'DIP-18',
     machines: ['pc5150', 'xt5160', 'portable5155', 'pcjr'],
-    summary: 'Runs the crystal and divides it by three for CLK, then by two again for PCLK. It turns the slow /RES input into a clean RESET and synchronises the ready lines into READY. On the 5150 the crystal is 14.31818 MHz, so CLK is 4.77 MHz, PCLK 2.386 MHz and OSC 14.318 MHz, and /RES is the PSU Power Good line. A dead 8284A gives no clock or a CPU held in reset. 5150 board (logic diagram sheet 1, U11): CSYNC, RDY2, F/C and /ASYNC tied to GND; /AEN2 tied to +5 V; /AEN1 driven by /RDY/WAIT and RDY1 by /DMA WAIT; /RES is P8 pin 1 Power Good; EFI not connected.',
-    fails: ['No clock on the CPU: dead machine, no beep', 'CPU held in reset (no Power Good, or RESET stuck HIGH)', 'Wrong CPU speed or colour burst off (crystal or trimmer)'],
+    summary: 'Runs the crystal and divides it by three for CLK, then by two again for PCLK. It turns the slow /RES input into a clean RESET and synchronizes the ready lines into READY. On the 5150 the crystal is 14.31818 MHz, so CLK is 4.77 MHz, PCLK 2.386 MHz and OSC 14.318 MHz, and /RES is the PSU Power Good line. A dead 8284A gives no clock or a CPU held in reset. 5150 board (logic diagram sheet 1, U11): CSYNC, RDY2, F/C and /ASYNC tied to GND; /AEN2 tied to +5 V; /AEN1 driven by /RDY/WAIT and RDY1 by /DMA WAIT; /RES is P8 pin 1 Power Good; EFI not connected.',
+    fails: ['No clock on the CPU: dead machine, no beep', 'CPU held in reset (no Power Good, or RESET stuck HIGH)', 'Wrong CPU speed or color burst off (crystal or trimmer)'],
     heat: 'warm',
     datasheets: [S('Intel 8284A/8284A-1 data sheet, 1983 Microprocessors and Peripherals Handbook pp. 3-234 to 3-241', IH + '#page=414'), S('IBM PC Technical Reference (Apr 1983), 16/64K system board logic diagram, sheet 1 (U11 8284A, U6 8288, U4 8087 socket)', PCTR + '#page=478')],
     verifiedAgainst: 'Intel 8284A data sheet (1983 handbook, pin configuration and Table 1). 5150 wiring from the IBM PC 16/64K system board logic diagram, sheet 1 (U11).',
     pins: [
-      P(1, 'CSYNC', 'ctrl', 'in', 'Clock synchronisation, active HIGH. HIGH resets the dividers so several 8284As stay in phase. Tied LOW when the crystal oscillator is used.'),
+      P(1, 'CSYNC', 'ctrl', 'in', 'Clock synchronization, active HIGH. HIGH resets the dividers so several 8284As stay in phase. Tied LOW when the crystal oscillator is used.'),
       P(2, 'PCLK', 'clock', 'out', 'Peripheral clock: CLK divided by 2, 50 percent duty, TTL level.', { terms: ['clock'], probe: '5150: 2.386 MHz square wave.' }),
       P(3, '/AEN1', 'ctrl', 'in', 'Address enable 1, active LOW. Qualifies RDY1.', AL),
       P(4, 'RDY1', 'ctrl', 'in', 'Bus ready 1, active HIGH, qualified by /AEN1.', { terms: ['rdy'] }),
-      P(5, 'READY', 'ctrl', 'out', 'Synchronised ready to the CPU READY pin, active HIGH.', { terms: ['rdy'], probe: 'HIGH with short LOW dips during wait states. Stuck LOW hangs the CPU.' }),
+      P(5, 'READY', 'ctrl', 'out', 'Synchronized ready to the CPU READY pin, active HIGH.', { terms: ['rdy'], probe: 'HIGH with short LOW dips during wait states. Stuck LOW hangs the CPU.' }),
       P(6, 'RDY2', 'ctrl', 'in', 'Bus ready 2, active HIGH, qualified by /AEN2.', { terms: ['rdy'] }),
       P(7, '/AEN2', 'ctrl', 'in', 'Address enable 2, active LOW. Qualifies RDY2.', AL),
       P(8, 'CLK', 'clock', 'out', 'Processor clock: one third of the crystal or EFI frequency, 33 percent duty. Drives the CPU and the 8288.', { terms: ['clock'], probe: '5150: 4.77 MHz, HIGH one third of the time. Missing: check the crystal at pins 16 and 17.' }),
       P(9, 'GND', 'ground', '-', 'Ground.', { terms: ['gnd'] }),
-      P(10, 'RESET', 'ctrl', 'out', 'Reset to the CPU, active HIGH, synchronised to CLK from /RES.', { terms: ['reset'], probe: 'HIGH at switch-on, LOW once /RES goes HIGH.' }),
+      P(10, 'RESET', 'ctrl', 'out', 'Reset to the CPU, active HIGH, synchronized to CLK from /RES.', { terms: ['reset'], probe: 'HIGH at switch-on, LOW once /RES goes HIGH.' }),
       P(11, '/RES', 'ctrl', 'in', 'Reset input, active LOW, Schmitt trigger. Usually an RC network or a power-good signal.', { activeLow: true, terms: ['active-low', 'power-good'], probe: 'LOW at switch-on, HIGH once Power Good (or the reset RC) comes up.' }),
       P(12, 'OSC', 'clock', 'out', 'Oscillator output at the crystal frequency, TTL level.', { terms: ['clock'], probe: '5150: 14.31818 MHz. It also feeds I/O channel pin B30.' }),
       P(13, 'F/C', 'ctrl', 'in', 'Frequency/crystal select. LOW: CLK comes from the crystal. HIGH: from EFI.'),
       P(14, 'EFI', 'clock', 'in', 'External frequency input, used when F/C is HIGH.', { terms: ['clock'] }),
-      P(15, '/ASYNC', 'ctrl', 'in', 'Ready synchronisation select. LOW: two-stage READY synchronisation. HIGH or open: one stage.', AL),
-      P(16, 'X2', 'clock', 'in', 'Crystal connection.', { terms: ['clock'], probe: '5150: 14.31818 MHz crystal Y1 with a trimmer (colour adjust). A scope probe can stop a weak crystal; probe OSC instead.' }),
+      P(15, '/ASYNC', 'ctrl', 'in', 'Ready synchronization select. LOW: two-stage READY synchronization. HIGH or open: one stage.', AL),
+      P(16, 'X2', 'clock', 'in', 'Crystal connection.', { terms: ['clock'], probe: '5150: 14.31818 MHz crystal Y1 with a trimmer (color adjust). A scope probe can stop a weak crystal; probe OSC instead.' }),
       P(17, 'X1', 'clock', 'in', 'Crystal connection.', { terms: ['clock'] }),
       P(18, 'VCC', 'power', '-', '+5 V supply.', { terms: ['vcc'], probe: '+5 V.' }),
     ],
@@ -395,7 +395,7 @@
     23: 'vertical retrace from the video gate array.', 24: 'diskette adapter.', 25: 'I/O channel (parallel printer).',
     26: 'there is no 8288; in minimum mode the 8088 makes /INTA itself (8088 pin 24).' });
   pit8253.machines.push('pcjr');
-  pit8253.summary += ' PCjr (ZM23): no DMA refresh. Counter 1 helps the BIOS deserialise keyboard data, or counts timer 0 overflows during diskette I/O; port $A0 bit 5 picks its clock.';
+  pit8253.summary += ' PCjr (ZM23): no DMA refresh. Counter 1 helps the BIOS deserialize keyboard data, or counts timer 0 overflows during diskette I/O; port $A0 bit 5 picks its clock.';
   pit8253.datasheets.push(S('PCjr Technical Reference (Nov 1983), 8253-5 channel use, p. 2-6', JRTR + '#page=32'), S('PCjr Technical Reference (Nov 1983), port $A0 bit 5 (timer 1 clock select), p. 2-35', JRTR + '#page=61'), JR_SH9);
   pit8253.verifiedAgainst += ' PCjr wiring from the PCjr Technical Reference logic diagram, sheet 9 (ZM23).';
   jrPins(pit8253, { 9: '1.1925 MHz from ZM34 (74LS112) pin 9, shared with CLK2.', 11: 'tied to +5 V.', 13: 'not connected; the BIOS reads counter 1 to time keyboard bits.',
@@ -612,8 +612,8 @@
     role: 'PCjr video: modes, palette and the video memory interface.',
     pkg: 'Custom (pin count not read)',
     machines: ['pcjr'],
-    summary: 'The PCjr video gate array takes the CPU video writes and makes the CRT timing and colour. It does the job of the CGA card, built into the planar. Its pin count and designator were not read.',
-    fails: ['No picture or wrong colours on the PCjr'],
+    summary: 'The PCjr video gate array takes the CPU video writes and makes the CRT timing and color. It does the job of the CGA card, built into the planar. Its pin count and designator were not read.',
+    fails: ['No picture or wrong colors on the PCjr'],
     heat: 'warm',
     verify: true,
     datasheets: [S('PCjr Technical Reference (Nov 1983), Video Subsystem (gate array uses IRQ5 for vertical retrace), p. 2-82', JRTR + '#page=108')],
@@ -735,7 +735,7 @@
   const cgaRcaConn = id => ({
     id, name: 'CGA composite (RCA)', kind: 'RCA phono jack on the Color/Graphics Monitor Adapter', geo: 'rca',
     verify: false, verifiedAgainst: 'IBM PC Technical Reference (Apr 1983), Color/Graphics Adapter connector specifications (part 1), p. 1-155',
-    summary: 'NTSC composite video for a composite monitor. Colours differ from RGBI output. Pin 1 is the centre, pin 2 the shell.',
+    summary: 'NTSC composite video for a composite monitor. Colors differ from RGBI output. Pin 1 is the center, pin 2 the shell.',
     terms: ['luma-chroma'],
     pins: [T(1, 'VIDEO', 'video', 'Composite video.', { expect: 'About 1.5 V peak to peak' }), T(2, 'GND', 'ground', 'Chassis ground.')],
     sources: [S('IBM PC Technical Reference (Apr 1983), CGA composite jack, p. 1-155', PCTR + '#page=163')],
@@ -750,7 +750,7 @@
     T(13, '+SELECT', 'ctrl', 'Printer selected, HIGH.'),
     T(14, '-AUTO FEED', 'ctrl', 'Auto line feed, active LOW.'),
     T(15, '-ERROR', 'ctrl', 'Printer error, active LOW.'),
-    T(16, '-INIT', 'ctrl', 'Initialise printer, active LOW.'),
+    T(16, '-INIT', 'ctrl', 'Initialize printer, active LOW.'),
     T(17, '-SELECT IN', 'ctrl', 'Select input, active LOW.'),
     ...seq('', 18, 25).map(n => T(+n, 'GND', 'ground', 'Ground.')),
   ];
@@ -993,7 +993,7 @@
       ],
       // PCjr: HMS (Sep 1983) Advanced POST Error Table, pp. 3-000-8 to 3-000-11 (JRHMS #page=44-47). "X" is any digit.
       pcjr: [
-        { symptom: 'No beep; no picture or wrong picture', suspects: [], note: 'HMS: power. Normal advanced POST is a stable IBM logo with a 16-colour pattern, one beep and BASIC within a minute (pp. 2-6, 2-7). Go to PIC Power (p. 3-020-1): transformer, power board, strip to the base unit (power page).' },
+        { symptom: 'No beep; no picture or wrong picture', suspects: [], note: 'HMS: power. Normal advanced POST is a stable IBM logo with a 16-color pattern, one beep and BASIC within a minute (pp. 2-6, 2-7). Go to PIC Power (p. 3-020-1): transformer, power board, strip to the base unit (power page).' },
         { symptom: 'One beep; no picture or wrong picture', suspects: ['pcjr_ga', 'crtc6845'], note: 'HMS: display problem area; go to PIC Display (p. 3-500-1).' },
         { symptom: 'Two beeps; no picture or wrong picture', suspects: [], note: 'HMS: power; go to PIC Power (p. 3-020-1).' },
         { symptom: 'Three beeps; no picture or wrong picture', suspects: [], note: 'HMS: memory. Replace the 64KB memory and display expansion and repeat advanced POST; same error: PIC Memory.' },
@@ -1013,7 +1013,7 @@
         { symptom: '301 with two short beeps', suspects: ['ppi8255'], note: 'Guide Example 2: keyboard cable seated and nothing on the keys, then the keyboard; 301 again with a good keyboard: the system unit.' },
         { symptom: 'Any other error code with two short beeps', suspects: [], note: 'Guide Example 3: run the Diagnostics diskette.' },
         { symptom: 'Blank, rolling or shadowed picture, one short beep', suspects: ['crtc6845'], note: 'Guide Example 6: the display. Check +12 V at the display connector P12 first (power page), then the CGA in slot 1.' },
-        { symptom: 'Wrong or no colour on an external TV', suspects: [], note: 'Guide Example 5: check the TV on its own; it must be a US broadcast-standard set.' },
+        { symptom: 'Wrong or no color on an external TV', suspects: [], note: 'Guide Example 5: check the TV on its own; it must be a US broadcast-standard set.' },
         { symptom: 'Diagnostics: no SYSTEM UNIT 100', suspects: ['cpu8088', 'pic8259', 'pit8253', 'dma8237'], note: 'Guide Test 100: the system board.' },
         { symptom: 'Diagnostics: keyboard blocks do not change', suspects: [], note: 'Guide Test 300: the keyboard; a failed typematic test also means the keyboard.' },
         { symptom: 'Diagnostics: TESTING MATH COPROCESSOR for over 10 s, or 7XX', suspects: ['fpu8087'], note: 'Guide Test 700: the system unit (8087).' },
@@ -1084,7 +1084,7 @@
       pcjr: [
         { id: 'jr-power', name: 'Power in (P, from the transformer)', kind: '3-pin socket on the power board, rear panel', geo: 'custom',
           verify: true, verifiedAgainst: 'PCjr Technical Reference (Nov 1983), Power Supply connector specifications, p. 2-138; PCjr HMS (Sep 1983) p. 3-020-8',
-          summary: 'The external transformer brick plugs in here. It supplies low-voltage AC, not DC. The TechRef labels pins 1 and 3 17 V AC and pin 2 ground, but does not say how the winding is tapped, so do not assume a 17 + 17 V centre tap. IBM\'s own check: 15.0 to 30.0 V AC between pins 1 and 3 with the transformer cable unplugged from the PCjr; outside that range the transformer is bad. The power board inside turns it into +5 V, +12 V and -6 V. Pin order follows the manual; the socket face and polarisation were not checked.',
+          summary: 'The external transformer brick plugs in here. It supplies low-voltage AC, not DC. The TechRef labels pins 1 and 3 17 V AC and pin 2 ground, but does not say how the winding is tapped, so do not assume a 17 + 17 V center tap. IBM\'s own check: 15.0 to 30.0 V AC between pins 1 and 3 with the transformer cable unplugged from the PCjr; outside that range the transformer is bad. The power board inside turns it into +5 V, +12 V and -6 V. Pin order follows the manual; the socket face and polarization were not checked.',
           pads: row(['1', '2', '3'], 50, 25, 75), outline: 'M12 35 H88 V65 H12 Z',
           pins: [T('1', '17 VAC', 'power', 'Transformer AC output (TechRef label).', { expect: '15.0 to 30.0 V AC to pin 3, transformer unplugged (IBM HMS)', verify: true }), T('2', 'GND', 'ground', 'Ground (TechRef label). How it connects to the winding is not documented.', { verify: true }), T('3', '17 VAC', 'power', 'Transformer AC output (TechRef label).', { expect: '15.0 to 30.0 V AC to pin 1, transformer unplugged (IBM HMS)', verify: true })],
           sources: [S('PCjr Technical Reference (Nov 1983), power supply connectors, p. 2-138', JRTR + '#page=164'), S('IBM PCjr Hardware Maintenance and Service (Sep 1983), power transformer check (pin 1 to pin 3, 15.0 to 30.0 V AC), p. 3-020-8', JRHMS + '#page=62')] },
@@ -1103,7 +1103,7 @@
           sources: [S('PCjr Technical Reference (Nov 1983), power board connectors, p. 2-138', JRTR + '#page=164'), S('PCjr Technical Reference (Nov 1983), system power supply, pp. 2-135 to 2-137', JRTR + '#page=161')] },
         { id: 'jr-video', name: 'Direct-drive video (D)', kind: '18-pin Berg socket (2 x 9), rear panel', geo: 'custom', ...berg(9),
           verify: false, verifiedAgainst: 'PCjr Technical Reference (Nov 1983), Video Subsystem connector specifications, p. 2-82',
-          summary: 'RGBI TTL video for the PCjr colour display, with both polarities of sync and the audio output. Not a DE-9: the PCjr monitor cable has its own Berg plug. Audio on A9 is 1 V peak to peak, biased at 0 V, into 10 kilohm or more.',
+          summary: 'RGBI TTL video for the PCjr color display, with both polarities of sync and the audio output. Not a DE-9: the PCjr monitor cable has its own Berg plug. Audio on A9 is 1 V peak to peak, biased at 0 V, into 10 kilohm or more.',
           terms: ['rgbi'],
           pins: [
             T('A1', '-VERT SYNC', 'video', 'Vertical sync, active LOW.'), T('A2', 'LOGIC GND', 'ground', 'Ground.'),
@@ -1120,7 +1120,7 @@
           sources: [S('PCjr Technical Reference (Nov 1983), direct-drive connector, p. 2-82', JRTR + '#page=108'), jrRear] },
         { id: 'jr-comp', name: 'Composite video (V)', kind: 'RCA phono jack, rear panel', geo: 'rca',
           verify: false, verifiedAgainst: 'PCjr Technical Reference (Nov 1983), Video Subsystem connector specifications, p. 2-83',
-          summary: 'Composite video for a monitor. Pin 1 is the centre, pin 2 the shell.',
+          summary: 'Composite video for a monitor. Pin 1 is the center, pin 2 the shell.',
           terms: ['luma-chroma'],
           pins: [T(1, 'VIDEO', 'video', 'Composite video.', { expect: '1 V peak to peak, biased at 0.7 V, into 75 ohm' }), T(2, 'GND', 'ground', 'Chassis ground.')],
           sources: [S('PCjr Technical Reference (Nov 1983), composite jack, p. 2-83', JRTR + '#page=109'), jrRear] },
@@ -1198,7 +1198,7 @@
           sources: [S('PCjr Technical Reference (Nov 1983), cassette connector, p. 2-41', JRTR + '#page=67'), jrRear] },
         { id: 'jr-audio', name: 'Audio out (A)', kind: 'RCA phono jack, rear panel', geo: 'rca',
           verify: false, verifiedAgainst: 'PCjr Technical Reference (Nov 1983), Sound Subsystem connector specifications, p. 2-87',
-          summary: 'Line-level audio to an external amplifier; it cannot drive a speaker directly. Pin 1 is the centre, pin 2 the shell.',
+          summary: 'Line-level audio to an external amplifier; it cannot drive a speaker directly. Pin 1 is the center, pin 2 the shell.',
           pins: [T(1, 'AUDIO', 'audio', 'Audio out.', { expect: '1 V peak to peak, biased at 0 V, into 10 kilohm or more' }), T(2, 'GND', 'ground', 'Ground.')],
           sources: [S('PCjr Technical Reference (Nov 1983), audio connector, p. 2-87', JRTR + '#page=113'), jrRear] },
         { id: 'jr-cart', name: 'Program cartridge slots (two)', kind: '36-contact card-edge socket (A1-A18, B1-B18), front', geo: 'edge-18x18-ab',
@@ -1252,7 +1252,7 @@
     power: {
       pc5150: {
         supply: {
-          external: false, name: 'IBM 5150 internal switching supply, 63.5 W (220 V units often labelled 63 W)',
+          external: false, name: 'IBM 5150 internal switching supply, 63.5 W (220 V units often labeled 63 W)',
           output: '+5 V 7 A, +12 V 2 A, -5 V 0.3 A, -12 V 0.25 A; switched 120 V AC 0.75 A outlet for the monochrome display',
           connector: 'pc-psu',
           notes: [
@@ -1261,7 +1261,7 @@
             'Power Good (P8-1) rises at least 100 ms after the rails reach their sense levels (PC TechRef p. 1-27). Off for less than 5 seconds, the supply may not send it again and the board sits dead with no beep.',
             'It shuts down if +5 V or +12 V goes over 200 percent, or any output over 130 percent, of its rating. A shorted card or drive gives the same dead machine as a bad PSU.',
             'The big red switch does not remove mains from every part inside the PSU. Unplug it before opening.',
-            'Lead colours are not in the IBM manuals; go by the pin numbers, not by colour.',
+            'Lead colors are not in the IBM manuals; go by the pin numbers, not by color.',
           ],
           sources: [
             S('IBM PC Technical Reference (Apr 1983), Power Supply, pp. 1-24 to 1-27', PCTR + '#page=32'),
@@ -1290,7 +1290,7 @@
               note: 'HIGH for one third of each 210 ns cycle. The data sheet gives 4.5 V typical on this pin to drive MOS inputs; well under 4 V and the 8088 may not clock reliably.' } },
           { tp: 'Oscillator', where: '8284A pin 12', expect: '14.31818 MHz (crystal on pins 16 and 17)',
             scope: { f: '14.31818 MHz', low: '0 V', high: '4.2 V', shape: 'square', duty: '50%', basis: 'capture', source: SM('system board schematic p. 4, OSC waveform at U11 pin 12', 4),
-              note: 'Sams: 4.2 V p-p at 0.1 µs/cm, trace bottom 0 V; 50 percent duty per TechRef p. 1-19. Count it here, not on the crystal pins. Off frequency: trim T1, the colour adjust (Sams troubleshooting p. 15).' } },
+              note: 'Sams: 4.2 V p-p at 0.1 µs/cm, trace bottom 0 V; 50 percent duty per TechRef p. 1-19. Count it here, not on the crystal pins. Off frequency: trim T1, the color adjust (Sams troubleshooting p. 15).' } },
           { tp: 'PCLK', where: '8284A pin 2', expect: '2.386 MHz',
             scope: { f: '2.3864 MHz', low: '0 V', high: '6 V', shape: 'square', duty: '50%', basis: 'capture', source: SM('system board schematic, keyboard sheet (unnumbered), PCLK waveform at U26 pin 9', 64),
               note: 'Sams probed the PCLK net at U26-9 (74LS175), after R15: 6 V p-p at 0.2 µs/cm, trace bottom 0 V. PCLK is half of CLK with 50 percent duty (8284A data sheet p. 3-235, the PCLK row).' } },
@@ -1314,9 +1314,9 @@
           { tp: 'MDA vertical drive', where: 'MDA DE-9 contact 9 (Sams J3-9)', expect: '50 Hz',
             scope: { f: '50 Hz', low: '0 V', high: '5.89 V', shape: 'pulse', basis: 'capture', source: SM('CSCS2-A Monochrome Display and Printer Adapter, schematic p. 3, waveform at J3 pin 9', 86),
               note: 'Sams: 5.89 V p-p at 5 ms/cm, trace bottom 0 V; Sams labels VERT DRIVE J3-9. 50 Hz refresh per TechRef p. 1-132.' } },
-          { tp: 'CGA colour reference', where: 'CGA card: U5-14 (74S174), the 3.58MHz line', expect: '3.58 MHz square',
+          { tp: 'CGA color reference', where: 'CGA card: U5-14 (74S174), the 3.58MHz line', expect: '3.58 MHz square',
             scope: { f: '3.579545 MHz', low: '0 V', high: '5 V', shape: 'square', basis: 'capture', source: SM('CSCS2-B Color/Graphics Monitor Adapter, schematic p. 3, waveform on the 3.58MHz line at U5', 106),
-              note: 'Sams: 5 V p-p at 0.1 µs/cm, trace bottom 0 V. It is the bus OSC divided by 4 (TechRef p. 1-4, the CGA colour reference row); the card makes the colour burst and the colour phases from it.' } },
+              note: 'Sams: 5 V p-p at 0.1 µs/cm, trace bottom 0 V. It is the bus OSC divided by 4 (TechRef p. 1-4, the CGA color reference row); the card makes the color burst and the color phases from it.' } },
         ],
         firstTen: [
           { step: 1, check: 'Supply on a load', where: 'Power P8 and P9 to the system board, no cards; a load on +12 V', expect: 'Fan starts and keeps running. TechRef minimum load: 2.3 A on +5 V and 0.4 A on +12 V. The bare board draws next to nothing from +12 V, so add a +12 V load such as a drive or a 30 Ω resistor rated 10 W (0.4 A)',
@@ -1337,7 +1337,7 @@
             ifNot: 'No reset pulse: the 8284A. An address pin stuck HIGH or LOW: the 8088 or a chip on that line. No pulses at BIOS ROM U33 chip select: decoder U46 (Sams).', source: SM('troubleshooting, microprocessor chip operation, p. 15', 15) },
         ],
         clocks: [
-          { name: 'Crystal Y1', where: '8284A pin 16 and pin 17', f: '14.31818 MHz', note: 'Trimmer T1 (5 to 30 pF) pulls it; that is the CGA colour adjust.', source: SM('system board schematic p. 4', 4) },
+          { name: 'Crystal Y1', where: '8284A pin 16 and pin 17', f: '14.31818 MHz', note: 'Trimmer T1 (5 to 30 pF) pulls it; that is the CGA color adjust.', source: SM('system board schematic p. 4', 4) },
           { name: 'OSC', where: '8284A pin 12; pc-slot pin B30', f: '14.31818 MHz', note: '50 percent duty.', source: S('IBM PC Technical Reference (Apr 1983), I/O channel description, p. 1-19', PCTR + '#page=27') },
           { name: 'CLK (CPU and bus)', where: '8284A pin 8; 8088 pin 19; 8288 pin 2; pc-slot pin B20', f: '4.7727 MHz', note: 'OSC / 3, 33 percent duty, 210 ns.', source: S('IBM PC Technical Reference (Apr 1983), I/O channel description, p. 1-19', PCTR + '#page=27') },
           { name: 'PCLK', where: '8284A pin 2', f: '2.3864 MHz', note: 'CLK / 2, 50 percent duty.', source: { ...S('Intel 8284A data sheet, PCLK, p. 3-235', IH + '#page=415'), note: 'CLK / 2; CLK is 4.7727 MHz (TechRef p. 1-19, the CLK row).' } },
@@ -1346,7 +1346,7 @@
           { name: 'Timer clock', where: '8253 pins 9, 15, 18', f: '1.19318 MHz', note: 'One clock feeds all three counters.', source: S('IBM PC Technical Reference (Apr 1983), speaker drive, p. 1-23', PCTR + '#page=31') },
           { name: 'Timer 0 (IRQ0)', where: '8253 pin 10; 8259A pin 18', f: '18.2 Hz', note: '1.19318 MHz / 65536: the time-of-day tick.', source: S('IBM PC Technical Reference (Apr 1983), BIOS listing, TIMER_INT, p. A-83', PCTR + '#page=419') },
           { name: 'Refresh timer (counter 1)', where: '8253 pin 13', f: '66.3 kHz', note: 'One DMA refresh every 72 clocks, about 15 µs.', source: S('IBM PC Technical Reference (Apr 1983), I/O channel, p. 1-17', PCTR + '#page=25') },
-          { name: 'CGA colour reference', where: 'CGA card, from OSC on pc-slot pin B30', f: '3.579545 MHz', note: 'OSC / 4.', source: S('IBM PC Technical Reference (Apr 1983), system board, p. 1-4', PCTR + '#page=16') },
+          { name: 'CGA color reference', where: 'CGA card, from OSC on pc-slot pin B30', f: '3.579545 MHz', note: 'OSC / 4.', source: S('IBM PC Technical Reference (Apr 1983), system board, p. 1-4', PCTR + '#page=16') },
           { name: 'MDA dot clock', where: 'MDA card oscillator OSC1', f: '16.257 MHz', source: S('IBM PC Technical Reference (Apr 1983), Monochrome Display, p. 1-131', PCTR + '#page=139') },
           { name: 'MDA character clock (dot clock / 9)', where: '6845 pin 21 on the MDA', f: '1.8063 MHz', note: 'The character box is 9 dots wide, so the 6845 gets one clock per 9 dots. A CGA card clocks its 6845 differently (8 or 16 dots per character by mode).', source: S('IBM PC Technical Reference (Apr 1983), Monochrome Display: 9-dot character box, 16.257 MHz, p. 1-131', PCTR + '#page=139') },
           { name: 'MDA horizontal', where: '6845 pin 39 on the MDA; MDA DE-9 contact 8', f: '18.432 kHz', source: S('IBM PC Technical Reference (Apr 1983), Monochrome Display, p. 1-132', PCTR + '#page=140') },
@@ -1485,7 +1485,7 @@
           { tp: 'CPU supply', where: '8088 pin 40', expect: '+5 V' },
           { tp: 'CPU clock', where: '8088 pin 19', expect: '4.77 MHz, 33 percent duty',
             scope: { f: '4.7727 MHz', low: '0.45 V', high: '4 V', shape: 'square', duty: '33%', basis: 'datasheet', source: DS_CLK('PCjr TechRef p. 2-23'),
-              note: 'Idealised from the 8284A data sheet levels. The PCjr runs the 8088 in minimum mode, but the clock is the same: 210 ns, HIGH for one third.' } },
+              note: 'Idealized from the 8284A data sheet levels. The PCjr runs the 8088 in minimum mode, but the clock is the same: 210 ns, HIGH for one third.' } },
           { tp: 'Bus clock', where: 'jr-io pin A24', expect: '4.77 MHz, 33 percent duty' },
           { tp: 'Reset', where: '8088 pin 21; jr-io pin A25', expect: 'HIGH at power-up, then LOW' },
         ],
@@ -1508,7 +1508,7 @@
           { name: 'OSC', where: '8284A pin 12', f: '14.31818 MHz', note: 'The 8284A OSC output runs at the crystal frequency (data sheet).', source: { ...S('Intel 8284A data sheet, OSC output, p. 3-235', IH + '#page=415'), note: 'The 14.31818 MHz crystal: PCjr TechRef p. 2-6 (the crystal row).' } },
           { name: 'PCLK', where: '8284A pin 2', f: '2.3864 MHz', note: 'CLK / 2 (data sheet).', source: { ...S('Intel 8284A data sheet, PCLK, p. 3-235', IH + '#page=415'), note: 'CLK / 2; CLK is 4.7727 MHz (PCjr TechRef p. 2-23, the CLK row).' } },
           { name: 'CLK (CPU and I/O channel)', where: '8284A pin 8; 8088 pin 19; jr-io pin A24', f: '4.7727 MHz', note: 'Crystal / 3, 33 percent duty.', source: S('PCjr Technical Reference (Nov 1983), I/O channel description, p. 2-23', JRTR + '#page=49') },
-          { name: 'Colour reference', where: 'Video gate array (pins not captured)', f: '3.579545 MHz', note: 'Crystal / 4.', source: S('PCjr Technical Reference (Nov 1983), system board, p. 2-6', JRTR + '#page=32') },
+          { name: 'Color reference', where: 'Video gate array (pins not captured)', f: '3.579545 MHz', note: 'Crystal / 4.', source: S('PCjr Technical Reference (Nov 1983), system board, p. 2-6', JRTR + '#page=32') },
           { name: 'Sound generator clock', where: 'SN76496 clock input (pins not captured)', f: '3.579 MHz', source: S('PCjr Technical Reference (Nov 1983), Sound Subsystem, p. 2-89', JRTR + '#page=115') },
           { name: 'Timer clock (counters 0 and 2)', where: '8253 pin 9 and pin 18', f: '1.1925 MHz', note: 'PCLK / 2 from ZM34 (74LS112) pin 9 (logic diagram sheet 9).', source: S('PCjr Technical Reference (Nov 1983), I/O channel, port $A0 bit 5, p. 2-35', JRTR + '#page=61') },
           { name: 'Timer clock (counter 1)', where: '8253 pin 15', f: '1.1925 MHz with port $A0 bit 5 = 0; timer 0 output when bit 5 = 1', note: 'Selected by port $A0 bit 5.', source: S('PCjr Technical Reference (Nov 1983), I/O channel, port $A0 bit 5, p. 2-35', JRTR + '#page=61') },
@@ -1566,7 +1566,7 @@
             { group: 'DOS commands', items: ['DIR, CD, MD, RD, TREE', 'COPY, XCOPY, DISKCOPY, DEL, ERASE, RENAME', 'TYPE, MORE, DATE, TIME, VER', 'FORMAT, CHKDSK, LABEL, SYS', 'BACKUP, RESTORE, EDLIN, DEBUG'] },
             { group: 'I/O ports', items: ['$20 PIC 8259A: IRQ mask and EOI', '$40 PIT 8253: counters 0 to 2 and control', '$60 PPI 8255: A keyboard in, B control, C switches and flags', '$80 DMA page registers (8237)', '$200 Game port (joysticks)', '$3B0 MDA (6845 at $3B4 and $3B5)', '$3D0 CGA (6845 at $3D4 and $3D5)', '$3F0 Floppy controller', '$3F8 COM1 (asynchronous card)'] },
             { group: 'Beep codes (POST)', items: ['None: no PSU, CPU, clock or BIOS fault', '1 short: POST passed', '1 long, 1 short: 8259 or 8253 test failed', '1 long, 2 short: video', '1 long, 3 short: EGA card RAM fault', 'Never-ending long: keyboard clock held LOW', 'Continuous tone: PSU, card or motherboard (see symptoms)'] },
-            { group: 'DIP switches SW1 (5150)', items: ['Switch 1: ON means no floppy drive; OFF means boot from drive A', 'Switches 3 and 4: planar RAM, ON ON 16 KB, OFF ON 32 KB, ON OFF 48 KB, OFF OFF 64 KB or more', 'Switches 5 and 6: display at power-up, ON ON reserved, OFF ON colour 40 x 25, ON OFF colour 80 x 25, OFF OFF monochrome', 'Switches 7 and 8: diskette drives, ON ON 1, OFF ON 2, ON OFF 3, OFF OFF 4', 'SW2 switches 1 to 5: RAM above 64 KB (table not read)'] },
+            { group: 'DIP switches SW1 (5150)', items: ['Switch 1: ON means no floppy drive; OFF means boot from drive A', 'Switches 3 and 4: planar RAM, ON ON 16 KB, OFF ON 32 KB, ON OFF 48 KB, OFF OFF 64 KB or more', 'Switches 5 and 6: display at power-up, ON ON reserved, OFF ON color 40 x 25, ON OFF color 80 x 25, OFF OFF monochrome', 'Switches 7 and 8: diskette drives, ON ON 1, OFF ON 2, ON OFF 3, OFF OFF 4', 'SW2 switches 1 to 5: RAM above 64 KB (table not read)'] },
           ],
           quirks: [
             'SOUND and PLAY use the speaker only. A missing speaker means no tone and no error.',

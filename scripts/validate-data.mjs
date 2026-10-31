@@ -363,8 +363,8 @@ for (const m of Object.values(R.machines)) {
   }
 }
 /* photos.js: board photos. The app draws the outlines over the unaltered image, so every box must sit inside it
-   and name a chip of that machine; the licence must be one the user allowed (PD, CC0, CC BY, CC BY-SA, GFDL). */
-const LICENCE = /^(PD|Public domain(?: \(PD-[\w-]+\))?|Public Domain Mark 1\.0(?: \(Flickr\))?|CC0(?: 1\.0)?|CC BY(?:-SA)? \d\.\d(?: [A-Z]{2})?|GFDL(?: \d\.\d)?(?: only| or later)?)$/;
+   and name a chip of that machine; the license must be one the user allowed (PD, CC0, CC BY, CC BY-SA, GFDL). */
+const LICENSE = /^(PD|Public domain(?: \(PD-[\w-]+\))?|Public Domain Mark 1\.0(?: \(Flickr\))?|CC0(?: 1\.0)?|CC BY(?:-SA)? \d\.\d(?: [A-Z]{2})?|GFDL(?: \d\.\d)?(?: only| or later)?)$/;
 const isUrl = u => /^https?:\/\//.test(u || '');
 /* pixel size from a WebP header (VP8, VP8L, VP8X), to check w and h; null for other formats */
 function webpSize(buf) {
@@ -383,16 +383,16 @@ for (const [mid, list] of Object.entries(R.photos || {})) {
   list.forEach((p, i) => {
     const at = `photo ${p && p.file ? p.file : i + 1}`;
     if (!p || typeof p !== 'object') { err(f, `${at} is not an object`); return; }
-    for (const k of ['board', 'file', 'author', 'licence', 'licenceUrl', 'source', 'chips']) if (!p[k]) err(f, `${at} missing ${k}`);
+    for (const k of ['board', 'file', 'author', 'license', 'licenseUrl', 'source', 'chips']) if (!p[k]) err(f, `${at} missing ${k}`);
     if (!(Number.isInteger(p.w) && p.w > 0 && Number.isInteger(p.h) && p.h > 0)) err(f, `${at} needs w and h in pixels`);
     if (p.rotate != null && ![0, 90, 180, 270].includes(p.rotate)) err(f, `${at} rotate ${p.rotate} (0, 90, 180, 270)`);
-    if (p.licenceUrl && !isUrl(p.licenceUrl)) err(f, `${at} licenceUrl is not an http(s) URL`);
+    if (p.licenseUrl && !isUrl(p.licenseUrl)) err(f, `${at} licenseUrl is not an http(s) URL`);
     if (p.source && (!p.source.label || !isUrl(p.source.url))) err(f, `${at} source needs label and http(s) url`);
-    if (p.licence && !LICENCE.test(p.licence)) err(f, `${at} licence "${p.licence}" is not allowed (PD, CC0, CC BY x.x, CC BY-SA x.x, GFDL)`);
-    const gv = /^GFDL(?: (\d\.\d))?/.exec(p.licence || '');
+    if (p.license && !LICENSE.test(p.license)) err(f, `${at} license "${p.license}" is not allowed (PD, CC0, CC BY x.x, CC BY-SA x.x, GFDL)`);
+    const gv = /^GFDL(?: (\d\.\d))?/.exec(p.license || '');
     if (gv) {
       const txt = gv[1] ? [`GFDL-${gv[1]}.txt`] : fs.existsSync(path.join(root, 'photos')) ? fs.readdirSync(path.join(root, 'photos')).filter(x => /^GFDL-[\d.]+\.txt$/.test(x)) : [];
-      if (!txt.length || !txt.every(x => fs.existsSync(path.join(root, 'photos', x)))) err(f, `${at} is ${p.licence}: ship the licence text as photos/${txt[0] || 'GFDL-<version>.txt'}`);
+      if (!txt.length || !txt.every(x => fs.existsSync(path.join(root, 'photos', x)))) err(f, `${at} is ${p.license}: ship the license text as photos/${txt[0] || 'GFDL-<version>.txt'}`);
     }
     if (p.file) {
       const fp = path.join(root, p.file);

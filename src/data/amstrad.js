@@ -111,9 +111,9 @@ const joystick = (mid, src) => ({
 const monitor = (mid, src) => ({
   id: `${mid}-monitor`, name: 'Monitor socket (RGB)', kind: '6-pin DIN 240 degrees', geo: 'din6', gender: 'female',
   verifiedAgainst: 'CPC6128 / CPC664 User Instructions ch. 7 part 9 (Monitor Socket, viewed from rear); service manual schematic J101',
-  summary: 'Analogue RGB for the CTM640/CTM644 colour monitor, luminance for the GT64/GT65 green screen, and composite sync. Each colour has three levels (off, half, full) from the Gate Array through 270 ohm resistors. The manual drawing (key at the top) matches the standard DIN numbering. No picture with a known-good monitor: check sync on pin 4 first, then the Gate Array.',
+  summary: 'Analog RGB for the CTM640/CTM644 color monitor, luminance for the GT64/GT65 green screen, and composite sync. Each color has three levels (off, half, full) from the Gate Array through 270 ohm resistors. The manual drawing (key at the top) matches the standard DIN numbering. No picture with a known-good monitor: check sync on pin 4 first, then the Gate Array.',
   pins: [
-    c(1, 'RED', 'video', 'Red, analogue, three levels.'), c(2, 'GREEN', 'video', 'Green, analogue.'), c(3, 'BLUE', 'video', 'Blue, analogue.'),
+    c(1, 'RED', 'video', 'Red, analog, three levels.'), c(2, 'GREEN', 'video', 'Green, analog.'), c(3, 'BLUE', 'video', 'Blue, analog.'),
     c(4, '/SYNC', 'video', 'Composite sync from the Gate Array /SYNC pin through 220 ohms.', { expect: 'Negative-going sync pulses; 15.6 kHz line and 50 Hz frame with the firmware\'s default CRTC settings', verify: true }),
     c(5, 'GND', 'ground', GND, { expect: '0 V' }),
     c(6, 'LUM', 'video', 'Luminance (R, G and B mixed by a transistor) for the green monitor.')
@@ -132,16 +132,16 @@ const stereo = (mid, src) => ({
 const fiveV = (mid, src, verify) => Object.assign({
   id: `${mid}-5v`, name: '5V DC socket (from the monitor)', kind: 'DC jack (Hosiden HEC0470-01-630, Amstrad part 170024; spec sheet calls it a 5 mm socket)', geo: 'barrel', gender: 'female',
   verifiedAgainst: 'CPC6128 service manual cassette control circuit diagram (J301: +5 V on the pin); parts lists (J104 on the 464, J301 on the 664/6128, same part 170024)',
-  summary: 'The only supply input: regulated +5 V from the monitor (GT64/GT65, CTM640/CTM644) or the MP-1/MP-2 modulator. Centre pin positive. Nothing in the computer regulates it, so 5.5 V on this pin reaches every chip. Measure the monitor lead unloaded and on load before plugging it in.',
-  pins: [c(1, '+5 V', 'power', 'Centre pin. Regulated +5 V from the monitor.', { expect: '+5 V DC', ...(verify ? { verify: true } : {}) }), c(2, 'GND', 'ground', 'Outer sleeve.', { expect: '0 V', ...(verify ? { verify: true } : {}) })],
+  summary: 'The only supply input: regulated +5 V from the monitor (GT64/GT65, CTM640/CTM644) or the MP-1/MP-2 modulator. Center pin positive. Nothing in the computer regulates it, so 5.5 V on this pin reaches every chip. Measure the monitor lead unloaded and on load before plugging it in.',
+  pins: [c(1, '+5 V', 'power', 'Center pin. Regulated +5 V from the monitor.', { expect: '+5 V DC', ...(verify ? { verify: true } : {}) }), c(2, 'GND', 'ground', 'Outer sleeve.', { expect: '0 V', ...(verify ? { verify: true } : {}) })],
   sources: src, terms: ['regulator']
-}, verify ? { verify: true, summary: 'The only supply input: regulated +5 V from the monitor (GT64/CTM640) or the MP-1 modulator. Nothing in the computer regulates it, so 5.5 V on this pin reaches every chip. Measure the monitor lead unloaded and on load before plugging it in. The 464 sources label the socket +5 V and 0 V but do not say which contact is the centre; centre positive is taken from the 664 and 6128 drawing of the same part (verify).' } : {});
+}, verify ? { verify: true, summary: 'The only supply input: regulated +5 V from the monitor (GT64/CTM640) or the MP-1 modulator. Nothing in the computer regulates it, so 5.5 V on this pin reaches every chip. Measure the monitor lead unloaded and on load before plugging it in. The 464 sources label the socket +5 V and 0 V but do not say which contact is the center; center positive is taken from the 664 and 6128 drawing of the same part (verify).' } : {});
 
 const twelveV = (mid, src) => ({
-  id: `${mid}-12v`, name: '12V DC lead (to the monitor, for the disc drive)', kind: 'DC plug on a flying lead (cord 14550401), centre negative', geo: 'barrel', gender: 'male',
+  id: `${mid}-12v`, name: '12V DC lead (to the monitor, for the disk drive)', kind: 'DC plug on a flying lead (cord 14550401), center negative', geo: 'barrel', gender: 'male',
   verifiedAgainst: 'CPC6128 service manual cassette control circuit diagram (CD301: inner GND, outer +12 V)',
-  summary: 'A short lead from the back of the computer plugs into the 12 V socket on the front of the CTM644/GT65 (or the rear of the MP-2). It powers the 3 in drive motor; the power switch turns it on through Q302/Q303. Polarity is the opposite of the 5 V socket: the CENTRE is ground and the outer sleeve +12 V. No 12 V gives a working computer with a dead drive ("Drive A: disc missing").',
-  pins: [c(1, 'GND', 'ground', 'Centre (inner) contact of the plug.', { expect: '0 V' }), c(2, '+12 V', 'power', 'Outer sleeve of the plug.', { expect: '+12 V DC' })],
+  summary: 'A short lead from the back of the computer plugs into the 12 V socket on the front of the CTM644/GT65 (or the rear of the MP-2). It powers the 3 in drive motor; the power switch turns it on through Q302/Q303. Polarity is the opposite of the 5 V socket: the CENTER is ground and the outer sleeve +12 V. No 12 V gives a working computer with a dead drive ("Drive A: disk missing").',
+  pins: [c(1, 'GND', 'ground', 'Center (inner) contact of the plug.', { expect: '0 V' }), c(2, '+12 V', 'power', 'Outer sleeve of the plug.', { expect: '+12 V DC' })],
   sources: src, terms: []
 });
 
@@ -171,7 +171,7 @@ const disc2 = (mid, src) => ({
     c(21, 'N/C', 'nc', 'Not connected per the user instructions.', { conflict: 'The service manual interface diagram labels this finger +5V.' }),
     c(23, '/DRIVE SELECT 1', 'ctrl', 'Selects drive B.'),
     c(25, 'N/C', 'nc', 'Not connected per the user instructions.', { conflict: 'The service manual interface diagram labels this finger DRIVE SELECT 0.' }),
-    c(27, '/INDEX', 'ctrl', 'Index pulse from the drive, once per turn.', { expect: 'One pulse per disc revolution with a disc turning' }),
+    c(27, '/INDEX', 'ctrl', 'Index pulse from the drive, once per turn.', { expect: 'One pulse per disk revolution with a disk turning' }),
     c(29, 'N/C', 'nc', 'Not connected per the user instructions.', { conflict: 'The service manual interface diagram labels this finger +5V.' }),
     c(31, 'N/C', 'nc', 'Not connected per the user instructions.', { conflict: 'The service manual interface diagram labels this finger +5V.' }),
     c(33, 'N/C', 'nc', 'Not connected per the user instructions.', { conflict: 'The service manual interface diagram labels this finger +5V.' }),
@@ -196,19 +196,19 @@ RCS.add({
   machines: {
     cpc464: {
       id: 'cpc464', brand: 'amstrad', name: 'Amstrad CPC 464', aka: 'CPC464 (Schneider CPC 464), built-in cassette', year: 1984, status: 'ready',
-      cpu: 'Z80A @ 4 MHz', ram: '64 KB (eight 4164 DRAM)', rom: '32 KB (OS firmware + Locomotive BASIC 1.0)', video: 'Gate Array + 6845: 160 x 200 x 16, 320 x 200 x 4, 640 x 200 x 2 colours from 27', sound: 'AY-3-8912, 3 voices, stereo jack', os: 'Locomotive BASIC 1.0',
+      cpu: 'Z80A @ 4 MHz', ram: '64 KB (eight 4164 DRAM)', rom: '32 KB (OS firmware + Locomotive BASIC 1.0)', video: 'Gate Array + 6845: 160 x 200 x 16, 320 x 200 x 4, 640 x 200 x 2 colors from 27', sound: 'AY-3-8912, 3 voices, stereo jack', os: 'Locomotive BASIC 1.0',
       chips: ['ga40007', 'ga40010', 'cpuz80', 'crtc6845', 'rom23256', 'dram4164', 'ppi8255', 'ay8912'],
       tagline: 'Keyboard, tape deck and a monitor that is also the power supply.'
     },
     cpc664: {
       id: 'cpc664', brand: 'amstrad', name: 'Amstrad CPC 664', aka: 'CPC664, built-in 3 in drive', year: 1985, status: 'ready',
-      cpu: 'Z80A @ 4 MHz', ram: '64 KB (eight 4164-type DRAM)', rom: '48 KB: 32 KB OS + BASIC 1.1, 16 KB AMSDOS', video: 'Gate Array 40010 + 6845, same modes as the 464', sound: 'AY-3-8912, 3 voices, stereo jack', os: 'Locomotive BASIC 1.1, AMSDOS, CP/M 2.2 on disc',
+      cpu: 'Z80A @ 4 MHz', ram: '64 KB (eight 4164-type DRAM)', rom: '48 KB: 32 KB OS + BASIC 1.1, 16 KB AMSDOS', video: 'Gate Array 40010 + 6845, same modes as the 464', sound: 'AY-3-8912, 3 voices, stereo jack', os: 'Locomotive BASIC 1.1, AMSDOS, CP/M 2.2 on disk',
       chips: ['ga40010', 'cpuz80', 'crtc6845', 'rom23256', 'rom23128', 'fdc765', 'dram4164', 'ppi8255', 'ay8912'],
       tagline: 'The short-lived 464 with a 3 in drive in place of the tape deck.'
     },
     cpc6128: {
       id: 'cpc6128', brand: 'amstrad', name: 'Amstrad CPC 6128', aka: 'CPC6128 (Schneider CPC 6128)', year: 1985, status: 'ready',
-      cpu: 'Z80A @ 4 MHz', ram: '128 KB in two 64 KB banks (sixteen 4164-type DRAM)', rom: '48 KB: 32 KB OS + BASIC 1.1, 16 KB AMSDOS', video: 'Gate Array 40010 + 6845, same modes as the 464', sound: 'AY-3-8912, 3 voices, stereo jack', os: 'Locomotive BASIC 1.1, AMSDOS, CP/M Plus and CP/M 2.2 on disc',
+      cpu: 'Z80A @ 4 MHz', ram: '128 KB in two 64 KB banks (sixteen 4164-type DRAM)', rom: '48 KB: 32 KB OS + BASIC 1.1, 16 KB AMSDOS', video: 'Gate Array 40010 + 6845, same modes as the 464', sound: 'AY-3-8912, 3 voices, stereo jack', os: 'Locomotive BASIC 1.1, AMSDOS, CP/M Plus and CP/M 2.2 on disk',
       chips: ['ga40010', 'pal40030', 'cpuz80', 'crtc6845', 'rom23256', 'rom23128', 'fdc765', 'dram4164', 'ppi8255', 'ay8912'],
       tagline: '128K, a 3 in drive and CP/M Plus; the PAL beside the Gate Array banks the second 64K.'
     }
@@ -224,7 +224,7 @@ RCS.add({
       role: 'Video (pixels, palette, RGB, sync), DRAM timing, ROM/RAM selection, CPU clock and wait states, interrupts', pkg: 'DIP-40',
       machines: ['cpc464'], location: { cpc464: 'IC116 (20RA043 = Amstrad 40007; 40008 is pin compatible)' },
       summary: 'The early CPC 464 Gate Array, fitted with a metal cooling plate. It divides the 16 MHz from a 7400 oscillator to 4 MHz for the Z80 (pin 39) and 1 MHz for the CRTC (pin 40), turns CRTC timing and RAM bytes into three-level RGB, and generates /RAS, /CAS and the address mux selects, READY (Z80 wait) and the 300 Hz interrupt. Write-only: the CPU programs it at I/O &7Fxx. The later 40010 does the same job on a different pinout; some boards take either. Missing heat plate or a dried pad gives faults that come with warm-up.',
-      fails: ['No picture, or black screen with the power LED on', 'Picture with wrong or flashing colours', 'Machine dead (no CPU clock, no READY)', 'Faults after warm-up (heat plate missing)'],
+      fails: ['No picture, or black screen with the power LED on', 'Picture with wrong or flashing colors', 'Machine dead (no CPU clock, no READY)', 'Faults after warm-up (heat plate missing)'],
       heat: 'hot', verifiedAgainst: 'CPC464 service manual circuit diagram p. 15-16 (IC116 20RA043); CPCWiki Gate Array pin-outs (40007)',
       datasheets: [sm464('CPC464 circuit diagram p. 15-16, IC116 gate array', 12), sm464('electrical parts list p. 17 (IC116 20RA043, part 40007)', 13), W_GAPIN, W_GAPIN_M, W_GA, W_GA_M],
       replacements: [
@@ -274,7 +274,7 @@ RCS.add({
       role: 'Video (pixels, palette, RGB, sync), DRAM timing, ROM/RAM selection, CPU clock and wait states, interrupts', pkg: 'DIP-40',
       machines: ['cpc464', 'cpc664', 'cpc6128'], location: { cpc464: 'IC116 on later boards (AMS40010, per the amendment)', cpc664: 'IC116 (HSG3130/3170)', cpc6128: 'IC116 (HSG3130/3170; socket J105)' },
       summary: 'The same functions as the 40007 on a new pinout, cool enough to run without the plate. 16 MHz in on CK16 (pin 24); /PHI (pin 19) is inverted by a 74HCU04 to give the Z80 its 4 MHz; CCLK (pin 4) is the 1 MHz CRTC clock and /CPU (pin 14) the 1 MHz phase that also clocks the AY. On the 6128 the 40030 PAL beside it does the 128K banking. The late cost-down 6128 replaces Gate Array, CRTC and PAL with the 100-pin 40226.',
-      fails: ['No picture, or black screen with the power LED on', 'Wrong colours or a missing colour level', 'Machine dead (no CPU clock or READY stuck LOW)', 'RAM faults that move when the Gate Array is swapped'],
+      fails: ['No picture, or black screen with the power LED on', 'Wrong colors or a missing color level', 'Machine dead (no CPU clock or READY stuck LOW)', 'RAM faults that move when the Gate Array is swapped'],
       heat: 'warm', verifiedAgainst: 'CPC6128 service manual CPU circuit diagram p. 19-20 (IC116 40010), cross-checked on the CPC664 CPU circuit diagram; CPCWiki Gate Array pin-outs (40010)',
       datasheets: [sm6128('CPU circuit diagram p. 19-20, IC116 gate array', 16), sm664('CPU circuit diagram, IC116', 16), W_GAPIN, W_GAPIN_M, W_GA, W_GA_M, W_CRTC_M],
       replacements: [
@@ -384,14 +384,14 @@ RCS.add({
     },
     fdc765: {
       id: 'fdc765', name: 'NEC uPD765A floppy disk controller', short: '765', family: 'NEC uPD765 (Intel 8272 equivalent)',
-      role: 'Floppy disc controller for the internal 3 in drive and drive B', pkg: 'DIP-40',
+      role: 'Floppy disk controller for the internal 3 in drive and drive B', pkg: 'DIP-40',
       machines: ['cpc664', 'cpc6128'], location: { cpc664: 'IC201 (uPD765AC, Amstrad 40018)', cpc6128: 'IC201 (uPD765AC-2; Z765APS on later boards)' },
       summary: 'Runs from a 4 MHz clock on the CPC (pin 19), not the 8 MHz of the datasheet, so it works at the 250 kbit/s MFM rate of the 3 in drive. Driven by polling: DRQ, INT and VCO are not connected, /DACK is held HIGH, and TC and RESET come from the same reset buffer. Ports &FB7E (status) and &FB7F (data); the drive motor is switched by a latch at &FA7E. The FDC9216 data separator (IC202) feeds it RDD and the 250 kHz RDW window. Before suspecting it, replace the drive belt and check the 12 V lead.',
-      fails: ['"Drive A: disc missing" with a disc in and the motor turning', 'Read fail / Bad command on every disc', 'Motor never starts (motor latch, not the FDC)', 'Works on the internal drive but not drive B (74LS38 buffers)'],
+      fails: ['"Drive A: disk missing" with a disk in and the motor turning', 'Read fail / Bad command on every disk', 'Motor never starts (motor latch, not the FDC)', 'Works on the internal drive but not drive B (74LS38 buffers)'],
       heat: 'warm', verifiedAgainst: 'NEC uPD765 data sheet (Dec 1978) pin configuration p. 1 and pin identification p. 3; CPC6128 service manual interface circuit diagram (IC201 pin voltages)',
       datasheets: [upd('pin configuration p. 1', 1), upd('pin identification p. 3', 3), sm6128('interface circuit diagram p. 33-34, IC201', 27), W_FDC, W_FDC_M],
       replacements: [
-        { part: 'Intel 8272A / UMC UM8272A', kind: 'pin-compatible', verify: true, note: 'The 8272 is the same design as the uPD765 under a cross-licence; the NEC and Intel DIP-40 pin maps agree. UMC UM8272A parts were fitted in CPCs, but no UMC data sheet was found. Timings scale with the clock: the CPC runs any of them at 4 MHz.', source: W_FDC },
+        { part: 'Intel 8272A / UMC UM8272A', kind: 'pin-compatible', verify: true, note: 'The 8272 is the same design as the uPD765 under a cross-license; the NEC and Intel DIP-40 pin maps agree. UMC UM8272A parts were fitted in CPCs, but no UMC data sheet was found. Timings scale with the clock: the CPC runs any of them at 4 MHz.', source: W_FDC },
         { part: 'NEC uPD765AC-2 / Zilog Z765A', kind: 'pin-compatible', verify: true, note: 'Other makers\' 765s found on CPC boards, per CPCWiki. Their own data sheets were not found to compare electrical limits.', source: W_FDC }
       ],
       pins: [
@@ -406,7 +406,7 @@ RCS.add({
         p(14, 'DRQ', 'ctrl', 'out', 'DMA request. Not connected on the CPC.'),
         p(15, '/DACK', 'ctrl', 'in', 'DMA acknowledge. Held HIGH on the CPC.', { probe: '5.0 V' }),
         p(16, 'TC', 'ctrl', 'in', 'Terminal count, active HIGH; tied to the reset buffer on the CPC.'),
-        p(17, 'IDX', 'ctrl', 'in', 'Index pulse from the drive.', { probe: 'One pulse per disc revolution with a disc turning' }),
+        p(17, 'IDX', 'ctrl', 'in', 'Index pulse from the drive.', { probe: 'One pulse per disk revolution with a disk turning' }),
         p(18, 'INT', 'ctrl', 'out', 'Interrupt request. Not connected on the CPC (polled).', { terms: ['irq'] }),
         p(19, 'CLK', 'clock', 'in', 'Clock; 8 MHz in the datasheet, 4 MHz on the CPC.', { terms: ['clock'], probe: '4 MHz' }),
         p(20, 'GND', 'ground', '-', '0 V.', { terms: ['gnd'] }),
@@ -438,7 +438,7 @@ RCS.add({
       { symptom: 'Red power LED on, black screen', suspects: ['ga40007', 'ga40010', 'cpuz80', 'rom23256', 'crtc6845', 'dram4164'], note: 'The service manual order: monitor cable and brightness, then Gate Array, Z80A, 6845, crystal, RAM. Check 16 MHz at 40007 pin 8, 4 MHz at Z80A pin 6 and /RESET HIGH at Z80A pin 26.' },
       { symptom: 'Screen of garbage or a fixed pattern, no sign-on', suspects: ['dram4164', 'ga40007', 'rom23256'], note: 'A dead 4164 shows as stripes or blocks. Piggyback a known-good 4164 on each in turn, or check /RAS and /CAS from the Gate Array.' },
       { symptom: 'Faults that start after a few minutes', suspects: ['ga40007'], note: 'The 40007 needs its cooling plate and thermal pad. Refit or replace the plate before swapping chips.' },
-      { symptom: 'Sign-on, then no colour or wrong colours', suspects: ['ga40007', 'ga40010'], note: 'Check RGB at monitor DIN pins 1-3 and the 270 ohm resistors. A missing level points at the Gate Array.' },
+      { symptom: 'Sign-on, then no color or wrong colors', suspects: ['ga40007', 'ga40010'], note: 'Check RGB at monitor DIN pins 1-3 and the 270 ohm resistors. A missing level points at the Gate Array.' },
       { symptom: 'No sound from speaker or stereo jack', suspects: ['ay8912', 'ppi8255'], note: 'The AY is written through 8255 port A. Check 1 MHz at AY-3-8912 pin 15; if the stereo jack works but the speaker does not, check the LA4140 and the volume pot.' },
       { symptom: 'Rows of keys or the joystick dead', suspects: ['ay8912', 'ppi8255'], note: 'Rows come from the 74LS145 (driven by 8255 port C 0-3); columns are read on AY port A. Check the keyboard membrane and its connector first.' },
       { symptom: 'Tape will not load', suspects: ['ppi8255'], note: 'Usually the deck: perished belt, dirty or misaligned head, sticking motor. Clean the head, replace the belt, set azimuth with a known-good tape. Data reaches 8255 PB7.' }
@@ -446,8 +446,8 @@ RCS.add({
     cpc664: [
       { symptom: 'Red power LED on, black screen', suspects: ['ga40010', 'cpuz80', 'rom23256', 'crtc6845', 'dram4164'], note: 'Monitor lead and brightness first. Then 16 MHz at 40010 pin 24, 4 MHz at Z80A pin 6, 1 MHz at 6845 pin 21, /RESET HIGH at Z80A pin 26.' },
       { symptom: 'Garbage screen, no sign-on', suspects: ['dram4164', 'ga40010', 'rom23256'], note: 'Check the eight 4164s and the Gate Array RAM strobes.' },
-      { symptom: '"Drive A: disc missing"', suspects: ['fdc765'], note: 'Almost always the drive: replace the rubber belt, then check the 12 V lead is plugged into the monitor. Then INDEX pulses at 765 pin 17.' },
-      { symptom: 'Disc reads but will not write', suspects: ['fdc765'], note: 'Check the write-protect hole of the 3 in disc, then WE at 765 pin 25 and the 74LS38 buffers.' },
+      { symptom: '"Drive A: disk missing"', suspects: ['fdc765'], note: 'Almost always the drive: replace the rubber belt, then check the 12 V lead is plugged into the monitor. Then INDEX pulses at 765 pin 17.' },
+      { symptom: 'Disc reads but will not write', suspects: ['fdc765'], note: 'Check the write-protect hole of the 3 in disk, then WE at 765 pin 25 and the 74LS38 buffers.' },
       { symptom: 'No sound', suspects: ['ay8912', 'ppi8255'], note: 'Check 1 MHz at AY-3-8912 pin 15 and the LA4140 amplifier.' },
       { symptom: 'Dead keys or joystick', suspects: ['ay8912', 'ppi8255'], note: 'Membrane and connector first; then the 74LS145 row decoder and AY port A.' }
     ],
@@ -455,8 +455,8 @@ RCS.add({
       { symptom: 'Red power LED on, black screen', suspects: ['ga40010', 'cpuz80', 'rom23256', 'crtc6845', 'dram4164'], note: 'Monitor lead and brightness first. Then 16 MHz at 40010 pin 24, 4 MHz at Z80A pin 6, 1 MHz at 6845 pin 21, /RESET HIGH at Z80A pin 26.' },
       { symptom: 'BASIC works, CP/M Plus or |BANK commands fail', suspects: ['pal40030', 'dram4164'], note: 'The second 64K (IC119-126) or the 40030 PAL. Check /CAS1 at 40030 pin 16 pulses after a bank switch.' },
       { symptom: 'Garbage screen, no sign-on', suspects: ['dram4164', 'pal40030', 'ga40010'], note: 'Bank 0 (IC127-134) holds the screen and BASIC. Check /CAS0 at 40030 pin 17 and /RAS from the Gate Array.' },
-      { symptom: '"Drive A: disc missing"', suspects: ['fdc765'], note: 'Replace the drive belt first, then check the 12 V lead (centre negative) is in the monitor. Then INDEX at 765 pin 17.' },
-      { symptom: 'Drive B not seen', suspects: ['fdc765'], note: 'Check the DL-2 lead and the FD-1 supply, then DRIVE SELECT 1 on disc 2 socket pin 23.' },
+      { symptom: '"Drive A: disk missing"', suspects: ['fdc765'], note: 'Replace the drive belt first, then check the 12 V lead (center negative) is in the monitor. Then INDEX at 765 pin 17.' },
+      { symptom: 'Drive B not seen', suspects: ['fdc765'], note: 'Check the DL-2 lead and the FD-1 supply, then DRIVE SELECT 1 on disk 2 socket pin 23.' },
       { symptom: 'No sound', suspects: ['ay8912', 'ppi8255'], note: 'Check 1 MHz at AY-3-8912 pin 15; the stereo jack bypasses the LA4140 speaker amplifier.' },
       { symptom: 'External tape will not load', suspects: ['ppi8255'], note: 'Check the CL1 lead, then the LA6358 shaper output to 8255 PB7 and the remote relay.' }
     ]
@@ -488,12 +488,12 @@ RCS.add({
   },
   power: {
     cpc464: {
-      supply: { external: true, name: 'The monitor: Amstrad GT64 (green) or CTM640 (colour); MP-1 modulator/power supply for a TV', output: '+5 V DC regulated (current rating not given in the service manual)',
+      supply: { external: true, name: 'The monitor: Amstrad GT64 (green) or CTM640 (color); MP-1 modulator/power supply for a TV', output: '+5 V DC regulated (current rating not given in the service manual)',
         connector: 'cpc464-5v',
         notes: [
-          'The computer has no regulator: the monitor\'s 5 V goes straight to every chip. Measure it at the plug, centre positive, before connecting: it should read +5 V.',
+          'The computer has no regulator: the monitor\'s 5 V goes straight to every chip. Measure it at the plug, center positive, before connecting: it should read +5 V.',
           'GT64: 5 V from an L78MG adjustable regulator (IC501); the service manual voltage chart gives about 4.9 V at its output pin 4 from about 20 V in. CTM640: L78MG at IC502 after the STK7308 supply.',
-          'Without the original monitor use a regulated 5 V supply of 2 A or more on a matching centre-positive plug (rating from common practice, not the manual).',
+          'Without the original monitor use a regulated 5 V supply of 2 A or more on a matching center-positive plug (rating from common practice, not the manual).',
           'The cassette deck runs from the same 5 V; its belt (not the supply) is the usual cause of a deck that turns slowly or not at all.',
           'MP-1: modulator and 5 V supply for TV use; output rating not sourced.'
         ],
@@ -513,7 +513,7 @@ RCS.add({
         { tp: 'Wait', where: 'Z80A pin 24', expect: 'Regular LOW pulses (READY from the Gate Array); stuck LOW = hung CPU' }
       ],
       firstTen: [
-        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+5 V DC on the plug, centre positive',
+        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+5 V DC on the plug, center positive',
           ifNot: 'No 5 V: the monitor mains fuse, then the cable or plug assembly from the monitor. The computer has no regulator of its own.', source: FLOW464, verify: true },
         { step: 2, check: 'Red LED and +5 V on the board', where: 'Z80A pin 11 to Z80A pin 29', expect: 'LED lit; +5 V',
           ifNot: '5 V on the cable but not here: internal connectors, soldered joints, a broken track, the LED or the power switch.', source: FLOW464 },
@@ -532,18 +532,18 @@ RCS.add({
         { name: 'CRTC character clock', where: '40007 pin 40 to 6845 pin 21; 40010 boards: 40010 pin 4', f: '1 MHz', source: { ...W_CRTC_M, note: 'The pin wiring is from the service manual circuit diagram (40007) and the Amendment (40010).' } },
         { name: '/CPU address phase (1 MHz)', where: '40010 pin 14 (40010 boards)', f: '1 MHz', source: W_GA_M, note: 'Called /CPU ADDR on the 40007. It picks the CPU half of each microsecond on the 74LS153 address multiplexers; the gate array fetches its 2 video bytes in the other half.' },
         { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', verify: true, source: { ...AMEND, note: 'The CPC464 sheets of the Amendment show the AY clock routing; the 1 MHz label is on its CPC6128 sheet (p. 12).' } },
-        { name: 'Interrupt (every 52 HSYNCs, nominal)', where: 'Z80A pin 16', f: '300 Hz', source: { ...W_GA_M, note: 'Z80 pin 16 is /INT (Zilog UM0080). The counter also resynchronises to VSYNC and software can reset it, so the rate is nominal.' } }
+        { name: 'Interrupt (every 52 HSYNCs, nominal)', where: 'Z80A pin 16', f: '300 Hz', source: { ...W_GA_M, note: 'Z80 pin 16 is /INT (Zilog UM0080). The counter also resynchronizes to VSYNC and software can reset it, so the rate is nominal.' } }
       ],
       sources: [sm464('circuit diagram p. 15-16', 12), sm464('electrical parts list p. 17', 13), AMEND, W_CRTC_M, W_GA_M, { label: 'Zilog Z80 CPU User Manual UM0080, Figure 3 Pin Configuration and Pin Functions, pp. 5-7 (Z80 pins 6, 11, 16, 24, 26, 29)', url: 'https://www.zilog.com/docs/z80/um0080.pdf#page=19' }]
     },
     cpc664: {
-      supply: { external: true, name: 'The monitor: Amstrad GT65 (green) or CTM644 (colour); MP-2 modulator/power supply for a TV', output: '+5 V DC to the 5 V socket and +12 V DC on the 12 V lead (current ratings not given in the service manual)',
+      supply: { external: true, name: 'The monitor: Amstrad GT65 (green) or CTM644 (color); MP-2 modulator/power supply for a TV', output: '+5 V DC to the 5 V socket and +12 V DC on the 12 V lead (current ratings not given in the service manual)',
         connector: 'cpc664-5v',
         notes: [
-          'Two leads: the monitor\'s 5 V plug (centre positive) into the computer, and the computer\'s 12 V plug (centre NEGATIVE, outer +12 V) into the front of the monitor. Check each with a meter before connecting.',
+          'Two leads: the monitor\'s 5 V plug (center positive) into the computer, and the computer\'s 12 V plug (center NEGATIVE, outer +12 V) into the front of the monitor. Check each with a meter before connecting.',
           'GT65: 5 V from an L78MG (IC502, about 4.9 V at pin 4 per the voltage data) and 12 V from a uPC78M12. CTM644: STK7308 supply with an L78MG 5 V regulator (IC502, about 18 V in, 5.0 V at pin 4) and a uPC78M12 (IC503).',
-          'The CTM644 5 V regulator runs hot. Low or noisy 5 V on load gives resets and disc errors: measure at the computer with the drive running. Resoldering the regulator and its heatsink joints is a common repair (community reports, not in the manual).',
-          'The 12 V only turns the drive; a missing 12 V gives "Drive A: disc missing" with everything else working.',
+          'The CTM644 5 V regulator runs hot. Low or noisy 5 V on load gives resets and disk errors: measure at the computer with the drive running. Resoldering the regulator and its heatsink joints is a common repair (community reports, not in the manual).',
+          'The 12 V only turns the drive; a missing 12 V gives "Drive A: disk missing" with everything else working.',
           'MP-2: modulator with 5 V and 12 V outputs for TV use; ratings not sourced.'
         ],
         sources: [sm664('technical specification, back page', 30), um664('ch. 1 Connecting the computer, p. 2', 12), ...S6128P] },
@@ -557,16 +557,16 @@ RCS.add({
         { tp: 'CPU clock', where: 'Z80A pin 6', expect: '4 MHz', scope: z80clk('from 40010 pin 19 (/PHI) through a 74HCU04 inverter') },
         { tp: 'CRTC clock', where: '6845 pin 21', expect: '1 MHz' },
         { tp: 'FDC clock', where: '765 pin 19', expect: '4 MHz', scope: fdcclk() },
-        { tp: 'Index', where: '765 pin 17', expect: 'One pulse per disc revolution with a disc turning' },
+        { tp: 'Index', where: '765 pin 17', expect: 'One pulse per disk revolution with a disk turning' },
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
       ],
       firstTen: [
-        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+5 V DC on the plug, centre positive',
+        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+5 V DC on the plug, center positive',
           ifNot: 'No 5 V: the monitor mains fuse, then the cable or plug assembly from the monitor. The computer has no regulator of its own.', source: FLOW664, verify: true },
         { step: 2, check: 'Red LED and +5 V on the board', where: 'Z80A pin 11 to Z80A pin 29', expect: 'LED lit; +5 V',
           ifNot: '5 V on the cable but not here: internal connectors, soldered joints, a broken track, the LED or the power switch.', source: FLOW664 },
-        { step: 3, check: '12 V for the drive', where: '12V DC lead (to the monitor, for the disc drive) pin 2 to pin 1', expect: '+12 V on the outer sleeve', verify: true,
-          ifNot: 'Missing 12 V gives "Drive A: disc missing" with everything else working.', source: sm6128('cassette control circuit diagram p. 36 (CD301: inner GND, outer +12 V)', 28) },
+        { step: 3, check: '12 V for the drive', where: '12V DC lead (to the monitor, for the disk drive) pin 2 to pin 1', expect: '+12 V on the outer sleeve', verify: true,
+          ifNot: 'Missing 12 V gives "Drive A: disk missing" with everything else working.', source: sm6128('cassette control circuit diagram p. 36 (CD301: inner GND, outer +12 V)', 28) },
         { step: 4, check: '16 MHz master clock', where: '40010 pin 24', expect: '16 MHz', ifNot: 'Crystal X101 and its 74HCU04 oscillator.', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
         { step: 5, check: 'Z80 clock', where: 'Z80A pin 6', expect: '4 MHz square wave',
           ifNot: 'Trace back through the 74HCU04 to 40010 pin 19; no clock out with 16 MHz in suspects the Gate Array.', source: sm664('CPU circuit diagram (X101, IC116, IC111)', 16) },
@@ -582,18 +582,18 @@ RCS.add({
         { name: '/CPU address phase (1 MHz)', where: '40010 pin 14', f: '1 MHz', source: W_GA_M, note: 'Called /CPU ADDR on the 40007. It picks the CPU half of each microsecond on the 74LS153 address multiplexers; the gate array fetches its 2 video bytes in the other half.' },
         { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', source: sm664('CPU circuit diagram p. 19 (SOUND CLOCK 1 MHz to AY pin 15)', 16) },
         { name: 'FDC clock', where: '765 pin 19', f: '4 MHz', source: W_FDC_M },
-        { name: 'Interrupt (every 52 HSYNCs, nominal)', where: 'Z80A pin 16', f: '300 Hz', source: { ...W_GA_M, note: 'Z80 pin 16 is /INT (Zilog UM0080). The counter also resynchronises to VSYNC and software can reset it, so the rate is nominal.' } }
+        { name: 'Interrupt (every 52 HSYNCs, nominal)', where: 'Z80A pin 16', f: '300 Hz', source: { ...W_GA_M, note: 'Z80 pin 16 is /INT (Zilog UM0080). The counter also resynchronizes to VSYNC and software can reset it, so the rate is nominal.' } }
       ],
       sources: [sm664('CPU circuit diagram', 16), sm664('cassette control circuit diagram (LA4140 IC301, R322)', 28), sm6128('interface circuit diagram p. 33-34 (FDC voltages)', 27), W_FDC_M, W_CRTC_M, W_GA_M, { label: 'Zilog Z80 CPU User Manual UM0080, Figure 3 Pin Configuration and Pin Functions, pp. 5-7 (Z80 pins 6, 11, 16, 24, 26, 29)', url: 'https://www.zilog.com/docs/z80/um0080.pdf#page=19' }]
     },
     cpc6128: {
-      supply: { external: true, name: 'The monitor: Amstrad GT65 (green) or CTM644 (colour); MP-2 modulator/power supply for a TV', output: '+5 V DC to the 5 V socket and +12 V DC on the 12 V lead (current ratings not given in the service manual)',
+      supply: { external: true, name: 'The monitor: Amstrad GT65 (green) or CTM644 (color); MP-2 modulator/power supply for a TV', output: '+5 V DC to the 5 V socket and +12 V DC on the 12 V lead (current ratings not given in the service manual)',
         connector: 'cpc6128-5v',
         notes: [
-          'Two leads: the monitor\'s 5 V plug (centre positive) into J301, and the computer\'s 12 V plug (CD301: inner GND, outer +12 V) into the front of the monitor or the rear of the MP-2. Check each with a meter before connecting.',
+          'Two leads: the monitor\'s 5 V plug (center positive) into J301, and the computer\'s 12 V plug (CD301: inner GND, outer +12 V) into the front of the monitor or the rear of the MP-2. Check each with a meter before connecting.',
           'GT65: 5 V from an L78MG (IC502) and 12 V from a uPC78M12. CTM644: STK7308 supply, L78MG 5 V regulator at IC502 (about 18 V in, 5.0 V at pin 4 per the voltage chart), uPC78M12 12 V at IC503.',
-          'The CTM644 5 V regulator runs hot; low or noisy 5 V on load gives resets and disc errors. Measure at the computer with the drive running (community reports, not in the manual).',
-          'The 12 V only turns the drive; a missing 12 V gives "Drive A: disc missing" with everything else working.',
+          'The CTM644 5 V regulator runs hot; low or noisy 5 V on load gives resets and disk errors. Measure at the computer with the drive running (community reports, not in the manual).',
+          'The 12 V only turns the drive; a missing 12 V gives "Drive A: disk missing" with everything else working.',
           'The 6128 adds 16 DRAMs and the drive electronics to the 5 V load, so a weak monitor supply shows first on the 6128.'
         ],
         sources: [...S6128P, um6128('ch. 1 Connecting the computer, p. 2', 14), sm6128('CTM644 voltages p. 28', 24)] },
@@ -612,12 +612,12 @@ RCS.add({
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
       ],
       firstTen: [
-        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+5 V DC on the plug, centre positive',
+        { step: 1, check: 'Monitor 5 V lead', where: '5V DC socket (from the monitor) pin 1 to pin 2', expect: '+5 V DC on the plug, center positive',
           ifNot: 'No 5 V: the monitor mains fuse, then the cable or plug assembly from the monitor. The computer has no regulator of its own.', source: FLOW6128, verify: true },
         { step: 2, check: 'Red LED and +5 V on the board', where: 'Z80A pin 11 to Z80A pin 29', expect: 'LED lit; +5 V',
           ifNot: '5 V on the cable but not here: internal connectors, soldered joints, a broken track, the LED or the power switch.', source: FLOW6128 },
-        { step: 3, check: '12 V for the drive', where: '12V DC lead (to the monitor, for the disc drive) pin 2 to pin 1', expect: '+12 V on the outer sleeve', verify: true,
-          ifNot: 'Missing 12 V gives "Drive A: disc missing" with everything else working.', source: sm6128('cassette control circuit diagram p. 36 (CD301: inner GND, outer +12 V)', 28) },
+        { step: 3, check: '12 V for the drive', where: '12V DC lead (to the monitor, for the disk drive) pin 2 to pin 1', expect: '+12 V on the outer sleeve', verify: true,
+          ifNot: 'Missing 12 V gives "Drive A: disk missing" with everything else working.', source: sm6128('cassette control circuit diagram p. 36 (CD301: inner GND, outer +12 V)', 28) },
         { step: 4, check: '16 MHz master clock', where: '40010 pin 24', expect: '16 MHz', ifNot: 'Crystal X101 and its 74HCU04 oscillator.', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
         { step: 5, check: 'Z80 clock', where: 'Z80A pin 6', expect: '4 MHz square wave',
           ifNot: 'Trace back through the 74HCU04 to 40010 pin 19; no clock out with 16 MHz in suspects the Gate Array.', source: sm6128('CPU circuit diagram p. 19-20 (X101, IC116, IC111)', 16) },
@@ -633,7 +633,7 @@ RCS.add({
         { name: '/CPU address phase (1 MHz)', where: '40010 pin 14', f: '1 MHz', source: W_GA_M, note: 'Called /CPU ADDR on the 40007. It picks the CPU half of each microsecond on the 74LS153 address multiplexers; the gate array fetches its 2 video bytes in the other half.' },
         { name: 'AY sound clock', where: 'AY-3-8912 pin 15', f: '1 MHz', source: AMEND },
         { name: 'FDC clock', where: '765 pin 19', f: '4 MHz', source: W_FDC_M },
-        { name: 'Interrupt (every 52 HSYNCs, nominal)', where: 'Z80A pin 16', f: '300 Hz', source: { ...W_GA_M, note: 'Z80 pin 16 is /INT (Zilog UM0080). The counter also resynchronises to VSYNC and software can reset it, so the rate is nominal.' } }
+        { name: 'Interrupt (every 52 HSYNCs, nominal)', where: 'Z80A pin 16', f: '300 Hz', source: { ...W_GA_M, note: 'Z80 pin 16 is /INT (Zilog UM0080). The counter also resynchronizes to VSYNC and software can reset it, so the rate is nominal.' } }
       ],
       sources: [sm6128('CPU circuit diagram p. 19-20', 16), sm6128('interface circuit diagram p. 33-34', 27), sm6128('electrical parts list p. 21', 17), W_FDC_M, W_CRTC_M, W_GA_M, { label: 'Zilog Z80 CPU User Manual UM0080, Figure 3 Pin Configuration and Pin Functions, pp. 5-7 (Z80 pins 6, 11, 16, 24, 26, 29)', url: 'https://www.zilog.com/docs/z80/um0080.pdf#page=19' }]
     }
@@ -649,10 +649,10 @@ RCS.add({
     ];
     const ess = [
       { cmd: 'RUN"name / LOAD"name / SAVE"name"', does: 'Run, load or save. SAVE"name",A saves ASCII, ,B binary, ,P protected.' },
-      { cmd: 'CAT', does: 'List the tape or disc directory.' },
+      { cmd: 'CAT', does: 'List the tape or disk directory.' },
       { cmd: 'LIST [a-b] / EDIT n / AUTO / RENUM / DELETE a-b', does: 'Program editing.' },
-      { cmd: 'MODE 0|1|2', does: 'Screen mode: 20, 40 or 80 columns; 16, 4 or 2 colours.' },
-      { cmd: 'INK i,c[,c2] / PEN / PAPER / BORDER c', does: 'Set ink i to colour 0-26 (two values flash).' },
+      { cmd: 'MODE 0|1|2', does: 'Screen mode: 20, 40 or 80 columns; 16, 4 or 2 colors.' },
+      { cmd: 'INK i,c[,c2] / PEN / PAPER / BORDER c', does: 'Set ink i to color 0-26 (two values flash).' },
       { cmd: 'LOCATE x,y / CLS / WINDOW', does: 'Text position (1-based) and windows.' },
       { cmd: 'PLOT / DRAW / MOVE x,y[,ink]', does: 'Graphics on a 640 x 400 grid in every mode.' },
       { cmd: 'SOUND ch,period,dur,vol[,env,ent,noise]', does: 'AY sound; ENV / ENT shape volume and tone.' },
@@ -670,7 +670,7 @@ RCS.add({
       { group: 'Files', items: ['OPENIN / OPENOUT / CLOSEIN / CLOSEOUT', 'INPUT #9 / PRINT #9 / LINE INPUT #9', 'MERGE / CHAIN / CHAIN MERGE', 'PRINT #8 (printer)'] }
     ];
     const q11 = { group: 'BASIC 1.1 additions (664, 6128)', items: ['FILL / FRAME / MASK / GRAPHICS PEN / GRAPHICS PAPER', 'COPYCHR$ / CLEAR INPUT / CURSOR', 'DEC$ / DERR / ON BREAK CONT'] };
-    const ams = { group: 'AMSDOS', items: ['|A / |B / |DRIVE,"B"', '|DIR / |ERA,"file" / |REN,"new","old" / |USER,n', '|TAPE / |DISC (and .IN / .OUT)', '|CPM (boot CP/M from the disc)'] };
+    const ams = { group: 'AMSDOS', items: ['|A / |B / |DRIVE,"B"', '|DIR / |ERA,"file" / |REN,"new","old" / |USER,n', '|TAPE / |DISC (and .IN / .OUT)', '|CPM (boot CP/M from the disk)'] };
     const mem464 = [
       { range: '$0000-$3FFF', what: 'Lower ROM (OS firmware) over RAM: reads hit ROM when enabled, writes go to RAM' },
       { range: '$0040-$AB7F', what: 'BASIC program and variables (HIMEM 43903 on a 464)', verify: true },
@@ -689,7 +689,7 @@ RCS.add({
       cpc464: {
         firstLook: [
           'Locomotive BASIC 1.0 at power-on: "Amstrad 64K Microcomputer (v1)" then Ready.',
-          'The built-in datacorder is the only storage until a DDI-1 disc interface is added.',
+          'The built-in datacorder is the only storage until a DDI-1 disk interface is added.',
           'Power comes from the monitor\'s 5 V lead; with no monitor there is no computer.',
           'RUN" (with no name) loads and runs the next program on the tape.',
           'Early boards have the 40007 Gate Array under a metal plate; later boards a 40010.'
@@ -707,19 +707,19 @@ RCS.add({
       },
       cpc664: {
         firstLook: [
-          'BASIC 1.1 with AMSDOS: disc is the default device; |TAPE switches to cassette on the 5-pin DIN.',
-          'The drive is a 3 in single-sided unit: 178K a side in data format, 169K in system format; turn the disc over for the other side.',
-          '|CPM boots CP/M 2.2 from the system disc.',
+          'BASIC 1.1 with AMSDOS: disk is the default device; |TAPE switches to cassette on the 5-pin DIN.',
+          'The drive is a 3 in single-sided unit: 178K a side in data format, 169K in system format; turn the disk over for the other side.',
+          '|CPM boots CP/M 2.2 from the system disk.',
           'Two power leads: 5 V in from the monitor and 12 V out to the monitor socket for the drive.',
           'Made for about six months in 1985, then replaced by the 6128.'
         ],
-        keys: [...keys, { keys: 'CTRL + small ENTER', does: 'Types RUN" (load and run from disc or tape).', verify: true }],
+        keys: [...keys, { keys: 'CTRL + small ENTER', does: 'Types RUN" (load and run from disk or tape).', verify: true }],
         basic: { dialect: 'Locomotive BASIC 1.1 + AMSDOS', essentials: ess, groups: [...groups, q11, ams],
           quirks: [
             'Graphics coordinates are 640 x 400 in every mode.',
             'BASIC 1.1 accepts |ERA,"name" directly; 464 programs written with @a$ still work.',
-            'AMSDOS reserves memory below the firmware, so HIMEM is lower than on a 464: some tape games will not load from disc.',
-            'Error "Drive A: disc missing" offers Retry, Ignore or Cancel: R, I or C.'
+            'AMSDOS reserves memory below the firmware, so HIMEM is lower than on a 464: some tape games will not load from disk.',
+            'Error "Drive A: disk missing" offers Retry, Ignore or Cancel: R, I or C.'
           ] },
         memory: mem664,
         sources: [um664('ch. 3 complete list of BASIC keywords', 102), um664('ch. 5 AMSDOS', 195), um664('ch. 1 foundation course', 12)]
@@ -727,12 +727,12 @@ RCS.add({
       cpc6128: {
         firstLook: [
           'Sign-on: "Amstrad 128K Microcomputer (v3)" and BASIC 1.1.',
-          'BASIC sees 64K; the second 64K is for CP/M Plus (|CPM from side 1 of the system discs) and the Bank Manager.',
-          'Bank Manager (BANKMAN on disc) adds |SCREENCOPY, |SCREENSWAP and RAM-file commands.',
+          'BASIC sees 64K; the second 64K is for CP/M Plus (|CPM from side 1 of the system disks) and the Bank Manager.',
+          'Bank Manager (BANKMAN on disk) adds |SCREENCOPY, |SCREENSWAP and RAM-file commands.',
           'Two power leads: 5 V in from the monitor and 12 V out to the monitor for the drive.',
-          'The drive belt is the first thing to check when discs stop loading.'
+          'The drive belt is the first thing to check when disks stop loading.'
         ],
-        keys: [...keys, { keys: 'CTRL + small ENTER', does: 'Types RUN" (load and run from disc or tape).', verify: true }],
+        keys: [...keys, { keys: 'CTRL + small ENTER', does: 'Types RUN" (load and run from disk or tape).', verify: true }],
         basic: { dialect: 'Locomotive BASIC 1.1 + AMSDOS', essentials: ess, groups: [...groups, q11, ams, { group: 'Bank Manager (RUN"BANKMAN)', items: ['|SCREENCOPY / |SCREENSWAP', '|BANKOPEN / |BANKREAD / |BANKWRITE / |BANKFIND'] }],
           quirks: [
             'Graphics coordinates are 640 x 400 in every mode.',
@@ -753,7 +753,7 @@ RCS.add({
     { name: 'CPCWiki, Gate Array page (archived copy; the wiki also covers CRTC, PPI, FDC, connectors and schematics)', url: WB + 'Gate_Array', what: 'The Amstrad CPC encyclopedia. The live site (www.cpcwiki.eu) blocks scripted fetches; open it in a browser or use the Wayback copies linked here.' },
     { name: 'CPC464 / CTM640 / GT64 Service Manual', url: AO + SM464_ID, what: 'Schematic, parts list, cassette deck alignment, monitor voltage charts.' },
     { name: 'CPC664 Service Manual', url: AO + SM664_ID, what: 'CPU and interface schematics, parts list, GT65/CTM644 data.' },
-    { name: 'CPC6128 / CTM644 / GT65 Service Manual', url: AO + SM6128_ID, what: 'CPU, interface, disc and cassette schematics, drive alignment, parts list.' },
+    { name: 'CPC6128 / CTM644 / GT65 Service Manual', url: AO + SM6128_ID, what: 'CPU, interface, disk and cassette schematics, drive alignment, parts list.' },
     { name: 'Service Manual Amendment (CPC464, CPC6128, GT65, CTM644, MP3, CT1)', url: AO + AMEND_ID, what: 'Cost-down boards: 40010 in the 464, 40226 in the 6128, revised schematics and parts.' },
     { name: 'CPC6128 User Instructions', url: AO + 'amstrad-cpc-6128-user-manual', what: 'BASIC keywords, AMSDOS, CP/M Plus, connector pinouts (ch. 7).' },
     { name: 'CPC664 User Instructions', url: AO + 'amstrad-cpc664-user-manual', what: 'BASIC 1.1, AMSDOS, CP/M 2.2, connector pinouts.' },

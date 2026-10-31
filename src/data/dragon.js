@@ -29,11 +29,11 @@ const SAM_EQ = SAMDS(2, 'DC characteristics: E and Q outputs VOL 0.5 V max, VOH 
 const SAM_VCLK = SAMDS(2, 'DC characteristics: VClk output VOL 0.6 V max, other outputs VOH 2.7 V min, p. 5-324');
 const XTAL_NOTE = 'The rate is derived from the 14.218 MHz crystal on the Dragon 64 sheet (CD41505 sheet 2, XL3, in this page\'s sources); the Dragon 32 SA2120 sheet marks XL2 14.32 MHz, which would give 0.895 MHz E and 3.58 MHz VClk. Read the can before trusting either.';
 const eScope = () => ({ f: '0.888625 MHz', low: '0.5 V', high: '4.25 V', shape: 'square', basis: 'datasheet', source: SAM_EQ,
-  note: `Levels idealised from the SAM output limits at 5 V (the cited data sheet), not a capture: no Dragon service document prints a waveform. E = crystal / 16 (SAM pin table, p. 5-326) in the SLOW mode the SAM selects at reset; FAST mode gives crystal / 8 (1.77725 MHz) and the address-dependent mode switches between the two (SAM p. 5-333). ${XTAL_NOTE}` });
+  note: `Levels idealized from the SAM output limits at 5 V (the cited data sheet), not a capture: no Dragon service document prints a waveform. E = crystal / 16 (SAM pin table, p. 5-326) in the SLOW mode the SAM selects at reset; FAST mode gives crystal / 8 (1.77725 MHz) and the address-dependent mode switches between the two (SAM p. 5-333). ${XTAL_NOTE}` });
 const qScope = () => ({ f: '0.888625 MHz', low: '0.5 V', high: '4.25 V', shape: 'square', basis: 'datasheet', source: SAM_EQ,
-  note: `Levels idealised from the SAM output limits (the cited data sheet), not a capture. Q runs a quarter cycle ahead of E (SAM pin table, p. 5-326). Same rate as E: crystal / 16 in the SLOW mode set at reset, crystal / 8 (1.77725 MHz) in FAST mode, switching between the two in address-dependent mode (SAM p. 5-333). ${XTAL_NOTE}` });
+  note: `Levels idealized from the SAM output limits (the cited data sheet), not a capture. Q runs a quarter cycle ahead of E (SAM pin table, p. 5-326). Same rate as E: crystal / 16 in the SLOW mode set at reset, crystal / 8 (1.77725 MHz) in FAST mode, switching between the two in address-dependent mode (SAM p. 5-333). ${XTAL_NOTE}` });
 const vclkScope = () => ({ f: '3.5545 MHz', low: '0.6 V', high: '2.7 V', shape: 'square', basis: 'datasheet', source: SAM_VCLK,
-  note: `Levels idealised from the SAM output limits (the cited data sheet), not a capture. The SAM pin table (p. 5-326) gives VClk as a square wave at crystal / 4. ${XTAL_NOTE}` });
+  note: `Levels idealized from the SAM output limits (the cited data sheet), not a capture. The SAM pin table (p. 5-326) gives VClk as a square wave at crystal / 4. ${XTAL_NOTE}` });
 
 /* Pad layouts for 'custom' drawings, 0-100 box looking into the connector. */
 const rowPads = ns => ns.map((n, i) => ({ n, x: Math.round(8 + i * (84 / Math.max(1, ns.length - 1))), y: 50 }));
@@ -80,7 +80,7 @@ const joyPins = [
   { n: 4, name: 'FIRE', type: 'io', desc: 'Fire button to ground. Right port to PA0, left port to PA1 of the $FF00 PIA, shared with keyboard rows 0 and 1 through 3.3 µH chokes L1 and L2.', expect: 'HIGH released, 0 V pressed' },
   { n: 5, name: '+5 V', type: 'power', desc: 'Pot reference, +5 V through R1 (100 Ω), shared by both ports.', expect: 'About +5 V' },
 ];
-const JOY_SUMMARY = 'Two 5-pin 240° DIN sockets on the right side, joystick L (PL5) and joystick R (PL3). Each stick is two 100 kΩ pots between +5 V and 0 V and a fire button to ground. The wipers go to the 4529 analogue mux; the 6-bit DAC and the LM393 comparator do the conversion. A port that reads 0 or 63 all the time: open pin 5 (R1), a dead pot, or the 4529. These are 240° sockets, not the CoCo\'s 6-pin DIN.';
+const JOY_SUMMARY = 'Two 5-pin 240° DIN sockets on the right side, joystick L (PL5) and joystick R (PL3). Each stick is two 100 kΩ pots between +5 V and 0 V and a fire button to ground. The wipers go to the 4529 analog mux; the 6-bit DAC and the LM393 comparator do the conversion. A port that reads 0 or 63 all the time: open pin 5 (R1), a dead pot, or the 4529. These are 240° sockets, not the CoCo\'s 6-pin DIN.';
 
 const cassPins = [
   { n: 1, name: 'REMOTE', type: 'ctrl', desc: 'Motor relay contact. Pins 1 and 3 close with MOTOR ON. The relay is driven from CA2 of the $FF20 PIA by TR2 (BC182L).', expect: 'Shorted to pin 3 with MOTOR ON (relay clicks)' },
@@ -130,7 +130,7 @@ const kbdSources = sheet => [
 ];
 
 const rfPins = [
-  { n: 1, name: 'RF', type: 'video', desc: 'UHF RF out from the modulator on the PSU board (centre pin).' },
+  { n: 1, name: 'RF', type: 'video', desc: 'UHF RF out from the modulator on the PSU board (center pin).' },
   { n: 2, name: 'GND', type: 'ground', desc: 'Shell, ground.', expect: '0 V' },
 ];
 
@@ -138,8 +138,8 @@ const rfPins = [
 const acPins = d64 => [
   { n: 1, name: '8 V AC', type: 'power', desc: 'Winding A (8–8.5 V AC, 1.5 A), one end. Through SW1 to the bridge D1, D2, D5, D6 that feeds the +5 V LM309.', expect: '8–8.5 V AC to pin 2 (more unloaded)' },
   { n: 2, name: '8 V AC', type: 'power', desc: 'Winding A, other end.', expect: '8–8.5 V AC to pin 1' },
-  { n: 3, name: '14 V AC', type: 'power', desc: 'Winding B (28 V AC centre-tapped, 0.25 A), one end. Through SW1 to D7 and D3: about +18 V and -18 V raw.', expect: 'About 14 V AC to pin 4; 28 V AC to pin 5' },
-  { n: 4, name: '0 V (CT)', type: 'ground', desc: 'Centre tap of winding B. 0 V of the whole computer.', expect: '0 V' },
+  { n: 3, name: '14 V AC', type: 'power', desc: 'Winding B (28 V AC center-tapped, 0.25 A), one end. Through SW1 to D7 and D3: about +18 V and -18 V raw.', expect: 'About 14 V AC to pin 4; 28 V AC to pin 5' },
+  { n: 4, name: '0 V (CT)', type: 'ground', desc: 'Center tap of winding B. 0 V of the whole computer.', expect: '0 V' },
   { n: 5, name: '14 V AC', type: 'power', desc: 'Winding B, other end. Through SW1 to D8 and D4.', expect: 'About 14 V AC to pin 4' },
   ...(d64 ? [
     { n: 6, name: '8 V AC', type: 'power', desc: 'Paralleled with pin 1 (Dragon 64 PSU CD41519).', expect: 'Same as pin 1' },
@@ -148,7 +148,7 @@ const acPins = d64 => [
     { n: 9, name: '0 V (CT)', type: 'ground', desc: 'Paralleled with pin 4.', expect: '0 V' },
   ] : []),
 ];
-const AC_SUMMARY = d64 => `Rear panel, marked POWER PACK. The external "power pack" is only a mains transformer; its cable ends in a 9-way D plug with sockets, so the computer side has pins. Winding A (8–8.5 V AC 1.5 A) makes +5 V, winding B (28 V AC centre-tapped, 0.25 A) makes the ±12 V${d64 ? ' and -12 V' : ' and -5 V'} rails. The power switch SW1 is on the low-voltage side: the transformer stays live while plugged in. Measure the AC at the plug before suspecting the board.${d64 ? ' The Dragon 64 sheet doubles pins 1, 2 and 4 onto 6, 7, 8 and 9.' : ' The Dragon 32 sheet shows pins 1 to 5 only.'} The D-sub gender is taken from a photo of the adaptor plug (verify on your unit).`;
+const AC_SUMMARY = d64 => `Rear panel, marked POWER PACK. The external "power pack" is only a mains transformer; its cable ends in a 9-way D plug with sockets, so the computer side has pins. Winding A (8–8.5 V AC 1.5 A) makes +5 V, winding B (28 V AC center-tapped, 0.25 A) makes the ±12 V${d64 ? ' and -12 V' : ' and -5 V'} rails. The power switch SW1 is on the low-voltage side: the transformer stays live while plugged in. Measure the AC at the plug before suspecting the board.${d64 ? ' The Dragon 64 sheet doubles pins 1, 2 and 4 onto 6, 7, 8 and 9.' : ' The Dragon 32 sheet shows pins 1 to 5 only.'} The D-sub gender is taken from a photo of the adapter plug (verify on your unit).`;
 const acSources = sheet => [
   sheet,
   { label: 'The Dragon Archive wiki, PSU Pictures: transformer labels (Ref. 28475: Sec. I 8.5 V 1.5 A, Sec. II 14/28 V 0.25 A; CT type: A 8 V 1.5 A, B 28 V 250 mA) and the 9-way D plug', url: WIKI('PSU_Pictures') },
@@ -236,7 +236,7 @@ const d32Connectors = [
     sources: [
       { label: 'Dragon 32 PSU and modulator sheet ("UHF to TV")', url: D32PSU },
       { label: 'Dragon Data repair notes, CPU and PSU modifications and compatibility (modulator types), pp. 6-9', url: RN(6) },
-      { label: 'Dragon Data Service Information RWEW/RA/0082a, Sound and colour faults', url: SVC(3) },
+      { label: 'Dragon Data Service Information RWEW/RA/0082a, Sound and color faults', url: SVC(3) },
     ],
   },
   {
@@ -376,7 +376,7 @@ const essentials = d64 => [
   { cmd: 'LIST a-b / LLIST', does: 'List to the screen or the printer.' },
   { cmd: 'PRINT @ p, ...', does: 'Print at text position 0–511.' },
   { cmd: 'PCLEAR n', does: 'Reserve n graphics pages (1–8, default 4). Each page is 1.5 KB.' },
-  { cmd: 'PMODE m,p / SCREEN t,c', does: 'Pick the graphics mode (0–4) and start page; SCREEN 1,c shows it with colour set c.' },
+  { cmd: 'PMODE m,p / SCREEN t,c', does: 'Pick the graphics mode (0–4) and start page; SCREEN 1,c shows it with color set c.' },
   { cmd: 'LINE / CIRCLE / PAINT / DRAW', does: 'Hi-res drawing.' },
   { cmd: 'SOUND p,d', does: 'Tone p 1–255 (89 = middle C), duration d (16 ≈ 1 s).' },
   { cmd: 'PLAY "..."', does: 'Music string: notes A–G, O octave, L length, T tempo, V volume, P pause.' },
@@ -433,7 +433,7 @@ const clocks = d64 => [
   { name: 'VDG clock (crystal / 4)', where: 'SAM pin 7 to VDG pin 33', f: '3.5545 MHz', verify: true, source: SAMDS(4, 'pin description table: VClk = crystal / 4 (3.579545 MHz from 14.31818 MHz), p. 5-326') },
   { name: 'E, CPU clock (crystal / 16)', where: `SAM pin 14 to 6809E pin 34; pia6821 pin 25 (both PIAs)${d64 ? '; 6551 pin 27 (ACIA Φ2, on E per CD41505 sheet 3)' : ''}`, f: '0.888625 MHz', verify: true, source: SAMDS(4, 'pin description table: E and Q, the MC6809E clocks, 90 degrees apart, p. 5-326') },
   { name: 'Q, quadrature clock', where: 'SAM pin 13 to 6809E pin 35', f: '0.888625 MHz', verify: true, source: CPUDS(3, 'bus timing, Q leads E (tEQ1), p. 3') },
-  ...(d64 ? [] : [{ name: 'PAL colour subcarrier', where: 'LM1889 colour encoder (IC9)', f: '4.433619 MHz', source: { label: 'Dragon 32 circuit diagram SA2120 sheet 3 (LM1889, 4.433619 MHz)', url: D32VID } }]),
+  ...(d64 ? [] : [{ name: 'PAL color subcarrier', where: 'LM1889 color encoder (IC9)', f: '4.433619 MHz', source: { label: 'Dragon 32 circuit diagram SA2120 sheet 3 (LM1889, 4.433619 MHz)', url: D32VID } }]),
   { name: 'Field sync (/FS)', where: 'VDG pin 37', f: '50 Hz', source: { label: 'Inside the Dragon, Appendix 7, PIA summary (CB1 field sync every 20 ms), pp. 343-344', url: ITD(350) } },
   ...(d64 ? [{ name: 'ACIA baud-rate crystal', where: '6551 pin 6 to pin 7', f: '1.8432 MHz', source: { label: 'Dragon 64 CD41505 sheet 3 (6551, 1.8432 MHz crystal)', url: D64VID } }] : []),
 ];
@@ -455,7 +455,7 @@ RCS.add({
       cpu: '6809E @ 0.89 MHz',
       ram: '32 KB (16 × 4116, or 8 × OKI 3732 "half-good" 64K on some boards)',
       rom: '16 KB Microsoft Extended Color BASIC 1.0 (2 × 8 KB MCM68A364)',
-      video: 'MC6847 VDG with PAL line insertion and an LM1889 colour encoder: 32 × 16 text, PMODE 0–4 up to 256 × 192',
+      video: 'MC6847 VDG with PAL line insertion and an LM1889 color encoder: 32 × 16 text, PMODE 0–4 up to 256 × 192',
       sound: '6-bit DAC and single-bit sound from the $FF20 PIA, through the 4529 mux',
       os: 'Microsoft Extended Color BASIC (Dragon tokens)',
       chips: ['sam6883', 'cpu6809e', 'vdg6847', 'pia6821', 'rom-dragon32-basic', 'dram4116', 'mux14529'],
@@ -557,10 +557,10 @@ RCS.add({
       pins: null,
     },
     mux14529: {
-      id: 'mux14529', name: 'MC14529B dual 4-channel analogue data selector', short: '4529 mux', family: 'Motorola CMOS (MC14000 series)',
+      id: 'mux14529', name: 'MC14529B dual 4-channel analog data selector', short: '4529 mux', family: 'Motorola CMOS (MC14000 series)',
       role: 'Joystick axis select for the A-to-D comparator, and sound source select for the TV and monitor.', pkg: 'DIP-16',
       machines: ['dragon32', 'dragon64'],
-      summary: 'Two 4-to-1 analogue switches sharing the select lines A and B (PIA0 CA2 and CB2). The X half picks one of four joystick pots for the comparator; the Y half picks the sound source (DAC, cassette, cartridge, unused) and is enabled by PIA1 CB2. Dragon 32 and 64 (SA2120 sheet 2, IC20): STX (pin 1) is tied to +5 V; X0-X3 are right X, right Y, left X, left Y (JOYSTK(0) to (3)); Z (pin 9) goes to the LM393 comparator through R55 (10 kΩ); Y0 is the 6-bit DAC, Y1 cassette in, Y2 cartridge sound (cartridge pin 35), Y3 held LOW; W (pin 10) feeds the modulator and the monitor socket; STY (pin 15) comes from CB2 of the $FF20 PIA. CoCo 1 (8000073 sheet 2, U9): Z goes through R48 to the LM339 comparator U14, and the sound inputs are the DAC (pin 14), cassette in (13) and cartridge sound (12), with pin 11 grounded. Dragon Data lists it first for joystick, cassette and no-sound faults. CMOS: handle it with static care.',
+      summary: 'Two 4-to-1 analog switches sharing the select lines A and B (PIA0 CA2 and CB2). The X half picks one of four joystick pots for the comparator; the Y half picks the sound source (DAC, cassette, cartridge, unused) and is enabled by PIA1 CB2. Dragon 32 and 64 (SA2120 sheet 2, IC20): STX (pin 1) is tied to +5 V; X0-X3 are right X, right Y, left X, left Y (JOYSTK(0) to (3)); Z (pin 9) goes to the LM393 comparator through R55 (10 kΩ); Y0 is the 6-bit DAC, Y1 cassette in, Y2 cartridge sound (cartridge pin 35), Y3 held LOW; W (pin 10) feeds the modulator and the monitor socket; STY (pin 15) comes from CB2 of the $FF20 PIA. CoCo 1 (8000073 sheet 2, U9): Z goes through R48 to the LM339 comparator U14, and the sound inputs are the DAC (pin 14), cassette in (13) and cartridge sound (12), with pin 11 grounded. Dragon Data lists it first for joystick, cassette and no-sound faults. CMOS: handle it with static care.',
       fails: ['No sound on the TV', 'Joystick axes dead, stuck at 0 or 63, or swapped', 'Cassette audio not heard'],
       replacements: [
         { part: 'HCF4529B (SGS-Thomson)', kind: 'pin-compatible',
@@ -599,7 +599,7 @@ RCS.add({
     dragon32: [
       { symptom: 'No picture and no sound', suspects: ['sam6883'], note: 'Service sheet order: the transformer (PL9 AC), the PSU board (PL10, the rails, the diodes), the RESET button, then IC15 (SAM) seated, then replace IC15.' },
       { symptom: 'No sound, picture fine', suspects: ['mux14529'], note: 'Retune the TV, then the modulator sound core, then IC20 (4529). Single-bit sound bypasses the mux: if SOUND works but PLAY from the DAC does not, look at the DAC and IC20.' },
-      { symptom: 'Bad or missing colour', suspects: ['vdg6847'], note: 'Adjust RV1 (and RV2); try a 2-22 pF trimmer for C7; fit the "Sony mod" (15 kΩ from IC10 pin 4 to IC12 pin 10). Then change IC9 (LM1889), IC16, IC12 (VDG).' },
+      { symptom: 'Bad or missing color', suspects: ['vdg6847'], note: 'Adjust RV1 (and RV2); try a 2-22 pF trimmer for C7; fit the "Sony mod" (15 kΩ from IC10 pin 4 to IC12 pin 10). Then change IC9 (LM1889), IC16, IC12 (VDG).' },
       { symptom: 'Garbage on screen', suspects: ['rom-dragon32-basic', 'sam6883', 'cpu6809e'], note: 'If RESET clears it, change IC17 (ROM). Otherwise IC15 (SAM), IC17, IC18 (ROMs).' },
       { symptom: 'Crashes while running programs', suspects: ['sam6883', 'rom-dragon32-basic', 'cpu6809e', 'dram4116'], note: 'Try another program first. Then IC15, IC17, IC18, IC19 (CPU), then the RAM lines.' },
       { symptom: 'Cassette will not load or save', suspects: ['mux14529', 'pia6821'], note: 'Check the lead, relay and diode D1. Then IC20 (4529), IC25 (LM393), IC34 (4050). A loud recorder can need 270-470 Ω in series with PL4 pin 4.' },
@@ -658,7 +658,7 @@ RCS.add({
         { tp: 'Horizontal sync', where: 'VDG pin 38', expect: 'Pulses every 63.5 µs (to PIA0 CA1)' },
         { tp: 'Field sync', where: 'VDG pin 37', expect: '50 Hz (to PIA0 CB1)' },
         { tp: 'CPU reset', where: '6809E pin 37', expect: 'HIGH once running; LOW while RESET is held (C23 1 µF, R15 100 kΩ)' },
-        { tp: 'PAL colour crystal', where: 'LM1889 (IC9)', expect: '4.433619 MHz' },
+        { tp: 'PAL color crystal', where: 'LM1889 (IC9)', expect: '4.433619 MHz' },
       ],
       sources: [
         { label: 'Dragon 32 PSU diagram SA2121', url: D32PSU },
@@ -675,7 +675,7 @@ RCS.add({
         output: 'Transformer: 8–8.5 V AC 1.5 A and 28 V AC CT 0.25 A. PSU board: +5 V (LM309), +12 V (LM7812), -12 V (LM7912); -5 V from a 79L05 on the CPU board',
         connector: 'dragon64-power',
         notes: [
-          'Same transformer as the Dragon 32. The Dragon 64 PSU doubles the 8 V winding pins (1 and 6, 2 and 7) and the centre tap (4, 8, 9) on PL9.',
+          'Same transformer as the Dragon 32. The Dragon 64 PSU doubles the 8 V winding pins (1 and 6, 2 and 7) and the center tap (4, 8, 9) on PL9.',
           'The bridge is 1N5401 (3 A) on this board, with C8 470 µF and C6, C9 4700 µF. The ± rails come from 1N4002s and C5 220 µF.',
           'PL10 pin 3 carries -12 V on the Dragon 64 (for the RS-232 drivers), not the -5 V of the Dragon 32. Do not swap PSU boards between the two models without checking it.',
           'SW1 switches the secondaries only. The transformer is live whenever the mains plug is in.',
@@ -727,7 +727,7 @@ RCS.add({
         'Video-only faults: the VDG (IC12), the LM1889 (IC9) and the PSU-board modulator.',
         'Keyboard, joystick buttons and printer data share the $FF00 PIA (IC26). A stuck key can break printing.',
         'Cartridge pins 1 and 2 are +12 V. A CoCo 1 pak that expects -12 V on pin 1 is not safe here.',
-        'CoCo software usually runs, but BASIC programs must be retokenised (load as ASCII).',
+        'CoCo software usually runs, but BASIC programs must be retokenized (load as ASCII).',
       ],
       keys: keys(false),
       basic: {
@@ -804,7 +804,7 @@ RCS.add({
     { name: 'Dragon Data archive: circuit diagrams', url: `${SCH}/index.html`, what: 'Dragon 64 CPU (CD41505) and PSU (CD41519) sheets; links to the Dragon 32 sets.' },
     { name: 'Dragon Data archive: Dragon 32 circuit diagrams (SA2120, SA2121)', url: `${SCH}/index32.html`, what: 'CPU, I/O, video/sound and PSU/modulator sheets for the SA, Siemens and OKI builds, plus the Mk II and Hargrave scans.' },
     { name: 'Dragon Data internal repair notes (Dragon 32)', url: RN(1), what: 'Service sheets, Dragon 64 memory map, CPU and PSU board compatibility and mods, board identification photos.' },
-    { name: 'Dragon Data Service Information (RWEW/KA/0080a-0082a)', url: SVC(1), what: 'Fault-finding order for cassette, joystick, cartridge, printer, picture, sound and colour faults with IC numbers.' },
+    { name: 'Dragon Data Service Information (RWEW/KA/0080a-0082a)', url: SVC(1), what: 'Fault-finding order for cassette, joystick, cartridge, printer, picture, sound and color faults with IC numbers.' },
     { name: 'Inside the Dragon (Smeed and Sommerville, 1983)', url: ITD(1), what: 'The hardware and firmware reference: PIA bits, I/O ports, cartridge pinout, reset, the Dragon 64, and the 6809E, SAM, VDG and PIA data sheets.' },
     { name: 'Dragon 32 Introduction to BASIC Programming (Dragon Data)', url: MAN(1), what: 'The owner\'s BASIC manual: keys, editor, graphics, sound, tape.' },
     { name: 'Dragon 64 Supplement (Dragon Data)', url: SUP(1), what: '64K mode, RS-232 use and pinout, auto-repeat, 64K memory map.' },

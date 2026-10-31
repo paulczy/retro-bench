@@ -7,7 +7,7 @@ Object.assign(RCS.terms, {
   'sideways-rom': { term: 'Sideways ROM', short: 'Paged 16 KB ROM slot at $8000-$BFFF.', long: 'The BBC pages one of up to 16 ROMs into $8000-$BFFF by writing the ROM select latch at $FE30. Languages (BASIC) and filing systems (DFS, ADFS, NFS) live there. A bad socket or a dirty ROM leg shows as a missing language or "Language?" at power-up.' },
   tube: { term: 'Tube', short: 'Acorn link to a second processor.', long: 'A 40-way connector carrying the host data bus, A0-A6 and a 2 MHz clock to a second processor box. The Tube ULA in the box passes bytes between the two CPUs through FIFOs. With a second processor attached the BBC only does I/O.' },
   econet: { term: 'Econet', short: 'Acorn low-cost network.', long: 'A clocked serial network for up to 254 stations, run by a 68B54 ADLC. One station or a clock box supplies the network clock on one balanced pair; data runs on a second pair. No clock or no termination looks like a dead network.' },
-  teletext: { term: 'Teletext (MODE 7)', short: 'Character display from the SAA5050 chip.', long: 'MODE 7 stores each character as one byte in 1 KB of RAM. The SAA5050 turns the codes into rounded characters, colours and block graphics. Faults that show only in MODE 7 point at the SAA5050, its 6 MHz clock or its data latch.' },
+  teletext: { term: 'Teletext (MODE 7)', short: 'Character display from the SAA5050 chip.', long: 'MODE 7 stores each character as one byte in 1 KB of RAM. The SAA5050 turns the codes into rounded characters, colors and block graphics. Faults that show only in MODE 7 point at the SAA5050, its 6 MHz clock or its data latch.' },
   'fred-jim': { term: 'FRED and JIM', short: '1 MHz bus pages $FC00 and $FD00.', long: 'The 1 MHz bus decodes two 256-byte pages for add-ons: FRED ($FC00-$FCFF) for registers and JIM ($FD00-$FDFF) as a window into paged memory, selected by writing $FCFF. Accesses run at 1 MHz.' }
 });
 
@@ -99,8 +99,8 @@ const rs423Pins = [
   { n: 'A', name: 'DATA IN', type: 'serial', desc: 'Receive data into the BBC (to the line receiver through a 2K2 resistor on the Model B).', expect: 'RS423 levels from the remote end' },
   { n: 'B', name: 'DATA OUT', type: 'serial', desc: 'Transmit data from the BBC, driven by the line driver.', expect: 'Swings between about -5 V and +5 V while sending' },
   { n: 'C', name: '0 V', type: 'ground', desc: 'Signal ground.', expect: '0 V' },
-  { n: 'D', name: 'CTS (Acorn label)', type: 'serial', desc: 'Labelled CTS by Acorn but driven by the line driver: an output (SERPROC RTSO, from the ACIA /RTS). Wire it to the other end\'s CTS input.', verify: true },
-  { n: 'E', name: 'RTS (Acorn label)', type: 'serial', desc: 'Labelled RTS by Acorn but an input to the line receiver (SERPROC CTSI, to the ACIA /CTS). Loop it to D for a three-wire link.', verify: true }
+  { n: 'D', name: 'CTS (Acorn label)', type: 'serial', desc: 'Labeled CTS by Acorn but driven by the line driver: an output (SERPROC RTSO, from the ACIA /RTS). Wire it to the other end\'s CTS input.', verify: true },
+  { n: 'E', name: 'RTS (Acorn label)', type: 'serial', desc: 'Labeled RTS by Acorn but an input to the line receiver (SERPROC CTSI, to the ACIA /CTS). Loop it to D for a three-wire link.', verify: true }
 ];
 const cassPins = [
   { n: 1, name: 'OUTPUT', type: 'audio', desc: 'Cassette signal out (to the recorder MIC/aux in). Joined to pin 4 on the Model B.', expect: 'Tones of 1200 / 2400 Hz while saving', verify: true },
@@ -116,18 +116,18 @@ const anaPins = [
   { n: 1, name: '+5 V', type: 'power', desc: '+5 V for paddles or joysticks.', expect: '+5 V' },
   { n: 2, name: '0 V', type: 'ground', desc: 'Ground.', expect: '0 V' },
   { n: 3, name: '0 V', type: 'ground', desc: 'Ground.', expect: '0 V' },
-  { n: 4, name: 'CH3', type: 'io', desc: 'Analogue channel 3 (ADVAL(4), second joystick up/down).', expect: '0 to 1.8 V in', verify: true },
-  { n: 5, name: 'AGND', type: 'ground', desc: 'Analogue ground. Use it as the low end of the paddle pots.', expect: '0 V' },
+  { n: 4, name: 'CH3', type: 'io', desc: 'Analog channel 3 (ADVAL(4), second joystick up/down).', expect: '0 to 1.8 V in', verify: true },
+  { n: 5, name: 'AGND', type: 'ground', desc: 'Analog ground. Use it as the low end of the paddle pots.', expect: '0 V' },
   { n: 6, name: '0 V', type: 'ground', desc: 'Ground.', expect: '0 V' },
-  { n: 7, name: 'CH1', type: 'io', desc: 'Analogue channel 1 (ADVAL(2), first joystick up/down).', expect: '0 to 1.8 V in', verify: true },
-  { n: 8, name: 'AGND', type: 'ground', desc: 'Analogue ground.', expect: '0 V' },
+  { n: 7, name: 'CH1', type: 'io', desc: 'Analog channel 1 (ADVAL(2), first joystick up/down).', expect: '0 to 1.8 V in', verify: true },
+  { n: 8, name: 'AGND', type: 'ground', desc: 'Analog ground.', expect: '0 V' },
   { n: 9, name: '/LPSTB', type: 'ctrl', desc: 'Light pen strobe to the 6845 (needs a positive pulse longer than 100 ns, SM 7.1).' },
   { n: 10, name: 'PB5 (fire 1)', type: 'io', desc: 'Digital input I1, a fire button to system VIA PB5 (IC3 pin 15).', expect: '+5 V open, 0 V pressed' },
   { n: 11, name: 'VREF', type: 'power', desc: 'Converter reference, from three diodes (about 1.8 V): the full-scale input.', expect: 'About 1.8 V' },
-  { n: 12, name: 'CH2', type: 'io', desc: 'Analogue channel 2 (ADVAL(3)).', expect: '0 to 1.8 V in', verify: true },
+  { n: 12, name: 'CH2', type: 'io', desc: 'Analog channel 2 (ADVAL(3)).', expect: '0 to 1.8 V in', verify: true },
   { n: 13, name: 'PB4 (fire 0)', type: 'io', desc: 'Digital input I0, a fire button to system VIA PB4 (IC3 pin 14).', expect: '+5 V open, 0 V pressed', verify: true },
   { n: 14, name: 'VREF', type: 'power', desc: 'Converter reference (second pin).', expect: 'About 1.8 V' },
-  { n: 15, name: 'CH0', type: 'io', desc: 'Analogue channel 0 (ADVAL(1), first joystick left/right).', expect: '0 to 1.8 V in', verify: true }
+  { n: 15, name: 'CH0', type: 'io', desc: 'Analog channel 0 (ADVAL(1), first joystick left/right).', expect: '0 to 1.8 V in', verify: true }
 ];
 const econetPins = [
   { n: 1, name: 'DATA', type: 'serial', desc: 'Network data, one leg of the balanced pair (with pin 4). Polarity is not given in the Acorn tables.' },
@@ -161,7 +161,7 @@ const printerPins = early => {
   return p.sort((a, b) => a.n - b.n);
 };
 const oneMhzPins = master => {
-  const ev = [['R/W', 'ctrl', 'Read/not write from the CPU, buffered.'], ['1MHzE', 'clock', master ? 'The 1 MHz system clock.' : 'The 1 MHz system clock, 50% square wave.'], ['/NMI', 'ctrl', master ? 'To the CPU NMI.' : 'To the CPU NMI, pulled up by 3K3. Disc and Econet use NMI too.'],
+  const ev = [['R/W', 'ctrl', 'Read/not write from the CPU, buffered.'], ['1MHzE', 'clock', master ? 'The 1 MHz system clock.' : 'The 1 MHz system clock, 50% square wave.'], ['/NMI', 'ctrl', master ? 'To the CPU NMI.' : 'To the CPU NMI, pulled up by 3K3. Disk and Econet use NMI too.'],
     ['/IRQ', 'ctrl', master ? 'To the CPU IRQ. Open-collector devices only.' : 'To the CPU IRQ, pulled up by 3K3. Open-collector devices only.'], ['/PGFC', 'ctrl', 'Low while page FRED ($FC00-$FCFF) is addressed.'], ['/PGFD', 'ctrl', 'Low while page JIM ($FD00-$FDFF) is addressed.'],
     ['/RST', 'ctrl', 'System reset, low at power-up and on BREAK.'], [master ? 'AUDIO' : 'ANALOG IN', 'audio', master ? 'Audio in to the mixer (LK1 position A, as shipped) or out (LK1 B, minimum load 1 k).' : 'Audio input to the sound mixer. On issues 1-3 a 10k resistor to ground cures noise (SM 6.4).']];
   const p = [];
@@ -191,10 +191,10 @@ const discPins = master => {
   const ev = master
     ? [['(/SIDE SEL 8")', 'ctrl', '8-inch side select position; not used for 5.25-inch drives.'], ['(/INDEX 8")', 'ctrl', '8-inch index position.'], ['NC', 'nc', 'Not connected.'], ['/INDEX', 'ctrl', 'Index pulse from the drive (5.25-inch).'],
       ['/DS0', 'ctrl', 'Drive select 0.'], ['/DS1', 'ctrl', 'Drive select 1.'], ['NC', 'nc', 'Not connected.'], ['/MOTOR', 'ctrl', 'Motor on (1770 MO).'], ['/DIR', 'ctrl', 'Step direction.'], ['/STEP', 'ctrl', 'Step pulse.'],
-      ['/WDATA', 'data', 'Write data.'], ['/WGATE', 'ctrl', 'Write gate (write enable).'], ['/TR00', 'ctrl', 'Head at track 0.'], ['/WPROT', 'ctrl', 'Disc write protected.'], ['/RDATA', 'data', 'Read data from the drive.'], ['/SIDE SEL', 'ctrl', 'Side select (5.25-inch).'], ['(/READY 8")', 'ctrl', '8-inch ready position; not used for 5.25-inch drives.']]
+      ['/WDATA', 'data', 'Write data.'], ['/WGATE', 'ctrl', 'Write gate (write enable).'], ['/TR00', 'ctrl', 'Head at track 0.'], ['/WPROT', 'ctrl', 'Disk write protected.'], ['/RDATA', 'data', 'Read data from the drive.'], ['/SIDE SEL', 'ctrl', 'Side select (5.25-inch).'], ['(/READY 8")', 'ctrl', '8-inch ready position; not used for 5.25-inch drives.']]
     : [['LINK S4', 'ctrl', 'Goes to link S4 (8-inch / ready options). Function not traced; check the link survey (SM 5.1).'], ['LINK S10', 'ctrl', 'Goes to link S10. Function not traced.'], ['NC', 'nc', 'No connection drawn.'], ['/INDEX', 'ctrl', 'Index pulse from the drive to the 8271.'],
       ['/DRIVE SEL 0', 'ctrl', 'Drive select 0 (8271 SELECT 0 through a 7438).'], ['/DRIVE SEL 1', 'ctrl', 'Drive select 1.'], ['NC', 'nc', 'No connection drawn.'], ['/LOAD HEAD', 'ctrl', 'Load head / motor on (8271 LOAD HEAD, via link S8).'], ['/DIRECTION', 'ctrl', 'Step direction.'], ['/SEEK STEP', 'ctrl', 'Step pulse.'],
-      ['/WRITE DATA', 'data', 'Write data.'], ['/WRITE ENABLE', 'ctrl', 'Write enable.'], ['/TRACK 0', 'ctrl', 'Head at track 0.'], ['/WRITE PROTECT', 'ctrl', 'Disc write protected.'], ['/READ DATA', 'data', 'Read data from the drive.'], ['/SIDE SELECT', 'ctrl', 'Side select.'], ['LINK S4', 'ctrl', 'Pin 34 also goes to link S4. Function not traced.']];
+      ['/WRITE DATA', 'data', 'Write data.'], ['/WRITE ENABLE', 'ctrl', 'Write enable.'], ['/TRACK 0', 'ctrl', 'Head at track 0.'], ['/WRITE PROTECT', 'ctrl', 'Disk write protected.'], ['/READ DATA', 'data', 'Read data from the drive.'], ['/SIDE SELECT', 'ctrl', 'Side select.'], ['LINK S4', 'ctrl', 'Pin 34 also goes to link S4. Function not traced.']];
   const p = [];
   ev.forEach(([name, type, desc], i) => {
     p.push({ n: 1 + i * 2, name: '0 V', type: 'ground', desc: 'Ground.', expect: '0 V' });
@@ -208,37 +208,37 @@ const MSM_PIN_SRC = [S('Master Series Service Manual, Appendix: Connector pinout
 
 const bbcbConnectors = [
   { id: 'bbcb-uhf', name: 'UHF out (TV)', kind: 'Phono socket, UHF channel 36 PAL', geo: 'rca', verifiedAgainst: 'BBC Microcomputer Service Manual 1.2.1, 3.4; Model B circuit diagram 103,000/C',
-    summary: 'UHF modulator (UM1233) output for a domestic TV on channel 36. Colour comes from the PAL encoder (Q10 17.73 MHz oscillator). No colour on the TV but colour on RGB points at the PAL encoder, not the video ULA.',
+    summary: 'UHF modulator (UM1233) output for a domestic TV on channel 36. Color comes from the PAL encoder (Q10 17.73 MHz oscillator). No color on the TV but color on RGB points at the PAL encoder, not the video ULA.',
     pins: [{ n: 1, name: 'UHF', type: 'video', desc: 'Modulated RF, channel 36.' }, { n: 2, name: '0 V', type: 'ground', desc: 'Screen / ground.', expect: '0 V' }],
     sources: [S('BBC Microcomputer Service Manual, 3.4 RGB + PAL encoder + UHF output', SM), S('Circuit diagram for BBC Microcomputer 103,000/C (UHF, SK2, SK3 area)', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy, UHF area)', CDM)] },
-  { id: 'bbcb-video', name: 'Video out (BNC, SK2)', kind: 'BNC socket: centre and shell', geo: 'custom', pads: [{ n: 1, x: 50, y: 50 }, { n: 2, x: 50, y: 18 }], outline: 'M18 50 A32 32 0 0 1 50 18 A32 32 0 0 1 82 50 A32 32 0 0 1 50 82 A32 32 0 0 1 18 50 Z M10 47 H18 V53 H10 Z M82 47 H90 V53 H82 Z', gender: 'female', verifiedAgainst: 'BBC Microcomputer Service Manual 3.4, 7.1',
-    summary: '1 V composite video for a monochrome monitor: R, G and B summed into grey levels by Q7. Colour (PAL) on this socket needs link S39 on issue 4 boards on, or a 470 pF capacitor from Q9 emitter to Q7 base on earlier issues. The two wires to SK2 must be unplugged to lift the board.',
+  { id: 'bbcb-video', name: 'Video out (BNC, SK2)', kind: 'BNC socket: center and shell', geo: 'custom', pads: [{ n: 1, x: 50, y: 50 }, { n: 2, x: 50, y: 18 }], outline: 'M18 50 A32 32 0 0 1 50 18 A32 32 0 0 1 82 50 A32 32 0 0 1 50 82 A32 32 0 0 1 18 50 Z M10 47 H18 V53 H10 Z M82 47 H90 V53 H82 Z', gender: 'female', verifiedAgainst: 'BBC Microcomputer Service Manual 3.4, 7.1',
+    summary: '1 V composite video for a monochrome monitor: R, G and B summed into gray levels by Q7. Color (PAL) on this socket needs link S39 on issue 4 boards on, or a 470 pF capacitor from Q9 emitter to Q7 base on earlier issues. The two wires to SK2 must be unplugged to lift the board.',
     pins: [{ n: 1, name: 'VIDEO', type: 'video', desc: 'Composite video, 1 V into 75 ohm.', expect: '1 V p-p composite' }, { n: 2, name: '0 V', type: 'ground', desc: 'Shell / ground.', expect: '0 V' }],
     sources: [S('BBC Microcomputer Service Manual, 3.4 and 7.1 Purpose of each interface', SM)] },
   { id: 'bbcb-rgb', name: 'RGB (SK3)', kind: 'DIN-6 240° socket', geo: 'din6', gender: 'female', verifiedAgainst: 'Model B circuit diagram 103,000/C (SK3, DIN viewed from outside); Master Series Service Manual p. 51',
-    summary: 'Separate TTL red, green, blue and composite sync for an RGB monitor. Sync is negative-going 5 V, 4.7 us; link S31 flips it. Pin 6 +5 V is for a few mA only. One colour missing on RGB: check the transistor buffers Q4-Q6, then the video ULA R/G/B pins 14, 12 and 10.',
+    summary: 'Separate TTL red, green, blue and composite sync for an RGB monitor. Sync is negative-going 5 V, 4.7 us; link S31 flips it. Pin 6 +5 V is for a few mA only. One color missing on RGB: check the transistor buffers Q4-Q6, then the video ULA R/G/B pins 14, 12 and 10.',
     pins: rgbPins.map(p => (p.n === 6 ? { ...p, desc: '+5 V for the monitor lead. A few mA only (Service Manual).' } : p)),
     sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, RGB connector SK3', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), RGB connector SK3', CDM), S('BBC Microcomputer Service Manual, 1.2.2 and 7.1', SM), S('Master Series Service Manual, SK9 RGB figure, p. 51', MSM(51))] },
   { id: 'bbcb-rs423', name: 'RS423 serial (SK4)', kind: "5-pin 'domino' DIN socket, pins A-E", geo: 'custom', pads: DOMINO_PADS, outline: DOMINO_OUTLINE, gender: 'female', verifiedAgainst: 'Master Series Service Manual p. 51 (SK10 figure); Model B circuit diagram 103,000/C (SK4); BBC User Guide p. 376',
-    summary: "Acorn's 5-pin domino: four pins at the corners and C in the centre, drawn as in the Master service manual. +/-5 V levels from a DS3691 driver and 88LS120 receiver (Model B). Acorn labels D 'CTS' but it is an output, and E 'RTS' but it is an input: wire D to the other end's CTS, and loop E to D for a three-wire link or printing stops after a few characters. The plug can go in upside down. Optional 180 ohm termination: links S23, S24.",
+    summary: "Acorn's 5-pin domino: four pins at the corners and C in the center, drawn as in the Master service manual. +/-5 V levels from a DS3691 driver and 88LS120 receiver (Model B). Acorn labels D 'CTS' but it is an output, and E 'RTS' but it is an input: wire D to the other end's CTS, and loop E to D for a three-wire link or printing stops after a few characters. The plug can go in upside down. Optional 180 ohm termination: links S23, S24.",
     pins: rs423Pins,
     sources: [S('Master Series Service Manual, SK10 RS423 figure, p. 51', MSM(51)), S('Circuit diagram for BBC Microcomputer 103,000/C, RS423 connector SK4 and IC75/IC74', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), RS423 connector SK4 and IC75/IC74', CDM), S('BBC Microcomputer System User Guide (1984), serial printer connections, p. 376', UG(388)), S('BBC Microcomputer Service Manual, 3.5 and 7.1', SM)] },
   { id: 'bbcb-cassette', name: 'Cassette (SK5)', kind: 'DIN-7 270° socket', geo: 'din7', gender: 'female', verifiedAgainst: 'Model B circuit diagram 103,000/C (SK5); Master Series Service Manual p. 51',
     summary: 'CUTS tape interface at 300 or 1200 baud with relay motor control on pins 6 and 7 (relay rated 24 V 1 A; never mains). Output is on pins 1 and 4 together. A tape fault is most often a damaged LM324 (IC35) or the SERPROC clock; for two BBCs linked directly fit 1.5 k from signal to ground.',
     pins: cassPins,
     sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, cassette connector SK5', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), cassette connector SK5', CDM), S('Master Series Service Manual, SK11 cassette figure, p. 51', MSM(51)), S('BBC Microcomputer Service Manual, 3.5, 6.4 and 7.1', SM)] },
-  { id: 'bbcb-analogue', name: 'Analogue in (SK6)', kind: 'DA-15 socket (15-way D-type)', geo: 'da15', gender: 'female', verifiedAgainst: 'Model B circuit diagram 103,000/C (paddle and light pen connector SK6); Master Series Service Manual p. 52',
+  { id: 'bbcb-analog', name: 'Analog in (SK6)', kind: 'DA-15 socket (15-way D-type)', geo: 'da15', gender: 'female', verifiedAgainst: 'Model B circuit diagram 103,000/C (paddle and light pen connector SK6); Master Series Service Manual p. 52',
     summary: 'Four uPD7002 channels (0 to 1.8 V, about 10 ms each at 12-bit), two fire buttons into the system VIA and the 6845 light pen strobe. The inputs have no protection: more than 5.5 V or less than -0.5 V damages the 7002 (Master SM 7.5.1). One channel wrong is usually the plug or lead.',
     pins: anaPins,
-    sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, SK6', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), SK6', CDM), S('Master Series Service Manual, SK12 analogue in, p. 52', MSM(52)), S('Advanced User Guide, ch. 26 (ADC, joystick connections)', AUG)] },
+    sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, SK6', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), SK6', CDM), S('Master Series Service Manual, SK12 analog in, p. 52', MSM(52)), S('Advanced User Guide, ch. 26 (ADC, joystick connections)', AUG)] },
   { id: 'bbcb-econet', name: 'Econet (SK7)', kind: 'DIN-5 180° socket', geo: 'din5-180', gender: 'female', verifiedAgainst: 'Model B circuit diagram 103,000/C (SK7); Master Series Service Manual p. 52',
     summary: 'Fitted only when the Econet upgrade is in (68B54 IC89, line driver IC93, receivers IC94/IC95). Balanced data on pins 1 and 4, network clock on 3 and 5. With no network clock the ADLC never gets clear-to-send, which looks like a dead station.',
     pins: econetPins, terms: ['econet'],
     sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, Econet connector SK7', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), Econet connector SK7', CDM), S('Master Series Service Manual, SK7 ECONET figure, p. 52', MSM(52)), S('BBC Microcomputer Service Manual, 3.12 Econet', SM)] },
-  { id: 'bbcb-disc', name: 'Disc drive (PL8)', kind: '34-way IDC header under the case', geo: 'custom', pads: hdrPads(34), outline: hdrOutline(34), gender: 'male', verifiedAgainst: 'Model B circuit diagram 103,000/C (PL8)',
+  { id: 'bbcb-disk', name: 'Disc drive (PL8)', kind: '34-way IDC header under the case', geo: 'custom', pads: hdrPads(34), outline: hdrOutline(34), gender: 'male', verifiedAgainst: 'Model B circuit diagram 103,000/C (PL8)',
     summary: 'Shugart-style floppy bus from the 8271 (IC78) through open-collector 7438 drivers. Odd pins are ground. Pins 2, 4 and 34 go to links S4/S10 and were not traced. Drive power comes from the auxiliary power socket, not this header. Drawing: odd row below, pin 1 at the left; find the pin-1 arrow on the board.',
     pins: discPins(false),
-    sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, disc connector PL8', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), disc connector PL8', CDM), S('BBC Microcomputer Service Manual, 3.10 Disc interface', SM)] },
+    sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, disk connector PL8', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), disk connector PL8', CDM), S('BBC Microcomputer Service Manual, 3.10 Disc interface', SM)] },
   { id: 'bbcb-printer', name: 'Printer (PL9)', kind: '26-way IDC header under the case', geo: 'custom', pads: hdrPads(26), outline: hdrOutline(26), gender: 'male', verifiedAgainst: 'Model B circuit diagram 103,000/C (PL9); BBC User Guide p. 375; Master Series Service Manual p. 53',
     summary: 'Centronics-style parallel port on user VIA port A, buffered by a 74LS244 so the data lines are outputs only (sink 10 mA, source 400 uA). Strobe is CA2 through IC27 and Q11; link S1 (issue 4 on) gives direct CA2. A 26-way to 36-way cable maps 1-14 and 19-32 straight through. Issue 1 boards differ: pin 19 ACK and pin 26 not open.',
     pins: printerPins(true),
@@ -277,9 +277,9 @@ const bbcbConnectors = [
     pins: TABS7.map(n => n.startsWith('+5V') ? { n, name: '+5 V', type: 'power', desc: 'One of three +5 V feeds. Most boards join them; some early issue 2 boards have three separate +5 V rails, so check all three.', expect: '+5 V' }
       : n.startsWith('0V') ? { n, name: '0 V', type: 'ground', desc: 'One of three 0 V returns.', expect: '0 V' }
       : { n, name: '-5 V', type: 'power', desc: '-5 V (brown lead on the linear supply). Needed only by cassette, sound, speech and RS423.', expect: '-5 V' }),
-    sources: [S('BBC Microcomputer Service Manual, 1.4, 3.14 Power supply, 6.3 Fault isolation, 6.4', SM), S('RetroTechWiki, BBC Micro Model A/B capacitor guide (lead colours, linear supply)', RTW, true)] },
-  { id: 'bbcb-auxpower', name: 'Auxiliary power out (disc drives)', kind: '6-way AMP socket under the case (mates with AMP 1-350234-9)', geo: 'custom', pads: AUX6_PADS, outline: AUX6_OUTLINE, gender: 'female', verify: true, verifiedAgainst: 'BBC Microcomputer Service Manual 3.14, Figure 10',
-    summary: 'Power for disc drives and add-ons from the switch-mode supply: +5 V 1.25 A, +12 V 1.25 A, -5 V 75 mA, shared with whatever is fitted inside. Early linear supplies have no socket and must be swapped before a disc upgrade (SM 4.4 v). Figure 10 gives no pin numbers: 1-6 here follow the figure left to right, top to bottom, as seen from the back of the cable plug.',
+    sources: [S('BBC Microcomputer Service Manual, 1.4, 3.14 Power supply, 6.3 Fault isolation, 6.4', SM), S('RetroTechWiki, BBC Micro Model A/B capacitor guide (lead colors, linear supply)', RTW, true)] },
+  { id: 'bbcb-auxpower', name: 'Auxiliary power out (disk drives)', kind: '6-way AMP socket under the case (mates with AMP 1-350234-9)', geo: 'custom', pads: AUX6_PADS, outline: AUX6_OUTLINE, gender: 'female', verify: true, verifiedAgainst: 'BBC Microcomputer Service Manual 3.14, Figure 10',
+    summary: 'Power for disk drives and add-ons from the switch-mode supply: +5 V 1.25 A, +12 V 1.25 A, -5 V 75 mA, shared with whatever is fitted inside. Early linear supplies have no socket and must be swapped before a disk upgrade (SM 4.4 v). Figure 10 gives no pin numbers: 1-6 here follow the figure left to right, top to bottom, as seen from the back of the cable plug.',
     pins: [
       { n: 1, name: '0 V (+5 V return)', type: 'ground', desc: '+5 V earth (orange wire in Figure 10).', expect: '0 V' },
       { n: 2, name: '0 V (+12 V return)', type: 'ground', desc: '+12 V earth (red wire).', expect: '0 V' },
@@ -293,10 +293,10 @@ const bbcbConnectors = [
 
 const masterConnectors = [
   { id: 'master-uhf', name: 'UHF out (TV)', kind: 'Phono socket, UHF channel 36', geo: 'rca', verifiedAgainst: 'Master Series Service Manual p. 51, 5.4',
-    summary: 'PAL (or NTSC by LK15) on UHF channel 36 at 1.5 mV into 75 ohm. Colour comes from the CHROMA chip IC40 and the 17.7345 MHz oscillator (VC2, IC43 pin 12).',
+    summary: 'PAL (or NTSC by LK15) on UHF channel 36 at 1.5 mV into 75 ohm. Color comes from the CHROMA chip IC40 and the 17.7345 MHz oscillator (VC2, IC43 pin 12).',
     pins: [{ n: 1, name: 'UHF', type: 'video', desc: 'Modulated RF (inner).' }, { n: 2, name: '0 V', type: 'ground', desc: 'Outer / ground.', expect: '0 V' }],
     sources: [S('Master Series Service Manual, Connector pinouts, TV UHF out, p. 51', MSM(51)), S('Master Series Service Manual, 5.4 Video Output, p. 25', MSM(25))] },
-  { id: 'master-video', name: 'Video out (BNC, SK8)', kind: 'BNC socket: centre and shell', geo: 'custom', pads: [{ n: 1, x: 50, y: 50 }, { n: 2, x: 50, y: 18 }], outline: 'M18 50 A32 32 0 0 1 50 18 A32 32 0 0 1 82 50 A32 32 0 0 1 50 82 A32 32 0 0 1 18 50 Z M10 47 H18 V53 H10 Z M82 47 H90 V53 H82 Z', gender: 'female', verifiedAgainst: 'Master Series Service Manual p. 51',
+  { id: 'master-video', name: 'Video out (BNC, SK8)', kind: 'BNC socket: center and shell', geo: 'custom', pads: [{ n: 1, x: 50, y: 50 }, { n: 2, x: 50, y: 18 }], outline: 'M18 50 A32 32 0 0 1 50 18 A32 32 0 0 1 82 50 A32 32 0 0 1 50 82 A32 32 0 0 1 18 50 Z M10 47 H18 V53 H10 Z M82 47 H90 V53 H82 Z', gender: 'female', verifiedAgainst: 'Master Series Service Manual p. 51',
     summary: '1 V p-p composite video. Picture faults only here: check R147-R150 to the output transistors (SM 7.3).',
     pins: [{ n: 1, name: 'VIDEO', type: 'video', desc: 'Composite video (inner).', expect: '1 V p-p composite' }, { n: 2, name: '0 V', type: 'ground', desc: 'Outer / ground.', expect: '0 V' }],
     sources: [S('Master Series Service Manual, SK8 video out, p. 51', MSM(51))] },
@@ -312,18 +312,18 @@ const masterConnectors = [
     summary: 'Tape in and out with motor relay contacts on 6 and 7. The incoming signal should reach about 1.2 V p-p at SERPROC pin 12 (CASIN). A static network protects the input; a bad part there kills the LM324.',
     pins: cassPins.map(p => (p.n === 1 ? { ...p, desc: 'Cassette signal out (from SERPROC CASOUT, pin 27, through an op-amp buffer).' } : p)),
     sources: [S('Master Series Service Manual, SK11 cassette figure, p. 51', MSM(51)), S('Master Series Service Manual, 7.7 Cassette interface, p. 43', MSM(43))] },
-  { id: 'master-analogue', name: 'Analogue in (SK12)', kind: 'DA-15 socket (15-way D-type)', geo: 'da15', gender: 'female', verifiedAgainst: 'Master Series Service Manual p. 52 (SK12 table)',
+  { id: 'master-analog', name: 'Analog in (SK12)', kind: 'DA-15 socket (15-way D-type)', geo: 'da15', gender: 'female', verifiedAgainst: 'Master Series Service Manual p. 52 (SK12 table)',
     summary: 'Four 7002 channels (10-bit, 0 to 1.8 V as shipped; LK13 lets you supply your own reference up to 2.5 V), fire buttons I0/I1 and the light pen strobe. More than 5.5 V on any pin damages the converter.',
     pins: anaPinsFor(true),
-    sources: [S('Master Series Service Manual, SK12 analogue in, p. 52', MSM(52)), S('Master Series Service Manual, 7.5 Analogue port, p. 40', MSM(41)), S('BBC Microcomputer Service Manual, 7.1 Purpose of each interface (light pen strobe: positive pulse over 100 ns)', SM)] },
+    sources: [S('Master Series Service Manual, SK12 analog in, p. 52', MSM(52)), S('Master Series Service Manual, 7.5 Analog port, p. 40', MSM(41)), S('BBC Microcomputer Service Manual, 7.1 Purpose of each interface (light pen strobe: positive pulse over 100 ns)', SM)] },
   { id: 'master-econet', name: 'Econet (SK7)', kind: 'DIN-5 180° socket', geo: 'din5-180', gender: 'female', verifiedAgainst: 'Master Series Service Manual p. 52 (SK7 figure)',
     summary: 'Wired one-to-one to the Econet module (68B54, drivers and receivers on a daughter board with a 5-way and a 15-way connector). If the module is shifted onto the two spare pins of the long connector it will not work (SM 7.17).',
     pins: econetPins, terms: ['econet'],
     sources: [S('Master Series Service Manual, SK7 ECONET figure, p. 52', MSM(52)), S('Master Series Service Manual, 5.4 ECONET Module and 7.17, p. 27', MSM(27))] },
-  { id: 'master-disc', name: 'Disc drive (PL1)', kind: '34-way IDC header under the front', geo: 'custom', pads: hdrPads(34), outline: hdrOutline(34), gender: 'male', verifiedAgainst: 'Master Series Service Manual p. 53 (PL1 table)',
+  { id: 'master-disk', name: 'Disk drive (PL1)', kind: '34-way IDC header under the front', geo: 'custom', pads: hdrPads(34), outline: hdrOutline(34), gender: 'male', verifiedAgainst: 'Master Series Service Manual p. 53 (PL1 table)',
     summary: 'Shugart bus from the 1770/1772 (IC3) and the 74LS174 drive latch (IC4). Odd pins ground; bracketed names are 8-inch positions not used by 5.25-inch drives. Pull-ups for the outputs are in the drive, so connect one before probing write lines. Only one drive on the cable should have terminators.',
     pins: discPins(true),
-    sources: [S('Master Series Service Manual, PL1 disc drive, p. 53', MSM(53)), S('Master Series Service Manual, 7.8 Disc drive interface, p. 44', MSM(44))] },
+    sources: [S('Master Series Service Manual, PL1 disk drive, p. 53', MSM(53)), S('Master Series Service Manual, 7.8 Disc drive interface, p. 44', MSM(44))] },
   { id: 'master-printer', name: 'Printer (PL3)', kind: '26-way IDC header', geo: 'custom', pads: hdrPads(26), outline: hdrOutline(26), gender: 'male', verifiedAgainst: 'Master Series Service Manual p. 53 (PL3 table)',
     summary: 'Parallel printer on user VIA IC6 port A through a 74LS244 (IC5). Strobe comes from IC6 pin 39 through the 7438 IC2 (pins 11 and 8). Check R11 pulls IC6 pin 40 (ACK) up.',
     pins: printerPins(false),
@@ -374,10 +374,10 @@ const masterConnectors = [
       { n: 'A15', name: '/INFD', type: 'ctrl', activeLow: true, desc: 'Page &FD select for cartridge I/O.' },
       { n: 'A16', name: 'AA14', type: 'addr', desc: 'Memory-controller address line AA14.' },
       { n: 'A17', name: 'CLOCK (LK6)', type: 'clock', desc: 'Main clock link LK6. As shipped (A-B) the board makes its own 16 MHz. With C-D also fitted the cartridges get the 8 MHz clock. With B-D the computer takes its 16 MHz FROM this pin, and a source MUST then be present or the DRAMs can be destroyed.', expect: 'Depends on LK6: 8 MHz with A-B plus C-D; an external 16 MHz in with B-D' },
-      { n: 'A18', name: 'CRTC RST', type: 'ctrl', desc: 'Labelled CRTC RST on the drawing.', verify: true },
-      { n: 'A19', name: 'AN OUT', type: 'audio', desc: 'Analogue (sound) out.' },
-      { n: 'A20', name: 'A GND', type: 'ground', desc: 'Analogue ground.', expect: '0 V' },
-      { n: 'A21', name: 'SPEECH', type: 'audio', desc: 'Audio in to the mixer (labelled SPEECH), through R34 1K.', verify: true },
+      { n: 'A18', name: 'CRTC RST', type: 'ctrl', desc: 'Labeled CRTC RST on the drawing.', verify: true },
+      { n: 'A19', name: 'AN OUT', type: 'audio', desc: 'Analog (sound) out.' },
+      { n: 'A20', name: 'A GND', type: 'ground', desc: 'Analog ground.', expect: '0 V' },
+      { n: 'A21', name: 'SPEECH', type: 'audio', desc: 'Audio in to the mixer (labeled SPEECH), through R34 1K.', verify: true },
       { n: 'A22', name: '0 V', type: 'ground', desc: 'Ground (joined to b22).', expect: '0 V' },
       { n: 'B1', name: '+5 V', type: 'power', desc: '+5 V (joined to a1).', expect: '+5 V' },
       { n: 'B2', name: 'A10', type: 'addr', desc: 'Address bit 10.' }, { n: 'B3', name: 'CD3', type: 'data', desc: 'Cartridge data bit 3.' }, { n: 'B4', name: 'A11', type: 'addr', desc: 'Address bit 11.' },
@@ -391,7 +391,7 @@ const masterConnectors = [
     ],
     sources: [S('Master main PCB circuit diagram 0143,000 sheet 1, SK3/SK4 cartridge', MSCH), S('Master Series Service Manual, 4 Selection links (LK2, LK6, LK12, LK21), pp. 8-10', MSM(8)), S('Master Reference Manual Part 1, F.5 links LK12, LK21', MRM1(245))] },
   { id: 'master-battery', name: 'Clock battery (PL8)', kind: '3-pin 0.1 in header; the battery lead fits either way round', geo: 'custom', pads: BAT3_PADS, outline: BAT3_OUTLINE, gender: 'male', verify: true, verifiedAgainst: 'Master main PCB circuit diagram 0143,000 sheet 2 (PL8); Master Series Service Manual 3 and 7.4.3',
-    summary: 'Battery for the 146818 clock and CMOS RAM. Both outer pins are 0 V and the centre pin is the battery feed, so the plug is reversible, but it must sit on all three pins or the polarity is wrong. Numbers 1-3 follow the drawing top to bottom. With mains off there should be at least 2.6 V at the clock chip. Original packs leak and corrode the casing and board: remove an old pack on sight.',
+    summary: 'Battery for the 146818 clock and CMOS RAM. Both outer pins are 0 V and the center pin is the battery feed, so the plug is reversible, but it must sit on all three pins or the polarity is wrong. Numbers 1-3 follow the drawing top to bottom. With mains off there should be at least 2.6 V at the clock chip. Original packs leak and corrode the casing and board: remove an old pack on sight.',
     pins: [
       { n: 1, name: '0 V', type: 'ground', desc: 'Battery negative.', expect: '0 V' },
       { n: 2, name: 'BAT +', type: 'power', desc: 'Battery positive to the clock supply (through R23 / Q4 on the drawing).', expect: 'About 3 V with the original 3.0 V lithium cell (at least 2.6 V at the clock chip, mains off)' },
@@ -410,9 +410,9 @@ const masterConnectors = [
 const elkExpPins = (() => {
   const P = (n, name, type, desc, x = {}) => ({ n, name, type, desc, ...x });
   return [
-    P(1, '18V AC', 'power', 'Straight from the mains adaptor (via the 18 VAC faston tab). Up to 6 W total, and only if nothing is taken from +5 V. Never feed AC in here.', { expect: 'About 18-19 V AC to pin 3' }),
+    P(1, '18V AC', 'power', 'Straight from the mains adapter (via the 18 VAC faston tab). Up to 6 W total, and only if nothing is taken from +5 V. Never feed AC in here.', { expect: 'About 18-19 V AC to pin 3' }),
     P(2, '18V AC', 'power', 'Joined to pin 1.', { expect: 'About 18-19 V AC' }),
-    P(3, 'AC RETURN', 'power', 'Other leg of the adaptor winding (RETURN tab).'),
+    P(3, 'AC RETURN', 'power', 'Other leg of the adapter winding (RETURN tab).'),
     P(4, 'AC RETURN', 'power', 'Joined to pin 3.'),
     P(5, '-5 V', 'power', '-5 V from the PSU board. 20 mA total for all add-ons.', { expect: '-5 V' }),
     P(6, '-5 V', 'power', 'Joined to pin 5.', { expect: '-5 V' }),
@@ -425,15 +425,15 @@ const elkExpPins = (() => {
     P(13, '÷13 IN', 'clock', '16 MHz divided by 13 (74LS169 IC9 pin 11), for baud rates: divide by 1024 for about 1200 Hz.', { expect: '1.23 MHz (812 ns period)' }),
     P(14, 'PHI OUT', 'clock', 'The 6502 clock from ULA pin 60: low 250 ns, high 250 ns (ROM), 750 or 1250 ns (1 MHz access) or up to 40 us (RAM in MODEs 0-3).', { expect: 'Mixed 2 / 1 MHz, stretched' }),
     P(15, '/RST', 'ctrl', 'System reset, active low, OUTPUT only (ULA pin 58). Low at power-up and on BREAK.', { activeLow: true, expect: '+5 V; 0 V while BREAK is held' }),
-    P(16, '/NMI', 'ctrl', 'Non-maskable interrupt, negative edge, open collector with a 3k3 pull-up inside the ULA. Must be synchronised to PHI OUT.', { activeLow: true, expect: 'High at rest' }),
+    P(16, '/NMI', 'ctrl', 'Non-maskable interrupt, negative edge, open collector with a 3k3 pull-up inside the ULA. Must be synchronized to PHI OUT.', { activeLow: true, expect: 'High at rest' }),
     P(17, '/IRQ', 'ctrl', 'Interrupt request, open collector, 3k3 pull-up inside the ULA. Add-ons must keep it off until software is ready.', { activeLow: true }),
     P(18, 'R/W', 'ctrl', 'Read/not write from the 6502 (pin 34).'),
     P(19, 'D7', 'data', 'Data bus bit 7 (6502 side).'), P(20, 'D6', 'data', 'Data bus bit 6.'), P(21, 'D5', 'data', 'Data bus bit 5.'), P(22, 'D4', 'data', 'Data bus bit 4.'),
     P(23, 'D3', 'data', 'Data bus bit 3.'), P(24, 'D2', 'data', 'Data bus bit 2.'), P(25, 'D1', 'data', 'Data bus bit 1.'), P(26, 'D0', 'data', 'Data bus bit 0.'),
     P(27, '/RDY', 'ctrl', '6502 RDY (active low, reads only), pulled up by R71 3k3. Middle expansion modules reuse it as the buffer enable for the module behind.', { activeLow: true }),
     P(28, 'NC', 'nc', 'No connection on the Electron.'),
-    P(29, 'KEY', 'nc', 'Polarising slot: no contact.'),
-    P(30, 'KEY', 'nc', 'Polarising slot: no contact.'),
+    P(29, 'KEY', 'nc', 'Polarizing slot: no contact.'),
+    P(30, 'KEY', 'nc', 'Polarizing slot: no contact.'),
     P(31, 'A15', 'addr', '6502 address bit 15.'), P(32, 'A14', 'addr', 'Address bit 14.'), P(33, 'A13', 'addr', 'Address bit 13.'), P(34, 'A12', 'addr', 'Address bit 12.'),
     P(35, 'A11', 'addr', 'Address bit 11.'), P(36, 'A10', 'addr', 'Address bit 10.'), P(37, 'A9', 'addr', 'Address bit 9.'), P(38, 'A0', 'addr', 'Address bit 0.'),
     P(39, 'A1', 'addr', 'Address bit 1.'), P(40, 'A2', 'addr', 'Address bit 2.'), P(41, 'A3', 'addr', 'Address bit 3.'), P(42, 'A4', 'addr', 'Address bit 4.'),
@@ -457,20 +457,20 @@ const ELK_PSU_OUTLINE = 'M2 42 H42 V58 H2 Z M64 40 H80 V60 H64 Z M84 40 H100 V60
 const electronConnectors = [
   { id: 'electron-power', name: 'Power in (19V A.C. POWER IN)', kind: 'Round low-voltage power jack on the PSU board, right side of the case', geo: 'barrel', gender: 'female', verify: true,
     verifiedAgainst: 'Electron Service Manual 2 and the power supply board circuit diagram (two-contact "19V AC input power jack")',
-    summary: 'Takes 19 V AC from the Acorn mains adaptor (14 W, moulded square-pin plug, thermal fuse inside). It is AC, so the two contacts have no polarity. The jack sits on the PSU board and its solder joints crack from years of plugging: power that cuts out when the lead moves is this jack. No Acorn document we found gives the plug size: measure before buying a replacement. Pin numbers are the drawing\'s (1 centre, 2 sleeve).',
+    summary: 'Takes 19 V AC from the Acorn mains adapter (14 W, molded square-pin plug, thermal fuse inside). It is AC, so the two contacts have no polarity. The jack sits on the PSU board and its solder joints crack from years of plugging: power that cuts out when the lead moves is this jack. No Acorn document we found gives the plug size: measure before buying a replacement. Pin numbers are the drawing\'s (1 center, 2 sleeve).',
     pins: [
-      { n: 1, name: '19V AC', type: 'power', desc: 'One leg of the adaptor winding, to the bridge rectifier D1-D4 through L1.', expect: 'At least 17 V AC to pin 2 under load' },
+      { n: 1, name: '19V AC', type: 'power', desc: 'One leg of the adapter winding, to the bridge rectifier D1-D4 through L1.', expect: 'At least 17 V AC to pin 2 under load' },
       { n: 2, name: '19V AC', type: 'power', desc: 'Other leg. Either way round.', expect: 'At least 17 V AC to pin 1 under load' }
     ],
     sources: [S('Electron Service Manual, 2 Packaging and installation (19 V AC 50 Hz, 14 W, socket on the right side), p. 2', ESM(8)), S('Electron Service Manual, power supply board circuit diagram, p. 37', ESM(43)), S('Electron Service Manual, 8.1 Power supply (at least 17 V RMS), p. 10', ESM(16)), S('Classic Acorn, Electron ULA repairs (worn joint where the mains lead attaches; secondary)', CLA_ULA, true), S('Dataserve Retro, Acorn Electron power socket (loose or broken sockets; secondary)', DSR_SOCK, true)] },
   { id: 'electron-expansion', name: 'Expansion connector (PL1)', kind: '50-way PCB edge at the rear, odd contacts on top', geo: 'edge-25x25-odd-even', gender: 'male', pin1: 'left',
     verifiedAgainst: 'Acorn Support Group Application Note 015 issue 2, Figure 1; Electron Advanced User Guide Figure 15.1; Electron main PCB circuit diagram (PL1)',
-    summary: 'The whole 6502 bus plus power, the 16 MHz and 16/13 MHz clocks, PHI OUT and the sound output. Acorn calls the component side "Top" (odd pins) and the underside "Bottom" (even pins), so odd numbers are drawn on top. 29 and 30 are the polarising slot. The silk-screen prints 1 at the end next to the PSU board and the 18 VAC tabs, which puts pin 1 at the left looking into the rear of the machine; check that printed 1 before probing, because pins 1-4 carry the raw 18 V AC. A crooked plug can short adjacent pins with power on. Plus 1 (two ROM cartridge slots, Centronics printer, analogue joystick port) and Plus 3 (3.5 in disc, WD1770, ADFS) plug in here. Add-ons may draw 500 mA from +5 V or 6 W from 18 V AC, not both; more blows the adaptor\'s thermal fuse for good.',
+    summary: 'The whole 6502 bus plus power, the 16 MHz and 16/13 MHz clocks, PHI OUT and the sound output. Acorn calls the component side "Top" (odd pins) and the underside "Bottom" (even pins), so odd numbers are drawn on top. 29 and 30 are the polarizing slot. The silk-screen prints 1 at the end next to the PSU board and the 18 VAC tabs, which puts pin 1 at the left looking into the rear of the machine; check that printed 1 before probing, because pins 1-4 carry the raw 18 V AC. A crooked plug can short adjacent pins with power on. Plus 1 (two ROM cartridge slots, Centronics printer, analog joystick port) and Plus 3 (3.5 in disk, WD1770, ADFS) plug in here. Add-ons may draw 500 mA from +5 V or 6 W from 18 V AC, not both; more blows the adapter\'s thermal fuse for good.',
     pins: elkExpPins, terms: ['edge-connector'],
     sources: [S('Acorn Application Note 015, Acorn Electron Expansion, 2.0 pinout and 2.1 signals, pp. 3-5', AN15(3)), S('Electron Advanced User Guide, 15.2 The expansion connector, Figure 15.1, pp. 226-229', EAUG(227)), S('Electron Service Manual, main PCB circuit diagram (PL1) and silk-screen, pp. 31, 35', ESM(37)), S('Acorn Electron Plus 1 Expansion Unit User Guide (archive.org)', PLUS1), S('Acorn Electron Plus 3 Expansion Unit User Guide (archive.org)', PLUS3), S("Chris's Acorns, Acorn Electron (Plus 3: WD1770, ADFS 1.00, 3.5 in drive)", CA_ELK)] },
   { id: 'electron-rgb', name: 'RGB (SK2)', kind: 'DIN-6 240° socket', geo: 'din6', gender: 'female',
     verifiedAgainst: 'Electron Service Manual main PCB circuit diagram (SK2); Electron Advanced User Guide Appendix G (issue 6 board, SK2)',
-    summary: 'TTL red, green, blue through 68R resistors (R47, R46, R45) and composite sync from the 74LS86 IC14 pin 11. Same layout as the BBC Micro. LK3 to 0 V (as shipped) gives the ULA\'s negative sync; LK3 to +5 V inverts it. A picture that rolls or tears only on RGB is LK3 or a dead IC14; one colour missing is the resistor or the ULA pin (RED 3, GREEN 4, BLUE 66).',
+    summary: 'TTL red, green, blue through 68R resistors (R47, R46, R45) and composite sync from the 74LS86 IC14 pin 11. Same layout as the BBC Micro. LK3 to 0 V (as shipped) gives the ULA\'s negative sync; LK3 to +5 V inverts it. A picture that rolls or tears only on RGB is LK3 or a dead IC14; one color missing is the resistor or the ULA pin (RED 3, GREEN 4, BLUE 66).',
     pins: [
       { n: 1, name: 'RED', type: 'video', desc: 'Red, TTL, active high, from ULA pin 3 through R47 68R.', expect: '0 / about 5 V TTL' },
       { n: 2, name: 'GREEN', type: 'video', desc: 'Green from ULA pin 4 through R46 68R.', expect: '0 / about 5 V TTL' },
@@ -482,14 +482,14 @@ const electronConnectors = [
     sources: [S('Electron Service Manual, main PCB circuit diagram, SK2 RGB connector, p. 32', ESM(38)), S('Electron Service Manual, 5.2 PCB links (LK3) and 8.7 d), pp. 7, 13', ESM(13)), S('Electron Advanced User Guide, Appendix G main board circuit diagram (issue 6)', EAUG(285)), S('Retro Repairs and Refurbs, Acorn Electron repair (IC14 sync stuck low; secondary)', RRR_ELK, true)] },
   { id: 'electron-video', name: 'Video out (SK3)', kind: 'Phono socket', geo: 'rca', gender: 'female',
     verifiedAgainst: 'Electron Service Manual 3.6 and main PCB circuit diagram (SK3)',
-    summary: 'Composite video, nominally 1 V p-p into 75 ohm, from the emitter follower Q8 (BC309) through R49 68R. Monochrome as shipped; making LK4 adds the chroma for a colour composite monitor, and is also the service manual\'s way to check the PAL encoder.',
-    pins: [{ n: 1, name: 'VIDEO', type: 'video', desc: 'Composite video (centre).', expect: '1 V p-p composite' }, { n: 2, name: '0 V', type: 'ground', desc: 'Shell / ground.', expect: '0 V' }],
+    summary: 'Composite video, nominally 1 V p-p into 75 ohm, from the emitter follower Q8 (BC309) through R49 68R. Monochrome as shipped; making LK4 adds the chroma for a color composite monitor, and is also the service manual\'s way to check the PAL encoder.',
+    pins: [{ n: 1, name: 'VIDEO', type: 'video', desc: 'Composite video (center).', expect: '1 V p-p composite' }, { n: 2, name: '0 V', type: 'ground', desc: 'Shell / ground.', expect: '0 V' }],
     sources: [S('Electron Service Manual, 3.6 Video outputs, p. 4', ESM(10)), S('Electron Service Manual, 5.2 PCB links (LK4), p. 7', ESM(13)), S('Electron Service Manual, main PCB circuit diagram, SK3 video out, p. 32', ESM(38))] },
   { id: 'electron-uhf', name: 'UHF out (TV)', kind: 'Phono socket on the UM1233-E36 modulator (SK4)', geo: 'rca', gender: 'female',
     verifiedAgainst: 'Electron Service Manual 3.1, 3.6 and parts list item 102',
     summary: 'PAL on UHF channel 36 (vision carrier 591.25 MHz), 1.0 to 2.5 mV into 75 ohm, from a UM1233-E36 modulator. RGB good but no TV picture: check the modulator input waveform (SM 8.7 b). Black and white only: the chroma circuit (17.7345 MHz at 74S04 IC8 pin 6, then the 74S74 IC11). White noise dots and no picture: the modulator. Corroded modulator cans are common.',
-    pins: [{ n: 1, name: 'UHF', type: 'video', desc: 'Modulated RF (centre).' }, { n: 2, name: '0 V', type: 'ground', desc: 'Shell / ground.', expect: '0 V' }],
-    sources: [S('Electron Service Manual, 3.1 and 3.6 Video outputs, pp. 3-4', ESM(10)), S('Electron Service Manual, 8.7 Video b) and c), pp. 11-13', ESM(17)), S('Electron Service Manual, parts list item 102 (UM1233-E36, SK4), p. 44', ESM(50)), S('Electron User Group, Trouble shooting (modulator noise; no colour from IC11 or IC12; secondary)', EUG_TROU, true)] },
+    pins: [{ n: 1, name: 'UHF', type: 'video', desc: 'Modulated RF (center).' }, { n: 2, name: '0 V', type: 'ground', desc: 'Shell / ground.', expect: '0 V' }],
+    sources: [S('Electron Service Manual, 3.1 and 3.6 Video outputs, pp. 3-4', ESM(10)), S('Electron Service Manual, 8.7 Video b) and c), pp. 11-13', ESM(17)), S('Electron Service Manual, parts list item 102 (UM1233-E36, SK4), p. 44', ESM(50)), S('Electron User Group, Trouble shooting (modulator noise; no color from IC11 or IC12; secondary)', EUG_TROU, true)] },
   { id: 'electron-cassette', name: 'Cassette (SK1)', kind: 'DIN-7 270° socket', geo: 'din7', gender: 'female',
     verifiedAgainst: 'Electron Service Manual main PCB circuit diagram (SK1) and 3.5; Electron Advanced User Guide Appendix G (SK1)',
     summary: '1200 baud CUTS tape interface with relay motor control on pins 6 and 7 (contact rated 1 A at 24 V DC; never mains). Output (about 200 mV p-p) is on pins 1 and 4 together, from LM324 IC13 pin 1. Input (50 mV to 5 V p-p) on pin 3 through R64 to the LM324 amplifier and on to ULA pin 59. Pin 5 is not connected. A tape fault with everything else working is usually the -5 V rail, the LM324 or the 16/13 MHz clock (SM 8.8).',
@@ -510,13 +510,13 @@ const electronConnectors = [
     sources: [S('Electron Service Manual, main PCB circuit diagram, PL2 keyboard connector, p. 31', ESM(37)), S('Electron Service Manual, 4 Disassembly and 8.9 Keyboard, pp. 6, 14', ESM(20)), S('Electron Service Manual, keyboard matrix, p. 39', ESM(45)), S('Electron Advanced User Guide, Appendix G main board circuit diagram (PL2)', EAUG(285))] },
   { id: 'electron-psu-board', name: 'PSU board to main board (PL3 and 18 VAC tabs)', kind: '3-way 0.156 in locking header PL3 plus two faston tabs', geo: 'custom', pads: ELK_PSU_PADS, outline: ELK_PSU_OUTLINE, gender: 'male', verify: true,
     verifiedAgainst: 'Electron Service Manual 4 Disassembly; PSU board circuit diagram; main PCB silk-screen (PL3 -5V 0V +5V; 18VAC OUT, RETURN)',
-    summary: 'The PSU board feeds the main board through PL3 (red +5 V, black 0 V, blue -5 V) and two grey leads to faston tabs marked 18 VAC and RETURN, which go only to expansion pins 1-4. Acorn gives no pin numbers; the labels are the silk-screen\'s and the positions here are a schematic. To test the supply, unplug PL3 and load +5 V with 10 ohm 2.5 W and -5 V with 47 ohm (SM 8.1).',
+    summary: 'The PSU board feeds the main board through PL3 (red +5 V, black 0 V, blue -5 V) and two gray leads to faston tabs marked 18 VAC and RETURN, which go only to expansion pins 1-4. Acorn gives no pin numbers; the labels are the silk-screen\'s and the positions here are a schematic. To test the supply, unplug PL3 and load +5 V with 10 ohm 2.5 W and -5 V with 47 ohm (SM 8.1).',
     pins: [
       { n: '+5V', name: '+5 V', type: 'power', desc: 'Red lead. The main board draws 700-900 mA.', expect: '+4.75 to +5.25 V, under 50 mV noise' },
       { n: '0V', name: '0 V', type: 'ground', desc: 'Black lead.', expect: '0 V' },
       { n: '-5V', name: '-5 V', type: 'power', desc: 'Blue lead. The board draws about 25 mA; a fault shows as a cassette fault.', expect: '-5 V' },
-      { n: '18VAC', name: '18 VAC', type: 'power', desc: 'Grey lead: adaptor AC, to expansion pins 1-2 only.', expect: 'At least 17 V AC to RETURN' },
-      { n: 'RETURN', name: 'AC RETURN', type: 'power', desc: 'Grey lead: adaptor AC return, to expansion pins 3-4 only.' }
+      { n: '18VAC', name: '18 VAC', type: 'power', desc: 'Gray lead: adapter AC, to expansion pins 1-2 only.', expect: 'At least 17 V AC to RETURN' },
+      { n: 'RETURN', name: 'AC RETURN', type: 'power', desc: 'Gray lead: adapter AC return, to expansion pins 3-4 only.' }
     ],
     sources: [S('Electron Service Manual, 4 Disassembly and assembly, p. 6', ESM(12)), S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)), S('Electron Service Manual, main PCB silk-screen and power supply board circuit diagram, pp. 35, 37', ESM(41))] }
 ];
@@ -547,11 +547,11 @@ RCS.add({
       cpu: '6502A, clocked by the ULA: 2 MHz from ROM, 1 MHz for RAM and I/O, held while the screen reads RAM in MODEs 0-3',
       ram: '32 KB: four 4164 (64K x 1) at IC4-IC7 run as a 4-bit RAM, two accesses per byte (one 64K x 4 TM4164EA4 on issue 6 boards)',
       rom: '32 KB OS + BASIC in one mask ROM (IC2, Acorn 201,621); keyboard and BASIC are paged ROMs 8-11',
-      video: 'ULA: MODEs 0-6 bitmapped (up to 640 x 256, 2/4/16 colours), no MODE 7; RGB, composite and UHF channel 36',
+      video: 'ULA: MODEs 0-6 bitmapped (up to 640 x 256, 2/4/16 colors), no MODE 7; RGB, composite and UHF channel 36',
       sound: 'ULA square-wave tone, one channel, to a 1.5 in speaker',
       os: 'Acorn MOS 1.00 with BBC BASIC (the BBC Micro BASIC II)',
       chips: ['elk_ula', 'cpu6502', 'rom23256', 'dram4164', 'ttl7404', 'ttl74169', 'ttl7474', 'ttl7486', 'lm324'],
-      tagline: 'A BBC Micro squeezed into one Ferranti ULA in a clip-down socket; most dead Electrons are that socket, the power jack or the adaptor\'s thermal fuse.' }
+      tagline: 'A BBC Micro squeezed into one Ferranti ULA in a clip-down socket; most dead Electrons are that socket, the power jack or the adapter\'s thermal fuse.' }
   },
 
   chips: {
@@ -572,7 +572,7 @@ RCS.add({
         { n: 3, name: 'NC', type: 'nc', dir: '-', desc: 'Not connected on the Master (phi1 out on an NMOS 6502).', verify: true },
         { n: 4, name: '/IRQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Interrupt request (TP4). The memory controller, RTC (via LK4) and VIAs pull it.', terms: ['irq'], probe: 'Pulses at least every 10 ms from the system VIA; stuck low or high = fault.', verify: true },
         { n: 5, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground (Master supply table lists 1, 5, 21).', terms: ['gnd'] },
-        { n: 6, name: '/NMI', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Non-maskable interrupt (TP3): disc DRQ and Econet.', terms: ['nmi'], probe: 'High at rest; held low = INTRQ/DRQ stuck (SM 7.8, 7.17).' },
+        { n: 6, name: '/NMI', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Non-maskable interrupt (TP3): disk DRQ and Econet.', terms: ['nmi'], probe: 'High at rest; held low = INTRQ/DRQ stuck (SM 7.8, 7.17).' },
         { n: 7, name: 'SYNC', type: 'ctrl', dir: 'out', desc: 'High on opcode fetch (TP5). The memory controller uses it for the shadow RAM rules.', probe: 'Toggling = CPU fetching instructions.' },
         { n: 8, name: 'VDD', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'] },
         { n: 9, name: 'A0', type: 'addr', dir: 'out', desc: 'Address bit 0.' },
@@ -610,17 +610,17 @@ RCS.add({
       ] },
 
     vidproc: { id: 'vidproc', name: 'Video ULA (Ferranti 5C094 / VLSI VC2069 VIDPROC)', short: 'VIDPROC', family: 'Acorn custom ULA',
-      role: 'Serialises screen bytes into RGB through a 16-entry palette, mixes in teletext, draws the cursor and divides 16 MHz into 8, 4, 2 and 1 MHz.', pkg: 'DIP-28',
+      role: 'Serializes screen bytes into RGB through a 16-entry palette, mixes in teletext, draws the cursor and divides 16 MHz into 8, 4, 2 and 1 MHz.', pkg: 'DIP-28',
       machines: ['bbcb', 'bbcmaster'], location: { bbcb: 'IC6', bbcmaster: 'IC42' },
       summary: 'All the system clocks come out of this chip, so a dead one stops the whole machine. The original Ferranti 5C094 runs hot and needs its heatsink: twinkling characters or a smeared cursor that appear after months of use usually mean the heatsink has come loose (SM 6.4). Later VLSI VIDPROC parts (VC2023 needs a patch wire, VC2069 is a direct swap; Acorn part 201,647) run cool. Registers: control at &FE20, palette at &FE21.',
-      fails: ['Dead machine: no 1/2/4/8 MHz clocks', 'Twinkling characters or smeared cursor in MODEs 0-2', 'Wrong or missing colours on all outputs', 'Fine on RGB in MODE 7 only (teletext path) or never in MODE 7'],
+      fails: ['Dead machine: no 1/2/4/8 MHz clocks', 'Twinkling characters or smeared cursor in MODEs 0-2', 'Wrong or missing colors on all outputs', 'Fine on RGB in MODE 7 only (teletext path) or never in MODE 7'],
       heat: 'hot',
       verifiedAgainst: 'Model B circuit diagram 103,000/C (IC6 pins 1-3, 9-28); BBC Service Manual 6.3 (pins 4-7); Master Series Service Manual 7.1.2 and 7.3.4 (pins 4-8, 9-14); Master PCB diagram supply table (1, 16)',
       datasheets: [S('Circuit diagram for BBC Microcomputer 103,000/C, IC6 video processor', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), IC6 video processor', CDM), S('Master Series Service Manual, 7.1.2 and 7.3.4, pp. 32, 39', MSM(32)), S('BeebWiki, Video ULA (pinout, registers; secondary)', BW_VULA, true)],
       replacements: [
         { part: 'VLSI VC2069 VIDPROC', kind: 'pin-compatible', verify: true, note: 'Functionally and physically compatible with the Ferranti 5C094 Video ULA (Acorn part 201,647), per BeebWiki. No maker data sheet for either part was found.', source: S('BeebWiki, Video ULA (5C094, VC 2023, VC 2069)', BW_VULA) },
         { part: 'VLSI VC2023 VIDPROC', kind: 'adapter', verify: true, note: 'The first VLSI revision needed a patch wire soldered on the main board; the source does not say where the wire goes. Fit a VC2069 where you can; a board that carries the wire was modified for a VC2023.', source: S('BeebWiki, Video ULA (5C094, VC 2023, VC 2069)', BW_VULA) },
-        { part: 'VideoNuLA', kind: 'modern', note: 'Rob Coleman\'s board replaces the Video ULA or VIDPROC in IC6 of the Model B and adds 12-bit colour; it needs a flying lead to the A1 address line.', source: S('BeebWiki, Video ULA, Third-party hardware', BW_VULA) }
+        { part: 'VideoNuLA', kind: 'modern', note: 'Rob Coleman\'s board replaces the Video ULA or VIDPROC in IC6 of the Model B and adds 12-bit color; it needs a flying lead to the A1 address line.', source: S('BeebWiki, Video ULA, Third-party hardware', BW_VULA) }
       ],
       pins: [
         { n: 1, name: 'GND', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'] },
@@ -629,7 +629,7 @@ RCS.add({
         { n: 4, name: '1MHz', type: 'clock', dir: 'out', desc: '1 MHz out (Model B: used for the teletext chip).', terms: ['clock'], probe: 'Clean 1 MHz TTL square wave.' },
         { n: 5, name: '2MHz', type: 'clock', dir: 'out', desc: '2 MHz out (CPU clock source).', terms: ['clock'], probe: 'Clean 2 MHz.' },
         { n: 6, name: '4MHz', type: 'clock', dir: 'out', desc: '4 MHz out (DRAM timing).', terms: ['clock'], probe: 'Clean 4 MHz.' },
-        { n: 7, name: '8MHz', type: 'clock', dir: 'out', desc: '8 MHz out (DRAM timing, disc).', terms: ['clock'], probe: 'Clean 8 MHz.' },
+        { n: 7, name: '8MHz', type: 'clock', dir: 'out', desc: '8 MHz out (DRAM timing, disk).', terms: ['clock'], probe: 'Clean 8 MHz.' },
         { n: 8, name: '16MHz', type: 'clock', dir: 'in', desc: '16 MHz master clock in from the crystal oscillator (IC43 on the Model B).', terms: ['crystal'], probe: 'About 4 V p-p, 16 MHz. Missing = RAS/CAS stuck and DRAM can overheat; do not run it long.' },
         { n: 9, name: 'BIN', type: 'video', dir: 'in', desc: 'Blue in from the SAA5050 (teletext).' },
         { n: 10, name: 'B', type: 'video', dir: 'out', desc: 'Blue out to the RGB buffers and PAL encoder.' },
@@ -685,15 +685,15 @@ RCS.add({
         { n: 24, name: 'RTSI', type: 'serial', dir: 'in', desc: 'RTS in from the ACIA /RTS.' },
         { n: 25, name: 'CLK', type: 'clock', dir: 'in', desc: '1.23 MHz reference (16 MHz / 13 from a counter, or the Master CHROMA chip by LK14).', terms: ['clock'], probe: '1.2288 MHz, 812 ns period (SM 6.4).' },
         { n: 26, name: 'TXC', type: 'clock', dir: 'out', desc: 'Transmit clock to the ACIA.' },
-        { n: 27, name: 'CAS OUT', type: 'audio', dir: 'out', desc: 'Synthesised cassette tones.' },
+        { n: 27, name: 'CAS OUT', type: 'audio', dir: 'out', desc: 'Synthesized cassette tones.' },
         { n: 28, name: 'VCC', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'] }
       ] },
 
     saa5050: { id: 'saa5050', name: 'Mullard SAA5050 teletext character generator', short: 'SAA5050', family: 'Mullard / Philips NMOS',
-      role: 'Teletext character generator: turns 7-bit character codes into rounded characters, colours and block graphics.', pkg: 'DIP-28',
+      role: 'Teletext character generator: turns 7-bit character codes into rounded characters, colors and block graphics.', pkg: 'DIP-28',
       machines: ['bbcb', 'bbcmaster'], location: { bbcb: 'IC5', bbcmaster: 'IC32' },
       summary: 'Takes 7-bit codes latched from RAM (IC15 on the Model B), a 6 MHz dot clock on TR6 and 1 MHz on F1, and drives open-drain R, G, B outputs into the video ULA. It needs no RAM of its own; 1 KB of screen memory holds the page. Faults that appear only in MODE 7 (and 135 on the Master) are this chip, its 6 MHz clock or the latch. A cursor but no text = no 6 MHz. On the BBC: SUPERIMPOSE (pin 2) is held low, DATA and DLIM (3, 11) are tied off, BCS (15) is pulled up and Y and BLAN (21, 25) are unused; D1-D7 carry BBC data bits D0-D6; GLR (12) comes from 6845 HSYNC through an inverter and DEW (13) from 6845 VSYNC; R, G, B (24, 23, 22) go to VIDPROC RIN, GIN, BIN; TR6 (19) is made from 8 and 4 MHz (IC40/IC38 on the Model B), uneven, with no part narrower than about 40 ns (Master SM 7.3.6).',
-      fails: ['MODE 7 shows a cursor but no text', 'Broken or unstable teletext characters', 'Wrong colours only in MODE 7'],
+      fails: ['MODE 7 shows a cursor but no text', 'Broken or unstable teletext characters', 'Wrong colors only in MODE 7'],
       heat: 'warm',
       verifiedAgainst: 'Philips SAA5050 data sheet, August 1978 (pinning and application data); Model B circuit diagram 103,000/C (IC5); Master Series Service Manual 7.3.4/7.3.6',
       datasheets: [S('Philips Semiconductors and ICs Part 6b (1979), SAA5050 data sheet, pinning p. 2', PHIL79), S('Circuit diagram for BBC Microcomputer 103,000/C, IC5', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), IC5', CDM)],
@@ -732,17 +732,17 @@ RCS.add({
         { n: 28, name: 'DE', type: 'ctrl', dir: 'in', desc: 'Display enable input.' }
       ] },
 
-    fdc8271: { id: 'fdc8271', name: 'Intel 8271 floppy disc controller', short: '8271', family: 'Intel MCS-80/85 peripheral (NMOS)',
-      role: 'Single-density (FM) floppy disc controller with internal CRC, seek and head positioning.', pkg: 'DIP-40',
-      machines: ['bbcb'], location: { bbcb: 'IC78 (disc upgrade)' },
-      summary: 'A high-level single-density controller at &FE80-&FE84 with internal CRC and head positioning; the BBC uses its non-DMA mode and services each byte on NMI. Data separation is external (IC81, IC82, IC87). Disc upgrades also need the DFS ROM, MOS 1.2 and a supply with the auxiliary socket. Double density needs a 1770 board instead. On the Model B: SELECT 0 (pin 2) drives disc connector pin 10 through a 7438, INT (pin 11) goes to the CPU NMI and /CS (pin 24) decodes &FE80-&FE9F.',
-      fails: ['Disc fault / Drive fault errors on every disc', 'Drive light never comes on', 'Reads but will not write'],
+    fdc8271: { id: 'fdc8271', name: 'Intel 8271 floppy disk controller', short: '8271', family: 'Intel MCS-80/85 peripheral (NMOS)',
+      role: 'Single-density (FM) floppy disk controller with internal CRC, seek and head positioning.', pkg: 'DIP-40',
+      machines: ['bbcb'], location: { bbcb: 'IC78 (disk upgrade)' },
+      summary: 'A high-level single-density controller at &FE80-&FE84 with internal CRC and head positioning; the BBC uses its non-DMA mode and services each byte on NMI. Data separation is external (IC81, IC82, IC87). Disk upgrades also need the DFS ROM, MOS 1.2 and a supply with the auxiliary socket. Double density needs a 1770 board instead. On the Model B: SELECT 0 (pin 2) drives disk connector pin 10 through a 7438, INT (pin 11) goes to the CPU NMI and /CS (pin 24) decodes &FE80-&FE9F.',
+      fails: ['Disc fault / Drive fault errors on every disk', 'Drive light never comes on', 'Reads but will not write'],
       heat: 'warm',
       verifiedAgainst: 'Intel 1979 Peripheral Design Handbook, 8271 data sheet pp. 1-108 to 1-109 (pin configuration and pin descriptions)',
       datasheets: [S('Intel 1979 Peripheral Design Handbook, 8271 Programmable Floppy Disk Controller, p. 1-108', INTEL79), S('Advanced User Guide, 25.1 The 8271 floppy disc controller', AUG)],
       replacements: [
         { part: 'Acorn 1770 Disc Interface Module (kit 0433,050)', kind: 'adapter', note: 'Plugs into the 8271 socket IC78 once the 8271 is out, with the 1770 DFS ROM. Cut link S9, take the 74LS393 out of IC86 and fit a wire link there between pins 1 and 4. Model B only (the B+ has a 1770); issue 2 and 3 boards may need PCB changes.', source: S('Acorn BBC Model B 1770 Disc Interface Upgrade Kit fitting instructions 0433,050, sections 3-4, pp. 6-7', `${KIT1770}#page=8`) },
-        { part: 'RetroClinic 177x disc interface', kind: 'modern', note: 'Fits the 8271 socket with a VLSI 1772; sold with Acorn 177x DFS or Watford DDFS ROMs. On a machine with no 8271 interface fitted, the kit adds the missing logic chips.', source: S('Retro-Kit, RetroClinic 1770 Disc Interface', RC1770) }
+        { part: 'RetroClinic 177x disk interface', kind: 'modern', note: 'Fits the 8271 socket with a VLSI 1772; sold with Acorn 177x DFS or Watford DDFS ROMs. On a machine with no 8271 interface fitted, the kit adds the missing logic chips.', source: S('Retro-Kit, RetroClinic 1770 Disc Interface', RC1770) }
       ],
       pins: [
         { n: 1, name: 'FAULT RESET/OPO', type: 'io', dir: 'out', desc: 'Optional fault reset or general output.' },
@@ -770,21 +770,21 @@ RCS.add({
         { n: 30, name: 'COUNT/OPI', type: 'io', dir: 'in', desc: 'Seek count input or optional input.' },
         { n: 31, name: 'TRK0', type: 'ctrl', dir: 'in', desc: 'Head over track 0.' },
         { n: 32, name: 'READY 0', type: 'ctrl', dir: 'in', desc: 'Drive 0 ready.' },
-        { n: 33, name: 'WR PROTECT', type: 'ctrl', dir: 'in', desc: 'Disc write protected.' },
+        { n: 33, name: 'WR PROTECT', type: 'ctrl', dir: 'in', desc: 'Disk write protected.' },
         { n: 34, name: 'INDEX', type: 'ctrl', dir: 'in', desc: 'Index pulse.' },
         { n: 35, name: 'WR ENABLE', type: 'ctrl', dir: 'out', desc: 'Write enable to the drive.' },
         { n: 36, name: 'SEEK/STEP', type: 'ctrl', dir: 'out', desc: 'Step pulses.' },
-        { n: 37, name: 'DIRECTION', type: 'ctrl', dir: 'out', desc: 'High = step in towards the spindle.' },
+        { n: 37, name: 'DIRECTION', type: 'ctrl', dir: 'out', desc: 'High = step in toward the spindle.' },
         { n: 38, name: 'LOAD HEAD', type: 'ctrl', dir: 'out', desc: 'Load head.' },
         { n: 39, name: 'LOW CURRENT', type: 'ctrl', dir: 'out', desc: 'High at track 43 and up.' },
         { n: 40, name: 'VCC', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'] }
       ] },
 
-    fdc1770: { id: 'fdc1770', name: 'WD1770 / WD1772 floppy disc controller', short: '1770', family: 'Western Digital (NMOS)',
-      role: 'Single and double density floppy disc controller with built-in data separator and write precompensation.', pkg: 'DIP-28',
+    fdc1770: { id: 'fdc1770', name: 'WD1770 / WD1772 floppy disk controller', short: '1770', family: 'Western Digital (NMOS)',
+      role: 'Single and double density floppy disk controller with built-in data separator and write precompensation.', pkg: 'DIP-28',
       machines: ['bbcmaster', 'bbcb'], location: { bbcmaster: 'IC3', bbcb: '1770 upgrade daughter board (replaces the 8271)' },
       summary: 'A 179X-compatible controller with its own data separator and write precompensation, needing an 8 MHz clock on pin 18. The 1772 is the same chip with faster step rates. On the Master DRQ (pin 27) is inverted onto the CPU NMI by the I/O controller; INTRQ stuck high masks DRQ. Drive select and side come from a 74LS174 latch (IC4). Master probing (SM 7.8): /CS (pin 1) goes validly low when the filing system accesses the chip; the 8 MHz on pin 18 comes from IC19 pin 4 and VIDPROC pin 7; DRQ (pin 27) is low, going high once every 32 us while reading.',
-      fails: ['Drive light comes on but no catalogue', 'Catalogue reads but data is corrupt', 'Reads but will not write'],
+      fails: ['Drive light comes on but no catalog', 'Catalog reads but data is corrupt', 'Reads but will not write'],
       heat: 'warm',
       verifiedAgainst: 'Western Digital WD1770/1772 data sheet, 1984 Storage Management Products Handbook pp. 43-44 (pin designation and pin table); Master Series Service Manual 7.8',
       datasheets: [S('Western Digital 1984 Storage Products Handbook, WD1770/1772 data sheet, pp. 43-44', WD84), S('Master Series Service Manual, 7.8 Disc drive interface, p. 44', MSM(44))],
@@ -803,7 +803,7 @@ RCS.add({
         { n: 16, name: 'STEP', type: 'ctrl', dir: 'out', desc: 'Step pulse per head step.' },
         { n: 17, name: 'DIRC', type: 'ctrl', dir: 'out', desc: 'Direction: high = stepping in.' },
         { n: 18, name: 'CLK', type: 'clock', dir: 'in', desc: '8 MHz, 50% duty clock.', terms: ['clock'], probe: '8 MHz.' },
-        { n: 19, name: '/RD', type: 'data', dir: 'in', activeLow: true, desc: 'Raw read data from the drive.', probe: 'Wiggles while reading a disc.' },
+        { n: 19, name: '/RD', type: 'data', dir: 'in', activeLow: true, desc: 'Raw read data from the drive.', probe: 'Wiggles while reading a disk.' },
         { n: 20, name: 'MO', type: 'ctrl', dir: 'out', desc: 'Motor on.' },
         { n: 21, name: 'WG', type: 'ctrl', dir: 'out', desc: 'Write gate.' },
         { n: 22, name: 'WD', type: 'data', dir: 'out', desc: 'Write data (FM or MFM pulses).' },
@@ -818,11 +818,11 @@ RCS.add({
     adc7002: { id: 'adc7002', name: 'NEC uPD7002 4-channel A/D converter', short: '7002', family: 'NEC CMOS',
       role: 'Four-channel integrating A/D converter, 8 or 10-bit, with a microprocessor bus interface.', pkg: 'DIP-28',
       machines: ['bbcb', 'bbcmaster'], location: { bbcb: 'IC73', bbcmaster: 'IC49' },
-      summary: 'An 8 or 10-bit integrating converter (the BBC reads a 12-bit field; trust 10 bits at most). Reference is about 1.8 V from three diodes. End of conversion interrupts through system VIA CB1. It sits straight on the analogue port with no protection: any input above 5.5 V or below -0.5 V can kill it. On the BBC: registers at &FEC0-&FEC2; XI (pin 2) takes 1 MHz (Master SM 7.5.1); the integrating capacitor (C25 / C49) sits on pins 4 and 6; VREF (pin 8) should be a quiet 1.8 V to pin 9; CH0-CH3 (pins 13-10) go to analogue port pins 15, 7, 12, 4; /CS (pin 23) comes from the Master I/O controller IC15 pin 35; /EOC (pin 28) goes to system VIA CB1.',
+      summary: 'An 8 or 10-bit integrating converter (the BBC reads a 12-bit field; trust 10 bits at most). Reference is about 1.8 V from three diodes. End of conversion interrupts through system VIA CB1. It sits straight on the analog port with no protection: any input above 5.5 V or below -0.5 V can kill it. On the BBC: registers at &FEC0-&FEC2; XI (pin 2) takes 1 MHz (Master SM 7.5.1); the integrating capacitor (C25 / C49) sits on pins 4 and 6; VREF (pin 8) should be a quiet 1.8 V to pin 9; CH0-CH3 (pins 13-10) go to analog port pins 15, 7, 12, 4; /CS (pin 23) comes from the Master I/O controller IC15 pin 35; /EOC (pin 28) goes to system VIA CB1.',
       fails: ['ADVAL reads nonsense on every channel', 'One channel stuck', 'Joystick fire buttons work but positions do not'],
       heat: 'cool',
       verifiedAgainst: 'NEC 1982 Microcomputer Catalog, uPD7002 data sheet p. 483 (pin configuration and names); Model B circuit diagram 103,000/C (IC73); Master Series Service Manual 7.5',
-      datasheets: [S('NEC 1982 Microcomputer Catalog, uPD7002 10-bit A/D converter, p. 483', NEC82), S('Master Series Service Manual, 7.5 Analogue port, p. 40', MSM(40))],
+      datasheets: [S('NEC 1982 Microcomputer Catalog, uPD7002 10-bit A/D converter, p. 483', NEC82), S('Master Series Service Manual, 7.5 Analog port, p. 40', MSM(40))],
       pins: [
         { n: 1, name: 'X0', type: 'clock', dir: 'in', desc: 'External clock input (the data sheet lists X0 and X1 together as the clock input). Not connected on the BBC boards, which feed the clock to pin 2.', terms: ['clock'] },
         { n: 2, name: 'XI', type: 'clock', dir: 'in', desc: 'External clock input.', terms: ['clock'] },
@@ -831,12 +831,12 @@ RCS.add({
         { n: 5, name: 'GD', type: 'io', dir: '-', desc: 'Guard.' },
         { n: 6, name: 'CI', type: 'io', dir: '-', desc: 'Integrating capacitor, other end.' },
         { n: 7, name: 'GD', type: 'io', dir: '-', desc: 'Guard.' },
-        { n: 8, name: 'VREF', type: 'power', dir: 'in', desc: 'Reference voltage input (to analogue ground, pin 9).' },
-        { n: 9, name: 'GND', type: 'ground', dir: '-', desc: 'Analogue ground.', terms: ['gnd'] },
-        { n: 10, name: 'CH3', type: 'io', dir: 'in', desc: 'Analogue input channel 3.' },
-        { n: 11, name: 'CH2', type: 'io', dir: 'in', desc: 'Analogue input channel 2.' },
-        { n: 12, name: 'CH1', type: 'io', dir: 'in', desc: 'Analogue input channel 1.' },
-        { n: 13, name: 'CH0', type: 'io', dir: 'in', desc: 'Analogue input channel 0.' },
+        { n: 8, name: 'VREF', type: 'power', dir: 'in', desc: 'Reference voltage input (to analog ground, pin 9).' },
+        { n: 9, name: 'GND', type: 'ground', dir: '-', desc: 'Analog ground.', terms: ['gnd'] },
+        { n: 10, name: 'CH3', type: 'io', dir: 'in', desc: 'Analog input channel 3.' },
+        { n: 11, name: 'CH2', type: 'io', dir: 'in', desc: 'Analog input channel 2.' },
+        { n: 12, name: 'CH1', type: 'io', dir: 'in', desc: 'Analog input channel 1.' },
+        { n: 13, name: 'CH0', type: 'io', dir: 'in', desc: 'Analog input channel 0.' },
         { n: 14, name: 'VDD', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'] },
         ...[7, 6, 5, 4, 3, 2, 1, 0].map((b, i) => ({ n: 15 + i, name: `D${b}`, type: 'data', dir: 'bidir', desc: `Data bus bit ${b}.` })),
         { n: 23, name: '/CS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select.', terms: ['cs'] },
@@ -909,14 +909,14 @@ RCS.add({
     mc_ioctl: { id: 'mc_ioctl', name: 'Master I/O controller gate array (CF30050)', short: 'IOCTRL', family: 'Acorn custom gate array',
       role: 'Decodes SHEILA chip selects (VIDPROC, ACIA, SERPROC, ADC, FDC), drives RDY and turns FDC DRQ into NMI.', pkg: 'DIP-40',
       machines: ['bbcmaster'], location: { bbcmaster: 'IC15' },
-      summary: 'Pins named in the service manual: 1 FDCON and 4 FDC (disc selects), 5 DRQ in, 17 READY to the CPU and PBC, 18-19 two data bits, 34 SERPROC select, 35 ADC select, 36 ACIA select, 38 FIT to the PBC. The full pinout is on the Master drawing but not transcribed here.',
+      summary: 'Pins named in the service manual: 1 FDCON and 4 FDC (disk selects), 5 DRQ in, 17 READY to the CPU and PBC, 18-19 two data bits, 34 SERPROC select, 35 ADC select, 36 ACIA select, 38 FIT to the PBC. The full pinout is on the Master drawing but not transcribed here.',
       fails: ['Disc, serial or ADC dead together', 'Hangs with 1 MHz bus devices'], heat: 'warm', verify: true,
       verifiedAgainst: 'Master Series Service Manual 7.5-7.13 (pin references only)', datasheets: [S('Master main PCB circuit diagram 0143,000 (IC15)', MSCH)], pins: null },
     mc_memctl: { id: 'mc_memctl', name: 'Master memory controller gate array (CF30058)', short: 'MEMCTRL', family: 'Acorn custom gate array',
       role: 'ROMSEL (&FE30) and ACCCON (&FE34): pages ROMs, sideways RAM, shadow LYNNE, HAZEL and ANDY.', pkg: 'DIP-40',
       machines: ['bbcmaster'], location: { bbcmaster: 'IC20' },
       summary: 'Address inputs on pins 21-28 and the AA/AT address outputs to the DRAM multiplexers (IC29, IC33). It also has a direct IRQ output (ACCCON bit 7). Memory faults on the Master are more often here or in the multiplexers than in the DRAMs (SM 7.1.11, 7.8.5).',
-      fails: ['Random dots or characters', 'Bad FS map or corrupt data from disc', 'Sideways RAM missing'], heat: 'warm', verify: true,
+      fails: ['Random dots or characters', 'Bad FS map or corrupt data from disk', 'Sideways RAM missing'], heat: 'warm', verify: true,
       verifiedAgainst: 'Master Series Service Manual 5.2, 7.1.7, 7.8.5 (pin references only)', datasheets: [S('Master main PCB circuit diagram 0143,000 (IC20)', MSCH)], pins: null },
     mc_pbc: { id: 'mc_pbc', name: 'Master peripheral bus controller (CF30049)', short: 'PBC', family: 'Acorn custom gate array',
       role: 'Buffers the data bus to slow I/O, the 1 MHz bus and the external Tube (EXbus).', pkg: 'DIP-40',
@@ -939,8 +939,8 @@ RCS.add({
     mc_chroma: { id: 'mc_chroma', name: 'Master CHROMA (PAL/NTSC encoder) gate array (CF30060)', short: 'CHROMA', family: 'Acorn custom gate array',
       role: 'Encodes RGB to PAL (or NTSC, LK15) for the UHF modulator; can also supply the 1.23 MHz serial clock (LK14).', pkg: 'DIP (count not read)',
       machines: ['bbcmaster'], location: { bbcmaster: 'IC40' },
-      summary: 'RGB in on pins 6-8, subcarrier on pin 11, summing resistors on pins 12-19, +5 V on pin 20 (SM 7.3). No colour on UHF: set VC2 for 17.7345 MHz at IC43 pin 12 first; change this chip last.',
-      fails: ['No colour on the TV output', 'Only one colour on UHF'], heat: 'warm', verify: true,
+      summary: 'RGB in on pins 6-8, subcarrier on pin 11, summing resistors on pins 12-19, +5 V on pin 20 (SM 7.3). No color on UHF: set VC2 for 17.7345 MHz at IC43 pin 12 first; change this chip last.',
+      fails: ['No color on the TV output', 'Only one color on UHF'], heat: 'warm', verify: true,
       verifiedAgainst: 'Master Series Service Manual 7.3.3, 7.3.4 (pin references only)', datasheets: [S('Master Series Service Manual, 7.3 Video, p. 38', MSM(38))], pins: null },
 
     elk_ula: { id: 'elk_ula', name: 'Electron ULA (Ferranti 12C021)', short: 'ULA', family: 'Ferranti uncommitted logic array (custom)',
@@ -1004,7 +1004,7 @@ RCS.add({
       role: 'Six inverters; often used, with a crystal, as a clock oscillator', pkg: 'DIP-14',
       machines: ['electron', 'bbcb'], location: { electron: 'IC8', bbcb: 'IC43' },
       summary: 'On the BBC Model B, IC43 is the 74S04 of the 16 MHz crystal oscillator, and the service manual photographs RAS on its pin 12. On the Electron (IC8) it runs both crystal oscillators. Pins 13-12, 11-10 and 9-8 with X1 (R1, R2 820R) make the 16 MHz clock, out on pin 8 to ULA pin 49, the 74LS169 and expansion pin 12. Pins 1-6 with X2 and trimmer VC1 make the 17.7345 MHz PAL subcarrier, out on pin 6 (TP1) to the 74S74 IC11; trim it to within 200 Hz. No 16 MHz = a dead machine; no 17.7 MHz = black and white on the TV only. Fit an S part, not LS.',
-      fails: ['Dead machine (no 16 MHz)', 'No colour on UHF or composite'], heat: 'warm',
+      fails: ['Dead machine (no 16 MHz)', 'No color on UHF or composite'], heat: 'warm',
       verifiedAgainst: 'TI SN74S04 data sheet (pin assignment); Electron Service Manual 8.2, 8.7 c) and circuit diagram (IC8)',
       datasheets: [S('TI SN7404 / SN74LS04 / SN74S04 data sheet, p. 1', TI('sn74ls04')), S('Electron Service Manual, 8.2 Oscillator and 8.7 c), pp. 10, 13', ESM(16))],
       pins: [
@@ -1045,10 +1045,10 @@ RCS.add({
       ] },
 
     ttl7474: { id: 'ttl7474', name: '7474 dual D flip-flop with preset and clear (74S74, 74LS74)', short: '7474', family: 'TTL (S and LS)',
-      role: 'Two positive-edge D flip-flops with preset and clear; dividers and synchronisers', pkg: 'DIP-14',
+      role: 'Two positive-edge D flip-flops with preset and clear; dividers and synchronizers', pkg: 'DIP-14',
       machines: ['electron'], location: { electron: 'IC11 (74S74), IC12 (74LS74)' },
-      summary: 'On the Electron these make the PAL colour timing. IC11 must be a 74S74: the service manual warns an LS part there makes the colour circuit fail. Its two flip-flops, clocked on pins 3 and 11 by the 17.7345 MHz from the 74S04 pin 6, give 4.4336 MHz on pins 9 and 6 (pin 6 feeds the 74LS86 IC14 pin 1). IC12 is clocked from the ULA HS line; pin 5 shows about 7.7 kHz (the PAL line switch) and pin 9 must also be active. No colour on UHF or composite with good RGB: these two, then the 74LS86s.',
-      fails: ['Black and white only on UHF and composite', 'No colour burst'], heat: 'cool',
+      summary: 'On the Electron these make the PAL color timing. IC11 must be a 74S74: the service manual warns an LS part there makes the color circuit fail. Its two flip-flops, clocked on pins 3 and 11 by the 17.7345 MHz from the 74S04 pin 6, give 4.4336 MHz on pins 9 and 6 (pin 6 feeds the 74LS86 IC14 pin 1). IC12 is clocked from the ULA HS line; pin 5 shows about 7.7 kHz (the PAL line switch) and pin 9 must also be active. No color on UHF or composite with good RGB: these two, then the 74LS86s.',
+      fails: ['Black and white only on UHF and composite', 'No color burst'], heat: 'cool',
       verifiedAgainst: 'TI SN74LS74A / SN74S74 data sheet (pin assignment); Electron Service Manual 8.7 c) and circuit diagram (IC11, IC12)',
       datasheets: [S('TI SN7474 / SN74LS74A / SN74S74 data sheet, p. 1', TI('sn74s74')), S('Electron Service Manual, 8.7 c) chrominance checks, p. 13', ESM(18))],
       pins: [
@@ -1071,8 +1071,8 @@ RCS.add({
     ttl7486: { id: 'ttl7486', name: '74LS86 quad 2-input exclusive-OR', short: '74LS86', family: 'TTL (LS)',
       role: 'Four 2-input XOR gates; selectable inverters and phase switches', pkg: 'DIP-14',
       machines: ['electron'], location: { electron: 'IC14, IC15' },
-      summary: 'On the Electron, IC14 gate 4 XORs the ULA /CSYNC (pin 13, from ULA pin 65) with link LK3 (pin 12) to make RGB pin 4 sync of either polarity on pin 11; gate 1 mixes the subcarrier phase from the 74S74 IC11 pin 6 (pin 1) with the PAL/NTSC link LK2 (pin 2). IC14 and IC15 with IC10, IC16 and R50-R57 form the colour encoder. A failed IC14 with pin 11 stuck low gives composite but no RGB.',
-      fails: ['No RGB picture (sync stuck), composite fine', 'No colour on UHF'], heat: 'cool',
+      summary: 'On the Electron, IC14 gate 4 XORs the ULA /CSYNC (pin 13, from ULA pin 65) with link LK3 (pin 12) to make RGB pin 4 sync of either polarity on pin 11; gate 1 mixes the subcarrier phase from the 74S74 IC11 pin 6 (pin 1) with the PAL/NTSC link LK2 (pin 2). IC14 and IC15 with IC10, IC16 and R50-R57 form the color encoder. A failed IC14 with pin 11 stuck low gives composite but no RGB.',
+      fails: ['No RGB picture (sync stuck), composite fine', 'No color on UHF'], heat: 'cool',
       verifiedAgainst: 'TI SN74LS86A data sheet (pin assignment); Electron Service Manual circuit diagram (IC14) and 8.7',
       datasheets: [S('TI SN7486 / SN74LS86A / SN74S86 data sheet, p. 1', TI('sn74ls86a')), S('Electron Service Manual, main PCB circuit diagram (IC14, LK3), p. 32', ESM(38)), S('Retro Repairs and Refurbs, Acorn Electron repair (IC14 pin 11 stuck low; secondary)', RRR_ELK, true)],
       pins: [
@@ -1140,34 +1140,34 @@ RCS.add({
       { symptom: 'Prompt appears but keyboard dead', suspects: ['via6522', 'mc_kbenc', 'rtc146818'], note: 'System VIA IC8, encoder IC16, then IRQ: the memory controller and the clock chip both drive IRQ; pull LK4 to isolate the clock (SM 7.1.7).' },
       { symptom: 'CTRL-BREAK acts like BREAK, settings not kept, or stuck in terminal mode', suspects: ['rtc146818'], note: 'Check the RTC power-down parts (early units: C11 100 uF, D8 1N4001, 1k8 on Q3), RTC pin 13 (CE) high at rest, pin 14 (AS) and pin 17 (DS) low (SM 7.1.9).' },
       { symptom: 'Clock loses time or forgets settings', suspects: ['rtc146818'], note: 'Flat battery or PL8 not on all three pins. Need at least 2.6 V at the clock chip with mains off; check Q4. 32.768 kHz at RTC pin 2 (SM 7.4).' },
-      { symptom: 'Green or white crust around the battery, corroded case or PSU area', suspects: [], note: 'The original battery pack has leaked. Remove it, clean and neutralise, check tracks under the cartridge area; fit a modern pack with the series diode and resistor.' },
+      { symptom: 'Green or white crust around the battery, corroded case or PSU area', suspects: [], note: 'The original battery pack has leaked. Remove it, clean and neutralize, check tracks under the cartridge area; fit a modern pack with the series diode and resistor.' },
       { symptom: 'Random dots or characters appear', suspects: ['mc_memctl', 'dram4464'], note: 'Memory system, rarely the DRAMs: check CPU address lines into the multiplexers IC29, IC30, IC33 and the timing after RAS (SM 7.1.11).' },
       { symptom: 'Typed text repeated two or more times round the screen', suspects: ['crtc6845', 'mc_crtcmux'], note: 'Check TP7-TP20 (CRTC outputs), MA13 on 6845 pin 17, and C0/C1 from IC10 pins 4-5 to IC31 pins 38-39 (SM 7.1.12).' },
       { symptom: 'MODE 7 shows a cursor but no text', suspects: ['saa5050'], note: '6 MHz at SAA5050 pin 19 from IC39 and IC25 (SM 7.3.6).' },
-      { symptom: 'No colour on the TV output', suspects: ['mc_chroma'], note: 'Set VC2 for 17.7345 MHz at IC43 pin 12; check IC40 pin 11 and +5 V on IC40 pin 20 (SM 7.3.3).' },
-      { symptom: 'Disc drive dead or catalogue unreadable', suspects: ['fdc1770', 'mc_ioctl'], note: '1770 pin 18 8 MHz, pin 19 read data wiggling, DRQ on pin 27 pulsing every 32 us and reaching NMI (65SC12 pin 6), INTRQ pin 28 not stuck high (SM 7.8).' },
+      { symptom: 'No color on the TV output', suspects: ['mc_chroma'], note: 'Set VC2 for 17.7345 MHz at IC43 pin 12; check IC40 pin 11 and +5 V on IC40 pin 20 (SM 7.3.3).' },
+      { symptom: 'Disc drive dead or catalog unreadable', suspects: ['fdc1770', 'mc_ioctl'], note: '1770 pin 18 8 MHz, pin 19 read data wiggling, DRQ on pin 27 pulsing every 32 us and reaching NMI (65SC12 pin 6), INTRQ pin 28 not stuck high (SM 7.8).' },
       { symptom: 'RS423 dead', suspects: ['serproc', 'acia6850'], note: 'Cable upside down? -5 V at the driver IC50 pin 8, 1.23 MHz at SERPROC pin 25, CTS/RTS on SERPROC pins 20/23 not stuck (SM 7.6).' },
-      { symptom: 'Analogue port reads nonsense', suspects: ['adc7002'], note: 'About 1.8 V between 7002 pins 8 and 9, 1 MHz on 7002 pin 2, select on 7002 pin 23. Over 5.5 V on a port pin kills it (SM 7.5).' }
+      { symptom: 'Analog port reads nonsense', suspects: ['adc7002'], note: 'About 1.8 V between 7002 pins 8 and 9, 1 MHz on 7002 pin 2, select on 7002 pin 23. Over 5.5 V on a port pin kills it (SM 7.5).' }
     ],
     electron: [
       { symptom: 'Continuous beep, bright distorted screen', suspects: ['elk_ula'], note: 'The ULA is not seated. Unclip the square metal clip (screwdriver at the front corners, clear of the tracks), lift the ULA out, clean the socket fingers and the chip contacts, refit with the three notched corners in place and the corner spring not bent under (SM 8.3).' },
       { symptom: 'Square raster or black screen, no text', suspects: ['elk_ula'], note: 'Dirty or weak ULA socket contacts. Clean with alcohol or a new pencil eraser and reseat. Snapped socket springs need the socket replaced (it must be desoldered; a desoldering gun helps) or the pin repaired. A paper shim on top of the chip under the clip adds pressure as a stopgap.' },
       { symptom: 'Crashes or white screen once warm; garbled text', suspects: ['elk_ula'], note: 'Socket pressure or a broken socket contact that opens with heat. Reseat, then check each socket pin with a point. Issue 6 boards have the ULA soldered in: look for cracked joints instead.' },
       { symptom: 'No picture on any output (RGB, UHF and composite)', suspects: ['elk_ula'], note: 'No signal from the ULA: substitute a known good ULA (SM 8.7 a). First check +5 V at ULA pin 48, 16 MHz at ULA pin 49 and PHI OUT at ULA pin 60.' },
-      { symptom: 'Dead: no beep, no picture', suspects: ['ttl7404', 'elk_ula', 'cpu6502'], note: 'Check the adaptor gives at least 17 V AC, +5 V on PL3 and 700-900 mA drawn; 16 MHz at 74S04 pin 8 and ULA pin 49; ULA pin 61 ROM and pins 52/53 RAS/CAS toggling; 6502 pin 40 high and pins 4, 6, 34 active (SM 8.1-8.5).' },
+      { symptom: 'Dead: no beep, no picture', suspects: ['ttl7404', 'elk_ula', 'cpu6502'], note: 'Check the adapter gives at least 17 V AC, +5 V on PL3 and 700-900 mA drawn; 16 MHz at 74S04 pin 8 and ULA pin 49; ULA pin 61 ROM and pins 52/53 RAS/CAS toggling; 6502 pin 40 high and pins 4, 6, 34 active (SM 8.1-8.5).' },
       { symptom: 'White bars or garbage at power-up', suspects: ['elk_ula', 'dram4164'], note: 'ULA, RAM or solder joints around them. Check RAS (4164 pin 4) and CAS (4164 pin 15) toggle; RAS stuck low kills DRAMs within seconds. 6502 address and data busy but no NMI, IRQ or R/W activity pointed to a dead ULA in one repair.' },
       { symptom: 'Dead after reassembly', suspects: [], note: 'The keyboard ribbon is not plugged back on PL2: the Electron does not run without the keyboard (SM 4).' },
       { symptom: 'A row of keys dead, or one key in every column', suspects: ['elk_ula'], note: 'A KBD return line: the PL2 plug one pin off (it can miss pins), a damaged ribbon, or ULA pins 27, 28, 31, 32. Single dead keys are the switches: work them or clean them; check the keyboard diodes and resistors (SM 8.9).' },
       { symptom: 'Power cuts out when the lead or machine is moved', suspects: [], note: 'The power jack on the PSU board: cracked solder joints or a worn socket. Resolder or replace the jack.' },
-      { symptom: 'Completely dead, adaptor gives no AC', suspects: [], note: 'The adaptor\'s thermal fuse has blown; it cannot be reset and the adaptor must be replaced. Overloading the 18 V AC or +5 V expansion pins blows it (AN015).' },
+      { symptom: 'Completely dead, adapter gives no AC', suspects: [], note: 'The adapter\'s thermal fuse has blown; it cannot be reset and the adapter must be replaced. Overloading the 18 V AC or +5 V expansion pins blows it (AN015).' },
       { symptom: 'Runs, then dies and recovers only after a wait', suspects: [], note: 'The PSU board cuts out on a short or overload and resets only after the lead is out for 15 s. Measure +5 V current; if the voltage is in spec and the current high, feel for a hot chip (SM 8.1).' },
       { symptom: 'Tape will not load or save', suspects: ['ttl74169', 'lm324', 'elk_ula'], note: '16 MHz at 74LS169 pin 2 and 812 ns at 74LS169 pin 11 reaching ULA pin 55; LM324 pins 7, 8, 14 under 100 mV after BREAK; -5 V present (a missing -5 V shows as a tape fault); about 1.8 V p-p at ULA pin 50 while saving (SM 8.8).' },
       { symptom: 'TV picture in black and white only; RGB fine', suspects: ['ttl7474', 'ttl7404', 'ttl7486'], note: '17.7345 MHz at 74S04 pin 6 (trim VC1), then 4.4336 MHz at 74S74 IC11 pins 9 and 6, and IC12 pins 5 and 9. A 74LS74 in IC11 fails. Check L1, C21, Q7 (SM 8.7 c).' },
       { symptom: 'RGB rolls or has no sync; composite fine', suspects: ['ttl7486'], note: 'Set LK3 for the monitor (SM 8.7 d). If 74LS86 IC14 pin 11 is stuck low, IC14 has failed.' },
       { symptom: 'RGB good, nothing on the TV', suspects: [], note: 'Check the modulator input waveform (SM 8.7 b); if it is good the UM1233 modulator is faulty. White noise dots on the TV also point at the modulator.' },
       { symptom: 'No sound', suspects: ['elk_ula'], note: 'A SOUND command should give a signal at ULA pin 62; if not, swap the ULA. If so, check Q3, Q4 and the speaker lead (SM 8.10).' },
-      { symptom: 'White snow on screen during disc access (Plus 3)', suspects: [], note: 'Normal: an NMI gives the 6502 RAM priority over the ULA, so the display loses fetches until the NMI is cleared (AUG 14.1).' },
-      { symptom: 'Wrong colours, e.g. blue text', suspects: ['elk_ula'], note: 'A poor ULA socket contact on a colour pin (ULA pins 3, 4, 66): clean and reseat.' }
+      { symptom: 'White snow on screen during disk access (Plus 3)', suspects: [], note: 'Normal: an NMI gives the 6502 RAM priority over the ULA, so the display loses fetches until the NMI is cleared (AUG 14.1).' },
+      { symptom: 'Wrong colors, e.g. blue text', suspects: ['elk_ula'], note: 'A poor ULA socket contact on a color pin (ULA pins 3, 4, 66): clean and reseat.' }
     ]
   },
 
@@ -1182,7 +1182,7 @@ RCS.add({
           'X2 mains suppression capacitors (EVOX RIFA, 0.1 uF and 0.01 uF, C1/C2 on the Astec board) crack with age and fail with a bang and acrid white smoke. Replace both with 275 V AC X2 parts before using an unknown machine.',
           'Astec switch-mode: replace the primary start-up electrolytic C9 when the 5 V is low or the supply hunts; the 5 V output capacitor after the choke must be low-ESR.',
           'The reservoir capacitors C6/C8 hold about 325 V DC after unplugging. Discharge them before working on the primary side.',
-          'Linear supply (black case, no auxiliary socket): three separate 7805-type regulators, one per +5 V pair, so +5 V can be present on two pairs and missing on the third. It cannot power disc drives; swap it for a switch-mode unit for a disc upgrade.',
+          'Linear supply (black case, no auxiliary socket): three separate 7805-type regulators, one per +5 V pair, so +5 V can be present on two pairs and missing on the third. It cannot power disk drives; swap it for a switch-mode unit for a disk upgrade.',
           'A Wong\'s switch-mode variant exists with no RIFA capacitors; the Astec designators do not apply to it.',
           'Acorn: treat the supply as an exchange module. After any repair it needs a 10 A earth continuity test and a 1500 V AC dielectric test.',
           'Measure +5 V at each of the three pairs and -5 V at the board with the board connected; no -5 V = no sound, tape or RS423.'
@@ -1191,9 +1191,9 @@ RCS.add({
       rails: [
         { rail: '+5 V', expect: '+5 V', where: '6502 pin 8; VIDPROC pin 16; SERPROC pin 28; 7002 pin 14; 4816 pin 8', note: 'Fed at three points and joined on the board (RetroTechWiki: Model B issue 2 linear boards have been found with the points not joined).' },
         { rail: '-5 V', expect: '-5 V', where: 'PSU -5 V lead; RS423 driver DS3691 (IC75); LM324 cassette stages', note: 'Only cassette, sound, speech and RS423 use it.' },
-        { rail: '+12 V', expect: '+12 V', where: 'Auxiliary power socket', note: 'For add-ons such as disc drives.' },
+        { rail: '+12 V', expect: '+12 V', where: 'Auxiliary power socket', note: 'For add-ons such as disk drives.' },
         { rail: 'Video ULA reference', expect: 'Three diode drops (D16-D18) above 0 V', where: 'VIDPROC pin 15', note: 'From D16-D18 and R114 (18 ohm).', verify: true },
-        { rail: 'ADC reference', expect: 'About 1.8 V', where: '7002 pin 8 to 7002 pin 9', note: 'Three diodes D6-D8; also on analogue port pins 11 and 14.' }
+        { rail: 'ADC reference', expect: 'About 1.8 V', where: '7002 pin 8 to 7002 pin 9', note: 'Three diodes D6-D8; also on analog port pins 11 and 14.' }
       ],
       testPoints: [
         { tp: 'Reset', where: '6502 pin 40', expect: 'High; low only while BREAK is held' },
@@ -1233,7 +1233,7 @@ RCS.add({
         { step: 3, check: 'Reset released', where: '6502 pin 40', expect: 'High; low only while BREAK is held',
           ifNot: 'Reset held low: look for a short on the reset line before suspecting the CPU.', verify: true, source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 i), p. 39', SM85P(49)) },
         { step: 4, check: '16 MHz master clock', where: 'VIDPROC pin 8', expect: '16 MHz from the 74S04 oscillator (IC43)',
-          ifNot: 'Check the 74S04 (IC43) and crystal X1. Every clock except the PAL colour clock comes from this one; that has its own oscillator (Q10 and X2, 17.7345 MHz, divided by IC46).', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1 Processor and clock circuitry, p. 9', SM85P(19)) },
+          ifNot: 'Check the 74S04 (IC43) and crystal X1. Every clock except the PAL color clock comes from this one; that has its own oscillator (Q10 and X2, 17.7345 MHz, divided by IC46).', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1 Processor and clock circuitry, p. 9', SM85P(19)) },
         { step: 5, check: 'Divided clocks and CPU clock', where: 'VIDPROC pins 4, 5, 6, 7; 6502 pin 37 and pin 3', expect: '1, 2, 4 and 8 MHz on VIDPROC 4 to 7; 2 MHz into and out of the 6502',
           ifNot: '16 MHz present but no outputs: swap the VIDPROC (IC6).', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 iii), p. 40', SM85P(50)) },
         { step: 6, check: 'IRQ not stuck', where: '6502 pin 4', expect: 'Neither permanently high nor permanently low',
@@ -1245,7 +1245,7 @@ RCS.add({
       ],
       clocks: [
         { name: 'Crystal X1 (system)', where: 'X1 with the 74S04 oscillator (IC43) into VIDPROC pin 8', f: '16 MHz', source: { ...S('BBC Microcomputer Service Manual (Oct 1985), 3.1 and parts list item 98 (X1 16 MHz), pp. 9, 83', SM85P(19)), note: 'Pins from the BBC circuit diagram 103,000/C (in this page\'s sources).' } },
-        { name: '8 MHz (DRAM timing, disc)', where: 'VIDPROC pin 7', f: '8 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 iii), p. 40', SM85P(50)) },
+        { name: '8 MHz (DRAM timing, disk)', where: 'VIDPROC pin 7', f: '8 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 iii), p. 40', SM85P(50)) },
         { name: '4 MHz (DRAM timing)', where: 'VIDPROC pin 6', f: '4 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 6.3 iii), p. 40', SM85P(50)) },
         { name: '2 MHz CPU clock', where: 'VIDPROC pin 5 to 6502 pin 37', f: '2 MHz', source: { ...S('BBC Microcomputer Service Manual (Oct 1985), 3.1 Processor and clock circuitry, p. 9', SM85P(19)), note: 'Pins from the BBC circuit diagram 103,000/C (in this page\'s sources).' } },
         { name: 'CPU phi2 out (stretched to 1 MHz for slow devices)', where: '6502 pin 39', f: '2 MHz', source: { ...S('BBC Microcomputer Service Manual (Oct 1985), 3.1 (1 MHz cycles for the VIAs, 6845, ACIA, SERPROC, ADC, 1 MHz bus), p. 9', SM85P(19)), note: 'Pins from the BBC circuit diagram 103,000/C (in this page\'s sources).' } },
@@ -1253,13 +1253,13 @@ RCS.add({
         { name: '1MHzE system 1 MHz (2 MHz divided by a D-type, IC34)', where: '1 MHz bus (PL11) pin 4; VIA pin 25 (IC3, IC69); ACIA pin 14 (IC4); 7002 pin 2 (IC73 X1)', f: '1 MHz', source: { ...S('BBC Microcomputer Service Manual (Oct 1985), 3.1, p. 9', SM85P(19)), note: 'Pins from the BBC circuit diagram 103,000/C (in this page\'s sources).' }, note: 'Circuit diagram 103,000/C labels the VIA, ACIA E and uPD7002 X1 inputs 1MHZE. The 7002 X0 (pin 1) is not used with this external clock.' },
         { name: '2MHzE (2 MHz, one cycle masked during 1 MHz accesses)', where: 'SERPROC pin 10 (IC7); ADLC pin 13 (IC89)', f: '2 MHz', source: { ...S('BBC Microcomputer Service Manual (Oct 1985), 3.1: 2 MHzE and the 1 MHz cycle stretch, p. 9', SM85P(19)), note: 'Pins from the BBC circuit diagram 103,000/C (in this page\'s sources).' }, note: 'Circuit diagram 103,000/C labels both E inputs 2MHZE.' },
         { name: 'Sound generator clock', where: 'SN76489 pin 14 (IC18)', f: '4 MHz', source: S('Circuit diagram for BBC Microcomputer 103,000/C: IC18 76489 CLK (pin 14) on 4MHZ', CD) },
-        { name: '1770 disc upgrade clock', where: '1770 pin 18', f: '8 MHz', source: S('Western Digital 1984 Storage Products Handbook, WD1770/1772 data sheet: CLK 8 MHz 50% duty, pp. 43-44', WD84), note: 'Only on a 1770 upgrade board in place of the 8271; the board is not on the 103,000 diagram.' },
+        { name: '1770 disk upgrade clock', where: '1770 pin 18', f: '8 MHz', source: S('Western Digital 1984 Storage Products Handbook, WD1770/1772 data sheet: CLK 8 MHz 50% duty, pp. 43-44', WD84), note: 'Only on a 1770 upgrade board in place of the 8271; the board is not on the 103,000 diagram.' },
         { name: '6845 character clock (2 MHz in MODEs 0-3, 1 MHz in 4-7)', where: 'VIDPROC pin 28 to 6845 pin 21', f: '2 MHz', verify: true, source: S('BBC Micro Advanced User Guide, 19.1.4 6845 clock rate select (video ULA control register bit 4)', AUG) },
         { name: 'Teletext dot clock (from the 8, 4 and 2 MHz by IC40 and IC38)', where: 'SAA5050 pin 19', f: '6 MHz', source: { ...S('BBC Microcomputer Service Manual (Oct 1985), 3.3 teletext 6 MHz clock, p. 17', SM85P(27)), note: 'Pins from the BBC circuit diagram 103,000/C (in this page\'s sources).' } },
         { name: 'Serial clock (16 MHz / 13 by IC42)', where: 'SERPROC pin 25', f: '1.2308 MHz', source: { ...S('BBC Microcomputer Service Manual (Oct 1985), 3.5 Cassette + RS423 + serial processor, p. 19', SM85P(29)), note: 'Pins from the BBC circuit diagram 103,000/C (in this page\'s sources).' } },
         { name: 'Cassette tone (1.23 MHz / 1024; 2400 Hz for the other bit value)', where: 'Cassette (SK5) pin 1', f: '1200 Hz', source: { ...S('BBC Microcomputer Service Manual (Oct 1985), 3.5 (1200 Hz cassette signal), p. 19', SM85P(29)), note: 'Pins from the BBC circuit diagram 103,000/C (in this page\'s sources).' } },
         { name: 'PAL crystal X2 (Q10 oscillator)', where: 'X2 at Q10', f: '17.7345 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.4 PAL encoder and parts list item 99 (X2 17.7345 MHz), p. 19', SM85P(29)) },
-        { name: 'PAL colour subcarrier (ring counter IC46; U signal on its leg 9)', where: 'IC46', f: '4.433618 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.4 PAL encoder, p. 19', SM85P(29)) }
+        { name: 'PAL color subcarrier (ring counter IC46; U signal on its leg 9)', where: 'IC46', f: '4.433618 MHz', source: S('BBC Microcomputer Service Manual (Oct 1985), 3.4 PAL encoder, p. 19', SM85P(29)) }
       ],
       sources: [S('BBC Microcomputer Service Manual, 3.1, 3.3, 3.5, 3.14, 6.3 Fault isolation, 6.4 Most common faults', SM), S('Circuit diagram for BBC Microcomputer 103,000/C', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy)', CDM), S('BBC Microcomputer Service Manual, October 1985 edition (Acorn part 0433,001), section 1', SM85)]
     },
@@ -1317,7 +1317,7 @@ RCS.add({
       ],
       clocks: [
         { name: 'Crystal X2 (system)', where: 'X2 with IC43 into VIDPROC pin 8', f: '16 MHz', source: S('Master Series Service Manual, parts list item 218 (X2 16.000 MHz) and 7.1.2 step 3', MSM(58)) },
-        { name: '8 MHz (DRAM timing, disc, cartridges)', where: 'VIDPROC pin 7', f: '8 MHz', source: S('Master Series Service Manual, 7.1.2 step 4, p. 32', MSM(32)) },
+        { name: '8 MHz (DRAM timing, disk, cartridges)', where: 'VIDPROC pin 7', f: '8 MHz', source: S('Master Series Service Manual, 7.1.2 step 4, p. 32', MSM(32)) },
         { name: '4 MHz (RAS timing, sound)', where: 'VIDPROC pin 6', f: '4 MHz', source: S('Master Series Service Manual, 7.1.2 step 4, p. 32', MSM(32)) },
         { name: '2 MHz CPU clock', where: 'VIDPROC pin 5 to 65SC12 pin 37; 65SC12 pin 39 (phi2 out)', f: '2 MHz', source: { ...S('Master Series Service Manual, 7.1.2 steps 4-5, p. 32', MSM(32)), note: 'Pins from the Master main PCB circuit diagram 0143,000.' } },
         { name: '1 MHz', where: 'VIDPROC pin 4', f: '1 MHz', source: S('Master Series Service Manual, 7.1.2 step 4, p. 32', MSM(32)) },
@@ -1330,18 +1330,18 @@ RCS.add({
         { name: '6845 character clock (2 MHz in MODEs 0-3, 1 MHz in 4-7, as the Model B)', where: 'VIDPROC pin 28 to 6845 pin 21', f: '2 MHz', verify: true, source: S('BBC Micro Advanced User Guide, 19.1.4 6845 clock rate select (video ULA control register bit 4)', AUG) },
         { name: 'Teletext dot clock (generator IC39 and IC25)', where: 'SAA5050 pin 19', f: '6 MHz', source: { ...S('Master Series Service Manual, 7.3 MODE 7 faults, p. 40', MSM(40)), note: 'Pins from the Master main PCB circuit diagram 0143,000.' } },
         { name: 'Serial reference (CHROMA output via LK14)', where: 'SERPROC pin 25', f: '1.23 MHz', source: S('Master Series Service Manual, LK14 and 7.6 step 5, pp. 10, 42', MSM(42)) },
-        { name: 'PAL crystal (trim VC2)', where: 'IC43, leg 12', f: '17.7345 MHz', source: S('Master Series Service Manual, 7.2 colour fault step 1, p. 39', MSM(39)) },
+        { name: 'PAL crystal (trim VC2)', where: 'IC43, leg 12', f: '17.7345 MHz', source: S('Master Series Service Manual, 7.2 color fault step 1, p. 39', MSM(39)) },
         { name: 'Clock crystal X1 (trim VC1)', where: 'RTC pin 2 to pin 3', f: '32.768 kHz', source: S('Master Series Service Manual, 7.4 step 1 (X1, VC1, C6, C7, R17, R24) and parts list, pp. 40, 61', MSM(40)) }
       ],
       sources: [S('Master Series Service Manual, 7 Fault finding, pp. 31-49', MSM(31)), S('Master main PCB circuit diagram 0143,000 (supply table, test points)', MSCH)]
     },
     electron: {
-      supply: { external: true, name: 'Acorn Electron mains power adaptor (moulded square-pin plug-top transformer) feeding the PSU board 332,002 inside the case',
-        output: 'Adaptor: 19 V AC 50 Hz, 14 W. PSU board: +5 V 1.5 A and -5 V 100 mA (switch-mode, short-circuit protected)',
+      supply: { external: true, name: 'Acorn Electron mains power adapter (molded square-pin plug-top transformer) feeding the PSU board 332,002 inside the case',
+        output: 'Adapter: 19 V AC 50 Hz, 14 W. PSU board: +5 V 1.5 A and -5 V 100 mA (switch-mode, short-circuit protected)',
         connector: 'electron-power',
         notes: [
-          'The adaptor is a plain transformer with a thermal fuse inside. The fuse blows for good on overload (more than 14 W total, for example add-ons drawing from both +5 V and the 18 V AC expansion pins); then the adaptor must be replaced. It accepts 216-264 V AC.',
-          'Measure the adaptor output across the two grey leads at the PSU board with the machine running: at least 17 V RMS. The PSU board works from 17.1 to 20.9 V RMS.',
+          'The adapter is a plain transformer with a thermal fuse inside. The fuse blows for good on overload (more than 14 W total, for example add-ons drawing from both +5 V and the 18 V AC expansion pins); then the adapter must be replaced. It accepts 216-264 V AC.',
+          'Measure the adapter output across the two gray leads at the PSU board with the machine running: at least 17 V RMS. The PSU board works from 17.1 to 20.9 V RMS.',
           'The PSU board is not a 7805 linear: it is a bridge rectifier (D1-D4) and reservoir followed by a transistor switching regulator (Q1-Q5, IC1) and a small transformer T1 whose extra winding makes the -5 V. It shuts down on a short and resets only after the input has been off for 15 s.',
           'Test it off the main board: 10 ohm 2.5 W across red and black (+5 V, about 500 mA) and 47 ohm across blue and black (-5 V). +5 V must be 4.75-5.25 V with under 50 mV noise. Over 5.25 V: replace or repair the PSU board before reconnecting.',
           'The power jack on the PSU board wears and its joints crack: intermittent power when the lead moves. Resolder or replace it.',
@@ -1349,7 +1349,7 @@ RCS.add({
         ],
         sources: [S('Electron Service Manual, 2 Packaging and installation and 3.4 Power supply, pp. 2, 4', ESM(8)), S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)), S('Electron Service Manual, power supply board circuit diagram, p. 37', ESM(43)), S('Acorn Application Note 015, 1.0 and 3.0 Power supply (thermal fuse, expansion budget), pp. 2, 5', AN15(2)), S('Classic Acorn, Electron ULA repairs (PSU board joint at the mains lead; secondary)', CLA_ULA, true), S('Retro Repairs and Refurbs, Acorn Electron repair (dry, cracked power socket joints; secondary)', RRR_ELK, true)] },
       rails: [
-        { rail: 'Adaptor AC', expect: 'At least 17 V RMS loaded (17.1-20.9 V RMS)', where: 'Grey leads at the PSU board; electron-expansion pins 1, 2, 3, 4', note: 'AC: no polarity.' },
+        { rail: 'Adapter AC', expect: 'At least 17 V RMS loaded (17.1-20.9 V RMS)', where: 'Gray leads at the PSU board; electron-expansion pins 1, 2, 3, 4', note: 'AC: no polarity.' },
         { rail: '+5 V', expect: '4.75-5.25 V, under 50 mV noise', where: 'ULA pin 48; 6502 pin 8; 23256 pin 28; 4164 pin 8', note: 'Main board draws 700-900 mA. The +5 V track runs in a ring round the board, so it must break in two places to isolate a section.' },
         { rail: '+5 V (ULA VCC2)', expect: 'A little under +5 V', where: 'ULA pin 9; ULA pin 43', note: 'Fed through R5 and R58, 24R 1/2 W each.' },
         { rail: '-5 V', expect: '-5 V', where: 'LM324 pin 11; electron-expansion pins 5, 6', note: 'About 25 mA. Only the cassette amplifier uses it on the board; a fault shows as a tape fault. Zero current: a short, or a broken track to the LM324.' },
@@ -1367,15 +1367,15 @@ RCS.add({
         { tp: 'CPU alive', where: '6502 pin 34', expect: 'R/W toggling; IRQ (pin 4) and NMI (pin 6) not stuck' },
         { tp: 'Divide-by-13 clock', where: '74LS169 pin 11', expect: '812 ns period, reaching ULA pin 55' },
         { tp: 'PAL subcarrier', where: '74S04 pin 6', expect: '17.7345 MHz +/-200 Hz (TP1; trim VC1). TP2 is 0 V' },
-        { tp: 'Colour divider', where: '7474 pin 9', expect: '4.4336 MHz at IC11 pins 9 and 6' },
+        { tp: 'Color divider', where: '7474 pin 9', expect: '4.4336 MHz at IC11 pins 9 and 6' },
         { tp: 'Cassette out', where: 'ULA pin 50', expect: 'About 1.8 V p-p sine while saving',
           scope: { f: '2400 Hz', pp: '1.8 V', shape: 'sine', basis: 'datasheet',
-            source: S('Electron Service Manual, 8.8 Cassette interface (synthesised sine of about 1.8 V p-p at ULA pin 50 while saving), p. 13', ESM(19)),
+            source: S('Electron Service Manual, 8.8 Cassette interface (synthesized sine of about 1.8 V p-p at ULA pin 50 while saving), p. 13', ESM(19)),
             note: 'Swing from the service manual text. It gives only the peak-to-peak swing, so the trace is drawn AC-coupled with no 0 V reference. 2400 Hz is the high tone that leads every block (Electron Advanced User Guide p. 212, the cassette high tone row); data bits also use 1200 Hz (16/13 MHz / 1024, AUG p. 228). SAVE a section of ROM to see it.' } },
         { tp: 'PAL into the modulator', where: 'PAL wire into the UM1233 modulator (SM Figure 3)', expect: 'PAL line: sync tip 2.6 V, black 2.9 V, burst to 3.05 V, white 3.3 V',
           scope: { period: '64 µs', low: '2.6 V', high: '3.3 V', sync: '2.6 V', black: '2.9 V', shape: 'video-line', basis: 'capture',
             source: S('Electron Service Manual, 8.7 b) Figures 3-5, black and white PAL waveforms at 50 mV/div, 10 µs/div, pp. 12-13', ESM(18)),
-            note: 'After BREAK: 4 µs sync at 2.6 V, black at 2.9 V, burst to 3.05 V. After COLOUR129: CLS the line rises to 3.3 V white. Burst missing: chrominance circuit (IC11 must be a 74S74). Anything else wrong: make LK4 and check composite out (1 V p-p); good there but no TV picture means the UHF luminance stage (Q5, D1-D3, C13).' } },
+            note: 'After BREAK: 4 µs sync at 2.6 V, black at 2.9 V, burst to 3.05 V. After COLOR129: CLS the line rises to 3.3 V white. Burst missing: chrominance circuit (IC11 must be a 74S74). Anything else wrong: make LK4 and check composite out (1 V p-p); good there but no TV picture means the UHF luminance stage (Q5, D1-D3, C13).' } },
         { tp: 'Cassette in', where: 'ULA pin 59', expect: '0.5-2 V p-p while loading a good tape' },
         { tp: 'Sound', where: 'ULA pin 62', expect: 'Signal during a SOUND command' },
         { tp: 'ROM enable', where: '23256 pin 22', expect: 'Toggling' },
@@ -1383,8 +1383,8 @@ RCS.add({
         { tp: 'RGB sync', where: '74LS86 pin 11', expect: 'Sync pulses every 64 us, not stuck low (IC14)' }
       ],
       firstTen: [
-        { step: 1, check: 'Mains adaptor output', where: 'Grey 18 VAC leads at the PSU board, machine running', expect: 'At least 17 V AC RMS',
-          ifNot: 'Replace the mains adaptor.', source: S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)) },
+        { step: 1, check: 'Mains adapter output', where: 'Gray 18 VAC leads at the PSU board, machine running', expect: 'At least 17 V AC RMS',
+          ifNot: 'Replace the mains adapter.', source: S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)) },
         { step: 2, check: 'PSU board +5 V off the main board', where: 'PSU lead unplugged; 10 ohm 2.5 W across red (+5 V) and black (0 V)', expect: '+4.75 to +5.25 V, under 50 mV noise',
           ifNot: 'Replace or repair the PSU board (it is easy to work on; see its circuit diagram).', source: S('Electron Service Manual, 8.1 Power supply, p. 10', ESM(16)) },
         { step: 3, check: 'PSU board -5 V', where: '47 ohm across blue (-5 V) and black, 10 ohm still on red', expect: 'About -5 V (the trace deflects the other way)',
@@ -1407,7 +1407,7 @@ RCS.add({
         { name: 'Expansion 16 MHz', where: 'Expansion connector (PL1) pin 12', f: '16 MHz', source: S('Electron Advanced User Guide, expansion connector signals (16 MHz, 16/13 MHz), p. 228', EAUG(229)) },
         { name: 'Expansion 16/13 MHz', where: 'Expansion connector (PL1) pin 13', f: '1.2308 MHz', source: S('Electron Advanced User Guide, expansion connector signals (16 MHz divided by 13), p. 228', EAUG(229)) },
         { name: 'PAL crystal X2 (trim VC1, +/-200 Hz)', where: '74S04 pin 6', f: '17.7345 MHz', source: S('Electron Service Manual, 8.7 c) chrominance, p. 13', ESM(19)) },
-        { name: 'Colour subcarrier (IC11, a 74S74)', where: '7474 pin 9 and pin 6', f: '4.4336 MHz', source: S('Electron Service Manual, 8.7 c) chrominance, p. 13', ESM(19)) },
+        { name: 'Color subcarrier (IC11, a 74S74)', where: '7474 pin 9 and pin 6', f: '4.4336 MHz', source: S('Electron Service Manual, 8.7 c) chrominance, p. 13', ESM(19)) },
         { name: 'PAL crystal into the subcarrier divider (IC11, a 74S74)', where: '7474 pin 3 and pin 11', f: '17.7345 MHz', source: S('Electron Service Manual, 8.7 c) chrominance: 17.7345 MHz at pins 3 and 11 of IC11, p. 13', ESM(19)), note: 'IC11 must be a 74S74; a 74LS74 here can make the circuit fail. IC12 pins 3 and 11 run slower (PAL switch).' },
         { name: '16 MHz into the divide-by-13 counter (IC9)', where: '74LS169 pin 2', f: '16 MHz', source: S('Electron Service Manual, 8.8 Cassette interface: 16 MHz at pin 2 of IC9, p. 13', ESM(19)) },
         { name: 'Φ1 and Φ2 out (CPU)', where: '6502 pin 3; 6502 pin 39', f: '2 MHz', note: 'Follow PHI OUT on pin 37: 2 MHz for ROM, 1 MHz for RAM and I/O, stopped while the screen reads RAM in MODEs 0-3.', source: S('Electron Service Manual, 5 Microprocessor clock, p. 7', ESM(13)) },
@@ -1421,20 +1421,20 @@ RCS.add({
   quickref: {
     bbcb: {
       firstLook: [
-        'Power on: two-tone beep, "BBC Computer 32K" and the BASIC > prompt. Disc and Econet ROMs add their own banner lines.',
+        'Power on: two-tone beep, "BBC Computer 32K" and the BASIC > prompt. Disk and Econet ROMs add their own banner lines.',
         'BREAK is a soft reset: the program looks lost but OLD then RUN brings it back if no lines were typed.',
-        'CTRL-BREAK is a hard reset that clears everything; SHIFT-BREAK boots the disc (!BOOT).',
-        'With a disc or Econet ROM fitted, type *TAPE before loading a tape; for long tapes also PAGE=&E00 then NEW.',
+        'CTRL-BREAK is a hard reset that clears everything; SHIFT-BREAK boots the disk (!BOOT).',
+        'With a disk or Econet ROM fitted, type *TAPE before loading a tape; for long tapes also PAGE=&E00 then NEW.',
         'ESCAPE stops a running program or a tape load; CTRL-N turns on paged scrolling (SHIFT for the next page), CTRL-O turns it off.',
         'Everything below $8000 is RAM; screen memory comes off the top, so HIMEM moves with MODE.'
       ],
       keys: [
         { keys: 'BREAK', does: 'Soft reset: language and filing system restart, function keys kept. OLD recovers the program.' },
         { keys: 'CTRL + BREAK', does: 'Hard reset: clears memory, key definitions and settings.' },
-        { keys: 'SHIFT + BREAK', does: 'Reset and boot the current filing system (runs !BOOT on disc).' },
+        { keys: 'SHIFT + BREAK', does: 'Reset and boot the current filing system (runs !BOOT on disk).' },
         { keys: 'ESCAPE', does: 'Stop the program or the current operation.' },
         { keys: 'Cursor keys + COPY', does: 'Screen editing: move the copy cursor and COPY characters into the line being typed.' },
-        { keys: 'f0-f9', does: 'Red user keys; programme with *KEY n "text". BREAK is key 10.' },
+        { keys: 'f0-f9', does: 'Red user keys; program with *KEY n "text". BREAK is key 10.' },
         { keys: 'CTRL-N / CTRL-O', does: 'Paged mode on / off (SHIFT shows the next page).' },
         { keys: 'CTRL-B / CTRL-C', does: 'Printer on / off.' },
         { keys: 'SHIFT LOCK / CAPS LOCK', does: 'Lock keys with LEDs. Keywords must be in capitals.' }
@@ -1453,20 +1453,20 @@ RCS.add({
           { cmd: 'RENUMBER [start,step]', does: 'Renumber lines.' },
           { cmd: 'DELETE a,b', does: 'Delete a range of lines.' },
           { cmd: 'MODE n', does: 'Screen mode 0-7 (7 = teletext, 1 KB).' },
-          { cmd: '*CAT (*.)', does: 'Catalogue the tape or disc.' },
+          { cmd: '*CAT (*.)', does: 'Catalog the tape or disk.' },
           { cmd: '*FX a,x,y', does: 'Operating system call (OSBYTE).' },
           { cmd: 'PRINT ~X', does: 'Print in hex; &1F is a hex constant.' }
         ],
         groups: [
           { group: 'Program control', items: ['IF ... THEN ... ELSE', 'FOR ... NEXT', 'REPEAT ... UNTIL', 'GOSUB / RETURN', 'ON n GOTO / GOSUB', 'DEF PROC / ENDPROC, DEF FN', 'LOCAL', 'ON ERROR', 'END, STOP'] },
-          { group: 'Graphics', items: ['MODE', 'CLS, CLG', 'GCOL a,c', 'COLOUR', 'MOVE, DRAW, PLOT k,x,y', 'VDU n', 'POINT(x,y)'] },
+          { group: 'Graphics', items: ['MODE', 'CLS, CLG', 'GCOL a,c', 'COLOR', 'MOVE, DRAW, PLOT k,x,y', 'VDU n', 'POINT(x,y)'] },
           { group: 'Sound and input', items: ['SOUND c,a,p,d', 'ENVELOPE', 'ADVAL(n)', 'INKEY(n), GET, GET$', 'INPUT'] },
           { group: 'Memory and machine code', items: ['? ! $ indirection', 'CALL, USR', '[ ... ] assembler, OPT', 'PAGE, HIMEM, LOMEM, TOP', 'DIM x% n'] },
           { group: 'Star commands', items: ['*TAPE, *DISC, *NET', '*LOAD, *SAVE, *RUN', '*KEY', '*FX', '*SPOOL, *EXEC', '*MOTOR', '*TV', '*OPT', '*HELP'] }
         ],
         quirks: [
           'Keywords must be typed in capitals and can be abbreviated with a full stop (P. for PRINT).',
-          'PAGE is &E00 on tape, &1900 with DFS: some tape games will not run from a disc machine without *TAPE and PAGE=&E00.',
+          'PAGE is &E00 on tape, &1900 with DFS: some tape games will not run from a disk machine without *TAPE and PAGE=&E00.',
           'BREAK does not wipe the program: OLD restores it.',
           'Integer variables end in % and are much faster; A% to Z% and @% survive NEW and are passed to CALL.',
           'The screen scrolls in hardware, so screen addresses move: write through VDU and PLOT, not straight to memory.'
@@ -1476,7 +1476,7 @@ RCS.add({
         { range: '$0000-$00FF', what: 'Zero page (MOS and BASIC workspace)' },
         { range: '$0100-$01FF', what: '6502 stack' },
         { range: '$0200-$0DFF', what: 'MOS workspace: vectors, buffers, soft keys ($0B00), user characters ($0C00), NMI ($0D00)' },
-        { range: '$0E00-$18FF', what: 'User RAM on tape (PAGE=&E00); DFS workspace when a disc ROM is fitted' },
+        { range: '$0E00-$18FF', what: 'User RAM on tape (PAGE=&E00); DFS workspace when a disk ROM is fitted' },
         { range: '$1900-...', what: 'PAGE with DFS' },
         { range: '$3000-$7FFF', what: 'Screen memory: 20 KB in MODEs 0-2 from $3000, 16 KB MODE 3, 10 KB MODEs 4-5, 8 KB MODE 6, 1 KB MODE 7 at $7C00' },
         { range: '$8000-$BFFF', what: 'Sideways ROM: BASIC or one of up to 16 paged ROMs (latch at &FE30)' },
@@ -1525,7 +1525,7 @@ RCS.add({
           { cmd: '*TIME', does: 'Show the date and time.' }
         ],
         groups: [
-          { group: 'New in BASIC IV', items: ['LIST IF', 'EDIT', 'TIME$', 'ON ... PROC', 'EXT#=', 'COLOR (spelling of COLOUR)', 'LISTO 7 indents REPEAT/UNTIL'] },
+          { group: 'New in BASIC IV', items: ['LIST IF', 'EDIT', 'TIME$', 'ON ... PROC', 'EXT#=', 'COLOR (spelling of COLOR)', 'LISTO 7 indents REPEAT/UNTIL'] },
           { group: 'Configuration', items: ['*CONFIGURE (FILE, LANG, MODE, BAUD, DATA, BOOT, NODIR, ...)', '*STATUS', '*SHADOW', '*TV'] },
           { group: 'ROMs and sideways RAM', items: ['*ROMS', '*UNPLUG n', '*INSERT n', '*SRLOAD, *SRSAVE', '*SRDATA, *SRROM', '*SRREAD, *SRWRITE'] },
           { group: 'Files', items: ['*CAT, *EX, *INFO', '*DELETE', '*MOVE', '*BUILD, *TYPE, *LIST, *DUMP', '*SPOOL, *SPOOLON, *EXEC', '*SHUT, *CLOSE'] },
@@ -1564,10 +1564,10 @@ RCS.add({
       keys: [
         { keys: 'BREAK', does: 'Clears the screen and resets to BASIC. The program is kept: type OLD to recover it.' },
         { keys: 'CTRL + BREAK', does: 'Resets the machine to its switch-on state.' },
-        { keys: 'SHIFT + BREAK', does: 'Reset and boot the filing system (!BOOT on a Plus 3 disc).', verify: true },
+        { keys: 'SHIFT + BREAK', does: 'Reset and boot the filing system (!BOOT on a Plus 3 disk).', verify: true },
         { keys: 'ESCAPE', does: 'Stop a running program, a listing or a tape operation.' },
         { keys: 'SHIFT + CAPS LK/FUNC', does: 'Toggle CAPS LOCK (the LED left of the keyboard).' },
-        { keys: 'FUNC + letter', does: 'Type a keyword: A AUTO, B RENUMBER, C COLOUR, D DRAW, F FOR, G GOTO, K CHAIN, L LIST, M MODE, N NEXT, O OLD + RETURN, P PLOT, R RUN + RETURN, , LOAD, . SAVE, / PRINT.' },
+        { keys: 'FUNC + letter', does: 'Type a keyword: A AUTO, B RENUMBER, C COLOR, D DRAW, F FOR, G GOTO, K CHAIN, L LIST, M MODE, N NEXT, O OLD + RETURN, P PLOT, R RUN + RETURN, , LOAD, . SAVE, / PRINT.' },
         { keys: 'FUNC + 0-9', does: 'User keys f0-f9, set with *KEY n "text".' },
         { keys: 'Cursor keys + COPY', does: 'Screen editing: move the copy cursor and COPY characters into the line.' },
         { keys: 'DELETE', does: 'Delete the character left of the cursor.' }
@@ -1584,7 +1584,7 @@ RCS.add({
           { cmd: 'NEW', does: 'Clear the program.' },
           { cmd: 'AUTO / RENUMBER', does: 'Line numbering (FUNC A, FUNC B).' },
           { cmd: 'MODE n', does: 'Screen mode 0-6 (FUNC M). MODE 7 does not exist on the Electron.' },
-          { cmd: '*CAT (*.)', does: 'Catalogue the tape: slow, it reads the whole tape.' },
+          { cmd: '*CAT (*.)', does: 'Catalog the tape: slow, it reads the whole tape.' },
           { cmd: '*OPT 1,x / *OPT 2,x', does: 'Tape messages (0 none, 1 short, 2 long) / error action (0 ignore, 1 retry, 2 abort).' },
           { cmd: '*KEY n "text"', does: 'Define user key f0-f9 (FUNC + digit).' },
           { cmd: '*FX a,x,y', does: 'Operating system call (OSBYTE).' },
@@ -1592,7 +1592,7 @@ RCS.add({
         ],
         groups: [
           { group: 'Program control', items: ['IF ... THEN ... ELSE', 'FOR ... NEXT', 'REPEAT ... UNTIL', 'GOSUB / RETURN', 'DEF PROC / ENDPROC, DEF FN', 'LOCAL', 'ON ERROR', 'END, STOP'] },
-          { group: 'Graphics', items: ['MODE 0-6', 'CLS, CLG', 'GCOL, COLOUR', 'MOVE, DRAW, PLOT', 'VDU n (VDU 19 sets the palette)', 'POINT(x,y)'] },
+          { group: 'Graphics', items: ['MODE 0-6', 'CLS, CLG', 'GCOL, COLOR', 'MOVE, DRAW, PLOT', 'VDU n (VDU 19 sets the palette)', 'POINT(x,y)'] },
           { group: 'Sound and input', items: ['SOUND (one tone channel from the ULA)', 'ENVELOPE', 'INKEY, GET, GET$', 'INPUT'] },
           { group: 'Files (tape)', items: ['OPENIN, OPENOUT, OPENUP', 'INPUT#, PRINT#', 'BGET#, BPUT#', 'EOF#, CLOSE#'] },
           { group: 'Star commands', items: ['*CAT (*.)', '*LOAD, *SAVE, *RUN', '*OPT', '*KEY', '*FX', '*SPOOL, *EXEC', '*MOTOR', '*TAPE', '*TV', '*ROM', '*HELP', '*BASIC'] },
@@ -1640,10 +1640,10 @@ RCS.add({
     { name: 'Electron Advanced User Guide', url: EAUG(1), what: 'ULA registers at &FE00-&FE0F, memory map, expansion connector, Plus 1 and Plus 3, issue 6 circuit diagram.' },
     { name: 'Acorn Electron User Guide', url: EUG(1), what: 'Keyboard, FUNC keywords, BASIC, tape commands.' },
     { name: 'Acorn Application Note 015: Electron expansion', url: AN15(1), what: 'Expansion connector pinout, power budget, timing, sideways ROM paging.' },
-    { name: 'Acorn Electron Plus 1 Expansion Unit User Guide', url: PLUS1, what: 'Cartridges, printer port, analogue port.' },
+    { name: 'Acorn Electron Plus 1 Expansion Unit User Guide', url: PLUS1, what: 'Cartridges, printer port, analog port.' },
     { name: "Chris's Acorns: Acorn Electron", url: CA_ELK, what: 'Board issues 2 and 4, Plus 1 and Plus 3 details.' },
     { name: 'Classic Acorn: Electron ULA socket repairs', url: CLA_ULA, what: 'ULA socket pressure and broken-contact repairs.', verify: true },
-    { name: 'Electron User Group: Trouble shooting', url: EUG_TROU, what: 'ULA contacts, modulator, colour faults.', verify: true },
+    { name: 'Electron User Group: Trouble shooting', url: EUG_TROU, what: 'ULA contacts, modulator, color faults.', verify: true },
     { name: 'linuxjedi.co.uk: Acorn Electron retro restoration', url: LJ_ELK, what: 'Black screen from snapped ULA socket springs; socket replacement.', verify: true },
     { name: 'Bygone Bytes: More Electron repairs', url: BGB_ELK, what: 'Blue text from ULA contacts, white bars at power-up, dead keys.', verify: true }
   ]
@@ -1679,7 +1679,7 @@ RCS.add({
     },
     electron: {
       conditions: [
-        'Adapter output: AC voltmeter across the two grey leads at the power supply PCB, with the adapter plugged into a working Electron; at least 17 V RMS.',
+        'Adapter output: AC voltmeter across the two gray leads at the power supply PCB, with the adapter plugged into a working Electron; at least 17 V RMS.',
         'Supply checks are made under a resistive load of about 500 mA on +5 V: 10 Ω 2.5 W across the red and black leads, with the supply connector unplugged from the main PCB. Read +5 V on a scope (4.75 to 5.25 V, at most 50 mV noise).',
         '-5 V is read across the blue and black leads with a 47 Ω load, keeping the 10 Ω load on +5 V.',
         'With the loads removed and the main PCB connected, it draws 700 to 900 mA from +5 V and about 25 mA from -5 V.',

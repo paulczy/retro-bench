@@ -159,7 +159,7 @@ const chk = () => '<span class="chk" title="Reconstructed from incomplete source
 const flagged = x => !!(x && (x.verify || x.conflict));
 const disagree = (x, cls = 'conflict', tag = 'div') => (x && x.conflict ? `<${tag} class="${cls}"><b>Sources disagree:</b> ${esc(x.conflict)}</${tag}>` : '');
 const vmark = x => (flagged(x) ? chk() : '');
-/* a chip is flagged when it, or any of its pins, is; its conflicts are its own plus each pin's, labelled by pin */
+/* a chip is flagged when it, or any of its pins, is; its conflicts are its own plus each pin's, labeled by pin */
 const chipFlagged = c => flagged(c) || arr(c && c.pins).some(flagged);
 const chipConflicts = c => [c, ...arr(c && c.pins).filter(p => p && p.conflict).map(p => ({ conflict: `pin ${p.n} ${p.name || ''}: ${p.conflict}` }))].filter(x => x && x.conflict);
 /* the two flags a search row keeps from the record it points at */
@@ -328,11 +328,11 @@ function pinRefs(text, m) {
   return out;
 }
 
-/* ---------- scope: an idealised trace and the settings derived from two sourced numbers ----------
+/* ---------- scope: an idealized trace and the settings derived from two sourced numbers ----------
    A test point's `scope` gives a frequency (or period) and a swing (low and high, or `pp` alone) from a capture or
    a datasheet. Everything a tech sets on the scope follows from those, so nothing is entered by hand:
    TIME/DIV = the 1-2-5 step whose cycle count across 10 divisions is closest to 3, within 1.5 to 5 cycles
-     (neighbouring 1-2-5 steps are at most 2.5x apart, so one always fits);
+     (neighboring 1-2-5 steps are at most 2.5x apart, so one always fits);
    VOLTS/DIV = the smallest 1-2-5 step >= (high - low) / 5, so the swing fills 2.5 to 5 of the 8 divisions;
    DC coupling (AC when only `pp` is given: no DC level), probe 10x, trigger at 1.4 V (TTL threshold) for logic
    shapes whose swing crosses it, else mid-swing; falling edge for `polarity: 'low'`. The trace is drawn from
@@ -383,7 +383,7 @@ function scopeSet(sc) {
   }
   if (lo != null && hi != null && hi > lo) {
     s.vdiv = step125((hi - lo) / 5);
-    /* 0 V one division up for a positive swing; else centre the swing (and say where 0 V went) */
+    /* 0 V one division up for a positive swing; else center the swing (and say where 0 V went) */
     s.gnd = lo >= 0 && hi / s.vdiv <= 6.5 ? 1 : 4 - (lo + hi) / 2 / s.vdiv;
     s.yLo = s.gnd + lo / s.vdiv; s.yHi = s.gnd + hi / s.vdiv;
     s.trig = LOGIC.has(shape) && lo < 1.4 && hi > 1.4 ? 1.4 : (lo + hi) / 2;
@@ -394,7 +394,7 @@ function scopeSet(sc) {
     /* inverted: trigger on the leading (rising) sync edge, midway between blanking and the tip */
     if (vinv) { s.trig = hi - (s.black ?? 0.3) * (hi - lo) / 2; s.yTrig = s.gnd + s.trig / s.vdiv; }
   } else if (lo == null && hi == null && pos(V('pp')) != null) {
-    /* swing only, no DC level: AC coupling, centred, no 0 V marker, trigger mid-swing */
+    /* swing only, no DC level: AC coupling, centered, no 0 V marker, trigger mid-swing */
     s.pp = V('pp'); s.ac = true; s.vdiv = step125(s.pp / 5);
     s.yLo = 4 - s.pp / 2 / s.vdiv; s.yHi = 4 + s.pp / 2 / s.vdiv; s.yTrig = 4;
   } else {
@@ -408,7 +408,7 @@ function shapeSegs(s) {
   if (s.shape === 'square' || s.shape === 'pulse') { const d = s.duty; return s.inv ? [[d, 0], [1 - d, 1]] : [[d, 1], [1 - d, 0]]; }
   /* a group of four pulses, then a gap as long as the group; f or period is the group's repetition rate */
   if (s.shape === 'burst') return [...Array.from({ length: 4 }, () => [[1 / 16, 1], [1 / 16, 0]]).flat(), [0.5, 0]];
-  /* video line from the start of the active picture: active (flat grey midway black to white), front porch, sync
+  /* video line from the start of the active picture: active (flat gray midway black to white), front porch, sync
      tip, back porch; PAL proportions 52, 1.65, 4.7, 5.65 of 64 µs; blanking at the sourced `black` level, else at
      the standard 0.3 of the swing above the sync tip (and the caption says it is not to scale) */
   if (s.shape === 'video-line') {
@@ -421,7 +421,7 @@ function shapeSegs(s) {
 const DV = 24;   /* px per division: the screen is 240 x 192 */
 function scopeSVG(s, label) {
   const X = x => r1(x * DV), Y = y => r1((8 - y) * DV);
-  const P = s.T > 0 && s.tdiv ? s.T / s.tdiv : 10 / 3, xt = 5;   /* divisions per period; trigger at the centre */
+  const P = s.T > 0 && s.tdiv ? s.T / s.tdiv : 10 / 3, xt = 5;   /* divisions per period; trigger at the center */
   let d = '', u = '';
   if (s.shape === 'sine') {
     const mid = (s.yLo + s.yHi) / 2, amp = (s.yHi - s.yLo) / 2, n = Math.ceil(10 / P * 48);
@@ -447,7 +447,7 @@ function scopeSVG(s, label) {
   return `<svg viewBox="-26 -14 282 212" role="img" aria-label="${esc(label)}">
     <rect class="fr" x="0" y="0" width="${10 * DV}" height="${8 * DV}"/>
     <path class="gr" d="${grid}"/><path class="ax" d="M ${5 * DV} 0 V ${8 * DV} M 0 ${4 * DV} H ${10 * DV} ${ticks}"/>
-    <text class="wm" x="6" y="15">IDEALISED</text>
+    <text class="wm" x="6" y="15">IDEALIZED</text>
     <svg x="0" y="0" width="${10 * DV}" height="${8 * DV}"><path class="tr" d="${d}"/>${u ? `<path class="tr unk" d="${u}"/>` : ''}</svg>
     ${gnd}${trig}
   </svg>`;
@@ -469,8 +469,8 @@ function scopeBlock(sc, title, parent) {
   rows.push(['Probe', '10×', 'channel set to 10×']);
   const f = s.T > 0 ? fmtU(1 / s.T, 'Hz') : '';
   const word = s.vinv ? 'inverted video (sync most positive)' : SHAPE_WORD[s.shape];
-  const label = `Idealised ${word}${f && s.shape !== 'dc' ? ', ' + f : ''}${swing ? ', ' + swing : ''}${s.unk ? ', duty not in source' : ''}, from ${basis}`;
-  const cap = [`Idealised from ${basis}`, s.vinv && 'inverted video (sync most positive)', s.shape === 'video-line' && 'picture drawn as a flat grey',
+  const label = `Idealized ${word}${f && s.shape !== 'dc' ? ', ' + f : ''}${swing ? ', ' + swing : ''}${s.unk ? ', duty not in source' : ''}, from ${basis}`;
+  const cap = [`Idealized from ${basis}`, s.vinv && 'inverted video (sync most positive)', s.shape === 'video-line' && 'picture drawn as a flat gray',
     s.shape === 'video-line' && s.black == null && 'levels to standard ratio, not to scale', s.unk && 'duty not in source', s.ac && 'no DC level in source'].filter(Boolean).join('; ');
   const sum = s.shape === 'dc' ? (s.vdiv ? `${fmtU(s.vdiv, 'V')}/div, DC` : 'DC') : [s.tdiv && fmtU(s.tdiv, 's') + '/div', s.vdiv && fmtU(s.vdiv, 'V') + '/div'].filter(Boolean).join(' · ');
   return `<details class="scope"${PHONE_MQ.matches ? '' : ' open'}><summary>Scope${title ? ` <span class="t">${esc(title)}</span>` : ''}${flag}<span class="s">${esc(sum)}</span></summary>
@@ -515,7 +515,7 @@ function pinExpect(chip, p, m) {
 const REPL_KIND = { 'pin-compatible': 'Pin-compatible', modern: 'Modern', adapter: 'Adapter' };
 const clockFreqs = c => (c.f ? String(c.f) : [c.pal && `PAL ${c.pal}`, c.ntsc && `NTSC ${c.ntsc}`].filter(Boolean).join(' / '));
 
-/* ---------- PAL / NTSC: the standard the user works on (rb-region). Only a value labelled with the other standard
+/* ---------- PAL / NTSC: the standard the user works on (rb-region). Only a value labeled with the other standard
    is hidden: the PAL or NTSC field of a clock, a video column, or one half of a pair written in a text field
    ("1.023 MHz NTSC / 0.985 MHz PAL", "60 Hz (NTSC) or 50 Hz (PAL)"). Anything else always shows. ---------- */
 const showPal = () => state.region !== 'ntsc', showNtsc = () => state.region !== 'pal';
@@ -680,7 +680,7 @@ function buildIndex() {
     const m = D.machines[mid], pw = m && dataFor(D.power, m).data; if (!pw) continue;
     for (const c of arr(pw.clocks)) if (c && c.name) ix.push({ group: 'Clocks', title: c.name, tag: clockFreqs(c), sub: `${m.name}${c.where ? ': ' + c.where : ''}`, keys: `clock ${clockFreqs(c)} ${c.where || ''}`, href: `${mPath(m)}/power?at=clocks`, des: mDes(m), ...flags(c) });
   }
-  ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' }, { group: 'Pages', title: 'About', sub: 'Version, repository, licence', href: '#/about' },
+  ix.push({ group: 'Pages', title: 'Glossary', sub: 'Every term', href: '#/glossary' }, { group: 'Pages', title: 'Resources', sub: 'Archives and communities', href: '#/resources' }, { group: 'Pages', title: 'Sources and credits', sub: 'Who the data comes from', href: '#/credits' }, { group: 'Pages', title: 'About', sub: 'Version, repository, license', href: '#/about' },
     { group: 'Pages', title: 'Video signals', sub: 'Composite levels, PAL and NTSC timing, RGBI, RGB, luma/chroma, RF', keys: 'video composite sync porch burst pal ntsc rgbi cga mda rgb luma chroma s-video rf modulator channel ire', href: '#/video' },
     { group: 'Pages', title: 'Bench notes', sub: 'Your notes, kept on this device', keys: 'notes export import', href: '#/notes' });
   INDEX = ix;
@@ -798,7 +798,7 @@ const mark = (t, x, y) => t === 'power' ? `<rect class="mk pwr" x="${x - 4}" y="
   : t === 'reset' ? `<path class="mk rst" d="M ${x} ${y - 5} l 5.5 9.5 h -11 z"/>`
   : t === 'ground' ? `<path class="mk gnd" d="M ${x - 5} ${y - 3} h 10 M ${x - 3} ${y + 1} h 6 M ${x - 1} ${y + 5} h 2"/>` : '';
 const markIcon = t => `<svg viewBox="-7 -7 14 14" aria-hidden="true">${mark(t, 0, 0) || '<circle class="mk ring" r="4.5"/>'}</svg>`;
-/* every lead stub is tinted by its pin's class (src/input.css, .lead.pwr ...); the marks stay, so colour is never the only cue */
+/* every lead stub is tinted by its pin's class (src/input.css, .lead.pwr ...); the marks stay, so color is never the only cue */
 const LEAD = { power: 'pwr', ground: 'gnd', clock: 'clk', reset: 'rst', addr: 'bus', data: 'bus', ctrl: 'ctl', nc: 'nc' };
 const leadOf = p => LEAD[isReset(p) ? 'reset' : p.type] || '';
 function dipGeom(chip, compact) {
@@ -829,7 +829,7 @@ const fourSided = svg => !!svg && (svg.classList.contains('plcc') || svg.classLi
 
 /* ---------- chip rotation: R / Shift+R or the Rotate button turn the drawing a quarter turn. The SVG is drawn
    upright, then its contents go into one rotated group; each pad's side turns with it (wire routing reads it),
-   and every label is turned back about its own centre so none reads upside down: names end up level or
+   and every label is turned back about its own center so none reads upside down: names end up level or
    reading upward, pin numbers level. ---------- */
 const SIDES = ['t', 'r', 'b', 'l'];   /* clockwise */
 function turnChip() {
@@ -961,7 +961,7 @@ function plccSVG(chip) {
       ${hit}${lead}${pad}${(k => (v ? mark(k, a, o(markX)) : mark(k, o(markX), a)))(isReset(p) ? 'reset' : p.type)}${num}${name}</g>`;
   });
   const c = W / 2;
-  return `<svg class="dip plcc" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" role="group" aria-label="${esc(chip.name)} ${esc(chip.pkg)} footprint, ${state.flip ? 'viewed from below, numbers clockwise' : 'top view, numbers counter-clockwise from pin 1 at the top ' + (corner ? 'left corner' : 'centre')}. Tab to a pad, Enter selects it.">
+  return `<svg class="dip plcc" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}" role="group" aria-label="${esc(chip.name)} ${esc(chip.pkg)} footprint, ${state.flip ? 'viewed from below, numbers clockwise' : 'top view, numbers counter-clockwise from pin 1 at the top ' + (corner ? 'left corner' : 'center')}. Tab to a pad, Enter selects it.">
     <rect class="body" x="${bodyX}" y="${bodyX}" width="${W - 2 * bodyX}" height="${W - 2 * bodyX}" rx="4"/>
     <circle class="notch" cx="${dot[0]}" cy="${dot[1]}" r="7"/>
     <text class="chipname" x="${c}" y="${c + 5}" text-anchor="middle">${esc(chip.short)}  ${esc(chip.pkg)}</text>
@@ -1336,13 +1336,13 @@ function rotBox([x, y, w, h], r) {
 }
 const frac = v => `${(v * 100).toFixed(3)}%`;
 const photoBoard = p => [p.board, p.rev].filter(Boolean).join(', ');
-const photoCredit = p => `Photo: ${esc(p.author)}, <a href="${esc(safeUrl(p.licenceUrl))}" target="_blank" rel="noopener license">${esc(p.licence)}</a>, via <a href="${esc(safeUrl(p.source && p.source.url))}" target="_blank" rel="noopener">${esc((p.source && p.source.label) || 'source')}</a>`;
+const photoCredit = p => `Photo: ${esc(p.author)}, <a href="${esc(safeUrl(p.licenseUrl))}" target="_blank" rel="noopener license">${esc(p.license)}</a>, via <a href="${esc(safeUrl(p.source && p.source.url))}" target="_blank" rel="noopener">${esc((p.source && p.source.label) || 'source')}</a>`;
 /* the image and its outlines. o.only: draw just that chip's box (the chip page thumbnail, no links inside) */
 function photoFrame(m, p, o = {}) {
   const r = rotOf(p), turned = r % 180, W = turned ? p.h : p.w, H = turned ? p.w : p.h;
   const img = turned ? `position:absolute;left:50%;top:50%;width:${frac(p.w / p.h)};height:${frac(p.h / p.w)};transform:translate(-50%,-50%) rotate(${r}deg)` : r ? 'transform:rotate(180deg)' : '';
   const vfy = new Set(arr(p.verify));
-  /* biggest first, so a small chip's enlarged hit area sits on top of a big neighbour */
+  /* biggest first, so a small chip's enlarged hit area sits on top of a big neighbor */
   const boxes = Object.entries(p.chips || {}).filter(([cid]) => D.chips[cid] && (!o.only || cid === o.only))
     .map(([cid, b]) => [cid, rotBox(b, r)]).sort((a, b) => b[1][2] * b[1][3] - a[1][2] * a[1][3]);
   const sel = o.only || state.ph.sel;
@@ -1442,7 +1442,7 @@ function viewChip(m, chip) {
       <div><div class="dipwrap" id="dipwrap">${isPLCC(chip) ? plccSVG(chip) : dipSVG(chip)}</div>
         <p class="note text-center mx-auto">${state.rot ? `TURNED ${state.rot * 90}° CLOCKWISE from the view below. ` : ''}${isPLCC(chip)
           ? (isCorner(chip) ? (state.flip ? 'VIEW: BOTTOM. Leads toward you; pin 1 now at the top right corner, numbers run clockwise.' : 'VIEW: TOP. Pin 1 at the square pad, top left corner by the dot; numbers run counter-clockwise.')
-            : state.flip ? 'VIEW: BOTTOM. Leads toward you; pin 1 still at the top centre, numbers run clockwise.' : 'VIEW: TOP. Pin 1 at the square pad, top centre by the dot; numbers run counter-clockwise.')
+            : state.flip ? 'VIEW: BOTTOM. Leads toward you; pin 1 still at the top center, numbers run clockwise.' : 'VIEW: TOP. Pin 1 at the square pad, top center by the dot; numbers run counter-clockwise.')
           : state.flip ? 'VIEW: BOTTOM. Pins toward you, notch still up.' : 'VIEW: TOP. Notch up, pin 1 at the square pad.'}</p></div>
       <div class="detail" id="detail">${detailBox(chip, m)}</div>
     </div>
@@ -1732,17 +1732,17 @@ function viewAbout() {
       <dl class="kv mt-0"><dt>Repository</dt><dd>${ext(REPO, 'github.com/paulczy/retro-bench')}</dd>
         <dt>Changes</dt><dd>${ext(`${REPO}/commits/main`, 'Commit history')}</dd>
         <dt>Report</dt><dd>${ext(`${REPO}/issues`, 'Open an issue')}: a wrong pin, a missing source, a bug.</dd>
-        <dt>Licence</dt><dd>Code ${ext(`${REPO}/blob/main/LICENSE`, 'MIT')}. Data ${ext(`${REPO}/blob/main/LICENSE-DATA`, 'CC BY 4.0')}.</dd>
+        <dt>License</dt><dd>Code ${ext(`${REPO}/blob/main/LICENSE`, 'MIT')}. Data ${ext(`${REPO}/blob/main/LICENSE-DATA`, 'CC BY 4.0')}.</dd>
         <dt>Credits</dt><dd><a class="lnk" href="#/credits">Every archive and document the data comes from</a></dd></dl>
     </section>`;
 }
-/* every board photo with its author, licence and source, as the licences ask */
+/* every board photo with its author, license and source, as the licenses ask */
 function photoCredits() {
   const rows = Object.entries(D.photos).flatMap(([mid, list]) => (D.machines[mid] ? photosOf(D.machines[mid]).map(p => [D.machines[mid], p]) : []));
   if (!rows.length) return '';
   return `<section class="blk" id="photo-credits"><span class="lbl">Board photos</span>
     <div class="legend">${rows.map(([m, p]) => `<div class="k"><a class="lnk" href="${mPath(m)}?at=photo">${esc(mDes(m))}</a></div><div class="v"><b>${esc(m.name)}</b>, ${esc(photoBoard(p))}<br><span class="sm">${photoCredit(p)}</span></div>`).join('')}</div>
-    <p class="note">The photos are shown unaltered apart from resizing; the chip outlines are drawn over them by the app. Each keeps its own licence, listed file by file in <a class="plink" href="photos/LICENSES.md" target="_blank" rel="noopener">photos/LICENSES.md</a>${[...new Set(rows.map(([, p]) => (/^GFDL\s*([\d.]+)/i.exec(p.licence) || [])[1]).filter(Boolean))].map(v => `, with the full <a class="plink" href="photos/GFDL-${v}.txt" target="_blank" rel="noopener">GNU Free Documentation License ${v}</a>`).join('')}.</p></section>`;
+    <p class="note">The photos are shown unaltered apart from resizing; the chip outlines are drawn over them by the app. Each keeps its own license, listed file by file in <a class="plink" href="photos/LICENSES.md" target="_blank" rel="noopener">photos/LICENSES.md</a>${[...new Set(rows.map(([, p]) => (/^GFDL\s*([\d.]+)/i.exec(p.license) || [])[1]).filter(Boolean))].map(v => `, with the full <a class="plink" href="photos/GFDL-${v}.txt" target="_blank" rel="noopener">GNU Free Documentation License ${v}</a>`).join('')}.</p></section>`;
 }
 function viewCredits() {
   const all = allSources(), byHost = new Map();
@@ -1761,7 +1761,7 @@ function viewMore() {
   const m = mask(), nNotes = noteKeys().filter(k => noteGet(k)).length, pm = currentMachine();
   return head('', 'More', '') + `
     <section class="blk"><span class="lbl">Reference</span>
-      <div class="legend"><div class="k"><a class="lnk" href="#/glossary">GLOSSARY</a></div><div class="v">Every term, with the long definition</div><div class="k"><a class="lnk" href="#/resources">RESOURCES</a></div><div class="v">Archives and communities, by brand</div><div class="k"><a class="lnk" href="#/about">ABOUT</a></div><div class="v">Version ${esc(rbVersion().v)}, source code and licence</div><div class="k"><a class="lnk" href="#/credits">CREDITS</a></div><div class="v">Every archive and document the data was checked against</div><div class="k"><a class="lnk" href="#/video">VIDEO SIGNALS</a></div><div class="v">Composite levels, PAL and NTSC sync timing, RGBI, analogue RGB, luma/chroma, RF channels</div></div>
+      <div class="legend"><div class="k"><a class="lnk" href="#/glossary">GLOSSARY</a></div><div class="v">Every term, with the long definition</div><div class="k"><a class="lnk" href="#/resources">RESOURCES</a></div><div class="v">Archives and communities, by brand</div><div class="k"><a class="lnk" href="#/about">ABOUT</a></div><div class="v">Version ${esc(rbVersion().v)}, source code and license</div><div class="k"><a class="lnk" href="#/credits">CREDITS</a></div><div class="v">Every archive and document the data was checked against</div><div class="k"><a class="lnk" href="#/video">VIDEO SIGNALS</a></div><div class="v">Composite levels, PAL and NTSC sync timing, RGBI, analog RGB, luma/chroma, RF channels</div></div>
     </section>
     <section class="blk"><span class="lbl">On the bench</span>
       <div class="legend"><div class="k"><a class="lnk" href="#/notes">NOTES</a> <span class="tin mono sm">${nNotes}</span></div><div class="v">Your bench notes from machine and chip pages, kept on this device only. Export and import as a text file.</div><div class="k"><a class="lnk" href="${pm ? mPath(pm) : '#/'}">PRINT</a></div><div class="v">On a machine page, <span class="mono">Print card</span> (or the browser's Print) gives one page in black on white: the chip footprints with designators, rails, the first ten minutes or the order of checks, clocks and every connector's pin numbers.${pm ? ` Last machine: ${esc(pm.name)}.` : ''}</div></div>
@@ -1779,8 +1779,8 @@ const VIDEO_GROUPS = [
   ['line', 'Line timing', 'Between half-amplitude points, from the leading edge of horizontal sync.'],
   ['field', 'Field timing', ''],
   ['rgbi', 'RGBI, TTL direct drive', 'IBM CGA and MDA, as the PC Technical Reference gives them.'],
-  ['rgb', 'Analogue RGB', 'The level sets a display can declare (VESA EDID).'],
-  ['yc', 'Luma and chroma', 'S-Video style: sync and brightness on one line, colour on another. The Commodore 64 example.'],
+  ['rgb', 'Analog RGB', 'The level sets a display can declare (VESA EDID).'],
+  ['yc', 'Luma and chroma', 'S-Video style: sync and brightness on one line, color on another. The Commodore 64 example.'],
   ['rf', 'RF channels', ''],
   ['mod', 'What a modulator takes in', ''],
 ];
@@ -1810,17 +1810,17 @@ function videoLineSVG() {
   let grid = '';
   for (let t = t0 + 2; t < t1; t += 2) grid += `M ${X(t)} 0 V ${H} `;
   for (let v = 1; v < 12; v++) grid += `M 0 ${r1(v * 0.1 * YS)} H ${W} `;
-  /* the trace: picture (mid grey), front porch, sync, back porch with the burst, picture (white, then grey) */
+  /* the trace: picture (mid gray), front porch, sync, back porch with the burst, picture (white, then gray) */
   let d = `M 0 ${Y(0.35)} H ${X(-fp)} V ${Y(0)} H ${X(0)} V ${Y(sync)} H ${X(hs)} V ${Y(0)} H ${X(bs)}`;
   for (let i = 1, n = 80; i <= n; i++) d += ` L ${X(bs + bl * i / n)} ${Y(burst / 2 * Math.sin(2 * Math.PI * 10 * i / n))}`;
   d += ` H ${X(bend)} V ${Y(white)} H ${X(13.5)} V ${Y(0.35)} H ${W}`;
   const mv = v => `${v > 0 ? '+' : v < 0 ? '−' : ''}${+Math.abs(v).toFixed(3)} V`;
   const lvl = (v, k, sub) => `<path class="lv" d="M 0 ${Y(v)} H ${W}"/><text class="vlk" x="${W + 12}" y="${Y(v) + 4}">${k}</text><text class="vls" x="${W + 12}" y="${Y(v) + 19}">${sub}</text>`;
   const dim = (a, b, y, k) => `<path class="dm" d="M ${X(a)} ${y - 5} v 10 M ${X(b)} ${y - 5} v 10 M ${X(a)} ${y} H ${X(b)}"/><text class="vls" x="${(X(a) + X(b)) / 2}" y="${y + 17}" text-anchor="middle">${k}</text>`;
-  return `<svg class="vline" width="${W + 250}" height="${H + 88}" viewBox="-40 -26 ${W + 250} ${H + 88}" role="img" aria-label="One PAL video line around line blanking: picture, front porch ${fp} µs, sync ${hs} µs down to ${mv(sync)}, back porch ${bp} µs with the colour burst, then picture up to peak white ${mv(white)}.">
+  return `<svg class="vline" width="${W + 250}" height="${H + 88}" viewBox="-40 -26 ${W + 250} ${H + 88}" role="img" aria-label="One PAL video line around line blanking: picture, front porch ${fp} µs, sync ${hs} µs down to ${mv(sync)}, back porch ${bp} µs with the color burst, then picture up to peak white ${mv(white)}.">
     <rect class="fr" x="0" y="0" width="${W}" height="${H}"/><path class="gr" d="${grid}"/>
     <path class="ax" d="M ${X(0)} 0 V ${H}"/><text class="mt" x="${X(0)}" y="-10" text-anchor="middle">0H</text>
-    <text class="wm" x="6" y="15">IDEALISED</text>
+    <text class="wm" x="6" y="15">IDEALIZED</text>
     ${lvl(white, `PEAK WHITE ${mv(white)}`, showNtsc() ? `NTSC ${esc(row('white').ntsc || '')}` : '')}
     ${lvl(0, 'BLANKING 0 V', ['PAL black = blanking', showNtsc() && 'NTSC 7.5 IRE up'].filter(Boolean).join('; '))}
     ${lvl(sync, `SYNC TIP ${mv(sync)}`, showNtsc() ? `NTSC ${esc(row('sync').ntsc || '')}` : '')}
@@ -1842,7 +1842,7 @@ function viewVideo() {
     <nav class="jumpers" aria-label="Sections">${groups.map(([g, title]) => `<a href="#/video?at=v-${g}">${esc(title.split(',')[0])}</a>`).join('')}</nav>
     <section class="blk"><span class="lbl">One line, PAL</span>
       <figure class="scr vfig"><div class="vwrap">${videoLineSVG()}</div>
-        <figcaption class="normal-case">Idealised, 2 µs/div and 0.1 V/div into 75 Ω. Timing and levels are the PAL rows below, NTSC on the right.${(() => { const ids = ['white', 'sync', 'burst', 'fp', 'hs', 'bp', 'bs']; const fl = ids.map(id => arr(D.video.signals).find(r => r.id === id)).filter(r => r && flagged(r)); return fl.length ? `<br>Drawn from values not proven by a source: ${fl.map(r => `${esc(r.name)}${vmark(r)}${disagree(r, 'conflict', 'span')}`).join(', ')}.` : ''; })()}</figcaption></figure>
+        <figcaption class="normal-case">Idealized, 2 µs/div and 0.1 V/div into 75 Ω. Timing and levels are the PAL rows below, NTSC on the right.${(() => { const ids = ['white', 'sync', 'burst', 'fp', 'hs', 'bp', 'bs']; const fl = ids.map(id => arr(D.video.signals).find(r => r.id === id)).filter(r => r && flagged(r)); return fl.length ? `<br>Drawn from values not proven by a source: ${fl.map(r => `${esc(r.name)}${vmark(r)}${disagree(r, 'conflict', 'span')}`).join(', ')}.` : ''; })()}</figcaption></figure>
     </section>
     ${groups.map(([g, title, sub, rows]) => `<section class="blk scroll-mt-4" id="v-${g}"><span class="lbl">${esc(title)}</span>${sub ? `<p class="note mt-0 mb-2">${esc(sub)}</p>` : ''}${videoTable(rows)}</section>`).join('')}
     <section class="blk" id="v-sources"><span class="lbl">Sources</span>${sourceList(V.sources.map(s => ({ label: `${s.short}: ${s.label}`, url: s.url, note: s.note, verify: s.verify, conflict: s.conflict })), '')}

@@ -12,7 +12,7 @@
     c64: [{
       board: 'Assy 250407', boards: ['250407'], rev: 'Rev B',
       file: 'photos/c64-250407.webp', w: 1600, h: 837, side: 'component', rotate: 0,
-      author: 'Sven.petersen', licence: 'CC BY-SA 4.0', licenceUrl: BYSA('4.0'),
+      author: 'Sven.petersen', license: 'CC BY-SA 4.0', licenseUrl: BYSA('4.0'),
       source: src('0430 - C64 Mainboard ASSY250407 RevB.jpg'),
       chips: {
         cia6526: [0.074, 0.180, 0.105, 0.240], cpu6510: [0.340, 0.180, 0.049, 0.240],
@@ -20,12 +20,12 @@
         pla82s100: [0.407, 0.182, 0.047, 0.167], sid6581: [0.406, 0.423, 0.049, 0.171],
         sram2114: [0.375, 0.500, 0.022, 0.090], dram4164: [0.118, 0.498, 0.125, 0.268] },
       verify: [],
-      note: 'Board still in the lower case. The VIC-II (U19) sits under the closed RF shield and is not marked. The 2114 box is U6, the colour RAM.' }],
+      note: 'Board still in the lower case. The VIC-II (U19) sits under the closed RF shield and is not marked. The 2114 box is U6, the color RAM.' }],
 
     vic20: [{
       board: 'VIC-20 main board (assy number not visible)', rev: 'Grid-designator board, PAL',
       file: 'photos/vic20-mainboard.webp', w: 1600, h: 823, side: 'component', rotate: 0,
-      author: 'Sven.petersen', licence: 'Public domain (PD-self)', licenceUrl: PDSELF,
+      author: 'Sven.petersen', license: 'Public domain (PD-self)', licenseUrl: PDSELF,
       source: src('4860 - VIC-20 Mainboard.JPG'),
       chips: {
         via6522: [0.090, 0.178, 0.104, 0.242], vic6560: [0.338, 0.336, 0.128, 0.082],
@@ -37,7 +37,7 @@
     plus4: [{
       board: 'Plus/4 board (schematic 310164)', rev: 'Assy 310163',
       file: 'photos/plus4-310163.webp', w: 1600, h: 892, side: 'component', rotate: 0,
-      author: 'Journey234', licence: 'Public domain (PD-self)', licenceUrl: PDSELF,
+      author: 'Journey234', license: 'Public domain (PD-self)', licenseUrl: PDSELF,
       source: src('Plus4 main board.jpg'),
       chips: {
         cpu7501: [0.559, 0.445, 0.157, 0.093], acia6551: [0.739, 0.445, 0.113, 0.093],
@@ -49,7 +49,7 @@
     c128: [{
       board: 'C128 (flat)', rev: 'Flat C128 board',
       file: 'photos/c128-flat.webp', w: 1600, h: 1064, side: 'component', rotate: 0,
-      author: 'Bill Bertram', licence: 'CC BY-SA 2.5', licenceUrl: BYSA('2.5'),
+      author: 'Bill Bertram', license: 'CC BY-SA 2.5', licenseUrl: BYSA('2.5'),
       source: src('C128mobo.jpg'),
       chips: {
         cia6526: [0.049, 0.284, 0.040, 0.177], vdc8563: [0.228, 0.239, 0.037, 0.217],
@@ -63,7 +63,7 @@
     c1541: [{
       board: 'Assy 250442, 250446 (1541A, 1541A-2)', boards: ['250442'], rev: 'Assy 250442, PCB 251830 Rev A',
       file: 'photos/c1541-250442.webp', w: 1600, h: 1150, side: 'component', rotate: 0,
-      author: 'Evan-Amos', licence: 'Public domain (PD-self)', licenceUrl: PDSELF,
+      author: 'Evan-Amos', license: 'Public domain (PD-self)', licenseUrl: PDSELF,
       source: src('Commodore-64-1541-Floppy-Drive-Motherboard-01.jpg'),
       chips: {
         cpu6502: [0.435, 0.378, 0.190, 0.123], via6522: [0.396, 0.480, 0.211, 0.237],
@@ -75,7 +75,7 @@
     apple2: [{
       board: 'Apple II main board', rev: 'Revision not readable',
       file: 'photos/apple2-mainboard.webp', w: 1089, h: 1600, side: 'component', rotate: 0,
-      author: 'Steve Jurvetson', licence: 'CC BY 2.0', licenceUrl: BY('2.0'),
+      author: 'Steve Jurvetson', license: 'CC BY 2.0', licenseUrl: BY('2.0'),
       source: src('Apple II motherboard (53171103722).jpg'),
       chips: {
         cpu6502: [0.372, 0.290, 0.207, 0.054], rom2316: [0.216, 0.376, 0.483, 0.086],
@@ -86,7 +86,7 @@
     apple2e: [{
       board: 'IIe main board 820-0087-C', boards: ['enhcf'], rev: '607-0187-C, 1986 (enhanced, 65C02)',
       file: 'photos/apple2e-820-0087.webp', w: 1280, h: 1600, side: 'component', rotate: 0,
-      author: 'Nicolasfoster', licence: 'CC0 1.0', licenceUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
+      author: 'Nicolasfoster', license: 'CC0 1.0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
       source: src('Apple IIe 1986 Mobo.png'),
       chips: {
         cpu6502: [0.310, 0.405, 0.065, 0.172], mmu344: [0.310, 0.596, 0.065, 0.166],
@@ -97,7 +97,7 @@
     apple2c: [{
       board: 'IIc main board', rev: 'Original',
       file: 'photos/apple2c-820-0115.webp', w: 1559, h: 1600, side: 'component', rotate: 0,
-      author: 'Evan-Amos', licence: 'Public domain (PD-self)', licenceUrl: PDSELF,
+      author: 'Evan-Amos', license: 'Public domain (PD-self)', licenseUrl: PDSELF,
       source: src('Apple-IIc-Motherboard-Flat-Top.jpg'),
       chips: {
         cpu6502: [0.597, 0.849, 0.180, 0.056], mmu2c: [0.597, 0.754, 0.180, 0.058],
@@ -110,7 +110,7 @@
     atari800: [{
       board: '800 motherboard, personality, CPU and RAM boards', rev: 'Motherboard Rev A',
       file: 'photos/atari800-motherboard.webp', w: 1192, h: 1600, side: 'component', rotate: 0,
-      author: 'Evan-Amos', licence: 'Public domain (PD-self)', licenceUrl: PDSELF,
+      author: 'Evan-Amos', license: 'Public domain (PD-self)', licenseUrl: PDSELF,
       source: src('Atari-800-Motherboard-Flat-Top.jpg'),
       chips: { pokey: [0.204, 0.541, 0.204, 0.055], pia6520: [0.179, 0.660, 0.208, 0.054] },
       verify: [],
@@ -119,7 +119,7 @@
     atari800xl: [{
       board: '800XL main board', rev: 'PAL, serial 72RHA AT8489594',
       file: 'photos/atari800xl-mainboard.webp', w: 1600, h: 1001, side: 'component', rotate: 0,
-      author: 'Multicherry', licence: 'CC BY-SA 4.0', licenceUrl: BYSA('4.0'),
+      author: 'Multicherry', license: 'CC BY-SA 4.0', licenseUrl: BYSA('4.0'),
       source: src('Atari 800XL board top perspective fix (72RHA AT8489594 I-474).jpg'),
       chips: {
         dram4164: [0.116, 0.330, 0.049, 0.360], gtia: [0.160, 0.761, 0.125, 0.054],
@@ -132,7 +132,7 @@
     colecovision: [{
       board: 'ColecoVision main board (NTSC)', rev: 'PCB 75743 Rev H2-1 (1982)',
       file: 'photos/colecovision-75743.webp', w: 1600, h: 1309, side: 'component', rotate: 0,
-      author: 'Evan-Amos', licence: 'Public domain (PD-self)', licenceUrl: PDSELF,
+      author: 'Evan-Amos', license: 'Public domain (PD-self)', licenseUrl: PDSELF,
       source: src('ColecoVision-Motherboard-Top.jpg'),
       chips: {
         dram4116: [0.140, 0.113, 0.220, 0.290], vdp9918: [0.381, 0.107, 0.080, 0.316],
@@ -145,7 +145,7 @@
     spectrum: [{
       board: 'Issue 4A/4B', boards: ['issue4b'], rev: 'Issue 4B',
       file: 'photos/spectrum-issue4b.webp', w: 1600, h: 964, side: 'component', rotate: 0,
-      author: 'AUIC Oficial - (c) Fernando Sáenz - Public Domain Work', licence: 'Public Domain Mark 1.0 (Flickr)', licenceUrl: 'https://creativecommons.org/publicdomain/mark/1.0/',
+      author: 'AUIC Oficial - (c) Fernando Sáenz - Public Domain Work', license: 'Public Domain Mark 1.0 (Flickr)', licenseUrl: 'https://creativecommons.org/publicdomain/mark/1.0/',
       source: src('Sinclair ZX Spectrum Issue 4B Motherboard.jpg'),
       chips: {
         ula_spectrum: [0.336, 0.297, 0.064, 0.345], cpuz80: [0.630, 0.283, 0.060, 0.212],
@@ -157,7 +157,7 @@
     zx81: [{
       board: 'ZX81 (issue not stated)', rev: 'Issue not visible',
       file: 'photos/zx81-mainboard.webp', w: 1600, h: 1200, side: 'component', rotate: 0,
-      author: 'liftarn', licence: 'CC BY-SA 2.0', licenceUrl: BYSA('2.0'),
+      author: 'liftarn', license: 'CC BY-SA 2.0', licenseUrl: BYSA('2.0'),
       source: src('SinclairZX81PCB.jpg'),
       chips: {
         ula_zx81: [0.345, 0.252, 0.077, 0.278], rom_zx81: [0.424, 0.525, 0.073, 0.203],
@@ -168,7 +168,7 @@
     ts1000: [{
       board: 'TS1000 main PCB', rev: 'Silkscreen "Sinclair ZX81 ISS 3"',
       file: 'photos/ts1000-mainboard.webp', w: 1600, h: 1518, side: 'component', rotate: 0,
-      author: 'MarcoTangerino', licence: 'Public domain (PD-self)', licenceUrl: PDSELF,
+      author: 'MarcoTangerino', license: 'Public domain (PD-self)', licenseUrl: PDSELF,
       source: src('Timex Sinclair 1000 Motherboard Top.jpg'),
       chips: {
         ula_zx81: [0.332, 0.119, 0.093, 0.300], cpuz80: [0.459, 0.220, 0.090, 0.301],
@@ -179,7 +179,7 @@
     dragon32: [{
       board: 'SA2120 Mk II', rev: 'PC10087 "CPU UK 32K MK II", side 2 issue 5',
       file: 'photos/dragon32-pc10087.webp', w: 1600, h: 1006, side: 'component', rotate: 0,
-      author: 'Roberto Carlos Fernández Gerhardt', licence: 'GFDL 1.2', licenceUrl: 'https://www.gnu.org/licenses/old-licenses/fdl-1.2.html',
+      author: 'Roberto Carlos Fernández Gerhardt', license: 'GFDL 1.2', licenseUrl: 'https://www.gnu.org/licenses/old-licenses/fdl-1.2.html',
       source: src('Dragon32 PCB Top (PC10087 Issue5).jpg'),
       chips: {
         vdg6847: [0.290, 0.178, 0.048, 0.297], sam6883: [0.375, 0.415, 0.190, 0.090],
@@ -192,7 +192,7 @@
     pc5150: [{
       board: '16KB-64KB CPU', rev: '16KB-64KB CPU (silkscreen)',
       file: 'photos/pc5150-16-64kb.webp', w: 1600, h: 1145, side: 'component', rotate: 0,
-      author: 'German', licence: 'CC BY-SA 3.0', licenceUrl: BYSA('3.0'),
+      author: 'German', license: 'CC BY-SA 3.0', licenseUrl: BYSA('3.0'),
       source: src('IBM PC Motherboard (1981).jpg'),
       chips: {
         cpu8088: [0.088, 0.268, 0.171, 0.074], bus8288: [0.172, 0.105, 0.085, 0.050],
@@ -205,7 +205,7 @@
     xt5160: [{
       board: '64-256KB SYSTEM BOARD', rev: '64-256KB SYSTEM BOARD (silkscreen)',
       file: 'photos/xt5160-64-256kb.webp', w: 1600, h: 1156, side: 'component', rotate: 0,
-      author: 'Mister_rf', licence: 'CC BY-SA 4.0', licenceUrl: BYSA('4.0'),
+      author: 'Mister_rf', license: 'CC BY-SA 4.0', licenseUrl: BYSA('4.0'),
       source: src('IBM XT 5160 motherboard.jpg'),
       chips: {
         cpu8088: [0.088, 0.172, 0.169, 0.071], bus8288: [0.268, 0.078, 0.080, 0.042],
@@ -218,7 +218,7 @@
     portable5155: [{
       board: '64-256KB SYSTEM BOARD (XT type)', rev: '64-256KB SYSTEM BOARD (silkscreen)',
       file: 'photos/portable5155-64-256kb.webp', w: 1600, h: 1200, side: 'component', rotate: 0,
-      author: 'tony_duell', licence: 'CC BY 2.0', licenceUrl: BY('2.0'),
+      author: 'tony_duell', license: 'CC BY 2.0', licenseUrl: BY('2.0'),
       source: src('Motherboard (54216337134).jpg'),
       chips: {
         cpu8088: [0.170, 0.268, 0.140, 0.057], bus8288: [0.320, 0.212, 0.066, 0.035],
@@ -231,7 +231,7 @@
     pcjr: [{
       board: 'PCjr system board', rev: 'Revision not readable',
       file: 'photos/pcjr-mainboard.webp', w: 1600, h: 1236, side: 'component', rotate: 0,
-      author: 'Binarysequence', licence: 'CC BY-SA 4.0', licenceUrl: BYSA('4.0'),
+      author: 'Binarysequence', license: 'CC BY-SA 4.0', licenseUrl: BYSA('4.0'),
       source: src('IBM PCB Jr Motherboard.jpg'),
       chips: {
         cpu8088: [0.732, 0.482, 0.152, 0.060], pic8259: [0.762, 0.397, 0.112, 0.052],
@@ -239,12 +239,12 @@
         crtc6845: [0.192, 0.309, 0.153, 0.058], sn76496: [0.052, 0.311, 0.063, 0.031],
         clk8284: [0.856, 0.182, 0.066, 0.031] },
       verify: ['cpu8088', 'pic8259', 'pit8253', 'ppi8255', 'crtc6845', 'sn76496', 'clk8284'],
-      note: 'Shown as uploaded: cartridge slots at the front (bottom), sidecar connector on the right. Chips are fitted both ways round, so some markings read upside down. The board prints almost no reference designators near the chips, so every chip was placed by its part marking. The video gate array was not identified with certainty (the 40-pin IBM 1503730 left of centre is a candidate).' }],
+      note: 'Shown as uploaded: cartridge slots at the front (bottom), sidecar connector on the right. Chips are fitted both ways round, so some markings read upside down. The board prints almost no reference designators near the chips, so every chip was placed by its part marking. The video gate array was not identified with certainty (the 40-pin IBM 1503730 left of center is a candidate).' }],
 
     model1: [{
       board: 'CPU board 1700069', rev: 'Revision not readable (serial 112788)',
       file: 'photos/model1-1700069.webp', w: 1600, h: 918, side: 'component', rotate: 0,
-      author: 'Binarysequence', licence: 'CC BY-SA 4.0', licenceUrl: BYSA('4.0'),
+      author: 'Binarysequence', license: 'CC BY-SA 4.0', licenseUrl: BYSA('4.0'),
       source: src('Radio Shack Tandy TRS-80 Model I PCB.JPG'),
       chips: {
         cpuz80: [0.789, 0.376, 0.042, 0.203], dram4116: [0.431, 0.272, 0.279, 0.087],

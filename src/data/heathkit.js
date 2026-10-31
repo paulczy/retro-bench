@@ -747,7 +747,7 @@ RCS.add({
 
       { id: 'hero1-p202', name: 'Power supply board charge and battery input (P202, pins 13-24)', kind: '12-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(13, 24)), outline: hkRowOutline(12), verify: true,
         verifiedAgainst: 'ET-18 Schematics sheet 3 (power supply board); ET-18 Block Interconnect Diagram',
-        summary: 'Charger and battery wiring into the two charge regulators (U201 logic, U204 motor). Heathkit numbers pins board-wide, so this header runs 13-24. Pads in number order along one row (layout assumed). Wire colours differ between the two drawings; pin roles agree.',
+        summary: 'Charger and battery wiring into the two charge regulators (U201 logic, U204 motor). Heathkit numbers pins board-wide, so this header runs 13-24. Pads in number order along one row (layout assumed). Wire colors differ between the two drawings; pin roles agree.',
         pins: [
           { n: 13, name: 'CHG GND', type: 'ground', desc: 'Charger ground return (from charger socket pin 4, block interconnect diagram).' },
           { n: 14, name: 'LOGIC REG IN', type: 'power', desc: 'Charger + into logic regulator U201 (from charger socket pin 8, block interconnect diagram).', expect: 'About 27 V near full charge; falls to as little as 14 V while the charger is in current limit into nearly discharged batteries' },
@@ -818,7 +818,7 @@ RCS.add({
           { n: 10, name: 'RESET', type: 'ctrl', desc: 'RESET key (joined to 11); the key grounds it.' },
           { n: 11, name: 'RESET', type: 'ctrl', desc: 'RESET key.' },
           { n: 12, name: 'GND', type: 'ground', desc: 'Ground.' },
-          { n: 13, name: '+5V', type: 'power', desc: 'Labelled +5V; on the switched +5V SOURCE rail from Q1201.' },
+          { n: 13, name: '+5V', type: 'power', desc: 'Labeled +5V; on the switched +5V SOURCE rail from Q1201.' },
           { n: 14, name: 'NC', type: 'nc', desc: 'Not connected.' },
           { n: 15, name: 'D4', type: 'kbd', desc: 'Keypad row bit 4 out through buffer U1209.' },
           { n: 16, name: 'D3', type: 'kbd', desc: 'Keypad row bit 3.' },
@@ -829,7 +829,7 @@ RCS.add({
           { n: 21, name: '/D0', type: 'data', desc: 'Inverted D0: segment on/off data to the latches.' },
           { n: 22, name: 'A5', type: 'addr', desc: 'Digit address A5 to decoder U1208.' },
           { n: 23, name: 'A6', type: 'addr', desc: 'Digit address A6.' },
-          { n: 24, name: 'SELECT', type: 'ctrl', desc: 'Display select into U1208 (74LS42) pin 12, the D input used as the enable (unlabelled on the drawing).' },
+          { n: 24, name: 'SELECT', type: 'ctrl', desc: 'Display select into U1208 (74LS42) pin 12, the D input used as the enable (unlabeled on the drawing).' },
           { n: 25, name: 'A4', type: 'addr', desc: 'Digit address A4.' }
         ],
         sources: [H1SCH(4, 'display circuit board, P1201'), H1ERR(1, 9, 'replacement upper-left section of the display board schematic (page 8 of 9; R1202, C1202 and D1201 removed)')],
@@ -904,7 +904,7 @@ RCS.add({
 
       { id: 'hero1-p406', name: 'CPU expansion connector (P406)', kind: '10-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(1, 10)), outline: hkRowOutline(10),
         verifiedAgainst: 'ET-18 Schematics sheet 2 of 4 (CPU board, P406: pins 1-2 from U403 pins 13 and 12, 3-10 BA7-BA0 from U404); HERO 1 Advanced Programming and Interfacing, Table 6-7, printed p. 101',
-        summary: 'Unused on a stock robot; the ET-18-6 memory expansion and home-built boards use P406-P408. Pins 3-10 carry BA7-BA0 as labelled on the CPU schematic. Pads in number order (layout assumed).',
+        summary: 'Unused on a stock robot; the ET-18-6 memory expansion and home-built boards use P406-P408. Pins 3-10 carry BA7-BA0 as labeled on the CPU schematic. Pads in number order (layout assumed).',
         pins: [
           { n: 1, name: '/SEL 4000', type: 'ctrl', desc: 'Address select for $4000-$5FFF.' },
           { n: 2, name: '/SEL 6000', type: 'ctrl', desc: 'Address select for $6000-$7FFF.' },
@@ -1112,7 +1112,7 @@ RCS.add({
           { n: 11, name: 'ON/OFF', type: 'ctrl', desc: 'Speech board power control: a high from the CPU power port turns Q502 and then Q501 on (TM printed p. 78). Sheet 3 runs it from $C2E0 bit 3 (U311 pin 9) to P317 pin 143 SPEECH; the block diagram labels P501 pin 11 ENABLE.' },
           { n: 12, name: 'NC', type: 'nc', desc: 'Not connected.' }
         ],
-        sources: [{ label: 'ET-18 Illustration Booklet, Speech Accessory Board sheets 2-3, schematic (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Illustration%20Booklet%20-%20Speech%20Accessory%20Board%20sheet%202-3.pdf#page=1' }, H1BLOCK('speech board P501'), { label: 'Votrax SC-01 speech synthesizer data sheet (1980), signals p. 4 (strobe and request behaviour)', url: 'https://www.redcedar.com/sc01/sc01.pdf#page=4' }],
+        sources: [{ label: 'ET-18 Illustration Booklet, Speech Accessory Board sheets 2-3, schematic (archive.org)', url: 'https://archive.org/download/heathkit-hero-1-ET-18/ET-18%20Robot%20Illustration%20Booklet%20-%20Speech%20Accessory%20Board%20sheet%202-3.pdf#page=1' }, H1BLOCK('speech board P501'), { label: 'Votrax SC-01 speech synthesizer data sheet (1980), signals p. 4 (strobe and request behavior)', url: 'https://www.redcedar.com/sc01/sc01.pdf#page=4' }],
         terms: ['phoneme', 'strobe'] },
 
       { id: 'hero1-p502', name: 'Speech board power and speaker (P502, pins 13-16)', kind: '4-pin board header', geo: 'custom', gender: 'male', pads: hkRow(hkSeq(13, 16)), outline: hkRowOutline(4),
@@ -1396,7 +1396,7 @@ RCS.add({
           { n: 36, name: 'HLDA', type: 'ctrl', desc: 'Hold acknowledge.' },
           { n: 37, name: 'PHI', type: 'clock', desc: 'Bus clock phase.' },
           { n: 38, name: 'CLK', type: 'clock', desc: 'Clock.' },
-          { n: 39, name: '/MLDIS', type: 'ctrl', desc: 'Labelled /MLDIS; read as a memory disable, which the drawing does not spell out.', verify: true },
+          { n: 39, name: '/MLDIS', type: 'ctrl', desc: 'Labeled /MLDIS; read as a memory disable, which the drawing does not spell out.', verify: true },
           { n: 40, name: 'SLEEP', type: 'ctrl', desc: 'Sleep.' },
           { n: 41, name: 'OUT', type: 'ctrl', desc: 'Status: I/O output cycle.' },
           { n: 42, name: 'INP', type: 'ctrl', desc: 'Status: I/O input cycle.' },

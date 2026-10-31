@@ -84,7 +84,7 @@ const joystick = (mid, n) => ({
 const cassette = mid => ({
   id: `${mid}-tape`, name: 'Cassette interface', kind: '8-pin DIN 270 degrees (DIN 45326)', geo: 'din8-270', gender: 'female',
   verifiedAgainst: 'MSX Technical Data Book 1.4.1 Cassette Interface (table of signal pins and pin connection drawing) and 1.4.8 Connectors',
-  summary: 'FSK at 1200 baud (1200 Hz = 0, two cycles of 2400 Hz = 1) or 2400 baud. The book names DIN 45326 and its drawing (key at the top) turned upright matches the standard 8-pin 270 degree numbering: 1 4 2 5 3 over the top, 6 and 7 either side of the key, 8 in the centre. CMTOUT comes from 8255 port C bit 5 through a filter; CMTIN is shaped and read on PSG port A bit 7; REMOTE is the motor control from 8255 port C bit 4 (LOW = motor on); the book does not say how it is switched (most machines use a relay). The usual adapter lead splits this into MIC, EAR and REMOTE plugs.',
+  summary: 'FSK at 1200 baud (1200 Hz = 0, two cycles of 2400 Hz = 1) or 2400 baud. The book names DIN 45326 and its drawing (key at the top) turned upright matches the standard 8-pin 270 degree numbering: 1 4 2 5 3 over the top, 6 and 7 either side of the key, 8 in the center. CMTOUT comes from 8255 port C bit 5 through a filter; CMTIN is shaped and read on PSG port A bit 7; REMOTE is the motor control from 8255 port C bit 4 (LOW = motor on); the book does not say how it is switched (most machines use a relay). The usual adapter lead splits this into MIC, EAR and REMOTE plugs.',
   pins: [
     c(1, 'GND', 'ground', GND, { expect: '0 V' }), c(2, 'GND', 'ground', GND, { expect: '0 V' }), c(3, 'GND', 'ground', GND, { expect: '0 V' }),
     c(4, 'CMTOUT', 'audio', 'To the recorder MIC input.', { expect: '7 to 22 mV p-p at 1200 Hz (-45 dBm ± 5 dBm)' }),
@@ -130,7 +130,7 @@ const rca = (mid, id, name, what, expect, extra) => ({
   id: `${mid}-${id}`, name, kind: 'RCA (phono) jack', geo: 'rca', gender: 'female',
   verifiedAgainst: 'MSX Technical Data Book 1.4.8 Connectors' + (extra ? '; ' + extra.va : ''),
   summary: what,
-  pins: [c(1, 'SIGNAL', id === 'audio' ? 'audio' : 'video', 'Centre pin.', { ...(expect ? { expect } : {}), verify: true }), c(2, 'GND', 'ground', 'Shell.', { expect: '0 V', verify: true })],
+  pins: [c(1, 'SIGNAL', id === 'audio' ? 'audio' : 'video', 'Center pin.', { ...(expect ? { expect } : {}), verify: true }), c(2, 'GND', 'ground', 'Shell.', { expect: '0 V', verify: true })],
   sources: [S_CONN, ...(extra ? extra.src : [])], terms: []
 });
 
@@ -182,7 +182,7 @@ const ay8910 = {
     p(23, '/RESET', 'ctrl', 'in', 'LOW clears every register. On-chip pull-up.', { terms: ['reset'], probe: 'HIGH when running.' }),
     p(24, '/A9', 'addr', 'in', 'Extra chip-select address bit (active LOW), on-chip pull-down; usually left open or grounded.'),
     p(25, 'A8', 'addr', 'in', 'Extra chip-select address bit, on-chip pull-up; usually tied HIGH.'),
-    p(26, 'TEST 2', 'nc', '-', 'GI test pin; leave open. On a YM2149 this is SEL (pull-up): LOW divides the input clock by 2.', { conflict: 'Yamaha YM2149 data sheet: pin 26 is SEL (clock divider select, pull-up); GI AY-3-8910: TEST 2. Same behaviour when left open.' }),
+    p(26, 'TEST 2', 'nc', '-', 'GI test pin; leave open. On a YM2149 this is SEL (pull-up): LOW divides the input clock by 2.', { conflict: 'Yamaha YM2149 data sheet: pin 26 is SEL (clock divider select, pull-up); GI AY-3-8910: TEST 2. Same behavior when left open.' }),
     p(27, 'BDIR', 'ctrl', 'in', 'Bus direction. With BC1 (BC2 HIGH): 0 0 inactive, 0 1 read, 1 0 write, 1 1 latch address.'),
     p(28, 'BC2', 'ctrl', 'in', 'Bus control 2; may be tied HIGH so only BDIR and BC1 are driven.'),
     p(29, 'BC1', 'ctrl', 'in', 'Bus control 1.'),
@@ -202,10 +202,10 @@ const ay8910 = {
 
 const vdp9938 = {
   id: 'vdp9938', name: 'Yamaha V9938 MSX-Video display processor', short: 'V9938', family: 'Yamaha NMOS (video)',
-  role: 'MSX2 video: TMS9918A-compatible VDP with bitmap modes, 512-colour palette, RGB and composite out, 64-128 KB VRAM', pkg: 'DIP-64',
+  role: 'MSX2 video: TMS9918A-compatible VDP with bitmap modes, 512-color palette, RGB and composite out, 64-128 KB VRAM', pkg: 'DIP-64',
   machines: ['msx2'], location: { msx2: 'Varies by maker; 64-pin shrink DIP (SDIP, 1.778 mm pitch), usually beside the VRAM' },
   summary: 'Runs from a 21.47727 MHz crystal on XTAL1/XTAL2 and hands the Z80 its clock on CPUCLK (crystal / 6 = 3.58 MHz), so a dead V9938 or crystal can stop the whole machine, not just the picture. Ports $98 (VRAM), $99 (registers), $9A (palette), $9B (register pointer). Up to 128 KB VRAM on /CAS0 and /CAS1 (/CASX for 64 KB expansion VRAM), with 16K x 1, 16K x 4, 64K x 1 or 64K x 4 DRAM. Linear R, G, B and composite VIDEO out on pins 21-24 through external buffers. Unlike the TMS9918A, bit 0 of each bus is the LSB (CD0, RD0, AD0). Pin spacing is 1.778 mm: an ordinary 0.1 in socket will not fit.',
-  fails: ['No picture and no boot (the Z80 clock comes from CPUCLK)', 'Garbled screen or wrong colours (VRAM, palette)', 'Picture but no sync on RGB', 'Works in SCREEN 0-4, fails in SCREEN 5-8 (upper VRAM)'],
+  fails: ['No picture and no boot (the Z80 clock comes from CPUCLK)', 'Garbled screen or wrong colors (VRAM, palette)', 'Picture but no sync on RGB', 'Works in SCREEN 0-4, fails in SCREEN 5-8 (upper VRAM)'],
   replacements: [
     { part: 'Yamaha V9958 (MSX2+ VDP)', kind: 'adapter',
       note: 'Same 64-pin SDIP and software compatible, but not a drop-in. Pin 21 becomes VDD/DAC (+5 V in), where the V9938 has composite VIDEO out: the V9958 has no composite output, so a board that takes video from pin 21 loses it and the DAC is unpowered until pin 21 gets +5 V. Pin 4 (/VDS on the V9938) becomes the /VRESET input and /VDS moves onto pin 8 with CPUCLK; pins 26 and 27 (/LPS, /LPD) become /WAIT out and /HRESET in. Upgrades rewire those pins.',
@@ -218,21 +218,21 @@ const vdp9938 = {
     p(2, '/DHCLK', 'clock', 'out', 'Dot clock for high resolution, open drain.', { terms: ['clock', 'open-drain'], probe: '10.74 MHz (with a pull-up)' }),
     p(3, '/DLCLK', 'clock', 'bidir', 'Dot clock for low resolution, open drain; can be an input (multi-VDP systems).', { terms: ['clock', 'open-drain'], probe: '5.37 MHz (with a pull-up)' }),
     p(4, '/VDS', 'ctrl', 'out', 'VRAM data select: LOW when the VRAM access is for display data, HIGH for other accesses.'),
-    p(5, 'HSYNC', 'video', 'bidir', 'Tri-level: HIGH non-HSYNC, MIDDLE HSYNC or non-colour-burst period (output); LOW = HSYNC input.'),
+    p(5, 'HSYNC', 'video', 'bidir', 'Tri-level: HIGH non-HSYNC, MIDDLE HSYNC or non-color-burst period (output); LOW = HSYNC input.'),
     p(6, 'CSYNC', 'video', 'bidir', 'Tri-level: composite sync output (HIGH levels); LOW = VSYNC input.', { probe: '15.7 kHz line pulses (NTSC) / 15.6 kHz (PAL)', verify: true }),
     p(7, 'BLEO', 'video', 'out', 'Tri-level open drain: HIGH secondary field active, MIDDLE first field active, LOW blanking.', { terms: ['open-drain'] }),
     p(8, 'CPUCLK', 'clock', 'out', 'Clock out = crystal / 6; on an MSX2 this is the Z80 clock.', { terms: ['clock'], probe: '3.579545 MHz square wave' }),
-    p(9, '/RESET', 'ctrl', 'in', 'Initialises all V9938 circuits.', { terms: ['reset'], probe: 'LOW at power-on, then HIGH' }),
+    p(9, '/RESET', 'ctrl', 'in', 'Initializes all V9938 circuits.', { terms: ['reset'], probe: 'LOW at power-on, then HIGH' }),
     p(10, '/YS', 'video', 'out', 'Superimpose switch: HIGH = V9938 output transparent (external video shows), LOW = V9938 output opaque.'),
-    p(11, 'CBDR', 'ctrl', 'out', 'Colour bus direction: HIGH input, LOW output.'),
-    p(12, 'C7', 'io', 'bidir', 'Colour bus bit 7 (MSB); mouse YB.'),
-    p(13, 'C6', 'io', 'bidir', 'Colour bus bit 6; mouse YA.'),
-    p(14, 'C5', 'io', 'bidir', 'Colour bus bit 5; mouse XB.'),
-    p(15, 'C4', 'io', 'bidir', 'Colour bus bit 4; mouse XA.'),
-    p(16, 'C3', 'io', 'bidir', 'Colour bus bit 3: colour code out, or digitise input.'),
-    p(17, 'C2', 'io', 'bidir', 'Colour bus bit 2.'),
-    p(18, 'C1', 'io', 'bidir', 'Colour bus bit 1.'),
-    p(19, 'C0', 'io', 'bidir', 'Colour bus bit 0 (LSB).'),
+    p(11, 'CBDR', 'ctrl', 'out', 'Color bus direction: HIGH input, LOW output.'),
+    p(12, 'C7', 'io', 'bidir', 'Color bus bit 7 (MSB); mouse YB.'),
+    p(13, 'C6', 'io', 'bidir', 'Color bus bit 6; mouse YA.'),
+    p(14, 'C5', 'io', 'bidir', 'Color bus bit 5; mouse XB.'),
+    p(15, 'C4', 'io', 'bidir', 'Color bus bit 4; mouse XA.'),
+    p(16, 'C3', 'io', 'bidir', 'Color bus bit 3: color code out, or digitize input.'),
+    p(17, 'C2', 'io', 'bidir', 'Color bus bit 2.'),
+    p(18, 'C1', 'io', 'bidir', 'Color bus bit 1.'),
+    p(19, 'C0', 'io', 'bidir', 'Color bus bit 0 (LSB).'),
     p(20, 'GND DAC', 'ground', '-', '0 V for the video D/A converters.', { terms: ['gnd'], probe: '0 V' }),
     p(21, 'VIDEO', 'video', 'out', 'Composite video output (needs the external buffer).', { terms: ['luma-chroma'] }),
     p(22, 'G', 'video', 'out', 'Linear green output.'),
@@ -290,7 +290,7 @@ const s3527 = engine('s3527', 'Yamaha S3527 MSX-System (MSX-Engine)', 'S3527', '
   'One 100-pin flat pack replacing the 8255 PPI, the AY-3-8910 (as a YM2149 core) and the slot, DRAM and ROM control logic, printer port included. The RTC and the other MSX2 parts stay separate chips. It mirrors the PPI at I/O $AC-$AF and the VDP ports at $9C-$9F, which software uses to detect an MSX-Engine. Summary from the MSX Resource Center wiki (community source; no Yamaha data sheet found). A pinout table is published there but not entered here.',
   [W_S3527, th2('APPENDIX I/O map (ACH-AFH MSX engine)', 'th-ap.txt')], ['No sound and no joysticks', 'Dead keyboard rows', 'No RAM or no cartridge (slot select)', 'Tape and printer dead together']);
 const s1985 = engine('s1985', 'Yamaha S1985 MSX-System II (MSX-Engine)', 'S1985', 'One-chip MSX2 I/O: S3527 functions plus memory mapper, RP5C01-compatible clock and backup RAM',
-  'The S3527 functions (YM2149-compatible PSG with A centre, B left, C right stereo outputs, 8255-compatible PPI, slot and DRAM control, printer port) plus a memory mapper of up to 512 KB, an RP5C01-compatible real-time clock with its 26 x 4 bit RAM on a separate backup battery, and 16 bytes of backup RAM. A flat battery loses the clock and the SET settings, not the BASIC. Summary from the MSX Resource Center wiki (community source; no Yamaha data sheet found).',
+  'The S3527 functions (YM2149-compatible PSG with A center, B left, C right stereo outputs, 8255-compatible PPI, slot and DRAM control, printer port) plus a memory mapper of up to 512 KB, an RP5C01-compatible real-time clock with its 26 x 4 bit RAM on a separate backup battery, and 16 bytes of backup RAM. A flat battery loses the clock and the SET settings, not the BASIC. Summary from the MSX Resource Center wiki (community source; no Yamaha data sheet found).',
   [W_S1985, th2('APPENDIX I/O map (B4H-B5H CLOCK-IC RP-5C01)', 'th-ap.txt')], ['No sound and no joysticks', 'Dead keyboard rows', 'Clock and SET settings lost (battery)', 'RAM above 64 KB missing (mapper)']);
 
 /* ---------- quickref pieces ---------- */
@@ -307,11 +307,11 @@ const keys = [
   { keys: 'Hold SHIFT while powering on', does: 'Boot without the disk ROM (frees memory for tape software).', verify: true }
 ];
 const essentials = [
-  { cmd: 'CLOAD "name" / CSAVE "name"', does: 'Load or save a BASIC program on tape (tokenised).' },
+  { cmd: 'CLOAD "name" / CSAVE "name"', does: 'Load or save a BASIC program on tape (tokenized).' },
   { cmd: 'BLOAD "CAS:name",R / BSAVE', does: 'Load and run machine code from tape (,R runs it). BSAVE "CAS:name",start,end[,exec].' },
   { cmd: 'RUN "CAS:name" / LOAD / SAVE "CAS:name"', does: 'ASCII programs on tape; with a disk ROM use "A:name".' },
-  { cmd: 'SCREEN m[,sprite size[,click[,baud]]]', does: 'Mode 0 (40 x 24 text), 1 (32 x 24), 2 (256 x 192 graphics), 3 (multicolour). Baud 1 = 1200, 2 = 2400.' },
-  { cmd: 'COLOR fg,bg,border', does: 'Colours 0-15. Power-on is 15,4,4 (white on dark blue).' },
+  { cmd: 'SCREEN m[,sprite size[,click[,baud]]]', does: 'Mode 0 (40 x 24 text), 1 (32 x 24), 2 (256 x 192 graphics), 3 (multicolor). Baud 1 = 1200, 2 = 2400.' },
+  { cmd: 'COLOR fg,bg,border', does: 'Colors 0-15. Power-on is 15,4,4 (white on dark blue).' },
   { cmd: 'LOCATE x,y / CLS / WIDTH n', does: 'Text cursor position, clear, line width (up to 40 in SCREEN 0, 32 in SCREEN 1).' },
   { cmd: 'PSET / LINE / CIRCLE / PAINT / DRAW', does: 'Graphics in SCREEN 2 and 3; DRAW takes a graphics macro string.' },
   { cmd: 'PUT SPRITE n,(x,y),c,p / SPRITE$(p)=', does: '32 sprites, 4 per line; define the pattern with SPRITE$.' },
@@ -335,7 +335,7 @@ const quirks = [
   'Double precision (14-digit BCD) is the default numeric type: use DEFINT A-Z for speed.',
   'Direct I/O is discouraged by the standard: use the BIOS calls. The VDP is the exception (its ports are at ROM $0006/$0007).',
   'Cartridges run from the ROM search at power-on; a game cartridge may never return to BASIC.',
-  'Tape: CLOAD / CSAVE for tokenised BASIC, LOAD / SAVE "CAS:" for ASCII, BLOAD "CAS:",R for machine code. Using the wrong one gives "Device I/O error" or silence.'
+  'Tape: CLOAD / CSAVE for tokenized BASIC, LOAD / SAVE "CAS:" for ASCII, BLOAD "CAS:",R for machine code. Using the wrong one gives "Device I/O error" or silence.'
 ];
 const memory1 = [
   { range: 'Slots', what: '8255 port A ($A8) holds two bits per 16 KB page: the primary slot (0-3) for that page. The BIOS / BASIC ROM is always in slot 0, selected at reset.' },
@@ -418,7 +418,7 @@ const msxClocks = mid => mid === 'msx1' ? [
   { name: 'VDP crystal (TMS9929A boards)', where: 'TMS9918A pin 39 to pin 40', pal: '10.6875 MHz (Philips VG-8020 X1); other PAL makers may differ', source: VG20('Parts list: X1 10.6875 MHz, X2 14.31818 MHz, p. 7', 7) },
   { name: 'GROMCLK (crystal / 24)', where: 'TMS9918A pin 37', ntsc: '447.4 kHz', source: TMS_OSC },
   { name: 'GROMCLK, Philips VG-8020 (TMS9929A)', where: 'TMS9918A pin 37', pal: '445.32 kHz (adjustment value)', source: VG20('Adjustments: VDP clock frequency 445.32 kHz at U30 pin 37, p. 2', 2) },
-  { name: 'CPU clock', where: 'Z80A pin 6; Cartridge slot pin 42', ntsc: '3.579545 MHz', pal: '3.579545 MHz (VG-8020: 14.31818 MHz / 4)', verify: true, source: tdb('1.3.1 LSIs: CPU clock 3.579545 MHz (NTSC colour subcarrier), p. 10', 13) },
+  { name: 'CPU clock', where: 'Z80A pin 6; Cartridge slot pin 42', ntsc: '3.579545 MHz', pal: '3.579545 MHz (VG-8020: 14.31818 MHz / 4)', verify: true, source: tdb('1.3.1 LSIs: CPU clock 3.579545 MHz (NTSC color subcarrier), p. 10', 13) },
   { name: 'CPU clock, Sony HB-101P', where: 'Z80A pin 6', pal: '3.5625 MHz', source: HB101 },
   { name: 'PSG clock (CPU / 2)', where: 'AY-3-8910 pin 22', ntsc: '1.7897725 MHz', pal: '1.7897725 MHz', source: tdb('1.3.6 Sound (clock 1.7897725 MHz, 1/2 CPU clock), p. 14', 17) },
   { name: 'Frame interrupt', where: 'TMS9918A pin 16', ntsc: '59.9 Hz', pal: '50.2 Hz', source: { label: 'TMS9918A/9928A/9929A Data Manual, 3.6.2 (262 lines, about 60 frames/s; TMS9929A 313 lines, about 50), p. 3-8', url: TMS_OSC.url } },
@@ -439,14 +439,14 @@ RCS.add({
     msx1: {
       id: 'msx1', brand: 'msx', name: 'MSX1 (generic)', aka: 'Any MSX1 machine (Sony HitBit, Philips VG, Yamaha CX, Toshiba HX, Canon V, Sanyo MPC and others)', year: 1983, status: 'ready',
       cpu: 'Z80A @ 3.579545 MHz (one wait state in each M1 cycle)', ram: '8 KB to 64 KB (BASIC uses at most 32 KB, $8000-$FFFF)', rom: '32 KB MSX-BASIC 1.0 + BIOS in slot 0',
-      video: 'TMS9918A (NTSC) or TMS9929A (PAL) with 16 KB VRAM: 256 x 192, 16 colours, 32 sprites', sound: 'AY-3-8910 PSG, 3 voices + noise at 1.79 MHz; 1-bit key click from the 8255', os: 'MSX-BASIC 1.0 (MSX-DOS with a disk interface)',
+      video: 'TMS9918A (NTSC) or TMS9929A (PAL) with 16 KB VRAM: 256 x 192, 16 colors, 32 sprites', sound: 'AY-3-8910 PSG, 3 voices + noise at 1.79 MHz; 1-bit key click from the 8255', os: 'MSX-BASIC 1.0 (MSX-DOS with a disk interface)',
       chips: ['vdp9918', 'cpuz80', 'ay8910', 'ppi8255', 'rom23256', 'dram4116', 'dram4164'],
       tagline: 'One standard, many makers: the same chips, ports and BIOS on very different boards.'
     },
     msx2: {
       id: 'msx2', brand: 'msx', name: 'MSX2 (generic)', aka: 'Any MSX2 machine (Sony HB-F, Philips NMS / VG-8235, Panasonic FS-A1, Yamaha YIS and others)', year: 1985, status: 'ready',
       cpu: 'Z80A @ 3.579545 MHz (clock from the V9938 CPUCLK pin)', ram: '64 KB minimum; many have 128 KB or more behind a memory mapper (I/O $FC-$FF)', rom: '48 KB: 32 KB MSX-BASIC 2.0 main ROM + 16 KB sub-ROM (often plus a disk ROM)',
-      video: 'Yamaha V9938 with 64 or 128 KB VRAM: up to 512 x 212 (424 interlaced), 512-colour palette, 256 colours in SCREEN 8', sound: 'AY-3-8910 / YM2149 PSG (often inside an MSX-Engine)', os: 'MSX-BASIC 2.0; MSX-DOS with a disk drive',
+      video: 'Yamaha V9938 with 64 or 128 KB VRAM: up to 512 x 212 (424 interlaced), 512-color palette, 256 colors in SCREEN 8', sound: 'AY-3-8910 / YM2149 PSG (often inside an MSX-Engine)', os: 'MSX-BASIC 2.0; MSX-DOS with a disk drive',
       chips: ['vdp9938', 'cpuz80', 'ay8910', 'ppi8255', 's1985', 's3527'],
       tagline: 'The V9938 and a battery-backed clock on the MSX1 standard; one-chip MSX-Engines on most boards.'
     }
@@ -479,7 +479,7 @@ RCS.add({
     ],
     msx2: [
       { symptom: 'Power LED on, black screen, no boot', suspects: ['vdp9938', 'cpuz80', 's1985', 's3527'], note: 'The Z80 clock comes from V9938 pin 8 (3.58 MHz): check it and the 21.47727 MHz crystal on V9938 pins 63 and 64 first. Then +5 V, +12 V and -12 V at the cartridge slot and /RESET at Z80A pin 26.' },
-      { symptom: 'Boots, but garbage or wrong colours, especially in SCREEN 5-8', suspects: ['vdp9938'], note: 'VRAM: check /RAS (V9938 pin 62), /CAS0 (pin 61) and, on 128 KB machines, /CAS1 (pin 60). Wrong colours with good shapes can be the palette or the RGB buffers after pins 22-24.' },
+      { symptom: 'Boots, but garbage or wrong colors, especially in SCREEN 5-8', suspects: ['vdp9938'], note: 'VRAM: check /RAS (V9938 pin 62), /CAS0 (pin 61) and, on 128 KB machines, /CAS1 (pin 60). Wrong colors with good shapes can be the palette or the RGB buffers after pins 22-24.' },
       { symptom: 'Clock and SET settings lost at every power-on', suspects: ['s1985'], note: 'Backup battery flat or leaking (the clock chip and its RAM run from it). Replace it and clean any electrolyte off the board before it eats the traces.' },
       { symptom: 'No sound, joysticks dead, dead keyboard rows', suspects: ['s3527', 's1985', 'ay8910', 'ppi8255'], note: 'On engine boards the PSG and PPI are one chip: check its supply and clock before replacing it. On discrete boards follow the MSX1 checks.' },
       { symptom: 'Hum bars, resets on load', suspects: [], note: 'Recap the supply as on the MSX1 (repair experience, not from the standard).' }
@@ -504,12 +504,12 @@ RCS.add({
         { tp: 'VDP crystal', where: 'TMS9918A pin 39; TMS9918A pin 40', expect: '10.738635 MHz' },
         { tp: 'CPU clock', where: 'Z80A pin 6', expect: '3.579545 MHz',
           scope: { f: '3.579545 MHz', low: '0.45 V', high: '4.4 V', shape: 'square', basis: 'datasheet', source: Z80PS,
-            note: 'Levels idealised from the Z80 clock-input limits (LOW below 0.45 V, HIGH above VCC - 0.6 V), not a capture. The rate is the standard\'s (Technical Data Book 1.3.1, in the sources below); the Sony HB-101P runs 3.5625 MHz (its service manual p. 6-1, the HB-101P clock row). A clock that only reaches TTL levels is outside the Z80 spec.' } },
+            note: 'Levels idealized from the Z80 clock-input limits (LOW below 0.45 V, HIGH above VCC - 0.6 V), not a capture. The rate is the standard\'s (Technical Data Book 1.3.1, in the sources below); the Sony HB-101P runs 3.5625 MHz (its service manual p. 6-1, the HB-101P clock row). A clock that only reaches TTL levels is outside the Z80 spec.' } },
         { tp: 'CPU clock from the VDP (TMS9918A boards)', where: 'TMS9918A pin 38', expect: '3.579545 MHz (crystal / 3); the 9928A and 9929A have R-Y here, so PAL boards make the CPU clock elsewhere', verify: true },
         { tp: 'Cartridge clock', where: 'Cartridge slot pin 42', expect: '3.579545 MHz' },
         { tp: 'PSG clock', where: 'AY-3-8910 pin 22', expect: '1.7897725 MHz',
           scope: { f: '1.7897725 MHz', low: '0.6 V', high: '2.4 V', shape: 'square', basis: 'datasheet', source: AY_DC,
-            note: 'Idealised from the PSG input limits, not a capture. The data manual allows 1-2 MHz and a 25-75% duty, so the exact shape depends on the board\'s divider. Rate: half the CPU clock (Technical Data Book 1.3.6, p. 14, in the sources below).' } },
+            note: 'Idealized from the PSG input limits, not a capture. The data manual allows 1-2 MHz and a 25-75% duty, so the exact shape depends on the board\'s divider. Rate: half the CPU clock (Technical Data Book 1.3.6, p. 14, in the sources below).' } },
         { tp: 'Frame interrupt', where: 'TMS9918A pin 16', expect: 'LOW pulse every frame: 60 Hz (NTSC) or 50 Hz (PAL)' },
         { tp: 'Reset', where: 'Z80A pin 26', expect: 'LOW briefly at power-on, then HIGH' }
       ],
@@ -527,7 +527,7 @@ RCS.add({
       testPoints: [
         { tp: 'VDP crystal', where: 'V9938 pin 63; V9938 pin 64', expect: '21.47727 MHz',
           scope: { f: '21.4697 MHz', low: '0.3 V', high: '3.7 V', shape: 'sine', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 63 (XTAL1): 3.4 V p-p, 21.4697 MHz; 2.0 V DC marked at the pin, p. 16'),
-            note: 'Sony prints 3.4 V p-p and 21.4697 MHz on its PAL HB-F9P, with 2.0 V DC at the pin; low and high here are that swing centred on 2.0 V (derived, not captured limits). NTSC boards use 21.47727 MHz (V9938 data book p. 113, in the sources below).' } },
+            note: 'Sony prints 3.4 V p-p and 21.4697 MHz on its PAL HB-F9P, with 2.0 V DC at the pin; low and high here are that swing centered on 2.0 V (derived, not captured limits). NTSC boards use 21.47727 MHz (V9938 data book p. 113, in the sources below).' } },
         { tp: 'CPU clock', where: 'V9938 pin 8; Z80A pin 6', expect: '3.579545 MHz (crystal / 6)',
           scope: { period: '280 ns', pp: '4.7 V', shape: 'square', basis: 'capture', source: F9P('CPU section schematic, waveform at IC8 pin 8 (CPUCLK): 4.7 V p-p, 280 ns, p. 16'),
             note: 'Sony prints 4.7 V p-p and a 280 ns period. Only the peak-to-peak swing is given, so the trace is drawn AC-coupled with no 0 V reference. Sony draws it with rounded tops. No CPUCLK with the crystal running: the V9938.' } },
@@ -568,9 +568,9 @@ RCS.add({
       basic: {
         dialect: 'MSX-BASIC 2.0 (Microsoft)', essentials,
         groups: [...groups,
-          { group: 'MSX2 screen and colour', items: ['SCREEN 0-8[,sprite,click,baud,printer,interlace]', 'SET PAGE display,active', 'COLOR=(p,r,g,b) / COLOR=RESTORE / COLOR=NEW', 'COPY (x1,y1)-(x2,y2),page TO (x3,y3),page[,op]', 'PSET / PRESET / LINE with a logical operation'] },
-          { group: 'MSX2 VDP and sprites', items: ['VDP(n) for the extra registers', 'BSAVE / BLOAD ...,S (to and from VRAM)', 'COLOR SPRITE(n)= / COLOR SPRITE$(n)= (per-line sprite colours)'] },
-          { group: 'Clock, memory switch and RAM disk', items: ['GET TIME / SET TIME / GET DATE / SET DATE', 'SET ADJUST (x,y) / SET BEEP / SET TITLE / SET PROMPT / SET PASSWORD / SET SCREEN', 'CALL MEMINI / CALL MFILES / CALL MKILL / CALL MNAME', 'SET VIDEO (superimpose, digitise, where fitted) / PAD(n) for mouse and light pen'] }
+          { group: 'MSX2 screen and color', items: ['SCREEN 0-8[,sprite,click,baud,printer,interlace]', 'SET PAGE display,active', 'COLOR=(p,r,g,b) / COLOR=RESTORE / COLOR=NEW', 'COPY (x1,y1)-(x2,y2),page TO (x3,y3),page[,op]', 'PSET / PRESET / LINE with a logical operation'] },
+          { group: 'MSX2 VDP and sprites', items: ['VDP(n) for the extra registers', 'BSAVE / BLOAD ...,S (to and from VRAM)', 'COLOR SPRITE(n)= / COLOR SPRITE$(n)= (per-line sprite colors)'] },
+          { group: 'Clock, memory switch and RAM disk', items: ['GET TIME / SET TIME / GET DATE / SET DATE', 'SET ADJUST (x,y) / SET BEEP / SET TITLE / SET PROMPT / SET PASSWORD / SET SCREEN', 'CALL MEMINI / CALL MFILES / CALL MKILL / CALL MNAME', 'SET VIDEO (superimpose, digitize, where fitted) / PAD(n) for mouse and light pen'] }
         ],
         quirks: [
           ...quirks.slice(0, 2),
