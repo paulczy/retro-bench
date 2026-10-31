@@ -71,7 +71,9 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
   The Electron ULA uses it: "pin 1 being marked at the top left of the chip, and the other pins following
   consecutively anti-clockwise" (Electron Service Manual ch. 6, p. 8). A `QIL-n` without it draws as a DIP.
 - `terms` are glossary ids from `core.js`. Add a term there only when it is electronics vocabulary a
-  tech might not know; keep `short` to one sentence and `long` to 2–3.
+  tech might not know; keep `short` to one sentence and `long` to 2–3. A term may carry an optional
+  `source: { label, url }` for a figure it states (the logic-level terms `ttl`, `logic-low`, `logic-high` and
+  `pulsing` cite the TI SN74LS00 data sheet); the validator checks it like any source.
 
 ### symptoms
 `[{ symptom: 'Black screen', suspects: ['cpu7501'], note: 'Check +5 V and /RES at pin 40 first.' }]`
@@ -157,6 +159,22 @@ ted7360: { id: 'ted7360', name: '7360 / 8360 TED', short: 'TED', family: 'MOS cu
   point, with or without a `scope`, and warns on a reference it cannot link.
 - The print card prints every supply `note`, every rail `note` and every firstTen `ifNot`: they carry the safety
   precautions. Keep them short; the card runs to a second page rather than drop them.
+
+### measured on power (optional)
+```js
+power: { c64: { measured: {
+  conditions: ['Voltages and waveforms are taken with the computer switched on and no keys pressed, unless noted.',
+               'Scope through an isolation (×10) probe.'],
+  sources: [{ label: 'Sams CC17 C64, schematic notes, PDF p. 24', url: '.../page/n23', sams: true }],
+  verify: true? } } }
+```
+How the machine's expected readings are taken: meter or scope ground point, the state the machine is in (switched
+on at the BASIC prompt, a test program or diagnostic cartridge running), loads for supply checks, probe type,
+board variant, warm-up. One short sentence per condition, and only what a source states: no generic bench advice.
+Leave the field out when no source gives any. `conditions` is a non-empty array of non-empty strings; `sources`
+(page number in the label, page anchor in the URL) is required unless `verify: true`. The log of every condition
+and its page is `docs/verification/measured-how.md`. Brand files set it at the end of the file
+(`RCS.power[mid].measured = {...}`).
 
 ### quickref
 ```js

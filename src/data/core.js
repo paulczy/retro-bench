@@ -123,8 +123,27 @@ window.RCS = (() => {
   },
   "ttl": {
     "term": "TTL level",
-    "short": "LOW < 0.8 V, HIGH > 2.0 V.",
-    "long": "On a 5 V system a valid LOW is below 0.8 V and a valid HIGH above 2.0 V. Readings in between mean a floating or fighting line."
+    "short": "LOW at or below 0.8 V, HIGH at or above 2.0 V.",
+    "long": "TI's SN74LS00 data sheet (recommended operating conditions) gives a low-level input voltage of 0.8 V maximum and a high-level input voltage of 2 V minimum. It specifies no input level between the two. NMOS and CMOS parts can use different thresholds; the chip's own data sheet wins.",
+    "source": { "label": "TI SN74LS00 data sheet (SDLS025D), 6.3 Recommended operating conditions, VIH and VIL, p. 4", "url": "https://www.ti.com/lit/ds/symlink/sn74ls00.pdf#page=4" }
+  },
+  "logic-low": {
+    "term": "Logic LOW",
+    "short": "A steady level at or below 0.8 V on a TTL input.",
+    "long": "TI's SN74LS00 data sheet gives a low-level input voltage (VIL) of 0.8 V maximum. NMOS and CMOS parts can use different thresholds; the chip's own data sheet wins.",
+    "source": { "label": "TI SN74LS00 data sheet (SDLS025D), 6.3 Recommended operating conditions, VIL, p. 4", "url": "https://www.ti.com/lit/ds/symlink/sn74ls00.pdf#page=4" }
+  },
+  "logic-high": {
+    "term": "Logic HIGH",
+    "short": "A steady level at or above 2.0 V on a TTL input.",
+    "long": "TI's SN74LS00 data sheet gives a high-level input voltage (VIH) of 2 V minimum. NMOS and CMOS parts can use different thresholds; the chip's own data sheet wins.",
+    "source": { "label": "TI SN74LS00 data sheet (SDLS025D), 6.3 Recommended operating conditions, VIH, p. 4", "url": "https://www.ti.com/lit/ds/symlink/sn74ls00.pdf#page=4" }
+  },
+  "pulsing": {
+    "term": "Pulsing",
+    "short": "The pin keeps switching between LOW and HIGH.",
+    "long": "Definition used here: the line switches between LOW and HIGH again and again, as a clock or bus line does. For a 74LS input, TI's SN74LS00 data sheet puts LOW at 0.8 V or less and HIGH at 2 V or more. NMOS and CMOS parts can use different thresholds; the chip's own data sheet wins.",
+    "source": { "label": "TI SN74LS00 data sheet (SDLS025D), 6.3 Recommended operating conditions, VIH and VIL, p. 4", "url": "https://www.ti.com/lit/ds/symlink/sn74ls00.pdf#page=4" }
   },
   "dip": {
     "term": "DIP package",

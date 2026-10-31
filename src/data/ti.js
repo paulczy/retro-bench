@@ -905,3 +905,15 @@ RCS.add({
     { name: 'whtech.com TI datasheets folder', url: `${TI_WHT}Datasheets%20-%20TI/`, what: 'TMS9900, TMS9901, TIM9904, TMS9918A, SN76489 and TI memory data books.' },
   ],
 });
+{
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+RCS.power.ti994a.measured = {
+  conditions: [
+    'Voltages, waveforms and logic probe readings are taken in Sams\'s "Power Up" mode, with the main title screen displayed, unless noted.',
+    'Voltages are read with a digital meter.',
+    'Scope input set for DC coupling on waveforms with a 0 V reference; switch to AC to view a waveform after its DC reference is measured, when necessary. Each waveform\'s DC reference voltage is given on its bottom line.',
+  ],
+  sources: [{ label: 'Sams CC2 TI-99/4A, schematic notes, folder p. 11', url: 'https://archive.org/details/cc_2_texasinst_ti99/page/n12/mode/1up', sams: true }],
+};
+}

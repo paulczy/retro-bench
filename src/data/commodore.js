@@ -4907,4 +4907,65 @@ RCS.add({
     },
   ],
 });
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+{
+  const IA = (id, n) => `https://archive.org/details/${id}/page/n${n}`;
+  const CC17 = 'sams-computerfacts-cc17-c64-1984-version', CC18 = 'SAMS_Computerfacts_CC18_C128';
+  const CC9 = 'SAMS_Computerfacts_Commodore_Plus_4_1985-01_Howard_W_Sams_Co_CC9', CD12 = 'SAMS_Computerfacts_CD12_1571';
+  const M = {
+    c64: {
+      conditions: [
+        'Voltages and waveforms are taken with the computer switched on and no keys pressed, unless a reading says otherwise.',
+        'Voltages are read with a digital meter.',
+        'Scope input set for DC coupling on waveforms with a 0 V reference; switch to AC to view a waveform after its DC reference is measured, when necessary. Each waveform\'s DC reference voltage is given on its bottom line.',
+        'Scope through an isolation (×10) probe.',
+      ],
+      sources: [
+        { label: 'Sams CC17 C64, schematic notes, PDF p. 24', url: IA(CC17, 23), sams: true },
+        { label: 'Sams CC17 C64, safety precautions item 6, PDF p. 25', url: IA(CC17, 24), sams: true },
+      ],
+    },
+    c128: {
+      conditions: [
+        'Voltages and waveforms are taken from ground, unless noted.',
+        'Logic probe readings and waveforms are taken in C128 mode with no keys pressed, unless noted.',
+        'Voltages are read with a digital meter.',
+        'Scope input set for DC coupling on waveforms with a 0 V reference; switch to AC to view a waveform after its DC reference is measured, when necessary. Each waveform\'s DC reference voltage is given on its bottom line.',
+        'Scope through an isolation (×10) probe.',
+      ],
+      sources: [
+        { label: 'Sams CC18 C128, schematic notes, PDF p. 44', url: IA(CC18, 43), sams: true },
+        { label: 'Sams CC18 C128, safety precautions item 6, PDF p. 42', url: IA(CC18, 41), sams: true },
+      ],
+    },
+    plus4: {
+      conditions: [
+        'Voltages and waveforms are taken from ground, unless noted.',
+        'Voltages, waveforms and logic probe readings are taken with the computer switched on and no keys pressed, unless noted.',
+        'Voltages are read with a digital meter, with no signal applied.',
+        'Scope through an isolation (×10) probe.',
+      ],
+      sources: [
+        { label: 'Sams CC9 Plus/4, schematic notes, PDF p. 25', url: IA(CC9, 24), sams: true },
+        { label: 'Sams CC9 Plus/4, safety precautions item 6, PDF p. 27', url: IA(CC9, 26), sams: true },
+      ],
+    },
+    c1571: {
+      conditions: [
+        'Voltages and waveforms are taken from ground, unless noted.',
+        'All readings are taken while the computer runs Sams\'s write loop (10 OPEN 3,8,3,"@0:SAMS,S,W" / 20 FOR X=1 TO 50 / 30 PRINT#3,"HOWARD W SAMS" / 40 NEXT X / 50 CLOSE 3 / 60 GOTO 10).',
+        'A formatted diskette that is not write-protected is in the drive.',
+        'Readings are taken while the heads are not moving, unless noted.',
+        'Voltages are read with a digital meter.',
+        'Scope through an isolation (×10) probe.',
+      ],
+      sources: [
+        { label: 'Sams CD12 1571, schematic notes and test program, PDF p. 31', url: IA(CD12, 30), sams: true },
+        { label: 'Sams CD12 1571, safety precautions item 6, PDF p. 33', url: IA(CD12, 32), sams: true },
+      ],
+    },
+  };
+  for (const [mid, m] of Object.entries(M)) RCS.power[mid].measured = m;
+}
 })();

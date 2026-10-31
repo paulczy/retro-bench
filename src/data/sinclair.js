@@ -1495,4 +1495,42 @@ RCS.add({
     spectrumplus2: { cpuz80: 'IC9', ay8912: 'IC4 (AY-3-8912A)', dram4164: 'IC17-IC32 (KM4164B-15P)' },
     spectrumplus3: { cpuz80: 'IC2', ay8912: 'IC11 (AY-3-8912A)', dram4464: 'IC3-IC6 (64K x 4)' } }
 });
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+{
+  const K1 = 'https://k1.spdns.de/Vintage/Sinclair';
+  const SM48 = p => `${K1}/82/Sinclair%20ZX%20Spectrum/Repair/ZX-Spectrum-Service-Manual.pdf#page=${p}`;
+  const SM128 = p => `${K1}/86/ZX%20Spectrum%2B%20128K/Repair/ZX%20Spectrum%2B%20128K%20Service%20Manual.pdf#page=${p}`;
+  const M = {
+    spectrum: {
+      conditions: [
+        'Rails and signals in the service manual tables are taken at switch-on with the Sinclair copyright screen showing and no keys pressed.',
+        'All DC levels are positive with respect to 0 V.',
+        'The setting-up checks (voltages, oscillators) are done with the board out of the case; the keyboard may be disconnected.',
+        'On a bench supply set to 9 V the board draws about 500 to 700 mA (16K) or 700 to 900 mA (48K).',
+        'Scope through a ×10 probe; the manual asks for a scope with 0.02 µs/cm rise time.',
+        'The full system test (ZXTP tape) runs with the keyboard connected and on the Spectrum\'s own power supply.',
+      ],
+      sources: [
+        { label: 'ZX Spectrum Service Manual, 7.1 notes under the IC14 pin signals, p. 37', url: SM48(37) },
+        { label: 'ZX Spectrum Service Manual, 3.1.1 Introduction and 3.1.2 Voltage check, p. 17', url: SM48(17) },
+        { label: 'ZX Spectrum Service Manual, 3.1.4 Sub-carrier oscillator (bench supply and current), p. 18', url: SM48(18) },
+        { label: 'ZX Spectrum Service Manual, 3.2 System test, p. 19', url: SM48(19) },
+        { label: 'ZX Spectrum Service Manual, 4.1.1 Test equipment, p. 20', url: SM48(20) },
+      ],
+    },
+    spectrum128: {
+      conditions: [
+        'At switch-on a working machine initialises to a clear screen with "© 1985 Sinclair Research Ltd" at lower left; the manual\'s basic checks are for a machine that does not.',
+        'The external supply is specified under load: at 215 V AC in and 1.4 A out its trough must stay at or above 7.0 V; at 265 V AC in and 600 mA out its peak must stay below 13 V.',
+        'Scope: a storage oscilloscope with a ×10 probe, 0.02 µs/cm rise time.',
+      ],
+      sources: [
+        { label: 'Spectrum 128 Service Manual, 2.2 Power supply unit and 2.3 Initialisation, p. 4.3', url: SM128(32) },
+        { label: 'Spectrum 128 Service Manual, test equipment list, PDF p. 31', url: SM128(31) },
+      ],
+    },
+  };
+  for (const [mid, m] of Object.entries(M)) RCS.power[mid].measured = m;
+}
 })();

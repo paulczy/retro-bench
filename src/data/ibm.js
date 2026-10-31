@@ -1687,4 +1687,60 @@
       { name: 'Retro troubleshooting guide: IBM PC 5150', url: 'https://wiki.retrotechcollection.com/IBM_PC_(5150)_Troubleshooting_Guide', what: 'Beep and PSU notes. Less authoritative than minuszerodegrees.', verify: true },
     ],
   });
+  /* "Measured how": the conditions the sources give for this brand's expected readings.
+     power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+  {
+    const HMS = 'https://minuszerodegrees.net/hms/HMS%20-%206280087%20-%20Maps%20-%200020.pdf';
+    const PCTR83 = 'https://bitsavers.org/pdf/ibm/pc/pc/1502234_PC_Technical_Reference_Apr83.pdf';
+    const XTTR84 = 'https://bitsavers.org/pdf/ibm/pc/xt/6361459_PC_XT_Technical_Reference_Apr84.pdf';
+    const JRHMS84 = 'https://minuszerodegrees.net/manuals/IBM/IBM%204860%20(PCjr)%20-%20Hardware%20Maintenance%20and%20Service%20-%20SEP83.pdf';
+    const map = [
+      'MAP 0020 step 001: power off, disconnect the keyboard and any external devices except the primary display (and the expansion unit, if attached), then power on. A 301 error may occur because the keyboard is disconnected.',
+      'Power Good: meter from system board power connector pin 1 to pin 5 (ground), power on; 2.4 to 5.2 V DC.',
+      'Rails: the MAP names a - lead and a + lead pin for each reading on the system board connectors (for +5 V: - lead pin 5, + lead pin 10) and on the drive connectors (+5 V: pin 2 to pin 4), with the supply plugged in and powered on.',
+      'Board resistance check: power off, supply connectors pulled from the system board and every option adapter removed.',
+    ];
+    const mapSrc = [
+      { label: 'IBM Hardware Maintenance Service 6280087, MAP 0020 Power (PC) step 001, PDF p. 3', url: `${HMS}#page=3` },
+      { label: 'IBM Hardware Maintenance Service 6280087, MAP 0020 Power (PC) step 005 (Power Good), PDF p. 4', url: `${HMS}#page=4` },
+      { label: 'IBM Hardware Maintenance Service 6280087, MAP 0020 Power (PC) step 007, Figures 2 and 3, PDF p. 5', url: `${HMS}#page=5` },
+      { label: 'IBM Hardware Maintenance Service 6280087, MAP 0020 Power (PC) step 036 and Figure 5, PDF pp. 10-11', url: `${HMS}#page=10` },
+    ];
+    const M = {
+      pc5150: {
+        conditions: [
+          ...map,
+          'The supply\'s regulation is specified with at least 2.3 A on +5 V and 0.4 A on +12 V; the -5 V and -12 V outputs need no minimum.',
+          'Power Good is generated when the supply is switched on after being off for at least 5 seconds; it has a turn-on delay of 100 ms after the output voltages have reached their minimum sense levels.',
+          'Sams takes voltages, waveforms and logic probe readings from ground, with the computer switched on and no keys pressed, using a digital meter with no signal applied and a scope through an isolation (×10) probe.',
+        ],
+        sources: [
+          ...mapSrc,
+          { label: 'IBM PC Technical Reference (Apr 1983), power supply Vdc output table, p. 1-25', url: `${PCTR83}#page=33` },
+          { label: 'IBM PC Technical Reference (Apr 1983), Power-Good signal, p. 1-27', url: `${PCTR83}#page=35` },
+          { label: 'Sams CSCS2 IBM 5150, schematic notes and safety precautions item 6, PDF p. 45', url: 'https://archive.org/details/Sams_IBM_5150/page/n44', sams: true },
+        ],
+      },
+      xt5160: {
+        conditions: [...map, 'The supply\'s regulation is specified with at least 2.3 A on +5 V and 0.4 A on +12 V; the -5 V and -12 V outputs need no minimum.'],
+        sources: [...mapSrc, { label: 'IBM PC XT Technical Reference (Apr 1984), XT power supply Vdc output table, p. 3-4', url: `${XTTR84}#page=69` }],
+      },
+      portable5155: {
+        conditions: [...map, 'The Portable supply\'s minimum loads: +5 V 2.3 A, +12 V 0.04 A, +12 V display output 0.5 A; -5 V and -12 V need none.'],
+        sources: [...mapSrc, { label: 'IBM PC XT Technical Reference (Apr 1984), Portable power supply amperage output, p. 3-8', url: `${XTTR84}#page=75` }],
+      },
+      pcjr: {
+        conditions: [
+          'Power transformer: power off, unplug its cable from system unit connector P and measure pin 1 to pin 3 at the plug, unloaded: 15.0 to 30.0 V AC.',
+          'Power board: power off, unplug the diskette drive power cable and the drive fan cable, plug the transformer back in, power on, then measure the diskette-drive power cable connector on the power board (p. 3-020-9); the next page then measures the diskette-drive fan power cable connector.',
+        ],
+        sources: [
+          { label: 'IBM PCjr Hardware Maintenance and Service (Sep 1983), PIC Power, power transformer check, p. 3-020-8', url: `${JRHMS84}#page=62` },
+          { label: 'IBM PCjr Hardware Maintenance and Service (Sep 1983), PIC Power, power board check, p. 3-020-9', url: `${JRHMS84}#page=63` },
+          { label: 'IBM PCjr Hardware Maintenance and Service (Sep 1983), PIC Power, fan connector check, PDF p. 64', url: `${JRHMS84}#page=64` },
+        ],
+      },
+    };
+    for (const [mid, m] of Object.entries(M)) RCS.power[mid].measured = m;
+  }
 })();

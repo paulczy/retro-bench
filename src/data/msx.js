@@ -603,4 +603,24 @@ RCS.add({
     { name: 'The MSX Assembly Page (map.grauw.nl)', url: 'http://map.grauw.nl/', what: 'BIOS calls, system variables, I/O ports, VDP and sound chip articles, transcribed handbooks.' }
   ]
 });
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+{
+  const AO = 'https://archive.org/details/';
+  const M = {
+    msx1: {
+      conditions: ['Sony HB-101P/201P (PAL): the CPU clock is set with power on and a frequency counter on IC6 pin 6, to 3.562500 MHz ±10 Hz with VC1.'],
+      sources: [{ label: 'Sony HB-101P/201P Service Manual (MSX1, PAL), 6-1 Clock frequency adjustment, p. 6-1', url: `${AO}sonyhb101sm/page/n59` }],
+    },
+    msx2: {
+      conditions: [
+        'Sony HB-F9P/F9S (PAL): voltages are DC with respect to ground, unless noted.',
+        'Readings are taken under no-signal conditions with a VOM of 50 kΩ/V.',
+        'Waveforms are taken to ground with an oscilloscope.',
+      ],
+      sources: [{ label: 'Sony HB-F9P/F9S Service Manual (MSX2, PAL), 4-3 schematic diagram CPU section, notes, p. 15', url: `${AO}sonyhbf9psm/page/n15` }],
+    },
+  };
+  for (const [mid, m] of Object.entries(M)) RCS.power[mid].measured = m;
+}
 })();

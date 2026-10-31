@@ -259,7 +259,22 @@ for (const [mid, pw] of Object.entries(R.power)) {
       if (c && c.where) checkWhere(f, mid, `${at} where`, c.where);
     });
   }
+  /* measured: how the expected readings are taken (docs/data-schema.md, power) */
+  if (pw.measured != null) {
+    const ms = pw.measured;
+    if (typeof ms !== 'object' || Array.isArray(ms)) err(f, 'measured must be an object { conditions, sources, verify? }');
+    else {
+      for (const k of Object.keys(ms)) if (!['conditions', 'sources', 'verify'].includes(k)) err(f, `measured has unknown field ${k}`);
+      if (!Array.isArray(ms.conditions) || !ms.conditions.length) err(f, 'measured.conditions must be a non-empty array');
+      else ms.conditions.forEach((c, i) => { if (typeof c !== 'string' || !c.trim()) err(f, `measured condition ${i + 1} must be a non-empty string`); });
+      if (ms.verify !== undefined && ms.verify !== true) err(f, 'measured.verify must be true or left out');
+      if (ms.sources != null && !Array.isArray(ms.sources)) err(f, 'measured.sources must be an array');
+      else if (!(ms.sources || []).length && ms.verify !== true) err(f, 'measured needs sources (or verify: true)');
+      checkSources(`${f} measured`, ms.sources);
+    }
+  }
 }
+for (const [id, t] of Object.entries(R.terms)) if (t.source) checkSources(`term ${id}`, [t.source]);
 for (const [cid, c] of Object.entries(R.chips)) {
   if (c.replacements == null) continue;
   const f = `chip ${cid}`;

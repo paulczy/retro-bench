@@ -411,6 +411,87 @@
   .ds li { font-size: 16px; }
   .pinlegend .legend > * { cursor: pointer; }
   .pinlegend .legend > .sel { color: var(--copper-hi); }
+  /* a pad lit from its pin table row, and the row from its pad */
+  svg.dip .pin.hov .pad { stroke: var(--copper); stroke-width: 2.5; }
+  svg.dip .pin.hov .name { fill: var(--copper-hi); }
+
+  /* reading badge: one word a meter or probe shows, from the data. Colour follows the pin marks; the word carries it */
+  .rd { position: relative; display: inline-flex; align-items: baseline; gap: 6px; align-self: center; font: 14px/18px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk); border: var(--w) solid var(--silk-45); border-radius: 2px; padding: 2px 7px 1px; white-space: nowrap; }
+  .rd .f { text-transform: none; letter-spacing: 0; color: var(--silk-70); }
+  .rd.v { color: var(--pwr); border-color: var(--pwr); }
+  .rd.pul { color: var(--clk); border-color: var(--clk); }
+  .rd.lo, .rd.gnd { color: var(--tin); border-color: var(--tin); }
+  .rd.hi { border-color: var(--silk); }
+  button.rd { cursor: pointer; text-decoration: underline dotted var(--copper); text-underline-offset: 4px; }
+  button.rd::before { content: ''; position: absolute; inset: -12px -4px; }   /* 44 px tap area, line unmoved */
+  button.rd:hover { border-color: var(--copper); }
+  /* the pin's name, when other pins on the machine share it: tap for the list */
+  .pinhead button.nm { font: 400 30px/1 var(--font-mono); color: inherit; text-decoration: underline dotted var(--copper); text-decoration-thickness: 1.5px; text-underline-offset: 6px; min-height: 44px; }
+  .pinhead button.nm:hover { color: var(--copper-hi); }
+  .same .sig li { font-size: 16px; padding: 3px 0; }
+  .same .sig .tin { font-size: 14px; margin-left: 4px; }
+
+  /* machine bar: the machine, its boards, PAL / NTSC, and the tab row; one block stuck to the top while the page scrolls */
+  .mbar { position: sticky; top: 0; z-index: 25; margin: 0 -10px; padding: 4px 10px 0; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
+  .mbar .ctx { display: flex; align-items: center; gap: 4px 16px; min-width: 0; }
+  .mbar .ctx .region { margin: 0 0 0 auto; flex-wrap: nowrap; }
+  .mname { display: inline-flex; align-items: baseline; gap: 10px; min-height: 44px; min-width: 0; padding: 0 2px; color: var(--silk); }
+  .mname .des { font: 18px var(--font-mono); color: var(--copper); }
+  .mname .nm { font: 500 20px var(--font-sans); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mname .sw { font-size: 12px; color: var(--tin); }
+  .mname:hover .nm { color: var(--copper-hi); }
+  .brev { display: inline-flex; align-items: center; min-height: 44px; font: 14px var(--font-mono); color: var(--tin); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .brev:hover { color: var(--copper-hi); }
+  .mtabs { display: flex; gap: 0 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .mtabs::-webkit-scrollbar { display: none; }
+  .mtabs a { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font: 15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk-70); border-bottom: 3px solid transparent; }
+  .mtabs a:hover { color: var(--silk); }
+  .mtabs a.on { color: var(--copper); border-bottom-color: var(--copper); }
+  .mtabs a.off { color: var(--silk-25); text-decoration: line-through dotted; pointer-events: none; }
+  html { scroll-padding-top: calc(var(--mbar-h, 0px) + 8px); }
+  .detail { top: calc(var(--mbar-h, 0px) + 14px); max-height: calc(100dvh - var(--mbar-h, 0px) - 28px); }
+
+  /* parts list by designator */
+  .pfilter { margin: 0 0 10px; }
+  .ctab.parts td.f { white-space: normal; }
+  .ctab.parts .loc { font-family: var(--font-sans); white-space: normal; margin-top: 2px; max-width: 32ch; }
+  .ctab.parts td.nm { white-space: nowrap; }
+
+  /* PAL / NTSC / BOTH */
+  .region { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; margin: 6px 0 4px; }
+  .region .h { font: 13px var(--font-mono); letter-spacing: .12em; color: var(--tin); margin-right: 10px; }
+  .region button { min-height: 44px; padding: 6px 12px; font: 14px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk-70); border: var(--w) solid var(--silk-45); margin-left: calc(-1 * var(--w)); }
+  .region button:first-of-type { border-radius: var(--radius-silk) 0 0 var(--radius-silk); margin-left: 0; }
+  .region button:last-of-type { border-radius: 0 var(--radius-silk) var(--radius-silk) 0; }
+  .region button:hover { color: var(--silk); }
+  .region button.on { position: relative; color: var(--copper); border-color: var(--copper); }
+  .region > .tin { margin-left: 12px; }
+  .probe .region { margin-top: 8px; }
+
+  /* the pin table: every pin of the chip, inside the pin filter */
+  .ptwrap { overflow-x: auto; overscroll-behavior-x: contain; }
+  .ptab { width: 100%; border-collapse: collapse; font-size: 16px; }
+  .ptab th { font: 400 13px var(--font-mono); letter-spacing: .12em; color: var(--tin); text-transform: uppercase; text-align: left; padding: 0 12px 6px 0; white-space: nowrap; }
+  .ptab td { height: 44px; padding: 4px 12px 4px 0; border-top: 1px solid var(--silk-12); vertical-align: middle; }
+  .ptab .n { font-family: var(--font-mono); color: var(--copper); text-align: right; width: 1%; padding-left: 6px; }
+  .ptab td.nm { font-family: var(--font-mono); white-space: nowrap; }
+  .ptab td.ty { white-space: nowrap; color: var(--silk-70); }
+  .ptab td.ty svg { display: inline-block; width: 12px; height: 12px; margin-right: 7px; vertical-align: -1px; overflow: visible; }
+  .ptab tbody tr { cursor: pointer; }
+  .ptab .rd { flex-wrap: wrap; white-space: normal; gap: 0 6px; }
+  .ptab tbody tr.hov td { background: var(--mask-deep); }
+  .ptab tbody tr.sel td { color: var(--copper-hi); }
+  .ptab tbody tr.sel td.n { box-shadow: inset 3px 0 0 var(--copper); }
+
+  /* folds: "Measured how", "Same signal on this machine" */
+  details.fold { margin-top: 10px; }
+  details.fold > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; min-height: 44px; padding: 10px 0; font: 13px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tin); }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary::before { content: '+'; font-size: 17px; line-height: 1; color: var(--copper); width: 10px; }
+  details.fold[open] > summary::before { content: '\2013'; }
+  details.fold > summary .s { color: var(--silk-70); letter-spacing: .02em; text-transform: none; font-size: 14px; }
+  .blk > details.fold:first-of-type { margin-top: -6px; }
+  .meas .mbody { padding: 0 0 6px; }
 
   /* ---------- connectors: drawings from src/connectors.js, a pin table beside them ---------- */
   .tag { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; border: 1px solid var(--silk-45); color: var(--silk-70); border-radius: 2px; padding: 1px 5px 0; vertical-align: 3px; margin-left: 8px; text-transform: uppercase; }
@@ -678,6 +759,22 @@
     .gl summary, .res a.row { grid-template-columns: 1fr; gap: 2px; }
     .res a.row .u { grid-column: 1; }
     .kv { grid-template-columns: 84px 1fr; }
+    .pinlegend.withtab { display: none; }
+    /* phone: only the tab row sticks; the machine line above it is one compact row that scrolls away */
+    .mbar { display: contents; }
+    .mbar .ctx { gap: 8px; margin-top: 2px; }
+    .mname { gap: 8px; min-height: 40px; }
+    .mname .des, .brev, .mbar .region .h, .mbar .region > .tin { display: none; }
+    .mname .nm { font-size: 18px; }
+    .mbar .region button { min-height: 28px; padding: 2px 8px; font-size: 12px; }
+    .mtabs { position: sticky; top: 0; z-index: 25; margin: 0 -12px; padding: 0 6px; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
+    .mtabs a { min-height: 40px; padding: 0 10px; font-size: 14px; }
+    .hd { margin-top: 10px; }
+    /* chip toolbar: short labels, one line */
+    .ctools-chip { gap: 6px; margin-top: 10px; }
+    .ctools-chip .btn { min-height: 40px; padding: 6px 9px; font-size: 13px; letter-spacing: .03em; gap: 0; white-space: nowrap; }   /* the pin table stands in for the legend */
+    .ptab { font-size: 15px; }
+    .ptab th, .ptab td { padding-right: 8px; }
     .scope-body { grid-template-columns: minmax(0, 1fr); }
     .ften li { grid-template-columns: 30px minmax(0, 1fr); gap: 0 10px; }
     .ften .n { font-size: 24px; }
@@ -716,7 +813,7 @@
     color-scheme: light;
   }
   html, body { background: #fff !important; background-image: none !important; color: #000; }
-  .strip, .trace, .edgebar, .panel, .wire, .wire-fixed, .pop, .palette, .hole, .tog, button, textarea, .notes, .jumpers { display: none !important; }
+  .strip, .trace, .edgebar, .panel, .wire, .wire-fixed, .pop, .palette, .hole, .tog, button, textarea, .notes, .jumpers, .region, .mbar, .pfilter { display: none !important; }
   .board { border: 0; margin: 0; padding: 0; max-width: none; min-height: 0; }
   main { padding: 0 !important; }
   .blk { border: .5pt solid #555; break-inside: avoid; }
@@ -728,7 +825,7 @@
   .vwrap { overflow: visible; }
 
   /* the card replaces the machine page */
-  body.has-card main > :not(.printcard) { display: none !important; }
+  body.has-card main > :not(#view), body.has-card #view > :not(.printcard) { display: none !important; }
   body.has-card .printcard { display: block; font: 8.5pt/1.25 var(--font-sans); color: #000; }
   .pc-h { display: flex; flex-wrap: wrap; gap: 2pt 10pt; align-items: baseline; border-bottom: .75pt solid #000; padding-bottom: 3pt; }
   .pc-h .pc-d { font: 18pt/1 var(--font-mono); }

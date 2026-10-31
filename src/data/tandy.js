@@ -2534,4 +2534,78 @@ RCS.add({
     { name: 'trs-80.org (Matthew Reed)', url: T80_EI, what: 'History and known problems of the Model I Expansion Interface, keybounce and related add-ons.' },
   ],
 });
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+{
+  const IA = (id, n) => `https://archive.org/details/${id}/page/n${n}`;
+  const DL = 'https://archive.org/download';
+  const CC13 = 'Sams_Computerfacts_Color_Computer_1986_Howard_Sams', CC15 = 'Sams_Computerfacts_Color_Computer_2_1986_Howard_Sams';
+  const CSCS3 = 'Sams_ComputerFacts_Model_I_1985_Howard_Sams', CSCS5 = 'sams-computerfacts-trs-80-model-iii-1985-howard-sams';
+  const CSCS13 = 'Sams_Computerfacts_for_Model_4_Gate_Array_1986_Sams';
+  const TRH = n => `${DL}/TRS-80_Micro_Computer_Technical_Reference_Handbook_2nd_Edition_1982_Radio_Shack/TRS-80_Micro_Computer_Technical_Reference_Handbook_2nd_Edition_1982_Radio_Shack.pdf#page=${n}`;
+  const M3SVC = n => `${DL}/Model_III_Microcomputer_Service_Manual_19xx_Tandy/Model_III_Microcomputer_Service_Manual_19xx_Tandy.pdf#page=${n}`;
+  const M4TRM = n => `${DL}/model-4-technical-reference-manual/Model%204%20Technical%20Reference%20Manual%20(1983)(Tandy%20Corporation)(pdf).pdf#page=${n}`;
+  const sams = [
+    'Voltages and waveforms are taken from ground, unless noted.',
+    'Voltages, waveforms and logic probe readings are taken with the computer switched on and no keys pressed, unless noted.',
+    'Voltages are read with a digital meter, with no signal applied.',
+  ];
+  const x10 = 'Scope through an isolation (×10) probe.';
+  const M = {
+    coco1: {
+      conditions: [...sams, x10],
+      sources: [
+        { label: 'Sams CC13 Color Computer (26-3002), schematic notes, PDF p. 26', url: IA(CC13, 25), sams: true },
+        { label: 'Sams CC13 Color Computer, safety precautions item 6, PDF p. 27', url: IA(CC13, 26), sams: true },
+      ],
+    },
+    coco2: {
+      conditions: [...sams, x10],
+      sources: [
+        { label: 'Sams CC15 Color Computer 2, schematic notes, PDF p. 32', url: IA(CC15, 31), sams: true },
+        { label: 'Sams CC15 Color Computer 2, safety precautions item 6, PDF p. 27', url: IA(CC15, 26), sams: true },
+      ],
+    },
+    model1: {
+      conditions: [
+        'Sams takes voltages, waveforms and logic probe readings in "Power Up" mode (main title screen displayed), unless noted.',
+        'Voltages are read with a digital meter.',
+        x10,
+        'The Technical Reference Handbook\'s regulator voltage table (Z1, Z2) is read with a digital voltmeter, referenced to ground at the right side of C9.',
+      ],
+      sources: [
+        { label: 'Sams CSCS3 TRS-80 Model I, schematic notes, PDF p. 20', url: IA(CSCS3, 19), sams: true },
+        { label: 'Sams CSCS3 TRS-80 Model I, safety precautions item 6, PDF p. 30', url: IA(CSCS3, 29), sams: true },
+        { label: 'TRS-80 Technical Reference Handbook, Figure 19 power supply voltages for Z1 and Z2, p. 75', url: TRH(76) },
+      ],
+    },
+    model3: {
+      conditions: [
+        ...sams,
+        'Bench test of the supply: through an isolation transformer of at least 500 VA and a variac, with DVMs on the input and on +5 V and a scope on +5 V at 50 mV/div; the scope needs ×10 and ×100 probes.',
+        'Load the supply before power-up: at least 0.45 A on +5 V (11.11 Ω) and 0.3 A on +12 V (40 Ω); -12 V needs no load. Bring the input up slowly: it should start at about 40 to 60 V AC and regulate from 95 V AC.',
+        'Performance test: five input/load combinations (95 to 128 V AC, min and max loads) are each checked against Table 2 (+5 V 4.75 to 5.25 V). The Table 2 ripple limits (+5 V 50 mV p-p, ±12 V 150 mV p-p) apply to a resistive load only, not under system operating conditions.',
+      ],
+      sources: [
+        { label: 'Sams CSCS5 TRS-80 Model III, schematic notes, PDF p. 34', url: IA(CSCS5, 33), sams: true },
+        { label: 'Model III Service Manual, power supply test set-up and equipment, p. 67', url: M3SVC(74) },
+        { label: 'Model III Service Manual, Table 1 Load board values and start-up, p. 68', url: M3SVC(75) },
+        { label: 'Model III Service Manual, performance test and Table 2 Voltage and ripple specification, p. 69', url: M3SVC(76) },
+      ],
+    },
+    model4: {
+      conditions: [
+        ...sams.slice(0, 2),
+        x10,
+        'Bench test of supply #8790043 (Astec AA12090): load it with the Table 6-1 minimums first (+5 V 1.35 A, 3.7 Ω; +12 V (V2) 0.40 A, 30 Ω; +12 V (V3) 0.60 A, 20 Ω), then bring the input up slowly on a variac while watching +5 V on a DVM and on a scope at 50 mV/div.',
+      ],
+      sources: [
+        { label: 'Sams CSCS13 Model 4 Gate Array, schematic notes and safety precautions item 6, PDF p. 35', url: IA(CSCS13, 34), sams: true },
+        { label: 'Model 4 Technical Reference Manual (1983), 6.2.1 Test set-up and 6.2.3 Start-up, p. 112', url: M4TRM(128) },
+        { label: 'Model 4 Technical Reference Manual (1983), Table 6-1 Load board values, p. 114', url: M4TRM(130) },
+      ],
+    },
+  };
+  for (const [mid, m] of Object.entries(M)) RCS.power[mid].measured = m;
+}
 })();

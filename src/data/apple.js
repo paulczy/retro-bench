@@ -2979,4 +2979,61 @@ RCS.add({
   ],
   chipLocations: { disk2: { uln2003: 'D4 on the analog card (socketed, Apple 327-2003)' } },
 });
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+{
+  const IA = (id, n) => `https://archive.org/details/${id}/page/n${n}`;
+  const CC1 = 'Sams_Computer_Facts_Apple_II_II_Plus', CC10 = 'Sams_Computer_Facts_Apple_IIe', CD6 = 'Sams_Technical_Disk_II';
+  const RB = 'https://mirrors.apple2.org.za/ftp.apple.asimov.net/documentation/hardware/machines/Apple%20II%20Reference%20Manual%20-%20The%20Red%20Book%20v2.pdf';
+  const minLoad = 'The switching supply needs a load: with the board disconnected its over-voltage protection turns it off. Nominal minimum load is 9 W, split roughly 50-50 between +5 V and +12 V.';
+  const rbLoad = { label: 'Apple II Red Book (1978), The Apple II Switching Power Supply (minimum load), p. 111', url: `${RB}#page=114` };
+  const cc1Safety = { label: 'Sams CC1 Apple II/II Plus, safety precautions item 6, PDF p. 35', url: IA(CC1, 34), sams: true };
+  const M = {
+    apple2: {
+      conditions: [
+        'Sams takes voltages and waveforms with Integer BASIC in ROM and the machine in the Monitor, unless noted.',
+        'Logic probe readings are taken just after power-up, on a board with Integer BASIC in ROM and no Autostart ROM.',
+        'Voltages are read with a digital meter.',
+        'Scope input set for DC coupling on waveforms with a 0 V reference; switch to AC to view a waveform after its DC reference is measured, when necessary. Each waveform\'s DC reference voltage is given on its bottom line.',
+        'Scope through an isolation (×10) probe.',
+        minLoad,
+      ],
+      sources: [
+        { label: 'Sams CC1 Apple II/II Plus, schematic notes, PDF p. 19', url: IA(CC1, 18), sams: true },
+        cc1Safety, rbLoad,
+      ],
+    },
+    apple2plus: {
+      conditions: ['Voltages are read with a digital meter.', 'Scope through an isolation (×10) probe.'],
+      sources: [{ label: 'Sams CC1 Apple II/II Plus, schematic notes, PDF p. 19', url: IA(CC1, 18), sams: true }, cc1Safety],
+    },
+    apple2e: {
+      conditions: [
+        'Voltages and waveforms are taken from ground, unless noted.',
+        'Main board readings are taken in Sams\'s "Power Up" mode, no keys pressed, unless noted.',
+        'Logic probe readings in Power Up mode are taken without the Disk II interface card fitted.',
+        'Disk II interface card readings are taken while a BASIC program writes a text file to disk (Sams\'s OPEN/WRITE SAMS loop).',
+        'Voltages are read with a digital meter, with no signal applied.',
+        'Scope through an isolation (×10) probe.',
+      ],
+      sources: [
+        { label: 'Sams CC10 Apple IIe, schematic notes and safety precautions item 6, PDF p. 50', url: IA(CC10, 49), sams: true },
+        { label: 'Sams CC10 Apple IIe, logic probe note, PDF p. 47', url: IA(CC10, 46), sams: true },
+      ],
+    },
+    disk2: {
+      conditions: [
+        'Voltages and waveforms are taken from ground, unless noted.',
+        'Readings are taken while a BASIC program writes a text file to disk (Sams\'s OPEN/WRITE SAMS loop), with the stepper motor not moving, unless noted. Read and write circuits are both active then.',
+        'Voltages are read with a digital meter, with no signal applied.',
+        'Scope through an isolation (×10) probe.',
+      ],
+      sources: [
+        { label: 'Sams CD6 Disk II, schematic notes and test program, PDF p. 15', url: IA(CD6, 14), sams: true },
+        { label: 'Sams CD6 Disk II, safety precautions item 4, PDF p. 28', url: IA(CD6, 27), sams: true },
+      ],
+    },
+  };
+  for (const [mid, m] of Object.entries(M)) RCS.power[mid].measured = m;
+}
 })();

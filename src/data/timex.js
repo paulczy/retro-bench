@@ -688,4 +688,21 @@ RCS.add({
     { name: 'TS2068 Connector Pinouts (Timex Technical Memo #6, SYNTAX)', url: MEMO6.url, what: 'P1, dock and joystick pinouts as Timex published them.' }
   ]
 });
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+{
+  const CC19 = n => `https://archive.org/details/TimexSinclairEphemera/CC-19_Timex%20_Sinclair%202068/page/n${n}`;
+  RCS.power.ts2068.measured = {
+    conditions: [
+      'Voltages and waveforms are taken with the computer switched on and no keys pressed, unless noted.',
+      'Voltages are read with a digital meter.',
+      'Scope input set for DC coupling on waveforms with a 0 V reference; switch to AC to view a waveform after its DC reference is measured, when necessary. Each waveform\'s DC reference voltage is given on its bottom line.',
+      'Scope through an isolation (×10) probe.',
+    ],
+    sources: [
+      { label: 'Sams CC19 Sinclair/Timex 2068, schematic notes, PDF p. 8', url: CC19(7), sams: true },
+      { label: 'Sams CC19 Sinclair/Timex 2068, safety precautions item 6, PDF p. 16', url: CC19(15), sams: true },
+    ],
+  };
+}
 })();

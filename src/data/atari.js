@@ -1132,4 +1132,38 @@ RCS.add({
     { name: 'Atari 400-800 Pocket Reference (sheet)', url: 'P:\\retro-computer-cheetsheets\\basic-cheatsheets\\Atari_400-800_Cheatsheet.pdf', what: 'Atari BASIC, graphics modes, SETCOLOR, POKEY sound, PEEK/POKE, CIO devices, DOS 2.x menu.' },
   ],
 });
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+{
+  const IA = (id, n) => `https://archive.org/details/${id}/page/n${n}`;
+  const CC5 = 'SamsComputerfactsAtari400B', CC16 = 'samscomputerfactstechnicalservicedataatarimodel130xecomputer1986sams';
+  const M = {
+    atari400: {
+      conditions: [
+        'Voltages and waveforms are taken in Sams\'s "Power Up" mode with the BASIC cartridge plugged in and no keys pressed, unless noted.',
+        'Voltages and waveforms are taken from ground, unless noted.',
+        'Voltages are read with a digital meter.',
+        'Scope input set for DC coupling on waveforms with a 0 V reference; switch to AC to view a waveform after its DC reference is measured, when necessary. Each waveform\'s DC reference voltage is given on its bottom line.',
+        'Scope through an isolation (×10) probe.',
+      ],
+      sources: [
+        { label: 'Sams CC5 Atari 400, schematic and logic chart notes, PDF p. 34', url: IA(CC5, 33), sams: true },
+        { label: 'Sams CC5 Atari 400, safety precautions item 6, PDF p. 20', url: IA(CC5, 19), sams: true },
+      ],
+    },
+    atari130xe: {
+      conditions: [
+        'Voltages and waveforms are taken from ground, unless noted.',
+        'Voltages, waveforms and logic probe readings are taken with the computer switched on and no keys pressed, unless noted.',
+        'Voltages are read with a digital meter, with no signal applied.',
+        'Scope through an isolation (×10) probe.',
+      ],
+      sources: [
+        { label: 'Sams CC16 Atari 130XE, schematic notes, PDF p. 6', url: IA(CC16, 5), sams: true },
+        { label: 'Sams CC16 Atari 130XE, safety precautions item 6, PDF p. 13', url: IA(CC16, 12), sams: true },
+      ],
+    },
+  };
+  for (const [mid, m] of Object.entries(M)) RCS.power[mid].measured = m;
+}
 })();

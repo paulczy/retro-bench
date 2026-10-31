@@ -14,6 +14,13 @@ const LS = {
   /* true when stored; false when storage is full, blocked or missing */
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } },
 };
+/* the same for this tab only (chip rotation): gone when the tab closes */
+const SS = {
+  get(k, d) { try { const v = sessionStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const REGIONS = ['both', 'pal', 'ntsc'];
+const REGION_CAP = { both: 'Both', pal: 'PAL', ntsc: 'NTSC' };
 const DIR = { in: 'Input', out: 'Output', bidir: 'Bidirectional', '-': 'Supply or passive' };
 const STATUS = { ready: 'FITTED', sheet: 'ON PAPER', planned: 'NOT FITTED' };
 const STATUS_LONG = { ready: 'fitted: full pinouts and quick reference', sheet: 'on paper: the cheat sheet exists, not yet in the app', planned: 'not fitted: planned' };
@@ -38,6 +45,9 @@ const state = {
   conn: null,   /* { id, pin } the selected connector pad on the ports or power page */
   ph: { m: null, i: 0, sel: null, big: false },   /* board photo on the machine page: which photo, the lit chip, full size */
   ctx: { route: { segs: [], q: {} } }, hits: [], hitIdx: -1, palItems: [], palIdx: 0,
+  region: REGIONS.includes(LS.get('rb-region', null)) ? LS.get('rb-region', null) : 'both',   /* PAL / NTSC / both, kept on the device */
+  rot: [0, 1, 2, 3].includes(SS.get('rb-rot', 0)) ? SS.get('rb-rot', 0) : 0,   /* chip drawing, quarter turns clockwise, this session */
+  ptable: SS.get('rb-ptable', false) === true,   /* the pin table on the chip page */
 };
 
 /* ---------- solder mask: GREEN / BLACK / LIGHT; follows the system until the user picks ---------- */
@@ -70,7 +80,7 @@ function syncWake() {
     }, () => { wake.asking = false; });
   } else if (!wakeOn() && wake.lock) { const l = wake.lock; wake.lock = null; l.release().catch(() => {}); }
 }
-const wakeBtn = () => (WAKE ? `<button type="button" class="btn${wake.want ? ' on' : ''}" data-act="wake" aria-pressed="${wake.want}" title="Keep the screen on while this page is open">Keep awake: ${wake.want ? 'On' : 'Off'}</button>` : '');
+const wakeBtn = () => (WAKE ? `<button type="button" class="btn${wake.want ? ' on' : ''}" data-act="wake" aria-pressed="${wake.want}" title="Keep the screen on while this page is open"><span class="max-sm:hidden">Keep </span>awake: ${wake.want ? 'On' : 'Off'}</button>` : '');
 function setWake(on) {
   wake.want = on; LS.set('rb-wake', on);
   for (const b of $$('[data-act="wake"]')) b.outerHTML = wakeBtn();
@@ -162,6 +172,20 @@ const hotMark = h => (h === 'hot' ? '<span class="hot">HOT</span>' : '');
 const locOf = (c, m) => (c.location && c.location[m.id]) || '';
 /* board designator from the sheet's location ("U1", "E6 (near the CPU)"); else the location's words; else the part */
 const boardDes = (c, m) => { const mm = locOf(c, m).match(/^[A-Z]{1,3}\d{1,3}\b/); return mm ? mm[0] : ''; };
+/* every designator a location names: "U403, U406", "IC6-IC13" (a range of one prefix is spelled out), "UC5 (long
+   board 1540008), U3 (1541-II)". A $ address ($FF00) is not one. */
+const DES_RE = /(^|[^$\w])([A-Z]{1,3})(\d{1,3}[A-Z]?)(?:\s*-\s*\2(\d{1,3}))?(?![\w])/g;
+function desAll(c, m) {
+  const out = [];
+  for (const mm of locOf(c, m).matchAll(DES_RE)) {
+    const a = Number(mm[3]), b = Number(mm[4]);
+    if (mm[4] && a < b && b - a < 40) for (let i = a; i <= b; i++) out.push(mm[2] + i); else out.push(mm[2] + mm[3]);
+  }
+  return [...new Set(out)];
+}
+/* designator order: prefix, then number ("U2" before "U10") */
+const DES_NUM = s => { const mm = /^([A-Z]+)(\d+)(.*)$/.exec(s || ''); return mm ? [mm[1], Number(mm[2]), mm[3]] : [s || '~', 0, '']; };
+const desCmp = (a, b) => { const x = DES_NUM(a), y = DES_NUM(b); return x[0].localeCompare(y[0]) || x[1] - y[1] || x[2].localeCompare(y[2]); };
 function desOf(c, m) {
   const l = locOf(c, m);
   return boardDes(c, m) || (l ? l.split(/[,(]/)[0].trim().toUpperCase().slice(0, 12) : c.short);
@@ -442,10 +466,10 @@ function pinExpect(chip, p, m) {
   const pw = dataFor(D.power, m).data || {};
   const hits = x => x && pinRefs(x.where || '', m).some(r => r.kind === 'chip' && r.c === chip && String(r.n) === String(p.n));
   const src = x => (x.source ? ` ${srcLink(x.source)}` : '');
+  const clocks = arr(pw.clocks).filter(hits), recs = [...arr(pw.testPoints).map(t => [t.tp, t]), ...arr(pw.rails).map(r => [r.rail, r]), ...arr(pw.firstTen).map(s => [s.check, s])].filter(([, x]) => hits(x));
   const rows = [
-    ...arr(pw.clocks).filter(hits).map(c => `<li><b class="mono">${esc(clockFreqs(c))}</b> ${esc(c.name)}${vmark(c)}${src(c)}${conflictNote(c)}</li>`),
-    ...[...arr(pw.testPoints).map(t => [t.tp, t]), ...arr(pw.rails).map(r => [r.rail, r]), ...arr(pw.firstTen).map(s => [s.check, s])].filter(([, x]) => hits(x))
-      .map(([name, x]) => `<li>${esc(name || '')}: <b>${esc(x.expect || '')}</b>${vmark(x)}${x.ifNot ? `<br><span class="tin sm">If not: ${esc(x.ifNot)}</span>` : ''}${src(x)}${conflictNote(x)}</li>`),
+    ...clocks.map(c => `<li><b class="mono">${clockFreqsR(c) ? esc(clockFreqsR(c)) : `<span class="tin">no ${REGION_CAP[state.region]} value</span>`}</b> ${esc(c.name)}${vmark(c)}${src(c)}${conflictNote(c)}</li>`),
+    ...recs.map(([name, x]) => `<li>${esc(name || '')}: <b>${esc(regionText(x.expect || ''))}</b>${vmark(x)}${x.ifNot ? `<br><span class="tin sm">If not: ${esc(x.ifNot)}</span>` : ''}${src(x)}${conflictNote(x)}</li>`),
   ];
   const lvl = p.activeLow || String(p.name).startsWith('/') ? 'Active LOW: near 0 V while in reset.' : 'Active HIGH (not marked active low): HIGH while in reset.';
   const gen = rst ? `<div class="probe"><b>Reset check</b>${lvl} It goes active at power-on, then releases. Stuck active holds the chip in reset; never going active means the reset circuit is not firing. Catch it with a logic probe or a scope on single-shot at power-on, and check the circuit that drives it.</div>` : '';
@@ -455,6 +479,133 @@ function pinExpect(chip, p, m) {
 }
 const REPL_KIND = { 'pin-compatible': 'Pin-compatible', modern: 'Modern', adapter: 'Adapter' };
 const clockFreqs = c => (c.f ? String(c.f) : [c.pal && `PAL ${c.pal}`, c.ntsc && `NTSC ${c.ntsc}`].filter(Boolean).join(' / '));
+
+/* ---------- PAL / NTSC: the standard the user works on (rb-region). Only a value labelled with the other standard
+   is hidden: the PAL or NTSC field of a clock, a video column, or one half of a pair written in a text field
+   ("1.023 MHz NTSC / 0.985 MHz PAL", "60 Hz (NTSC) or 50 Hz (PAL)"). Anything else always shows. ---------- */
+const showPal = () => state.region !== 'ntsc', showNtsc = () => state.region !== 'pal';
+const RG_V = String.raw`[+\-−]?\d[\d.,]*\s*(?:[kMG]?Hz|V(?:\s?AC|\s?DC)?)`, RG_T = String.raw`(\((?:PAL|NTSC)\)|PAL|NTSC)`;
+const RG_PAIR = new RegExp(String.raw`(${RG_V})\s+${RG_T}(\s*(?:\/|,|or)\s*)(${RG_V})\s+${RG_T}`, 'g');
+const rgTag = t => t.replace(/[()]/g, '');
+const regionPaired = s => [...String(s ?? '').matchAll(RG_PAIR)].some(mm => rgTag(mm[2]) !== rgTag(mm[5]));
+function regionText(s) {
+  s = String(s ?? '');
+  if (state.region === 'both') return s;
+  const want = state.region.toUpperCase();
+  return s.replace(RG_PAIR, (all, v1, t1, sep, v2, t2) => (rgTag(t1) === rgTag(t2) ? all : rgTag(t1) === want ? `${v1} ${t1}` : `${v2} ${t2}`));
+}
+const clockFreqsR = c => (c.f ? String(c.f) : [showPal() && c.pal && `PAL ${c.pal}`, showNtsc() && c.ntsc && `NTSC ${c.ntsc}`].filter(Boolean).join(' / '));
+const clockTV = c => !!(c && !c.f && (c.pal || c.ntsc));
+/* the toggle, wherever a page shows a value of one standard */
+const regionBar = () => `<div class="region" role="radiogroup" aria-label="TV standard shown"><span class="h">TV</span>${REGIONS.map(r => `<button type="button" role="radio" aria-checked="${state.region === r}" class="${state.region === r ? 'on' : ''}" data-act="region" data-r="${r}">${REGION_CAP[r]}</button>`).join('')}${state.region !== 'both' ? `<span class="tin sm">${state.region === 'pal' ? 'NTSC' : 'PAL'} values hidden</span>` : ''}</div>`;
+/* does this power record set show anything the toggle changes */
+const powerRegional = pw => !!pw && (arr(pw.clocks).some(clockTV) || [...arr(pw.rails), ...arr(pw.testPoints), ...arr(pw.firstTen)].some(x => x && regionPaired(x.expect)));
+/* the machine bar carries the toggle when anything on the machine's pages is of one standard */
+function machineRegional(m) {
+  const q = dataFor(D.quickref, m).data || {}, b = q.basic || {};
+  return powerRegional(dataFor(D.power, m).data)
+    || arr(dataFor(D.connectors, m).data).some(c => realPins(c).some(p => regionPaired(p.expect)))
+    || regionPaired([...arr(q.keys).map(k => k.does), ...arr(b.essentials).map(e => e.does), ...arr(b.quirks), ...arr(q.memory).map(r => r.what)].join('\n'));
+}
+
+/* ---------- reading badge: one word for PIN DETAIL and the pin table, from fields already in the data:
+   a ground pin reads 0 V; a power pin the voltage of its rail (chip) or its own `expect` (connector); a clock pin
+   PULSING with the frequency its clock or test point gives; any pin whose own `expect` opens with HIGH, LOW or
+   pulses (and no condition in that first clause) that word. Otherwise no badge. ---------- */
+const VOLT = /^(?:(about|near)\s+)?([+\-−]?\d+(?:\.\d+)?(?:\s*(?:–|-|to)\s*[+\-−]?\d+(?:\.\d+)?)?\s*V(?:\s?(?:AC|DC))?)(?![\w])/i;
+const voltOf = s => { const mm = VOLT.exec(String(s ?? '').trim()); return mm ? (mm[1] ? '≈ ' : '') + mm[2] : ''; };
+const freqsIn = s => String(s ?? '').match(/\d+(?:\.\d+)?\s*[kMG]?Hz\b/g) || [];
+function stateWord(s) {
+  const t = String(s ?? '').trim(), first = t.split(/[;,]/)[0];
+  if (!t || /\b(then|while|when|with|during|unless|only|if)\b/i.test(first)) return '';
+  if (/^(?:idles?\s+)?high\b/i.test(t)) return 'HIGH';
+  if (/^low\b(?!\s+resistance)/i.test(t)) return 'LOW';
+  if (/^(?:pulses?|pulse train|pulsing|toggles)\b/i.test(t)) return 'PULSING';
+  return '';
+}
+/* the chip pins a power record's `where` names */
+const namesPin = (x, chip, p, m) => x && pinRefs(x.where || '', m).some(r => r.kind === 'chip' && r.c === chip && String(r.n) === String(p.n));
+function chipReading(chip, p, m) {
+  if (p.type === 'ground') return { w: '0 V', why: 'Ground pin' };
+  const pw = dataFor(D.power, m).data || {}, hit = x => namesPin(x, chip, p, m);
+  if (p.type === 'power') {
+    const r = arr(pw.rails).find(hit), v = r && (voltOf(r.rail) || voltOf(r.expect));
+    return v ? { w: v, why: `The ${r.rail} rail on this machine` } : null;
+  }
+  if (p.type === 'clock') {
+    const c = arr(pw.clocks).find(hit);
+    if (c) return { w: 'PULSING', f: clockFreqsR(c), why: `Clock: ${c.name}` };
+    const t = arr(pw.testPoints).find(hit);
+    if (t) { const f = t.scope && t.scope.f ? [t.scope.f] : freqsIn(regionText(t.expect)); return { w: 'PULSING', f: f.length === 1 ? f[0] : '', why: `Test point: ${t.tp}` }; }
+  }
+  const s = stateWord(p.expect);
+  return s ? { w: s, why: p.expect } : null;
+}
+function connReading(p) {
+  if (p.type === 'ground') return { w: '0 V', why: 'Ground pin' };
+  if (p.type === 'power') { const v = voltOf(p.expect); return v ? { w: v, why: p.expect } : null; }
+  if (p.type === 'clock') { const f = freqsIn(regionText(p.expect)); if (f.length) return { w: 'PULSING', f: f.length === 1 ? f[0] : '', why: p.expect }; }
+  const s = stateWord(p.expect);
+  return s ? { w: s, why: p.expect } : null;
+}
+/* the glossary term behind a word (voltages link nothing); a term missing from the data leaves a plain badge */
+const READ_TERM = { LOW: 'logic-low', HIGH: 'logic-high', PULSING: 'pulsing' };
+function badge(r) {
+  if (!r) return '';
+  const cls = r.w === 'PULSING' ? 'pul' : r.w === 'HIGH' ? 'hi' : r.w === 'LOW' ? 'lo' : r.w === '0 V' ? 'gnd' : 'v';
+  const id = READ_TERM[r.w] && D.terms[READ_TERM[r.w]] ? READ_TERM[r.w] : null;
+  const inner = `${esc(r.w)}${r.f ? ` <span class="f">${esc(r.f)}</span>` : ''}`, t = r.why ? ` title="${esc(r.why)}"` : '';
+  return id ? `<button type="button" class="rd ${cls}" data-term="${id}"${t} aria-label="Reads ${esc(r.w)}${r.f ? ' ' + esc(r.f) : ''}: what ${esc(r.w.toLowerCase())} means">${inner}</button>`
+    : `<span class="rd ${cls}"${t}>${inner}</span>`;
+}
+
+/* ---------- signal lookup: every chip and connector pin on a machine carrying the same signal name. Names compare
+   without case or spaces, Φ as PHI, and one active-low mark whichever way it is written (/RAS, RAS*, R̅A̅S̅).
+   Only names in the data; nothing is inferred (VCC is not +5 V). ---------- */
+function sigKey(s) {
+  let t = String(s ?? '').trim(), low = false;
+  if (/̅/.test(t)) { low = true; t = t.replace(/̅/g, ''); }
+  if (/^[/~]/.test(t)) { low = true; t = t.replace(/^[/~]+/, ''); }
+  if (/[*#]$/.test(t)) { low = true; t = t.replace(/[*#]+$/, ''); }
+  t = t.replace(/[Φφϕ]/g, 'PHI').toUpperCase().replace(/\s+/g, '');
+  return t ? (low ? '/' : '') + t : '';
+}
+const SIG = new Map();
+function sigMap(m) {
+  if (SIG.has(m.id)) return SIG.get(m.id);
+  const map = new Map(), put = (k, x) => { if (!k) return; if (!map.has(k)) map.set(k, []); map.get(k).push(x); };
+  for (const c of chipsOf(m)) for (const p of arr(c.pins)) put(sigKey(p.name), { kind: 'chip', c, p });
+  for (const c of arr(dataFor(D.connectors, m).data)) for (const p of realPins(c)) put(sigKey(p.name), { kind: 'conn', c, p });
+  SIG.set(m.id, map);
+  return map;
+}
+const connHref = (m, c, n) => { const pw = dataFor(D.power, m).data; return `${mPath(m)}/${pw && pw.supply && pw.supply.connector === c.id ? 'power' : 'ports'}?c=${encodeURIComponent(c.id)}&pin=${encodeURIComponent(n)}`; };
+const sigHref = (m, x) => (x.kind === 'chip' ? `${chipPath(m, x.c)}?pin=${x.p.n}` : connHref(m, x.c, x.p.n));
+const sigLabel = (m, x) => (x.kind === 'chip' ? `${[boardDes(x.c, m), x.c.short].filter(Boolean).join(' ')} pin ${x.p.n}` : `${connDes(dataFor(D.connectors, m).data, x.c)} ${x.c.name} pin ${x.p.n}`);
+/* the pins that match a typed name: exactly, or either polarity when the query carries no active-low mark */
+function sigFind(m, q) {
+  const k = sigKey(q); if (!k) return [];
+  const map = sigMap(m);
+  return [...(map.get(k) || []), ...(k.startsWith('/') ? [] : map.get('/' + k) || [])];
+}
+function sameSignal(m, name, self) {
+  const list = (sigMap(m).get(sigKey(name)) || []).filter(x => x.p !== self);
+  if (!list.length) return '';
+  return `<details class="fold same" id="same-sig"${list.length <= 8 ? ' open' : ''}><summary>Same signal on this ${esc(m.name)}<span class="s">${list.length} more pin${list.length === 1 ? '' : 's'} named ${esc(name)}</span></summary>
+    <ul class="ds sig">${list.map(x => `<li><a class="plink" href="${sigHref(m, x)}">${esc(sigLabel(m, x))}</a> <span class="mono tin">${esc(x.p.name)}</span>${vmark(x.p)}</li>`).join('')}</ul></details>`;
+}
+/* the pin's name in PIN DETAIL: a button to that list when other pins share it */
+const sigName = (m, name, self) => ((sigMap(m).get(sigKey(name)) || []).some(x => x.p !== self)
+  ? `<button type="button" class="nm sig" data-act="sig" title="Every pin on this machine named ${esc(name)}">${esc(name)}</button>` : `<span class="nm">${esc(name)}</span>`);
+
+/* ---------- measured how: power.measured = { conditions: [..], sources: [..], verify? }, the conditions the
+   readings were taken under. A fold; nothing when absent. ---------- */
+function measuredFold(pw, name = 'Measured how') {
+  const ms = pw && pw.measured, conds = ms ? arr(ms.conditions).filter(Boolean) : [];
+  if (!ms || !(conds.length || arr(ms.sources).length)) return '';
+  return `<details class="fold meas"><summary>${name}${vmark(ms)}<span class="s">${conds.length ? `${conds.length} condition${conds.length === 1 ? '' : 's'} behind these readings` : 'sources for these readings'}</span></summary>
+    <div class="mbody">${conds.length ? `<ul class="bul">${conds.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${disagree(ms)}${sourceList(ms.sources)}</div></details>`;
+}
 
 /* ---------- search index ---------- */
 let INDEX = null;
@@ -514,7 +665,18 @@ function search(q, perGroup = 20) {
   hits.sort((a, b) => b.score - a.score || String(a.title).localeCompare(String(b.title)));
   const groups = new Map();
   for (const h of hits) { if (!groups.has(h.group)) groups.set(h.group, []); const g = groups.get(h.group); if (g.length < perGroup) g.push(h); }
-  return GROUP_ORDER.filter(g => groups.has(g)).map(g => ({ group: g, items: groups.get(g) }));
+  const out = GROUP_ORDER.filter(g => groups.has(g)).map(g => ({ group: g, items: groups.get(g) }));
+  /* a signal name on the machine on the bench: every chip and connector pin carrying it, first */
+  const m = currentMachine(), sig = m ? sigFind(m, q) : [];
+  /* a board designator ("u7", "IC1", "Z80"): that part on the machine on the bench first, then on every other machine */
+  if (/^[a-z]{1,3}\d{1,3}[a-z]?$/i.test(q)) {
+    const want = q.toUpperCase(), des = [];
+    for (const mm of [m, ...Object.values(D.machines).filter(x => x !== m)]) if (mm) for (const c of chipsOf(mm)) if (desAll(c, mm).includes(want))
+      des.push({ group: 'Designator', title: `${want}  ${c.short}`, sub: `${mm.name}: ${c.role || c.name}`, href: c.pins ? chipPath(mm, c) : `${mPath(mm)}/pinouts`, des: mDes(mm), mono: true, tag: c.pins ? '' : 'not captured', ...flags(c) });
+    if (des.length) out.unshift({ group: `Designator ${want}`, items: des.slice(0, Math.max(perGroup, 12)) });
+  }
+  if (sig.length) out.unshift({ group: `Signal on the ${m.name}`, items: sig.slice(0, Math.max(perGroup, 12)).map(x => ({ group: 'Signal', title: `${sigLabel(m, x)}  ${x.p.name}`, sub: x.p.desc || (x.kind === 'conn' ? x.c.kind || '' : x.c.name), href: sigHref(m, x), mono: true, ...flags(x.p) })) });
+  return out;
 }
 
 /* ---------- SVG: footprints ---------- */
@@ -619,12 +781,57 @@ function besideW() {
   return mw - detail - gap;
 }
 const geomOf = (chip, compact) => (isPLCC(chip) ? plccGeom : dipGeom)(chip, compact);
+/* the drawing's width on screen: a quarter turn swaps width and height */
+const drawnW = (chip, compact) => { const G = geomOf(chip, compact); return state.rot % 2 ? G.H : G.W; };
 function wantCompact(chip) {
   if (PANEL_MQ.matches) return true;
-  return geomOf(chip, false).W > besideW();
+  return drawnW(chip, false) > besideW();
 }
-/* a PLCC too wide to sit beside PIN DETAIL puts the detail under it instead (the trace then runs down to it) */
-const wantStack = chip => isPLCC(chip) && !PANEL_MQ.matches && geomOf(chip, state.compact).W > besideW();
+/* a PLCC, or a turned DIP, too wide to sit beside PIN DETAIL puts the detail under it instead (the trace then runs down to it) */
+const wantStack = chip => (isPLCC(chip) || state.rot % 2 === 1) && !PANEL_MQ.matches && drawnW(chip, state.compact) > besideW();
+/* the four-sided trace routes (PLCC gutters) serve any turned drawing too */
+const fourSided = svg => !!svg && (svg.classList.contains('plcc') || svg.classList.contains('turned'));
+
+/* ---------- chip rotation: R / Shift+R or the Rotate button turn the drawing a quarter turn. The SVG is drawn
+   upright, then its contents go into one rotated group; each pad's side turns with it (wire routing reads it),
+   and every label is turned back about its own centre so none reads upside down: names end up level or
+   reading upward, pin numbers level. ---------- */
+const SIDES = ['t', 'r', 'b', 'l'];   /* clockwise */
+function turnChip() {
+  const svg = $('svg.dip'), k = state.rot;
+  if (!svg || !k) return;
+  const W = +svg.getAttribute('width'), H = +svg.getAttribute('height'), g = document.createElementNS(svg.namespaceURI, 'g');
+  g.setAttribute('transform', ['', `translate(${H} 0) rotate(90)`, `translate(${W} ${H}) rotate(180)`, `translate(0 ${W}) rotate(270)`][k]);
+  while (svg.firstChild) g.appendChild(svg.firstChild);
+  svg.appendChild(g);
+  const [w, h] = k % 2 ? [H, W] : [W, H];
+  svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.classList.add('turned');
+  svg.setAttribute('aria-label', `${svg.getAttribute('aria-label').replace(/\. Tab.*$/, '')}, turned ${k * 90}° clockwise. Tab to a pad, Enter selects it.`);
+  for (const p of $$('.pin', svg)) p.dataset.side = SIDES[(SIDES.indexOf(p.dataset.side) + k) % 4];
+  upright(svg);
+}
+/* labels: measured after the fonts settle too, from each label's own first transform */
+function upright(svg) {
+  const R = state.rot * 90;
+  for (const t of $$('text', svg)) {
+    const t0 = t.dataset.t0 ?? (t.dataset.t0 = t.getAttribute('transform') || '');
+    if (t0) t.setAttribute('transform', t0); else t.removeAttribute('transform');
+    const own = Number((/rotate\((-?[\d.]+)/.exec(t0) || [])[1] || 0), a = (((own + R) % 360) + 360) % 360;
+    const c = t.classList.contains('num') ? -a : a === 90 || a === 180 ? 180 : 0;
+    if (!c) continue;
+    const b = t.getBBox(), M = t.transform.baseVal.consolidate();
+    let x = b.x + b.width / 2, y = b.y + b.height / 2;
+    if (M) { const q = M.matrix; [x, y] = [q.a * x + q.c * y + q.e, q.b * x + q.d * y + q.f]; }
+    t.setAttribute('transform', `rotate(${c} ${r1(x)} ${r1(y)})${t0 ? ' ' + t0 : ''}`);
+  }
+}
+function setRot(d) {
+  state.rot = (state.rot + d + 4) % 4; SS.set('rb-rot', state.rot);
+  const had = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.act === 'rot';
+  refreshChip();
+  if (had) { const b = $('[data-act="rot"]'); if (b) b.focus({ preventScroll: true }); }
+}
 function dipSVG(chip) {
   const G = dipGeom(chip, state.compact), { half, padX: pl, bodyX, W, TOP, H } = G;
   const n = chip.pins.length, bodyY = TOP - 14, bodyH = half * PT + 28, cy = bodyY + bodyH / 2;
@@ -794,8 +1001,14 @@ function render() {
   if (!ctx.conns) state.conn = null;
   state.phone = PHONE_MQ.matches;
   state.ctx = ctx;
+  if (ctx.machine) {
+    const tab = !c ? (r.q.at === 'notes' ? 'notes' : 'board') : c === 'pinouts' || c === 'chip' ? 'chips' : c === 'quickref' ? 'ref' : c === 'power' && r.q.at === 'clocks' ? 'clocks' : c;
+    html = `${mbar(ctx.machine, tab)}<div id="view">${html}</div>`;
+  }
   $('#main').innerHTML = html;
-  document.body.classList.toggle('has-card', !!$('#main > .printcard'));
+  syncMbar();
+  if (ctx.chip) turnChip();
+  document.body.classList.toggle('has-card', !!$('#view > .printcard'));
   renderStrip(); renderTrace(); renderEdgebar();
   closePop(); closePalette();
   window.scrollTo(0, 0);
@@ -810,6 +1023,16 @@ function render() {
   document.title = ctx.chip ? `${ctx.chip.short} pinout, Retro Bench` : ctx.machine ? `${ctx.machine.name}, Retro Bench` : ctx.brand ? `${ctx.brand.name}, Retro Bench` : 'Retro Bench';
 }
 
+/* what sticks: the whole bar, or on a phone only its tab row (the machine line scrolls away) */
+const mbarH = () => { const b = $('#mbar'), s = b && (PHONE_MQ.matches ? b.querySelector('.mtabs') : b); return s ? s.offsetHeight : 0; };
+/* the bar's height, for everything else that sticks or scrolls to an anchor (src/input.css, --mbar-h); the current
+   tab is scrolled into view in a tab row that scrolls sideways */
+function syncMbar() {
+  const b = $('#mbar');
+  document.documentElement.style.setProperty('--mbar-h', `${mbarH()}px`);
+  const on = b && b.querySelector('.mtabs .on'), row = on && on.parentElement;
+  if (on && row.scrollWidth > row.clientWidth) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
+}
 /* ---------- chrome ---------- */
 const edgeField = (value = '', id = 'q') => `<form class="edge" data-act="search-form" role="search" autocomplete="off"><input id="${id}" type="search" placeholder="Chips, pins, BASIC, keys, terms" value="${esc(value)}" aria-label="Search" spellcheck="false"><span class="hint">/</span></form>`;
 function renderStrip() {
@@ -841,6 +1064,32 @@ function renderEdgebar() {
 
 /* ---------- views ---------- */
 const head = (des, title, sub, checked) => `<div class="hd">${des ? `<span class="des">${esc(des)}</span>` : ''}<h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}${checked ? `<div class="chkd">${checked}</div>` : ''}</div>`;
+/* ---------- machine bar: one sticky block at the top of every machine page. The machine (tap to switch), how many
+   boards the schematics list (one board: its name and revision), the PAL / NTSC toggle when the machine has
+   values of one standard, and the tab row. A tab with no data is dashed and inert, by the bottom bar's tests. ---------- */
+function machineTabs(m) {
+  const pw = dataFor(D.power, m).data;
+  return [
+    ['board', 'Board', mPath(m), true],
+    ['chips', 'Chips', `${mPath(m)}/pinouts`, chipsOf(m).length > 0],
+    ['ports', 'Ports', `${mPath(m)}/ports`, arr(dataFor(D.connectors, m).data).length > 0],
+    ['power', 'Power', `${mPath(m)}/power`, !!pw],
+    ['clocks', 'Clocks', `${mPath(m)}/power?at=clocks`, !!pw && arr(pw.clocks).some(c => c && c.name)],
+    ['ref', 'Ref', `${mPath(m)}/quickref`, !!dataFor(D.quickref, m).data],
+    ['notes', 'Notes', `${mPath(m)}?at=notes`, true],
+  ];
+}
+function mbar(m, tab) {
+  const list = arr(D.schematics[m.id]), boards = [...new Set(list.map(s => s.board))];
+  const one = boards.length === 1 ? list.find(s => s.board === boards[0]) : null;
+  const bl = !boards.length ? '' : one ? [one.board, one.rev].filter(Boolean).join(', ') : `${boards.length} boards`;
+  return `<div class="mbar" id="mbar">
+    <div class="ctx"><button type="button" class="mname" data-act="mswitch" aria-label="${esc(m.name)}. Switch machine" title="Switch machine"><span class="des">${esc(mDes(m))}</span><span class="nm">${esc(m.name)}</span><span class="sw" aria-hidden="true">&#9662;</span></button>
+      ${bl ? `<a class="brev" href="${mPath(m)}?at=boards" title="Boards and schematics">${esc(bl)}</a>` : ''}
+      ${machineRegional(m) ? regionBar() : ''}</div>
+    <nav class="mtabs" aria-label="${esc(m.name)} sections">${machineTabs(m).map(([id, label, href, ok]) => `<a href="${href}" class="${id === tab ? 'on' : ''}${ok ? '' : ' off'}"${id === tab ? ' aria-current="page"' : ''}${ok ? '' : ' aria-disabled="true" tabindex="-1"'}>${label}</a>`).join('')}</nav>
+  </div>`;
+}
 const emptyBlk = (label, text) => `<div class="empty"><b>${esc(label)}</b>${text}</div>`;
 
 function viewHome() {
@@ -897,7 +1146,8 @@ function viewMachine(m) {
     let i = 1;
     const rows = [...arr(pw.data.rails).map(r => ({ tp: `TP${i++}`, name: r.rail, x: r })), ...arr(pw.data.testPoints).map(t => ({ tp: `TP${i++}`, name: t.tp, x: t }))];
     tp = `<section class="blk"><span class="lbl"><span class="d">TP</span>Test points</span>
-      <div class="legend tri">${rows.map(r => `<div class="k">${r.tp}</div><div class="v"><b>${esc(r.name)}</b>${vmark(r.x)}<br><span class="tin sm">${linkPins(r.x.where || '', m)}</span>${conflictNote(r.x)}</div><div class="v3 mono">${esc(r.x.expect || '')}</div>`).join('')}</div>
+      <div class="legend tri">${rows.map(r => `<div class="k">${r.tp}</div><div class="v"><b>${esc(r.name)}</b>${vmark(r.x)}<br><span class="tin sm">${linkPins(r.x.where || '', m)}</span>${conflictNote(r.x)}</div><div class="v3 mono">${esc(regionText(r.x.expect || ''))}</div>`).join('')}</div>
+      ${measuredFold(pw.data)}
       <a class="lnk" href="${mPath(m)}/power">All rails and test points</a></section>`;
   }
   const sub = `${esc(m.aka || '')}${m.year ? (m.aka ? ', ' : '') + m.year : ''}${m.aka || m.year ? '. ' : ''}${esc(m.tagline || '')} <span class="mono tin">${esc(statusOf(m))}</span>`;
@@ -1023,7 +1273,16 @@ function viewPinouts(m) {
     return c.pins ? `<a class="chiprow" href="${chipPath(m, c)}">${inner}</a>` : `<div class="chiprow nc">${inner}</div>`;
   }).join('');
   return head(mDes(m), 'Pinouts', `${esc(m.name)}. Hottest chips first. Tap one for the footprint.`) +
-    (chips.length ? `<section class="blk"><span class="lbl"><span class="d">U</span>Parts</span>${rows}</section>` : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} cheat sheet exists but its chips have not been entered.`));
+    (chips.length ? `<section class="blk"><span class="lbl"><span class="d">U</span>Parts</span>${rows}</section>${partsList(m, chips)}` : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} cheat sheet exists but its chips have not been entered.`));
+}
+/* the parts list by designator, with a filter box; a chip with no designator in the data goes last */
+function partsList(m, chips) {
+  const rows = chips.map(c => ({ c, ds: desAll(c, m) })).sort((a, b) => desCmp(a.ds[0], b.ds[0]) || String(a.c.short).localeCompare(String(b.c.short)));
+  return `<section class="blk scroll-mt-4" id="parts"><span class="lbl">Parts list by designator</span>
+    <form class="edge pfilter" role="search" autocomplete="off" data-act="parts-form"><input id="parts-q" type="search" placeholder="Filter: U7, 6510, video" aria-label="Filter the parts list" spellcheck="false"></form>
+    <table class="ctab parts" id="parts-t"><thead><tr><th>Designator</th><th>Part</th><th>Role</th></tr></thead>
+    <tbody>${rows.map(({ c, ds }) => `<tr data-q="${esc([...ds, c.short, c.name, c.role].join(' ').toLowerCase())}"><td class="f">${ds.length ? esc(ds.slice(0, 4).join(', ') + (ds.length > 4 ? ` … (${ds.length})` : '')) : '<span class="tin">—</span>'}${ds.length && locOf(c, m) !== ds.join(', ') ? `<div class="tin sm loc">${esc(locOf(c, m))}</div>` : ''}</td><td class="nm">${c.pins ? `<a class="plink" href="${chipPath(m, c)}">${esc(c.short)}</a>` : `${esc(c.short)} <span class="tin sm">not captured</span>`}${vmark(c)}</td><td>${esc(c.role || '')}</td></tr>`).join('')}</tbody></table>
+    <p class="note" id="parts-n" role="status"></p></section>`;
 }
 
 function viewChip(m, chip) {
@@ -1034,23 +1293,26 @@ function viewChip(m, chip) {
   const count = t => chip.pins.filter(p => pinIs(p, t)).length;
   const loc = locOf(chip, m);
   return head(boardDes(chip, m), esc(chip.name), `${esc(chip.role || '')}. ${esc(chip.pkg || '')}${loc ? `, ${esc(loc)} on the ${esc(m.name)}` : ''}. ${HEAT[chip.heat] || ''}.${hotMark(chip.heat)}${vmark(chip)}${disagree(chip)}`, chip.verifiedAgainst ? `Checked against: ${esc(chip.verifiedAgainst)}` : '') + `
-    <div class="flex flex-wrap gap-2.5 items-center mt-4">
-      <button type="button" class="btn${state.flip ? ' on' : ''}" data-act="flip" aria-pressed="${state.flip}">View: ${state.flip ? 'Bottom' : 'Top'}</button>
+    <div class="flex flex-wrap gap-2.5 items-center mt-4 ctools-chip">
+      <button type="button" class="btn${state.flip ? ' on' : ''}" data-act="flip" aria-pressed="${state.flip}"><span class="max-sm:hidden">View: </span>${state.flip ? 'Bottom' : 'Top'}</button>
+      <button type="button" class="btn${state.rot ? ' on' : ''}" data-act="rot" aria-label="Rotate the drawing a quarter turn clockwise, now ${state.rot * 90} degrees. Key R; Shift+R turns back." title="R turns clockwise, Shift+R back"><span class="max-sm:hidden">Rotate: </span><span class="sm:hidden" aria-hidden="true">&#8635; </span>${state.rot * 90}°</button>
+      <button type="button" class="btn${state.ptable ? ' on' : ''}" data-act="ptable" aria-pressed="${state.ptable}">Table</button>
       ${state.filter ? `<button type="button" class="btn" data-act="filter" data-t="">Show all pins</button>` : ''}
       ${wakeBtn()}
-      <span class="flex-1"></span><span class="tin sm max-sm:hidden">Tap a pad, or Tab to it and press Enter; arrow keys step pins</span>
+      <span class="flex-1"></span><span class="tin sm max-sm:hidden">Tap a pad, or Tab to it and press Enter; arrow keys step pins; R rotates</span>
     </div>
     <div class="types" role="group" aria-label="Pin types, tap to filter">${present.map(t => `<button type="button" data-act="filter" data-t="${esc(t)}" class="${state.filter === t ? 'on' : ''}" aria-pressed="${state.filter === t}">${LEAD[t] ? `<span class="lsw ${LEAD[t]}" aria-hidden="true"></span>` : ''}${markIcon(t)}${t === 'reset' ? 'Reset' : esc(ptype(t).label)} <span class="c">${count(t)}</span></button>`).join('')}</div>
     <div class="stage${state.stack ? ' stack' : ''}" id="stage">
       <svg class="wire" id="wire" aria-hidden="true"></svg>
       <div><div class="dipwrap" id="dipwrap">${isPLCC(chip) ? plccSVG(chip) : dipSVG(chip)}</div>
-        <p class="note text-center mx-auto">${isPLCC(chip)
+        <p class="note text-center mx-auto">${state.rot ? `TURNED ${state.rot * 90}° CLOCKWISE from the view below. ` : ''}${isPLCC(chip)
           ? (isCorner(chip) ? (state.flip ? 'VIEW: BOTTOM. Leads toward you; pin 1 now at the top right corner, numbers run clockwise.' : 'VIEW: TOP. Pin 1 at the square pad, top left corner by the dot; numbers run counter-clockwise.')
             : state.flip ? 'VIEW: BOTTOM. Leads toward you; pin 1 still at the top centre, numbers run clockwise.' : 'VIEW: TOP. Pin 1 at the square pad, top centre by the dot; numbers run counter-clockwise.')
           : state.flip ? 'VIEW: BOTTOM. Pins toward you, notch still up.' : 'VIEW: TOP. Notch up, pin 1 at the square pad.'}</p></div>
       <div class="detail" id="detail">${detailBox(chip, m)}</div>
     </div>
-    <section class="blk pinlegend"><span class="lbl">Pin legend</span>
+    ${state.ptable ? pinTable(chip, m) : ''}
+    <section class="blk pinlegend${state.ptable ? ' withtab' : ''}"><span class="lbl">Pin legend</span>
       <div class="legend tri" id="pinlegend">${chip.pins.map(p => { const s = state.pin === p.n ? ' sel' : ''; return `<div class="k${s}" data-pin="${p.n}">${p.n}</div><div class="v mono${s}" data-pin="${p.n}">${esc(p.name)}</div><div class="v3 tin" data-pin="${p.n}">${esc(ptype(p.type).label)}, ${esc(DIR[p.dir] || p.dir || '')}. ${esc(p.desc || '')}${vmark(p)}${disagree(p, 'cfl', 'span')}</div>`; }).join('')}</div>
     </section>
     <section class="blk"><span class="lbl">About ${esc(chip.short)}</span>
@@ -1064,6 +1326,16 @@ function viewChip(m, chip) {
     ${chipPhoto(m, chip)}
     ${replacementsBlock(chip)}
     ${noteBlock('c', chip.id, chip.name)}`;
+}
+/* every pin as a table, inside the pin filter; a row and its pad light each other, a row selects like a pad.
+   On a phone it stands in for the pin legend. */
+const DIR_SHORT = { in: 'In', out: 'Out', bidir: 'I/O', '-': '—' };
+function pinTable(chip, m) {
+  const rows = chip.pins.filter(p => !state.filter || pinIs(p, state.filter));
+  return `<section class="blk ptab-blk" id="ptab"><span class="lbl">Pin table${state.filter ? `, ${esc(state.filter === 'reset' ? 'Reset' : ptype(state.filter).label)} only` : ''}</span>
+    <div class="ptwrap"><table class="ptab" id="pintable"><thead><tr><th class="n">Pin</th><th>Name</th><th>Type</th><th>Dir</th><th>Reads</th></tr></thead>
+    <tbody>${rows.map(p => `<tr data-pin="${p.n}" class="${state.pin === p.n ? 'sel' : ''}"><td class="n">${p.n}</td><td class="nm">${esc(p.name)}${vmark(p)}</td><td class="ty">${markIcon(isReset(p) ? 'reset' : p.type)}${esc(isReset(p) ? 'Reset' : ptype(p.type).label)}</td><td>${esc(DIR_SHORT[p.dir] || p.dir || '')}</td><td>${badge(chipReading(chip, p, m))}</td></tr>`).join('')}</tbody></table></div>
+    <p class="note">Reads: the one-word reading from this machine's rails, clocks and test points; blank where the data gives none.</p></section>`;
 }
 /* pin-compatible parts, modern drop-ins and adapters a tech can buy or has in a drawer */
 function replacementsBlock(chip) {
@@ -1085,7 +1357,7 @@ function pinDetail(chip, p, m) {
   const t = ptype(p.type), i = chip.pins.indexOf(p);
   const prev = chip.pins[(i - 1 + chip.pins.length) % chip.pins.length], next = chip.pins[(i + 1) % chip.pins.length];
   const ex = pinExpect(chip, p, m);
-  return `<div class="pinhead"><span class="n">${p.n}</span><span class="nm">${esc(p.name)}</span><span class="ch">${esc([boardDes(chip, m), chip.short].filter(Boolean).join(' '))}</span></div>
+  return `<div class="pinhead"><span class="n">${p.n}</span>${sigName(m, p.name, p)}${badge(chipReading(chip, p, m))}<span class="ch">${esc([boardDes(chip, m), chip.short].filter(Boolean).join(' '))}</span></div>
     <dl class="kv">
       <dt>Direction</dt><dd>${esc(DIR[p.dir] || p.dir || '')}</dd>
       <dt>Type</dt><dd>${esc(t.label)} <span class="tin">${esc(t.hint)}</span></dd>
@@ -1096,6 +1368,7 @@ function pinDetail(chip, p, m) {
     ${p.probe && !(ex && ex.includes('On this chip in general')) ? `<div class="probe"><b>Probe</b>${esc(p.probe)}</div>` : ''}
     ${pinScopes(chip, p, m)}
     ${conflictNote(p)}
+    ${sameSignal(m, p.name, p)}
     ${termLinks(p.terms)}
     ${datasheets(chip)}
     <div class="pinnav"><button type="button" class="btn" data-pin="${prev.n}" data-nav="prev" aria-label="Previous pin, ${prev.n} ${esc(prev.name)}">&lsaquo; ${prev.n} ${esc(prev.name)}</button><button type="button" class="btn" data-pin="${next.n}" data-nav="next" aria-label="Next pin, ${next.n} ${esc(next.name)}">${next.n} ${esc(next.name)} &rsaquo;</button></div>`;
@@ -1109,15 +1382,16 @@ function viewQuickref(m, tabQ) {
   const tab = ['keys', 'basic', 'memory'].includes(tabQ) ? tabQ : 'keys';
   const base = `${mPath(m)}/quickref?tab=`;
   const jumpers = `<nav class="jumpers" aria-label="Quick reference sections">${[['keys', 'Keys'], ['basic', 'BASIC'], ['memory', 'Memory']].map(([id, l]) => `<a href="${base}${id}" class="${tab === id ? 'on' : ''}"${tab === id ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
+  const rt = regionText;
   let body = '';
-  if (tab === 'keys') body = `<section class="blk keys"><span class="lbl">Keys and quirks</span>${arr(q.keys).length ? `<div class="legend">${q.keys.map(k => `<div class="k silk">${keycaps(k.keys)}</div><div class="v">${esc(k.does)}${vmark(k)}${disagree(k)}</div>`).join('')}</div>` : '<p class="note mt-0">No keys captured.</p>'}</section>`;
+  if (tab === 'keys') body = `<section class="blk keys"><span class="lbl">Keys and quirks</span>${arr(q.keys).length ? `<div class="legend">${q.keys.map(k => `<div class="k silk">${keycaps(k.keys)}</div><div class="v">${esc(rt(k.does))}${vmark(k)}${disagree(k)}</div>`).join('')}</div>` : '<p class="note mt-0">No keys captured.</p>'}</section>`;
   else if (tab === 'basic') {
     const ess = arr(basic.essentials), half = Math.ceil(ess.length / 2);
-    const legend = list => `<div class="legend">${list.map(e => `<div class="k">${esc(e.cmd)}</div><div class="v">${esc(e.does)}${vmark(e)}${disagree(e)}</div>`).join('')}</div>`;
+    const legend = list => `<div class="legend">${list.map(e => `<div class="k">${esc(e.cmd)}</div><div class="v">${esc(rt(e.does))}${vmark(e)}${disagree(e)}</div>`).join('')}</div>`;
     body = `${ess.length ? `<section class="blk"><span class="lbl">${esc(basic.dialect || 'BASIC')}, essentials</span><div class="grid gap-x-10 lg:grid-cols-2">${legend(ess.slice(0, half))}${legend(ess.slice(half))}</div></section>` : ''}
       ${arr(basic.groups).length ? `<section class="blk"><span class="lbl">Everything else</span>${basic.groups.map(g => `<details class="grp"><summary>${esc(g.group)}<span class="cnt">${arr(g.items).length}</span></summary><div class="items">${arr(g.items).map(it => `<span>${esc(it)}</span>`).join('')}</div></details>`).join('')}</section>` : ''}
-      ${arr(basic.quirks).length ? `<section class="blk"><span class="lbl">Quirks</span><ul class="bul">${basic.quirks.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}`;
-  } else body = `<section class="blk"><span class="lbl">Memory map</span>${arr(q.memory).length ? `<div class="memmap">${q.memory.map((r, i) => `<div class="k${i === q.memory.length - 1 ? ' last' : ''}">${esc(r.range)}</div><div>${esc(r.what)}</div>`).join('')}</div>` : '<p class="note mt-0">No memory map captured.</p>'}</section>`;
+      ${arr(basic.quirks).length ? `<section class="blk"><span class="lbl">Quirks</span><ul class="bul">${basic.quirks.map(x => `<li>${esc(rt(x))}</li>`).join('')}</ul></section>` : ''}`;
+  } else body = `<section class="blk"><span class="lbl">Memory map</span>${arr(q.memory).length ? `<div class="memmap">${q.memory.map((r, i) => `<div class="k${i === q.memory.length - 1 ? ' last' : ''}">${esc(r.range)}</div><div>${esc(rt(r.what))}</div>`).join('')}</div>` : '<p class="note mt-0">No memory map captured.</p>'}</section>`;
   const src = arr(q.sources).length ? `<section class="blk"><span class="lbl">Sources</span>${sourceList(q.sources, '')}</section>` : '';
   return top + jumpers + body + src + sharedNote(shared);
 }
@@ -1143,11 +1417,13 @@ function connDetail(c, p, des) {
   const pins = realPins(c), i = pins.indexOf(p), t = p.type ? ptype(p.type) : null;
   const prev = pins[(i - 1 + pins.length) % pins.length], next = pins[(i + 1) % pins.length];
   const nav = (q, dir, label) => `<button type="button" class="btn" data-cpin="${esc(q.n)}" data-conn="${esc(c.id)}" data-nav="${dir}" aria-label="${dir === 'prev' ? 'Previous' : 'Next'} pin, ${esc(q.n)} ${esc(q.name || '')}">${label}</button>`;
-  return `<div class="pinhead"><span class="n">${esc(p.n)}</span><span class="nm">${esc(p.name || '')}</span><span class="ch">${esc(des)} ${esc(c.name)}</span></div>
+  const m = state.ctx.machine;
+  return `<div class="pinhead"><span class="n">${esc(p.n)}</span>${m ? sigName(m, p.name || '', p) : `<span class="nm">${esc(p.name || '')}</span>`}${badge(connReading(p))}<span class="ch">${esc(des)} ${esc(c.name)}</span></div>
     <dl class="kv">${t ? `<dt>Type</dt><dd>${esc(t.label)} <span class="tin">${esc(t.hint)}</span></dd>` : ''}<dt>Connector</dt><dd>${esc(c.kind || '')}</dd></dl>
     ${p.desc || flagged(p) ? `<p class="desc">${termify(p.desc || '', p.terms)}${vmark(p)}</p>` : ''}
-    ${p.expect ? `<div class="probe"><b>Expect</b>${esc(p.expect)}</div>` : ''}
+    ${p.expect ? `<div class="probe"><b>Expect</b>${esc(regionText(p.expect))}</div>` : ''}
     ${conflictNote(p)}
+    ${m ? sameSignal(m, p.name || '', p) : ''}
     ${termLinks(p.terms)}
     ${pins.length > 1 ? `<div class="pinnav">${pins.length > 2 ? nav(prev, 'prev', `&lsaquo; ${esc(prev.n)} ${esc(prev.name || '')}`) : ''}${nav(next, 'next', `${esc(next.n)} ${esc(next.name || '')} &rsaquo;`)}</div>` : ''}`;
 }
@@ -1174,7 +1450,7 @@ function connBody(c, o = {}) {
   const row = p => {
     const on = sel != null && String(p.n) === sel ? ' sel' : '', live = p.n != null && p.n !== '?' && p.n !== '-';
     const at = live ? ` data-cpin="${esc(p.n)}" data-conn="${esc(c.id)}"` : '';
-    const exp = p.expect ? `<span class="x">${esc(p.expect)}</span>` : '';
+    const exp = p.expect ? `<span class="x">${esc(regionText(p.expect))}</span>` : '';
     const parts = o.labels === 'expect' ? [exp, esc(p.desc || '')] : [esc(p.desc || ''), exp && `Expect ${exp}`];
     const text = parts.filter(Boolean).map(t => (/[.!?]$/.test(t) ? t : t + '.')).join(' ');
     return `<div class="k${on}"${at}>${esc(p.n)}</div><div class="v mono${on}"${at}>${esc(p.name || '')}</div><div class="v3 tin"${at}>${text}${vmark(p)}${disagree(p, 'cfl', 'span')}</div>`;
@@ -1224,12 +1500,14 @@ function viewPower(m) {
   const probes = chipsOf(m).filter(c => c.pins).flatMap(c => c.pins.filter(p => p.probe).map(p => ({ c, p })));
   const scope = x => (x.scope ? `<div class="tpscope">${scopeBlock(x.scope, '', x)}</div>` : '');
   const ften = arr(pw.firstTen), probeBlk = probes.length ? `<section class="blk"><span class="lbl">Probe hints</span><div class="legend">${probes.slice(0, 8).map(({ c, p }) => `<div class="k"><a class="lnk" href="${chipPath(m, c)}?pin=${p.n}">${esc(c.short)}.${p.n} ${esc(p.name)}</a></div><div class="v sm">${esc(p.probe)}${vmark(p)}${disagree(p)}</div>`).join('')}</div></section>` : '';
+  const meas = measuredFold(pw, 'Conditions');
   return top + wakeRow() + (pw.supply ? supplyBlock(m, pw.supply) : '') + `
+    ${meas ? `<section class="blk scroll-mt-4" id="measured"><span class="lbl">Measured how</span>${meas}</section>` : ''}
     <section class="blk"><span class="lbl">Rails</span>
-      <div class="legend tri">${arr(pw.rails).map(r => `<div class="k">TP${i++}</div><div class="v"><b class="mono">${esc(r.rail)}</b>${vmark(r)}<br><span class="tin sm">${linkPins(r.where || '', m)}</span>${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}${conflictNote(r)}</div><div class="v3 mono">${esc(r.expect || '')}</div>${scope(r)}`).join('')}</div>
+      <div class="legend tri">${arr(pw.rails).map(r => `<div class="k">TP${i++}</div><div class="v"><b class="mono">${esc(r.rail)}</b>${vmark(r)}<br><span class="tin sm">${linkPins(r.where || '', m)}</span>${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}${conflictNote(r)}</div><div class="v3 mono">${esc(regionText(r.expect || ''))}</div>${scope(r)}`).join('')}</div>
     </section>
     ${arr(pw.testPoints).length ? `<section class="blk"><span class="lbl">Test points</span>
-      <div class="legend tri">${pw.testPoints.map(t => `<div class="k">TP${i++}</div><div class="v"><b>${esc(t.tp)}</b>${vmark(t)}<br><span class="tin sm mono">${linkPins(t.where || '', m)}</span>${conflictNote(t)}</div><div class="v3 mono">${esc(t.expect || '')}</div>${scope(t)}`).join('')}</div>
+      <div class="legend tri">${pw.testPoints.map(t => `<div class="k">TP${i++}</div><div class="v"><b>${esc(t.tp)}</b>${vmark(t)}<br><span class="tin sm mono">${linkPins(t.where || '', m)}</span>${conflictNote(t)}</div><div class="v3 mono">${esc(regionText(t.expect || ''))}</div>${scope(t)}`).join('')}</div>
     </section>` : ''}
     ${clocksBlock(m, arr(pw.clocks))}
     ${arr(pw.sources).length ? `<section class="blk"><span class="lbl">Sources</span>${sourceList(pw.sources, '')}</section>` : ''}
@@ -1244,7 +1522,7 @@ function firstTenBlock(m, steps) {
     <ol class="ften">${steps.map((s, k) => `<li><span class="n">${esc(s.step ?? k + 1)}</span><div>
       <div class="c">${esc(s.check || '')}${vmark(s)}</div>
       ${s.where ? `<div class="w">${linkPins(s.where, m)}</div>` : ''}
-      ${s.expect ? `<div class="x">${esc(s.expect)}</div>` : ''}
+      ${s.expect ? `<div class="x">${esc(regionText(s.expect))}</div>` : ''}
       ${s.ifNot ? `<div class="if">If not: ${esc(s.ifNot)}</div>` : ''}
       ${s.source ? `<div class="sm">${srcLink(s.source)}</div>` : ''}${conflictNote(s)}</div></li>`).join('')}</ol>
     ${samsNote(steps.map(s => s.source))}</section>`;
@@ -1254,10 +1532,12 @@ function clocksBlock(m, list) {
   list = list.filter(c => c && c.name);
   if (!list.length) return '';
   const tv = list.some(c => c.pal || c.ntsc);
-  const cols = tv ? ['PAL', 'NTSC'] : ['Frequency'];
+  /* the toggle drops the other standard's column; a single-standard clock (f) spans whatever is left */
+  const std = [showPal() && ['PAL', 'pal'], showNtsc() && ['NTSC', 'ntsc']].filter(Boolean);
+  const cols = tv ? std.map(s => s[0]) : ['Frequency'];
   const freq = c => (!tv ? `<td class="f" data-h="f">${esc(c.f || '')}</td>`
-    : c.pal || c.ntsc ? `<td class="f" data-h="PAL">${esc(c.pal || '')}</td><td class="f" data-h="NTSC">${esc(c.ntsc || '')}</td>`
-    : `<td class="f" colspan="2" data-h="f">${esc(c.f || '')}</td>`);
+    : c.pal || c.ntsc ? std.map(([h, k]) => `<td class="f" data-h="${h}">${esc(c[k] || '')}</td>`).join('')
+    : `<td class="f"${std.length > 1 ? ' colspan="2"' : ''} data-h="f">${esc(c.f || '')}</td>`);
   return `<section class="blk scroll-mt-4" id="clocks"><span class="lbl">Clocks</span>
     <table class="ctab"><thead><tr><th>Clock</th><th>Where</th>${cols.map(h => `<th>${h}</th>`).join('')}<th>Source</th></tr></thead>
     <tbody>${list.map(c => `<tr><td class="nm">${esc(c.name)}${vmark(c)}${conflictNote(c)}</td><td class="w">${linkPins(c.where || '', m)}</td>${freq(c)}<td class="s">${c.source ? srcLink(c.source) : ''}</td></tr>`).join('')}</tbody></table>
@@ -1373,8 +1653,12 @@ const VIDEO_GROUPS = [
 ];
 const vSrc = id => (D.video ? arr(D.video.sources).find(s => s.id === id) : null);
 const vCite = r => [].concat(r.source || []).map(vSrc).filter(Boolean).map(s => `<a class="vsrc" href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener" title="${esc(s.label)}">${esc(s.short)}</a>${vmark(s)}${disagree(s, 'conflict', 'span')}`).join(' ');
+const vHidden = id => (id === 'pal' && !showPal()) || (id === 'ntsc' && !showNtsc());
 function videoTable(rows) {
-  const stds = arr(D.video.standards).filter(st => rows.some(r => r[st.id] != null));
+  const all = arr(D.video.standards).filter(st => rows.some(r => r[st.id] != null)), stds = all.filter(st => !vHidden(st.id));
+  /* a row whose only values are in the hidden standard's column goes with it */
+  if (stds.length < all.length) rows = rows.filter(r => r.value != null || stds.some(st => r[st.id] != null));
+  if (!rows.length) return `<p class="note mt-0">Nothing in this table for ${REGION_CAP[state.region]}.</p>`;
   const cols = stds.length ? stds : [{ id: 'value', name: 'Value' }];
   return `<table class="ctab vtab"><thead><tr><th>Signal</th>${cols.map(c => `<th${c.sub ? ` title="${esc(c.sub)}"` : ''}>${esc(c.name)}</th>`).join('')}<th>Source</th></tr></thead>
     <tbody>${rows.map(r => `<tr><td class="nm">${esc(r.name)}${vmark(r)}${conflictNote(r)}${r.note ? `<div class="vnote">${esc(r.note)}</div>` : ''}</td>${cols.map(c => `<td class="f" data-h="${stds.length ? esc(c.name) : 'f'}">${esc(r[c.id] ?? '')}</td>`).join('')}<td class="s">${vCite(r)}</td></tr>`).join('')}</tbody></table>`;
@@ -1404,9 +1688,9 @@ function videoLineSVG() {
     <rect class="fr" x="0" y="0" width="${W}" height="${H}"/><path class="gr" d="${grid}"/>
     <path class="ax" d="M ${X(0)} 0 V ${H}"/><text class="mt" x="${X(0)}" y="-10" text-anchor="middle">0H</text>
     <text class="wm" x="6" y="15">IDEALISED</text>
-    ${lvl(white, `PEAK WHITE ${mv(white)}`, `NTSC ${esc(row('white').ntsc || '')}`)}
-    ${lvl(0, 'BLANKING 0 V', 'PAL black = blanking; NTSC 7.5 IRE up')}
-    ${lvl(sync, `SYNC TIP ${mv(sync)}`, `NTSC ${esc(row('sync').ntsc || '')}`)}
+    ${lvl(white, `PEAK WHITE ${mv(white)}`, showNtsc() ? `NTSC ${esc(row('white').ntsc || '')}` : '')}
+    ${lvl(0, 'BLANKING 0 V', ['PAL black = blanking', showNtsc() && 'NTSC 7.5 IRE up'].filter(Boolean).join('; '))}
+    ${lvl(sync, `SYNC TIP ${mv(sync)}`, showNtsc() ? `NTSC ${esc(row('sync').ntsc || '')}` : '')}
     ${[white, 0, sync].map(v => `<text class="mt" x="-8" y="${Y(v) + 4}" text-anchor="end">${mv(v).replace(' V', '')}</text>`).join('')}
     <path class="tr" d="${d}"/>
     <text class="vls" x="${X(bs + bl / 2)}" y="${Y(burst / 2) - 8}" text-anchor="middle">BURST ${+burst.toFixed(3)} V p-p</text>
@@ -1421,6 +1705,7 @@ function viewVideo() {
   if (!V) return emptyBlk('NOT LOADED', 'src/data/video.js is missing.');
   const groups = VIDEO_GROUPS.map(([g, title, sub]) => [g, title, sub, arr(V.signals).filter(r => r.group === g)]).filter(x => x[3].length);
   return head('', 'Video signals', 'What a composite, RGBI, RGB, luma/chroma or RF output should measure. Every number links to the standard or manual it comes from; <span class="mono">CHECK</span> marks the few that no source here gives.') + `
+    <div class="mt-3">${regionBar()}</div>
     <nav class="jumpers" aria-label="Sections">${groups.map(([g, title]) => `<a href="#/video?at=v-${g}">${esc(title.split(',')[0])}</a>`).join('')}</nav>
     <section class="blk"><span class="lbl">One line, PAL</span>
       <figure class="scr vfig"><div class="vwrap">${videoLineSVG()}</div>
@@ -1605,6 +1890,7 @@ function selectPin(n) {
   history.replaceState(null, '', `#${parseHash().path}?pin=${n}`);
   for (const g of $$('svg.dip .pin')) { const on = Number(g.dataset.pin) === n; g.classList.toggle('sel', on); g.setAttribute('aria-pressed', on); }
   for (const el of $$('#pinlegend [data-pin]')) el.classList.toggle('sel', Number(el.dataset.pin) === n && !el.classList.contains('v3'));
+  for (const el of $$('#pintable tr[data-pin]')) el.classList.toggle('sel', Number(el.dataset.pin) === n);
   const d = $('#detail'); if (d) d.innerHTML = detailBox(chip, m);
   renderPanel();
   if (nav) { const b = $(`${PANEL_MQ.matches ? '#panel' : '#detail'} [data-nav="${nav}"]`); if (b) b.focus({ preventScroll: true }); }
@@ -1651,10 +1937,21 @@ function stepPin(d) {
   if (el && onPad) el.focus(); else if (el && !PANEL_MQ.matches) el.scrollIntoView({ block: 'nearest' });
   return true;
 }
+/* PAL / NTSC / BOTH: kept on the device; the page is drawn again where it stands, focus stays on the choice */
+function setRegion(r, inPanel) {
+  if (!REGIONS.includes(r)) return;
+  state.region = r; LS.set('rb-region', r);
+  const y = scrollY, p = $('#panel'), py = p.scrollTop, d = $('#detail'), dy = d ? d.scrollTop : 0;
+  render();
+  window.scrollTo(0, y); p.scrollTop = py;
+  const d2 = $('#detail'); if (d2) d2.scrollTop = dy;
+  const b = $(`${inPanel ? '#panel' : '#main'} [data-act="region"][data-r="${r}"]`); if (b) b.focus({ preventScroll: true });
+  drawWire();
+}
 /* SOCKET / PLUG: redraw the page where it stands, keep focus on the toggle that was pressed */
 function refreshConns(focusId) {
   const y = scrollY, m = state.ctx.machine;
-  $('#main').innerHTML = state.ctx.route.segs[2] === 'power' ? viewPower(m) : viewPorts(m);
+  $('#view').innerHTML = state.ctx.route.segs[2] === 'power' ? viewPower(m) : viewPorts(m);
   window.scrollTo(0, y);
   state.phone = PHONE_MQ.matches;
   const t = focusId && $$('[data-act="cview"]').find(b => b.dataset.conn === focusId); if (t) t.focus({ preventScroll: true });
@@ -1671,18 +1968,20 @@ function padIntoView(pin = $('svg.dip .pin.sel') || $('svg.conn .cpin.sel')) {
     const wrap = pin.closest('.cwrap'), w = wrap.getBoundingClientRect(), pr = pad.getBoundingClientRect();
     if (pr.left < w.left + 8 || pr.right > w.right - 8) wrap.scrollLeft += pr.left - (w.left + w.width / 2 - pr.width / 2);
     let dy = pin.ownerSVGElement.getBoundingClientRect().bottom - (top - 12);
-    const r = pad.getBoundingClientRect(); if (r.top - dy < 24) dy = r.top - 24;
+    const r = pad.getBoundingClientRect(), tp = mbarH() + 24; if (r.top - dy < tp) dy = r.top - tp;
     if (Math.abs(dy) > 2) window.scrollBy(0, dy);
     return;
   }
   const r = pad.getBoundingClientRect();
-  if (r.bottom > top - 24 || r.top < 24) window.scrollBy(0, r.top - Math.max(24, (top - r.height) * 0.45));
+  const tp = mbarH() + 24;   /* clear of the sticky machine bar */
+  if (r.bottom > top - 24 || r.top < tp) window.scrollBy(0, r.top - Math.max(tp, (top - r.height) * 0.45));
 }
 function refreshChip() {
   const { chip, machine } = state.ctx; if (!chip) return;
   noteFlush();
   state.compact = wantCompact(chip); state.stack = wantStack(chip);
-  $('#main').innerHTML = viewChip(machine, chip);
+  $('#view').innerHTML = viewChip(machine, chip);
+  turnChip();
   renderPanel(); drawWire(); watchDip();
 }
 function drawWire() { drawStageWire(); drawPhoneWire(); drawConnWire(); }
@@ -1722,7 +2021,7 @@ function drawStageWire() {
   const pad = sel.querySelector('.pad').getBoundingClientRect(), b = box.getBoundingClientRect();
   const sx = pad.left + pad.width / 2 - stage.left, sy = pad.top + pad.height / 2 - stage.top;
   const left = sel.dataset.side === 'l';
-  if (sel.ownerSVGElement.classList.contains('plcc')) {
+  if (fourSided(sel.ownerSVGElement)) {
     /* under the chip, land beside the box's PIN DETAIL label, never on it */
     const lb = box.querySelector('.lbl'), ex = lb ? lb.getBoundingClientRect().right - stage.left + 16 : b.left - stage.left + 36;
     const pts = plccStagePts(sel.dataset.side, sx, sy, plccLanes(stage.left, stage.top), b.left - stage.left, b.top - stage.top, b.left >= dip.right - 8, ex);
@@ -1766,7 +2065,7 @@ function drawPhoneWire() {
   const sx = pad.left + pad.width / 2, sy = pad.top + pad.height / 2, top = panelTop() + 1;
   const gy = sy + PT / 2;
   if (gy > top - 10 || sy < 0) return;
-  if (sel.ownerSVGElement.classList.contains('plcc')) {
+  if (fourSided(sel.ownerSVGElement)) {
     const pts = plccPhonePts(sel.dataset.side, sx, sy, plccLanes(0, 0), top), e = pts[pts.length - 1];
     svg.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
     svg.innerHTML = `<path d="${chamfer(pts, 9)}"/><circle cx="${e[0]}" cy="${e[1]}" r="4.5"/>`;
@@ -1822,7 +2121,7 @@ function plccPhonePts(side, sx, sy, lanes, top) {
 }
 /* a PLCC wider than its box: scroll the selected pad, and the gutter its trace runs down, into view */
 function plccIntoView(pin) {
-  const wrap = $('#dipwrap'); if (!wrap || !pin || !pin.ownerSVGElement.classList.contains('plcc') || wrap.scrollWidth <= wrap.clientWidth + 1) return;
+  const wrap = $('#dipwrap'); if (!wrap || !pin || !fourSided(pin.ownerSVGElement) || wrap.scrollWidth <= wrap.clientWidth + 1) return;
   const side = pin.dataset.side, pad = pin.querySelector('.pad').getBoundingClientRect(), w = wrap.getBoundingClientRect();
   /* the pad's x in the drawing; a top pin also wants the nearer gutter in view when both fit */
   const px = pad.left + pad.width / 2 - pin.ownerSVGElement.getBoundingClientRect().left, W = wrap.scrollWidth, ww = wrap.clientWidth;
@@ -1856,17 +2155,32 @@ function openPop(id, anchor) {
 function closePop() { const p = $('#pop'); if (!p.dataset.open) return; p.hidden = true; delete p.dataset.open; }
 
 /* ---------- finder palette (Ctrl+K or /) ---------- */
-function openPalette(prefill = '') {
+/* mode 'machines': the machine bar's switcher, the same finder listing machines only, empty query = all of them */
+function openPalette(prefill = '', mode = '') {
   closePop();
+  state.palMode = mode;
   $('#palette').hidden = false;
-  const inp = $('#pal-input'); inp.value = prefill; state.palIdx = 0; renderPalette(); inp.focus(); inp.select();
+  const inp = $('#pal-input'); inp.value = prefill; inp.placeholder = mode ? 'Switch machine: name, model, brand' : 'Chip, pin (/RAS, pin 40), BASIC, key, term';
+  state.palIdx = 0; renderPalette(); inp.focus(); inp.select();
 }
-function closePalette() { const p = $('#palette'); if (p.hidden) return; p.hidden = true; if (p.contains(document.activeElement)) document.activeElement.blur(); }
+function closePalette() { const p = $('#palette'); if (p.hidden) return; p.hidden = true; state.palMode = ''; if (p.contains(document.activeElement)) document.activeElement.blur(); }
+/* another machine, on the same page where it has one (the chip page goes to its pinouts) */
+function switchHref(m) {
+  const c = state.ctx.route.segs[2], ok = Object.fromEntries(machineTabs(m).map(t => [t[0], t[3]]));
+  const sec = c === 'chip' || c === 'pinouts' ? ok.chips && 'pinouts' : c === 'ports' ? ok.ports && 'ports' : c === 'power' ? ok.power && 'power' : c === 'quickref' ? ok.ref && 'quickref' : '';
+  return sec ? `${mPath(m)}/${sec}` : mPath(m);
+}
+function machineGroups(q) {
+  const t = q.trim().toLowerCase(), cur = state.ctx.machine;
+  const ms = Object.values(D.machines).filter(m => m !== cur && (!t || [m.name, m.aka, m.id, mDes(m), (brandOf(m) || {}).name].some(x => String(x || '').toLowerCase().includes(t))))
+    .sort((a, b) => (a.status === 'ready' ? 0 : 1) - (b.status === 'ready' ? 0 : 1) || a.name.localeCompare(b.name));
+  return ms.length ? [{ group: 'Machines', items: ms.map(m => ({ group: 'Machines', title: m.name, sub: [(brandOf(m) || {}).name, statusOf(m)].filter(Boolean).join(', '), href: switchHref(m), des: mDes(m) })) }] : [];
+}
 function renderPalette() {
-  const q = $('#pal-input').value, groups = search(q, 5), items = groups.flatMap(g => g.items);
+  const q = $('#pal-input').value, groups = state.palMode ? machineGroups(q) : search(q, 5), items = groups.flatMap(g => g.items);
   state.palItems = items; if (state.palIdx >= items.length) state.palIdx = 0;
   let i = 0;
-  $('#pal-results').innerHTML = !q.trim() ? '<p class="note">Type a chip, a pin like <span class="mono">/RAS</span> or <span class="mono">pin 40</span>, a BASIC keyword, a key or a term.</p>'
+  $('#pal-results').innerHTML = !q.trim() && !state.palMode ? '<p class="note">Type a chip, a pin like <span class="mono">/RAS</span> or <span class="mono">pin 40</span>, a BASIC keyword, a key or a term.</p>'
     : !items.length ? `<p class="note">Nothing matched "${esc(q)}".</p>`
     : groups.map(g => `<div class="grp-h">${g.group}</div>${g.items.map(it => { const idx = i++; return resultItem(it, idx, idx === state.palIdx); }).join('')}`).join('');
   const act = $('#pal-results .it.act'); if (act) act.scrollIntoView({ block: 'nearest' });
@@ -1885,6 +2199,7 @@ document.addEventListener('click', e => {
   const pinEl = e.target.closest('[data-pin]');
   if (pinEl) { selectPin(Number(pinEl.dataset.pin)); return; }
   if (e.target === $('#palette')) { closePalette(); return; }
+  if (e.target.closest('[data-act="mswitch"]')) { openPalette('', 'machines'); return; }
   const palItem = e.target.closest('#pal-results a[data-idx]');
   if (palItem) { e.preventDefault(); state.palIdx = Number(palItem.dataset.idx); palGo(); return; }
   const act = e.target.closest('[data-act]');
@@ -1896,6 +2211,14 @@ document.addEventListener('click', e => {
   else if (a === 'cview') { state.cview = state.cview === 'socket' ? 'plug' : 'socket'; LS.set('rb-cview', state.cview); refreshConns(act.dataset.conn); }
   else if (a === 'filter') { const t = act.dataset.t; state.filter = (!t || state.filter === t) ? null : t; refreshChip(); const f = $(`[data-act="filter"][data-t="${CSS.escape(t)}"]`) || $('[data-act="flip"]'); if (f) f.focus(); }
   else if (a === 'wake') { setWake(!wake.want); const b = $('[data-act="wake"]'); if (b) b.focus(); }
+  else if (a === 'rot') setRot(e.shiftKey ? -1 : 1);
+  else if (a === 'ptable') { state.ptable = !state.ptable; SS.set('rb-ptable', state.ptable); refreshChip(); const b = $('[data-act="ptable"]'); if (b) b.focus({ preventScroll: true }); }
+  else if (a === 'region') setRegion(act.dataset.r, !!act.closest('#panel'));
+  else if (a === 'sig') {
+    /* the pin's name: open "Same signal on this machine" in the box it was tapped in */
+    const box = act.closest('#panel, #detail, .cdetail, .blk'), d = box && box.querySelector('#same-sig');
+    if (d) { d.open = true; d.scrollIntoView({ block: 'nearest', behavior: REDUCE_MQ.matches ? 'auto' : 'smooth' }); const l = d.querySelector('a'); if (l) l.focus({ preventScroll: true }); }
+  }
   else if (a === 'close-panel') closePanel();
   else if (a === 'close-pop') closePop();
   else if (a === 'install' && net.prompt) { const p = net.prompt; p.prompt(); p.userChoice.finally(() => { net.prompt = null; paintNet(); }); }
@@ -1928,6 +2251,7 @@ document.addEventListener('submit', e => {
   const f = e.target.closest('form'); if (!f) return;
   e.preventDefault();
   if (f.dataset.act === 'pal-form') { palGo(); return; }
+  if (f.dataset.act === 'parts-form') return;
   const inp = f.querySelector('input');
   if (inp.id === 'q-page' && state.hitIdx >= 0 && state.hits[state.hitIdx]) { go(state.hits[state.hitIdx].href); return; }
   go('/search?q=' + encodeURIComponent(inp.value.trim()));
@@ -1935,6 +2259,13 @@ document.addEventListener('submit', e => {
 document.addEventListener('input', e => {
   if (e.target.dataset.note) { noteInput(e.target); return; }
   if (e.target.id === 'pal-input') { state.palIdx = 0; renderPalette(); }
+  if (e.target.id === 'parts-q') {
+    /* parts list filter: designator, part, name or role */
+    const q = e.target.value.trim().toLowerCase(), rows = $$('#parts-t tbody tr');
+    let n = 0;
+    for (const r of rows) { const on = !q || r.dataset.q.includes(q); r.hidden = !on; n += on; }
+    $('#parts-n').textContent = q ? `${n} of ${rows.length} parts` : '';
+  }
   if (e.target.id === 'q-page') { const q = e.target.value; history.replaceState(null, '', '#/search?q=' + encodeURIComponent(q)); $('#results').innerHTML = searchResults(q); }
 });
 document.addEventListener('keydown', e => {
@@ -1962,6 +2293,8 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && /^Arrow(Up|Down|Left|Right)$/.test(e.key) && stepPin(/Down|Right/.test(e.key) ? 1 : -1)) { e.preventDefault(); return; }
+  /* R turns the chip drawing clockwise, Shift+R back */
+  if (!typing && state.ctx.chip && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'r' || e.key === 'R')) { e.preventDefault(); setRot(e.shiftKey ? -1 : 1); return; }
   if (e.key === 'Escape') {
     if ($('#pop').dataset.open) { const a = $('#pop')._anchor; closePop(); if (a && a.isConnected) a.focus(); return; }
     if ($('#panel').classList.contains('open')) { closePanel(); return; }
@@ -1975,8 +2308,17 @@ window.addEventListener('hashchange', render);
 /* board photo: a footprint under the pointer or focus lights its outline; leaving it shows the selection again */
 let photoLit = null;
 const photoHover = el => { const s = el && el.closest && el.closest('[data-pchip-src]'), cid = s ? s.dataset.pchipSrc : state.ph.sel; if (cid !== photoLit) { photoLit = cid; photoShow(cid); } };
-document.addEventListener('mouseover', e => photoHover(e.target));
-document.addEventListener('focusin', e => photoHover(e.target));
+/* chip page: a pad and its pin table row light each other under the pointer or focus */
+let pinLit = null;
+function pinHover(el) {
+  const g = el && el.closest && el.closest('svg.dip .pin, #pintable tr[data-pin]'), n = g ? g.dataset.pin : null;
+  if (n === pinLit) return;
+  pinLit = n;
+  for (const x of $$('svg.dip .pin.hov, #pintable tr.hov')) x.classList.remove('hov');
+  if (n != null) for (const x of $$(`svg.dip .pin[data-pin="${n}"], #pintable tr[data-pin="${n}"]`)) x.classList.add('hov');
+}
+document.addEventListener('mouseover', e => { photoHover(e.target); pinHover(e.target); });
+document.addEventListener('focusin', e => { photoHover(e.target); pinHover(e.target); });
 /* a photo that is neither online nor in the cache: the placeholder says so; back online, try again */
 document.addEventListener('error', e => {
   const im = e.target;
@@ -1998,6 +2340,7 @@ let rt;
 window.addEventListener('resize', () => {
   clearTimeout(rt);
   rt = setTimeout(() => {
+    syncMbar();
     const { chip, conns } = state.ctx;
     if (chip) {
       if (wantCompact(chip) !== state.compact || wantStack(chip) !== state.stack) refreshChip();
@@ -2013,5 +2356,5 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 render();
 /* after fonts and layout settle: bring a deep-linked pad above the phone panel, then route the trace */
 window.addEventListener('load', () => { plccIntoView($('svg.dip .pin.sel')); if ((state.ctx.chip || state.conn) && PANEL_MQ.matches) padIntoView(); drawWire(); });
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => drawWire());
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { const s = $('svg.dip.turned'); if (s) upright(s); drawWire(); });
 })();

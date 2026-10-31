@@ -1,0 +1,6 @@
+1. Spectrum 48K bench supply 9 V -> 12 V
+2. IBM PC Power Good pin 1 -> pin 3
+3. Spectrum 128 probe x10 -> x1
+Round 2:
+1. IBM PC condition 6 Power Good delay 100 ms -> 500 ms
+2. Model III condition 5 +5 V load 0.45 A -> 0.75 A

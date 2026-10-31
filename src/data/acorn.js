@@ -1648,4 +1648,50 @@ RCS.add({
     { name: 'Bygone Bytes: More Electron repairs', url: BGB_ELK, what: 'Blue text from ULA contacts, white bars at power-up, dead keys.', verify: true }
   ]
 });
+/* "Measured how": the conditions the sources give for this brand's expected readings.
+   power.measured (docs/data-schema.md); log in docs/verification/measured-how.md. */
+{
+  const BSM = 'https://acorn.huininga.nl/pub/unsorted/manuals/BBC%20Microcomputer%20Service%20Manual-HTML/BBCServiceManual.html';
+  const MSM = p => `https://acorn.huininga.nl/pub/docs/manuals/Acorn/BBC%20Master%20Service%20Manual/Master%20Service%20Manual.pdf#page=${p}`;
+  const ESM = p => `https://chrisacorns.computinghistory.org.uk/docs/Acorn/Manuals/Acorn_ElectronSM.pdf#page=${p}`;
+  const M = {
+    bbcb: {
+      conditions: [
+        'Supply voltages are measured at the PCB terminals where the power leads attach; check +5 V on each of the three pairs of connectors, and check -5 V too.',
+        'For scope work on a dead machine the manual fits a test 2764 EPROM in place of the operating system ROM; routine 0 pulses each memory-mapped device\'s chip select in turn.',
+      ],
+      sources: [
+        { label: 'BBC Microcomputer Service Manual, 6.3 Fault isolation', url: BSM },
+        { label: 'BBC Microcomputer Service Manual, 6.5.2 Test ROM', url: BSM },
+      ],
+    },
+    bbcmaster: {
+      conditions: [
+        'Remove all user ROMs before starting.',
+        'Disconnect any second processor or co-processor, connect both a UHF TV and an RGB monitor, then switch on.',
+        'If the 16 MHz clock is dead, do not leave the machine on for more than 30 seconds at a time: DRAM RAS and CAS can be held low and the RAMs overheat.',
+        'Use sharp meter probes that push through the solder resist.',
+      ],
+      sources: [
+        { label: 'Master Series Service Manual, Hints for repair, p. 29', url: MSM(29) },
+        { label: 'Master Series Service Manual, 7.1 Switch on and 7.1.2, p. 32', url: MSM(32) },
+      ],
+    },
+    electron: {
+      conditions: [
+        'Adapter output: AC voltmeter across the two grey leads at the power supply PCB, with the adapter plugged into a working Electron; at least 17 V RMS.',
+        'Supply checks are made under a resistive load of about 500 mA on +5 V: 10 Ω 2.5 W across the red and black leads, with the supply connector unplugged from the main PCB. Read +5 V on a scope (4.75 to 5.25 V, at most 50 mV noise).',
+        '-5 V is read across the blue and black leads with a 47 Ω load, keeping the 10 Ω load on +5 V.',
+        'With the loads removed and the main PCB connected, it draws 700 to 900 mA from +5 V and about 25 mA from -5 V.',
+        'After a short-circuit trip, unplug the supply lead from the Electron for at least 15 seconds so the supply board resets.',
+        'UHF modulator input: scope at 50 mV/div, 10 µs/div, auto trigger, after pressing BREAK.',
+      ],
+      sources: [
+        { label: 'Electron Service Manual, 8.1 Power supply, p. 10', url: ESM(16) },
+        { label: 'Electron Service Manual, 8.7 Video (b), p. 12', url: ESM(18) },
+      ],
+    },
+  };
+  for (const [mid, m] of Object.entries(M)) RCS.power[mid].measured = m;
+}
 })();
