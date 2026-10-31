@@ -1,0 +1,3 @@
+1. P310 pins 91/92 swapped (true: 91 FWD/REV, 92 ON/OFF)
+2. P402 pin 18 shown as +12V (true: +5V)
+3. P501 pin 3 shown as GND (true: STROBE)
