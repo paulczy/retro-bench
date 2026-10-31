@@ -154,7 +154,7 @@ const psg76489Pins = [
   { n: 11, name: 'D6', type: 'data', dir: 'in', desc: 'Data bit 6 (TI numbering; D1 LSB-first).' },
   { n: 12, name: 'D5', type: 'data', dir: 'in', desc: 'Data bit 5 (TI numbering; D2 LSB-first).' },
   { n: 13, name: 'D4', type: 'data', dir: 'in', desc: 'Data bit 4 (TI numbering; D3 LSB-first).' },
-  { n: 14, name: 'CLOCK', type: 'clock', dir: 'in', desc: 'Clock input. Tone = clock / (32 x N). The SN76489AN takes up to 4 MHz; the 500 kHz parts (SN76494, SN94624) lack the divide-by-8 stage.', terms: ['clock'], probe: '3.58 MHz on an SN76489; about 447 kHz on an SN94624' },
+  { n: 14, name: 'CLOCK', type: 'clock', dir: 'in', desc: 'Clock input. SN76489AN: tone = clock / (32 x N), clock up to 4 MHz. The SN76494 drops the divide-by-8 stage (500 kHz limit, TI data sheet); the SN94624 is taken to match it, but no SN94624 data sheet was checked.', terms: ['clock'], probe: 'A steady clock at the board rate (see the machine test points).', verify: true },
   { n: 15, name: 'D3', type: 'data', dir: 'in', desc: 'Data bit 3 (TI numbering; D4 LSB-first).' },
   { n: 16, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.5 to +5.5 V' },
 ];
@@ -374,11 +374,12 @@ RCS.add({
         { label: 'TI-99/4A Servicing Manual, VDP description (oscillator, GROM clock, CPU clock), printed pp. 67-68', url: TI_SM(76) },
         { label: 'ColecoVision Technical Manual (Coleco, 1983), VII signal pictures: U9 (TMS9928A) pin 35 B-Y, pin 36 Y, pin 38 R-Y video outputs, PDF pp. 70-71', url: 'https://cvaddict.com/manuals/Colecovision_Technical_Manual.pdf#page=70' },
         { label: 'TMS9918A/9928A/9929A Data Manual (Nov 1982), applefritter mirror', url: 'https://git.applefritter.com/Apple-1-Tools/apple1-videocard-lib/raw/branch/main/docs/TMS9918A_TMS9928A_TMS9929A_Video_Display_Processors_Data_Manual_Nov82.pdf' },
+        { label: 'F18A pin-out and compatibility (dnotq.io), Wayback Machine copy (the live page fails certificate checks for some clients)', url: 'https://web.archive.org/web/20250120011023/https://dnotq.io/f18a/pinout.html', verify: true },
       ],
       pins: vdp9918Pins,
       replacements: [
-        { part: 'TMS9928A / TMS9929A', kind: 'pin-compatible', note: 'Same socket, not a drop-in. Pins 35, 36 and 38 become B-Y, Y and R-Y, so there is no composite video and no 3.58 MHz CPUCLK, and the 9929A runs 50 Hz, 313 lines. A 9918A console needs a colour-difference video stage (the PAL boards use jumpers W201-W204 on J201) before either will make a picture.', source: { label: 'TMS9918A/9928A/9929A Data Manual, 3.7.2 TMS9928A/9929A terminal assignments, p. 3-11', url: TI_DS('9918a28a29a.pdf', 54) } },
-        { part: 'TMS9118 / TMS9128 / TMS9129', kind: 'pin-compatible', note: 'Not for the TI-99/4A: they have no GROMCLK on pin 37 (not connected on the 9118, CPUCLK on the 9128/9129), so the GROMs get no clock and the console never reaches the title screen. Only pins 35 to 38 differ from the 9918A family.', source: { label: 'F18A pin-out and compatibility (Matthew Hagerty, dnotq.io)', url: 'https://dnotq.io/f18a/pinout.html' } },
+        { part: 'TMS9928A / TMS9929A', kind: 'adapter', note: 'Same socket, not a drop-in: needs a colour-difference video stage. Pins 35, 36 and 38 become B-Y, Y and R-Y, so there is no composite video and no 3.58 MHz CPUCLK, and the 9929A runs 50 Hz, 313 lines. A 9918A console needs a colour-difference video stage (the PAL boards use jumpers W201-W204 on J201) before either will make a picture.', source: { label: 'TMS9918A/9928A/9929A Data Manual, 3.7.2 TMS9928A/9929A terminal assignments, p. 3-11', url: TI_DS('9918a28a29a.pdf', 54) } },
+        { part: 'TMS9118 / TMS9128 / TMS9129', kind: 'adapter', verify: true, note: 'Pins 35-38 differ, and no TI data sheet for these parts was checked. Not for the TI-99/4A: they have no GROMCLK on pin 37 (not connected on the 9118, CPUCLK on the 9128/9129), so the GROMs get no clock and the console never reaches the title screen. Only pins 35 to 38 differ from the 9918A family.', source: { label: 'F18A pin-out and compatibility (Matthew Hagerty, dnotq.io)', url: 'https://dnotq.io/f18a/pinout.html' } },
         { part: 'F18A / F18A-MK2', kind: 'modern', note: 'FPGA 9918A with its own VRAM and VGA (MK2: also DVI) out. Pins 35 and 36 are not connected, so the console composite output goes dead and the cable has to leave the case. Set user jumpers 3 and 4 on for a TI-99/4A. /RESET does not do the 9918A external sync. The original F18A was made 2012 to 2017, about 550 boards; it is wider than the DIP-40.', source: { label: 'F18A pin-out, user jumpers and versions (Matthew Hagerty, dnotq.io)', url: 'https://dnotq.io/f18a/pinout.html' } },
         { part: 'PICO9918 / PICO9918 PRO', kind: 'modern', note: 'Raspberry Pi Pico (RP2040) drop-in for the 9918A family, tested on the TI-99/4 and 4A. VGA by default; HDMI and SCART only through add-on dongles; no composite output. Early v0.2 boards needed an external Pico for GROMCLK; v0.3 and later make it on the board. Power off before you swap dongles.', source: { label: 'PICO9918 project README (visrealm, GitHub)', url: 'https://github.com/visrealm/pico9918' } },
       ],
@@ -398,9 +399,9 @@ RCS.add({
       ],
       pins: psg76489Pins,
       replacements: [
-        { part: 'TMS9919 = SN94624N', kind: 'pin-compatible', note: 'The same part under two numbers: Sams lists U511 as SN94624N / TMS9919. It has no divide-by-eight on the clock input, so it runs from the 447 kHz GROM clock.', source: SAMS_18 },
-        { part: 'SN76494N', kind: 'pin-compatible', note: 'TI: identical to the SN76489A but with the divide-by-eight stage removed and a 500 kHz clock limit, which matches the SN94624. Check pin 9 (AUDIO IN on the SN94624) before you rely on speech and cassette audio.', source: { label: 'SN76489AN data sheet, SN76494N footnote, p. 1', url: TI_DS('SN76489.pdf', 1) } },
-        { part: 'SN76489AN', kind: 'pin-compatible', note: 'Keeps the divide-by-eight stage and takes up to 4 MHz. Fed the 447 kHz GROM clock of an SN94624 board, every tone comes out three octaves low; it only fits a board that clocks the sound chip at 3.58 MHz. Pin 9 is N.C., so the speech and cassette audio mixed in there is lost.', source: { label: 'SN76489AN data sheet, features and SN76494N footnote, p. 1', url: TI_DS('SN76489.pdf', 1) } },
+        { part: 'TMS9919 = SN94624N', kind: 'pin-compatible', verify: true, note: 'No SN94624 or TMS9919 data sheet seen. The same part under two numbers: Sams lists U511 as SN94624N / TMS9919. It has no divide-by-eight on the clock input, so it runs from the 447 kHz GROM clock.', source: SAMS_18 },
+        { part: 'SN76494N', kind: 'pin-compatible', verify: true, note: 'TI: identical to the SN76489A but with the divide-by-eight stage removed and a 500 kHz clock limit, which matches the SN94624. Check pin 9 (AUDIO IN on the SN94624) before you rely on speech and cassette audio.', source: { label: 'SN76489AN data sheet, SN76494N footnote, p. 1', url: TI_DS('SN76489.pdf', 1) } },
+        { part: 'SN76489AN', kind: 'adapter', note: 'Needs a 3.58 MHz clock fed to pin 14 instead of the 447 kHz GROM clock, and loses the pin 9 audio input. Keeps the divide-by-eight stage and takes up to 4 MHz. Fed the 447 kHz GROM clock of an SN94624 board, every tone comes out three octaves low; it only fits a board that clocks the sound chip at 3.58 MHz. Pin 9 is N.C., so the speech and cassette audio mixed in there is lost.', source: { label: 'SN76489AN data sheet, features and SN76494N footnote, p. 1', url: TI_DS('SN76489.pdf', 1) } },
       ],
     },
     tms9901: {
@@ -465,10 +466,11 @@ RCS.add({
         { label: 'TMS4732 data sheet, TI MOS Memory Data Book 1986, ROMs, p. 7-15', url: TI_DS('MOSMemory-1986/MOSMemory-1986-07-ROMs.pdf', 15) },
         { label: 'TI-99/4A Servicing Manual, MF4732 ROMs, printed p. 119', url: TI_SM(129) },
         { label: 'TI-99/4A Technical Data, schematic sheet 60 (U610, U611)', url: TI_TD(62) },
+        { label: 'TMS2532 data sheet, TI 1984 MOS Memory Data Book: pin 18 A11, 20 PD/PGM, 21 VPP (+5 V in read mode)', url: 'http://www.bitsavers.org/components/ti/_dataBooks/1984_TI_MOS_Memory_Data_Book.pdf#page=207' },
       ],
       pins: rom4732Pins,
       replacements: [
-        { part: 'TMS2532 EPROM', kind: 'pin-compatible', note: 'TI makes the TMS4732 pin-compatible with the TMS2532 and Sams lists TMS4732/2532 for U610 and U611. The 4732 selects on pins 20 and 21 are set in the mask (both active low on the TI), and an EPROM has programming functions on pins 18, 20 and 21: check them against the EPROM sheet and burn U610 (even byte) and U611 (odd byte) separately.', source: { label: 'TMS4732 data sheet, TI MOS Memory Data Book 1986, p. 7-15', url: TI_DS('MOSMemory-1986/MOSMemory-1986-07-ROMs.pdf', 15) } },
+        { part: 'TMS2532 EPROM', kind: 'adapter', note: 'Not a drop-in. TI makes the TMS4732 pin-compatible with the TMS2532 and Sams lists TMS4732/2532 for U610 and U611, but on the 2532 pin 18 is A11, pin 20 is PD/PGM (LOW to read) and pin 21 is VPP, which must be at +5 V while reading. The console grounds pin 21 (a 4732 chip select), so lift pin 21 out of the socket and tie it to +5 V. Burn U610 (even byte) and U611 (odd byte) separately.', source: { label: 'TMS4732 data sheet, TI MOS Memory Data Book 1986, p. 7-15', url: TI_DS('MOSMemory-1986/MOSMemory-1986-07-ROMs.pdf', 15) } },
       ],
     },
     sram6810: {
@@ -484,7 +486,7 @@ RCS.add({
       ],
       pins: sram6810Pins,
       replacements: [
-        { part: 'MCM6810P / NTE6810 / ECG6810', kind: 'pin-compatible', note: 'Sams cross-references U608 and U609 to these. Any 6810 from a 6800-family board fits; it must have the full six chip selects.', source: SAMS_18 },
+        { part: 'MCM6810P / NTE6810 / ECG6810', kind: 'pin-compatible', verify: true, note: 'Sams cross-references U608 and U609 to these (NTE and ECG data sheets not seen). Any 6810 from a 6800-family board fits; it must have the full six chip selects.', source: SAMS_18 },
       ],
     },
   },
@@ -510,9 +512,9 @@ RCS.add({
         pads: [{ n: 3, x: 30, y: 30 }, { n: 4, x: 70, y: 30 }, { n: 1, x: 30, y: 70 }, { n: 2, x: 70, y: 70 }],
         outline: 'M 10 10 L 90 10 L 90 90 L 10 90 Z',
         pins: [
-          { n: 1, name: '18 VAC', type: 'power', desc: 'End of the main (18 V) section of the tapped secondary. To the bridge rectifier for +12 V and +5 V.', expect: '17-19 V AC across 1-2', verify: true, conflict: 'A 1997 label quote gives 18 V AC 18 VA on pins 1-2; an AtariAge post gives 16.0 V AC 36 VA for an AC9500. Sams rates the section 17.85 V AC. Check your label.' },
-          { n: 2, name: 'TAP', type: 'power', desc: 'Centre tap, common to both sections (the white wire).', verify: true },
-          { n: 4, name: '8.5 VAC', type: 'power', desc: 'End of the small (8.5 V) section. To D5 and the 79M05 for -5 V.', expect: '8-9 V AC across 2-4; about 26 V AC across 1-4', verify: true, conflict: 'Label quote: 8.5 V AC 1.28 VA; AtariAge: 8.0 V AC 1.0 VA. Sams: whole winding 26.40 V AC, tap at 17.85 V AC.' },
+          { n: 1, name: '18 VAC', type: 'power', desc: 'End of the main (18 V) section of the tapped secondary. To the bridge rectifier for +12 V and +5 V.', expect: 'About 18 V AC across 1-2 (Sams: 17.85 V AC section)', verify: true, conflict: 'A 1997 label quote gives 18 V AC 18 VA on pins 1-2; an AtariAge post gives 16.0 V AC 36 VA for an AC9500. Sams rates the section 17.85 V AC. Check your label.' },
+          { n: 2, name: 'TAP', type: 'power', desc: 'Secondary tap, common to both sections (the white wire). Not a centre tap: Sams rates the winding 26.40 V AC tapped at 17.85 V AC.', verify: true },
+          { n: 4, name: '8.5 VAC', type: 'power', desc: 'End of the small (8.5 V) section. To D5 and the 79M05 for -5 V.', expect: 'About 8.5 V AC across 2-4; about 26 V AC across 1-4 (Sams: 26.40 V AC whole winding)', verify: true, conflict: 'Label quote: 8.5 V AC 1.28 VA; AtariAge: 8.0 V AC 1.0 VA. Sams: whole winding 26.40 V AC, tap at 17.85 V AC.' },
         ],
         sources: [
           { label: 'TI-99/4A Technical Data, Fig. E Connector Pin Identification Diagram, p. 18', url: TI_TD(20) },
@@ -627,7 +629,7 @@ RCS.add({
           { n: 38, name: 'D5', type: 'data', desc: 'Data bus bit 5.' },
           { n: 39, name: 'D2', type: 'data', desc: 'Data bus bit 2.' },
           { n: 40, name: 'D1', type: 'data', desc: 'Data bus bit 1.' },
-          { n: 41, name: 'IAQ', type: 'ctrl', desc: 'The 9900 IAQ (instruction acquisition).', conflict: 'The Technical Data (A.2 and D.2.1) names pin 41 IAQ; the Servicing Manual p. 104 labels it HOLD / IAQ.' },
+          { n: 41, name: 'IAQHA', type: 'ctrl', desc: 'IAQ OR HOLDA: the 9900 instruction-acquisition signal combined with hold acknowledge on the board (schematic signal IAQHA, I/O port pin 41). Not raw IAQ.', conflict: 'The simplified tables in the Technical Data (A.2 and D.2.1) call pin 41 IAQ; the schematic names the net IAQHA and the Servicing Manual p. 104 labels it HOLD / IAQ.' },
           { n: 42, name: 'D3', type: 'data', desc: 'Data bus bit 3.' },
           { n: 43, name: '-5V', type: 'power', desc: '-5 V for the speech module, 50 mA max.', expect: '-5 V' },
           { n: 44, name: 'AUDIO IN', type: 'audio', desc: 'To the sound chip AUDIO IN (speech audio).' },
@@ -640,7 +642,7 @@ RCS.add({
         ],
       },
       {
-        id: 'ti994a-cartridge', name: 'Cartridge (GROM) port', kind: '36-contact card-edge socket', geo: 'edge-18x18-odd-even', gender: 'female',
+        id: 'ti994a-cartridge', name: 'Cartridge (GROM) port', kind: '36-contact card-edge socket', geo: 'edge-18x18-odd-even', gender: 'female', verify: true,
         verifiedAgainst: 'TI-99/4A Servicing Manual, GROM Port Connector, printed p. 105; Technical Data schematic sheet 62 (J500)',
         summary: 'The command module slot. A cartridge gets the GROM bus (/GS, GR clock, GREADY, M0 = A14, M1 = DBIN), the ROM select /ROMG for $6000-$7FFF and the 8-bit data bus. Inserting a module disturbs the reset line and resets the console to the title screen. Pin numbers and signals are from TI; TI draws odd and even contacts in two columns with 35/36 marked FRONT, but does not show which row is up, so the row and end orientation of this drawing is not confirmed.',
         pins: [

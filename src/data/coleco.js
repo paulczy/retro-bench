@@ -68,7 +68,7 @@ const cartPins = [
   { n: 29, name: 'GND', type: 'ground', desc: 'Digital ground.', expect: '0 V' },
   { n: 30, name: '+5 V', type: 'power', desc: '+5 V to the cartridge. The TRM gives 0.2 A typical available current.', expect: '+5 V DC' },
 ];
-const cartSummary = 'Thirty contacts, odd numbers on one row and even on the other (2 opposite 1). The cartridge sees D0-D7, A0-A14 and four 8 KB chip selects that the console decodes (U5 74LS138); there is no R/W line, so a cartridge is ROM only. Pin 30 gives +5 V, pin 29 logic ground and pin 13 the RF shield ground. Which row faces up in the slot is not stated in the sources: check pin 30 for +5 V before you trust the drawing\'s orientation. Dirty contacts here are the most common "dead game" fault.';
+const cartSummary = 'Thirty contacts, odd numbers on one row and even on the other (2 opposite 1). The cartridge sees D0-D7, A0-A14 and four 8 KB chip selects that the console decodes (U5 74LS138); there is no R/W line, so a cartridge is ROM only. Pin 30 gives +5 V, pin 29 logic ground and pin 13 the RF shield ground. Which row faces up in the slot and which end is pin 1 are not stated in the sources, so the drawing is unchecked: check pin 30 for +5 V before you trust it. Dirty contacts here are the most common "dead game" fault.';
 
 /* Controller DE-9: TRM 2.2.7 pin table and Fig. 2-5; redraw sheet 6 (J5, J6 DB9_Male); Deathskull as second source. */
 const ctrlPins = [
@@ -202,7 +202,7 @@ RCS.add({
       video: 'TMS9928A (9918A on some boards): 16 KB VRAM, 32 × 24 text',
       sound: 'SN76489: 3 tones + noise',
       os: 'OS-7 BIOS; cartridge only, no BASIC',
-      chips: ['cpuz80', 'vdp9918', 'psg76489', 'dram4116', 'sram2114', 'rom2764', 'ls138', 'ls-controller'],
+      chips: ['cpuz80', 'vdp9918', 'psg76489', 'dram4116', 'sram2114', 'rom9464-cv', 'rom2764', 'ls138', 'ls-controller'],
       tagline: 'Z80 + TMS9928A + SN76489. Boots cartridges, no BASIC.',
     },
     adam: {
@@ -224,7 +224,7 @@ RCS.add({
   chipLocations: {
     colecovision: {
       cpuz80: 'U1',
-      rom2764: 'U2 (9464C-0036 mask ROM; A11, A12 and enable are routed differently from a 2764: jumpers WJ4/WJ5 convert the socket for a 2764 EPROM)',
+      rom2764: 'U2 only after the EPROM conversion (solder traces cut, jumpers WJ4/WJ5 fitted). A stock board has the 9464C mask ROM, whose pins 2, 20 and 23 differ: see 9464C.',
       sram2114: 'U3, U4',
       ls138: 'U5, U6',
       vdp9918: 'U9 (TMS9928A)',
@@ -233,6 +233,46 @@ RCS.add({
     },
   },
   chips: {
+    'rom9464-cv': {
+      id: 'rom9464-cv', name: '9464C-0036 BIOS mask ROM (ColecoVision U2)', short: '9464C', family: 'Mask ROM, 8K x 8',
+      role: 'OS-7 BIOS, $0000-$1FFF', pkg: 'DIP-28',
+      machines: ['colecovision'],
+      summary: 'The stock BIOS ROM at U2. It is not a 2764 pinout: pin 2 is NC, pin 20 is A11, pin 23 is A12 and pin 22 is the enable /EP, where a 2764 has A12, /CE and A11 on 2, 20 and 23. Pins 1, 26, 27 and 28 are all tied to +5 V on the board (26 is VCC on this part, 28 on a 2764). To fit a 2764 EPROM, sever the two solder traces by U2 and add jumpers WJ4 (pin 20 to the select) and WJ5 (pin 23 to A11), as the schematic note says. /EP comes from U5 (74LS138) output O0, the $0000-$1FFF select.',
+      fails: ['Dead console, no title screen', 'Garbled title screen'],
+      heat: 'cool',
+      verifiedAgainst: 'ColecoVision schematic, KiCad redraw Rev J, sheet 9 (U2 9464C-0036)',
+      datasheets: [sch(9, 'U2 9464C-0036 pin numbers, solder traces and jumpers WJ4/WJ5 (EEPROM note)')],
+      pins: [
+        { n: 1, name: 'NC', type: 'nc', dir: '-', desc: 'No connection on the 9464C; tied to +5 V on the board (VPP on a 2764).' },
+        { n: 2, name: 'NC', type: 'nc', dir: '-', desc: 'No connection on the 9464C. A 2764 has A12 here; the board links this pad to A12 for the EPROM conversion.' },
+        { n: 3, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bit 7.' },
+        { n: 4, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6.' },
+        { n: 5, name: 'A5', type: 'addr', dir: 'in', desc: 'Address bit 5.' },
+        { n: 6, name: 'A4', type: 'addr', dir: 'in', desc: 'Address bit 4.' },
+        { n: 7, name: 'A3', type: 'addr', dir: 'in', desc: 'Address bit 3.' },
+        { n: 8, name: 'A2', type: 'addr', dir: 'in', desc: 'Address bit 2.' },
+        { n: 9, name: 'A1', type: 'addr', dir: 'in', desc: 'Address bit 1.' },
+        { n: 10, name: 'A0', type: 'addr', dir: 'in', desc: 'Address bit 0.' },
+        { n: 11, name: 'D0', type: 'data', dir: 'out', desc: 'Data bit 0.' },
+        { n: 12, name: 'D1', type: 'data', dir: 'out', desc: 'Data bit 1.' },
+        { n: 13, name: 'D2', type: 'data', dir: 'out', desc: 'Data bit 2.' },
+        { n: 14, name: 'VSS', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
+        { n: 15, name: 'D3', type: 'data', dir: 'out', desc: 'Data bit 3.' },
+        { n: 16, name: 'D4', type: 'data', dir: 'out', desc: 'Data bit 4.' },
+        { n: 17, name: 'D5', type: 'data', dir: 'out', desc: 'Data bit 5.' },
+        { n: 18, name: 'D6', type: 'data', dir: 'out', desc: 'Data bit 6.' },
+        { n: 19, name: 'D7', type: 'data', dir: 'out', desc: 'Data bit 7.' },
+        { n: 20, name: 'A11', type: 'addr', dir: 'in', desc: 'Address bit 11 (through a solder trace that the EPROM conversion severs; a 2764 has /CE here).' },
+        { n: 21, name: 'A10', type: 'addr', dir: 'in', desc: 'Address bit 10.' },
+        { n: 22, name: '/EP', type: 'ctrl', dir: 'in', desc: 'Enable, active LOW, from U5 (74LS138) O0, the $0000-$1FFF select.', activeLow: true, terms: ['cs'], probe: 'Pulses LOW while the Z80 reads the BIOS.' },
+        { n: 23, name: 'A12', type: 'addr', dir: 'in', desc: 'Address bit 12 (a 2764 has A11 here; jumper WJ5 moves A11 to this pin for an EPROM).' },
+        { n: 24, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9.' },
+        { n: 25, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bit 8.' },
+        { n: 26, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply on the 9464C (NC on a 2764).', terms: ['vcc'] },
+        { n: 27, name: 'NC', type: 'nc', dir: '-', desc: 'No connection; tied to +5 V on the board (/PGM on a 2764).' },
+        { n: 28, name: 'NC', type: 'nc', dir: '-', desc: 'No connection on the 9464C; tied to +5 V on the board (VCC on a 2764).' },
+      ],
+    },
     mcu6801: {
       id: 'mcu6801', name: 'MC6801 microcontroller', short: '6801', family: 'Motorola 6800 family (NMOS)',
       role: 'ADAMnet processors (single-chip mode, 1 MHz). Master and tape-drive 6801s on the Memory and I/O board; keyboard and printer each have their own.', pkg: 'DIP-40',
@@ -329,7 +369,7 @@ RCS.add({
   },
   symptoms: {
     colecovision: [
-      { symptom: 'Dead console, no boot screen', suspects: ['cpuz80', 'rom2764'], note: 'Supply first (most common failure), then the Z80 clock at pin 6 and the BIOS ROM U2.' },
+      { symptom: 'Dead console, no boot screen', suspects: ['cpuz80', 'rom9464-cv'], note: 'Supply first (most common failure), then the Z80 clock at pin 6 and the BIOS ROM U2.' },
       { symptom: 'Won\'t boot (CPU RAM)', suspects: ['sram2114', 'cpuz80'], note: 'The diagnostic cartridge tests ROM and RAM first: bad RAM is U3 or U4 (2114), bad ROM is U2.' },
       { symptom: 'No picture', suspects: ['vdp9918', 'dram4116'], note: 'Check the RF board feed (WJ2) and the 10.7 MHz VDP clock at pin 40, then the VDP.' },
       { symptom: 'Bad graphics (corrupt or missing)', suspects: ['dram4116'], note: 'Each wrong title-screen pattern points at one of U10-U17 (Technical Manual VIII-2). The 4116s need +12 V and -5 V: check both rails first.' },
@@ -366,7 +406,7 @@ RCS.add({
         sources: [sch(3, 'power filters and switch (WHITE +5 V, RED +12 V, BLUE -5 V, BLACK GND)'), DSKULL_PWR, { label: 'colecovision.dk, console power connector photo (rear, with wire colours)', url: 'https://www.colecovision.dk/images/cv-power-connector-big.jpg' }, tm(23, 'parts list, J3 4-pin power connector')],
       },
       {
-        id: 'cv-cart', name: 'Cartridge slot (J1)', kind: '30-contact card-edge socket', geo: 'edge-15x15-odd-even',
+        id: 'cv-cart', name: 'Cartridge slot (J1)', kind: '30-contact card-edge socket', geo: 'edge-15x15-odd-even', verify: true,
         verifiedAgainst: 'ADAM Technical Reference Manual 2.1.9e (J1 cartridge connector); redrawn schematic sheet 2',
         summary: cartSummary,
         pins: cartPins,
@@ -381,7 +421,7 @@ RCS.add({
         sources: [trm(35, 'section 2.2.7, controller connector pin out'), trm(47, 'Fig. 2-5, controller configuration'), sch(6, 'J5, J6 DB9_Male, U18, U19, U24'), tm(9, 'III-6, hand control interface'), DSKULL_CTRL],
       },
       {
-        id: 'cv-expansion', name: 'Expansion module interface (J2)', kind: '60-contact card edge on the main board (front, behind the door)', geo: 'edge-30x30-seq',
+        id: 'cv-expansion', name: 'Expansion module interface (J2)', kind: '60-contact card edge on the main board (front, behind the door)', geo: 'edge-30x30-seq', verify: true,
         verifiedAgainst: 'Redrawn schematic sheet 2 (J2); ADAM Technical Reference Manual 2.1.8 and 2.4',
         summary: 'The board edge itself, under the front door: the full Z80 bus, the two spare 8 KB decoder selects, audio and video inputs to the RF modulator, and all three supply rails. Contacts 1-30 run along one side and 31-60 back along the other, so 31 is opposite 30 and 60 opposite 1; which face is up and which end is pin 1 are not stated in the sources (check pins 1-2 for ground). Expansion Module #1 (Atari 2600 adapter), #2 (driving controller) and #3 (ADAM) plug in here. Three pins disagree between the redraw and the ADAM manual: see the notes on 35, 36 and 56.',
         pins: expBase,
@@ -445,22 +485,22 @@ RCS.add({
         sources: [trm(44, 'section 3.2, keyboard interconnects')],
       },
       {
-        id: 'adam-cart', name: 'Cartridge slot', kind: '30-contact card-edge socket', geo: 'edge-15x15-odd-even',
+        id: 'adam-cart', name: 'Cartridge slot', kind: '30-contact card-edge socket', geo: 'edge-15x15-odd-even', verify: true,
         verifiedAgainst: 'ADAM Technical Reference Manual 2.1.9e (J1 cartridge connector)',
         summary: cartSummary.replace('U5 74LS138', 'a 74LS138'),
-        pins: cartPins,
+        pins: cartPins.map(p => (p.n === 22 ? { ...p, desc: 'Cartridge select 2, from the 74LS138 decoder (the address range is not given in the ADAM manual table).' } : p)),
         sources: [trm(30, 'section 2.1.9e, J1 cartridge connector')],
       },
       {
         id: 'adam-controller', name: 'Controller ports', kind: 'DE-9, male on the console', geo: 'de9', gender: 'male',
         verifiedAgainst: 'ADAM Technical Reference Manual 2.2.7 and Fig. 2-5',
-        summary: 'Same two ports and pinout as the ColecoVision: pin 8 strobes the joystick and left fire, pin 5 the keypad and right fire, pins 7 and 9 are the spinner inputs. Gender is taken from the ColecoVision board; the ADAM CPU board drawing does not show it.',
+        summary: 'Same two ports and pinout as the ColecoVision: pin 8 strobes the joystick and left fire, pin 5 the keypad and right fire, pins 7 and 9 are the spinner inputs. Gender is taken from the ColecoVision board; the ADAM CPU board drawing does not show it. The 2.2 V idle test in the ColecoVision Technical Manual is not given for the ADAM (its Table 1 gives 2.0 V minimum logic high).',
         terms: ['keypad-matrix', 'strobe'],
-        pins: ctrlPins,
+        pins: ctrlPins.map(({ expect, ...p }) => (/2\.2 V/.test(expect || '') ? p : { ...p, ...(expect ? { expect } : {}) })),
         sources: [trm(35, 'section 2.2.7, controller connector pin out'), trm(47, 'Fig. 2-5, controller configuration')],
       },
       {
-        id: 'adam-expansion', name: 'Expansion port (P1, right side)', kind: '60-contact male card edge on the memory console', geo: 'edge-30x30-seq',
+        id: 'adam-expansion', name: 'Expansion port (P1, right side)', kind: '60-contact male card edge on the memory console', geo: 'edge-30x30-seq', verify: true,
         verifiedAgainst: 'ADAM Technical Reference Manual 2.1.8 (expansion port pin table)',
         summary: 'The board edge that sticks out of the right side of the memory console, so ColecoVision expansion modules plug into a full ADAM. Same layout as the ColecoVision port except pin 40 (buffered /IORQ here, a clock on the ColecoVision), 45 (the clock) and 35/36. The manual numbers it 1-60 from the module\'s point of view; pin 1 end and face are not stated, so check pins 1-2 for ground.',
         pins: adamExpPins,

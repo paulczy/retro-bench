@@ -360,17 +360,17 @@ const ribbonPins = (side) => {
     { n: 6, name: 'Φ2', type: 'io', desc: `Stepper phase 2${card ? ' from 74LS259 Q2' : ', to ULN2003 pin 4'}.`, expect: 'TTL HIGH while phase 2 is on' },
     { n: 7, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
     { n: 8, name: 'Φ3', type: 'io', desc: `Stepper phase 3${card ? ' from 74LS259 Q3' : ', to ULN2003 pin 3'}.`, expect: 'TTL HIGH while phase 3 is on' },
-    { n: 9, name: '-12 V', type: 'power', desc: '-12 V from slot pin 33 (analog card C5, comparator offset pot R28).', expect: '-11 to -13 V' },
+    { n: 9, name: '-12 V', type: 'power', desc: '-12 V from slot pin 33 (analog card C5, comparator offset pot R28).', expect: '-12 V' },
     { n: 10, name: '/WR REQ', type: 'ctrl', desc: 'Write request, LOW to write. Shared by both drives; only the enabled drive acts on it.', expect: 'HIGH; LOW only while writing' },
-    { n: 11, name: '+5 V', type: 'power', desc: '+5 V logic supply from slot pin 25 (analog card C4, MC3470, 74LS125).', expect: '+4.75 to +5.25 V' },
-    { n: 12, name: '+5 V', type: 'power', desc: '+5 V, paralleled with pin 11.', expect: '+4.75 to +5.25 V' },
-    { n: 13, name: '+12 V', type: 'power', desc: '+12 V from slot pin 50: spindle motor, stepper, MC3470 and write driver.', expect: '+11.3 to +12.5 V' },
+    { n: 11, name: '+5 V', type: 'power', desc: '+5 V logic supply from slot pin 25 (analog card C4, MC3470, 74LS125).', expect: '+5 V' },
+    { n: 12, name: '+5 V', type: 'power', desc: '+5 V, paralleled with pin 11.', expect: '+5 V' },
+    { n: 13, name: '+12 V', type: 'power', desc: '+12 V from slot pin 50: spindle motor, stepper, MC3470 and write driver.', expect: '+12 V' },
     { n: 14, name: card ? '/ENBL1 or /ENBL2' : '/ENBL', type: 'ctrl', desc: card ? 'Drive enable: /ENBL1 on the DRIVE 1 header, /ENBL2 on the DRIVE 2 header (the only pin that differs). From the 74LS132 at A2.' : 'Drive enable from the controller, LOW turns this drive on: motor, IN USE light, stepper, read and write-protect outputs.', expect: 'LOW while this drive is on; HIGH about 1 s after the last access' },
-    { n: 15, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+11.3 to +12.5 V' },
+    { n: 15, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+12 V' },
     { n: 16, name: 'RD DATA', type: 'io', desc: 'Read pulses from the enabled drive (74LS125 3-state output on the analog card, so two drives can share it). About 1 µs per flux reversal.', expect: 'Pulse train while a written disk turns' },
-    { n: 17, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+11.3 to +12.5 V' },
+    { n: 17, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+12 V' },
     { n: 18, name: 'WR DATA', type: 'io', desc: 'Serial write data: each 1 bit is a level change, every 4 µs bit cell.', expect: 'Toggling only while writing' },
-    { n: 19, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+11.3 to +12.5 V' },
+    { n: 19, name: '+12 V', type: 'power', desc: '+12 V, paralleled with pin 13.', expect: '+12 V' },
     { n: 20, name: 'W PROT', type: 'io', desc: 'Write-protect status from the enabled drive (74LS125 3-state output). HIGH with a protected disk; shifted into the 74LS323 data register at SR (pin 11).', expect: 'HIGH with a write-protected disk in the enabled drive' },
   ];
 };
@@ -439,7 +439,7 @@ const driveChips = {
     id: 'mc3470', name: 'MC3470 floppy disk read amplifier', short: '3470', family: 'Motorola linear',
     replacements: [
     { part: 'MC3470A', kind: 'pin-compatible', note: 'Same data sheet and pinout; the A grade guarantees peak shift within 2 %.', source: { label: 'Motorola MC3470/MC3470A data sheet, p. 1 (bitsavers)', url: MC3470DS } },
-    { part: 'ECG3470', kind: 'pin-compatible', note: 'The cross Sams gives for the MC3470P. Apple\'s own number is 355-3470; it sits in a socket at B1.', source: S_CD6_PARTS },
+    { part: 'ECG3470', kind: 'pin-compatible', verify: true, note: 'The cross Sams gives for the MC3470P; no ECG3470 data sheet seen. Apple\'s own number is 355-3470; it sits in a socket at B1.', source: S_CD6_PARTS },
   ],
     role: 'Read amplifier, peak detector and pulse shaper', pkg: 'DIP-18',
     machines: ['disk2', 'duodisk'], location: { disk2: 'B1 on the analog card (socketed, Apple 355-3470)', duodisk: 'C1 on the DuoDisk analog card' },
@@ -511,7 +511,7 @@ const driveChips = {
     replacements: [
     { part: 'CA3146AE', kind: 'pin-compatible', note: 'Premium grade of the same array: VCEO 40 V against 30 V.', source: { label: 'RCA 1978 Linear Integrated Circuits, CA3118/CA3146/CA3183 ratings, PDF p. 211 (bitsavers)', url: RCA78(211) } },
     { part: 'CA3046', kind: 'pin-compatible', note: 'Same five-transistor layout and terminal numbers, but VCEO is only 15 V against 30 V for the CA3146E, on a write driver fed from +12 V. Prefer the CA3146.', source: { label: 'RCA 1978 Linear Integrated Circuits, CA3045/CA3046 data and terminal diagram, PDF p. 115 (bitsavers)', url: RCA78(115) } },
-    { part: 'RCA SK3697', kind: 'pin-compatible', note: 'The cross Sams gives for the CA3146E.', source: S_CD6_PARTS },
+    { part: 'RCA SK3697', kind: 'pin-compatible', verify: true, note: 'The cross Sams gives for the CA3146E; no SK3697 data sheet seen.', source: S_CD6_PARTS },
   ],
     role: 'Head write driver and write/erase current switch', pkg: 'DIP-14',
     machines: ['disk2'], location: { disk2: 'A3 on the analog card (socketed, Apple 351-3146)' },
@@ -644,7 +644,7 @@ const driveChips = {
   ls259: {
     id: 'ls259', name: '74LS259 8-bit addressable latch (9334)', short: '74LS259', family: '74LS TTL',
     replacements: [
-    { part: '9334 or 74259', kind: 'pin-compatible', note: 'Fitted on many Disk II cards in place of the 74LS259; Sams lists an N9334N latch on the IIe\'s Disk II card.', source: S_CC10_PARTS1 },
+    { part: '9334 or 74259', kind: 'pin-compatible', verify: true, note: 'Fitted on many Disk II cards in place of the 74LS259 (9334 and 74259 data sheets not seen); Sams lists an N9334N latch on the IIe\'s Disk II card.', source: S_CC10_PARTS1 },
     { part: '74HCT259', kind: 'modern', note: 'Same pinout (S0-S2, Q0-Q7, D, G, CLR) with TTL input levels.', source: { label: 'TI CD74HCT259 data sheet, pin configuration, p. 3', url: 'https://www.ti.com/lit/ds/symlink/cd74hct259.pdf#page=3' } },
   ],
     role: 'Controller soft switches $C080-$C08F,X: phases, motor, drive select, Q6, Q7', pkg: 'DIP-16',
@@ -744,10 +744,10 @@ const d2CardHdr = {
 };
 
 const d2Mech = {
-  id: 'disk2-mech', name: 'Analog card edge to the mechanism (motor, stepper, LED, write protect)', kind: '14-position double-sided card edge on the analog card (the "motor plug" pushes on)', geo: 'edge-14x14-cbm', keys: [],
+  id: 'disk2-mech', name: 'Analog card edge to the mechanism (motor, stepper, LED, write protect)', kind: '14-position double-sided card edge on the analog card (the "motor plug" pushes on)', geo: 'edge-14x14-cbm', keys: [], rowA: 'bottom',
   verify: true,
-  verifiedAgainst: 'Apple schematic 050-0007-H, Disk II Analog Board, edge-connector block',
-  summary: 'The harness from the mechanism (stepper coils, motor speed card, IN USE LED, write-protect switch) pushes onto these fingers at the rear of the analog card; Sams calls it J2. Stepper coils sit between gated +12 V (10-12) and the ULN2003 outputs on M, N, P, R. The pin assignments are from the schematic; which side carries numbers and which letters is not stated there (the photo shows A at the left end of the component side), so the drawing is unchecked. The read/write head has its own 4-wire plug at the front (erase, two R/W ends, centre tap); no pin numbers are given for it.',
+  verifiedAgainst: 'Apple schematic 050-0007-H, Disk II Analog Board, edge-connector block; A2DP analog card photo',
+  summary: 'The harness from the mechanism (stepper coils, motor speed card, IN USE LED, write-protect switch) pushes onto these fingers at the rear of the analog card; Sams calls it J2. Stepper coils sit between gated +12 V (10-12) and the ULN2003 outputs on M, N, P, R. The pin assignments are from the schematic. The card photo shows the lettered fingers on the component side with A at the left (edge toward you, components up), so the drawing puts A-R on top and 1-14 on the solder side below, 1 under A. The read/write head has its own 4-wire plug at the front (erase, two R/W ends, centre tap); no pin numbers are given for it.',
   pins: [
     { n: 2, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
     { n: 4, name: 'W P RET', type: 'io', desc: 'Write-protect switch return: phase 1 from ribbon pin 4 (schematic rev 01; earlier boards grounded it).' },
@@ -782,10 +782,10 @@ const ctrlDb19 = (iic) => [
   { n: 2, name: 'GND', type: 'ground', desc: 'Ground (DB-25 pin 4).', expect: '0 V' },
   { n: 3, name: 'GND', type: 'ground', desc: 'Ground (DB-25 pins 9, 21).', expect: '0 V' },
   { n: 4, name: 'GND', type: 'ground', desc: 'Ground (DB-25 pins 10, 14).', expect: '0 V' },
-  { n: 5, name: '-12 V', type: 'power', desc: '-12 V (DB-25 pin 23; bracketed in Apple\'s table).', expect: '-11 to -13 V' },
-  { n: 6, name: '+5 V', type: 'power', desc: '+5 V (DB-25 pin 7).', expect: '+4.75 to +5.25 V' },
-  { n: 7, name: '+12 V', type: 'power', desc: '+12 V (DB-25 pin 19).', expect: '+11.3 to +12.5 V' },
-  { n: 8, name: '+12 V', type: 'power', desc: '+12 V (DB-25 pin 20).', expect: '+11.3 to +12.5 V' },
+  { n: 5, name: '-12 V', type: 'power', desc: '-12 V (DB-25 pin 23; bracketed in Apple\'s table).', expect: '-12 V' },
+  { n: 6, name: '+5 V', type: 'power', desc: '+5 V (DB-25 pin 7).', expect: '+5 V' },
+  { n: 7, name: '+12 V', type: 'power', desc: '+12 V (DB-25 pin 19).', expect: iic ? '+12 V (IIc supply: ±10 %, 10.8 to 13.2 V)' : '+12 V' },
+  { n: 8, name: '+12 V', type: 'power', desc: '+12 V (DB-25 pin 20).', expect: iic ? '+12 V (IIc supply: ±10 %, 10.8 to 13.2 V)' : '+12 V' },
   { n: 9, name: 'ENBL B', type: 'ctrl', desc: `Enable, second drive (DB-25 pin 8). Active LOW as on the Disk II.${iic ? ' On a IIc external port this pin is /EXTINT instead (IIc TRM Table 11-18).' : ''}`, expect: 'LOW while drive 2 runs' },
   { n: 10, name: 'WR PROT', type: 'io', desc: 'Write-protect status (DB-25 pin 12).' },
   { n: 11, name: 'Φ0', type: 'io', desc: 'Stepper phase 0 (DB-25 pin 15).' },
@@ -793,7 +793,7 @@ const ctrlDb19 = (iic) => [
   { n: 13, name: 'Φ2', type: 'io', desc: 'Stepper phase 2 (DB-25 pin 17).' },
   { n: 14, name: 'Φ3', type: 'io', desc: 'Stepper phase 3 (DB-25 pin 18).' },
   { n: 15, name: '/WR REQ', type: 'ctrl', desc: 'Write request (DB-25 pin 5).', expect: 'HIGH; LOW only while writing' },
-  { n: 16, name: '+5 V', type: 'power', desc: `+5 V (DB-25 pin 24).${iic ? ' Not connected on a IIc external port (IIc TRM Table 11-18).' : ''}`, expect: '+4.75 to +5.25 V on a controller card' },
+  { n: 16, name: '+5 V', type: 'power', desc: `+5 V (DB-25 pin 24).${iic ? ' Not connected on a IIc external port (IIc TRM Table 11-18).' : ''}`, expect: '+5 V on a controller card' },
   { n: 17, name: 'ENBL A', type: 'ctrl', desc: 'Enable, first drive (DB-25 pin 11). Active LOW.', expect: 'LOW while drive 1 runs', ...(iic ? { conflict: 'The IIc TRM names this pin DR2* in Figure 11-26 and DR1* in Table 11-18; on the IIc it enables the external drive (drive 2).' } : {}) },
   { n: 18, name: 'RD DATA', type: 'io', desc: 'Read pulses (DB-25 pin 3).', expect: 'Pulse train while reading' },
   { n: 19, name: 'WR DATA', type: 'io', desc: 'Write data (DB-25 pin 6).' },
@@ -806,7 +806,7 @@ const duoDb25Pins = [
   { n: 4, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 2).', expect: '0 V' },
   { n: 5, name: 'WR REQ', type: 'ctrl', desc: 'Write request (DB-19 pin 15).' },
   { n: 6, name: 'WR DATA', type: 'io', desc: 'Write data (DB-19 pin 19).' },
-  { n: 7, name: '+5 V', type: 'power', desc: '+5 V (DB-19 pin 6).', expect: '+4.75 to +5.25 V' },
+  { n: 7, name: '+5 V', type: 'power', desc: '+5 V (DB-19 pin 6).', expect: '+5 V' },
   { n: 8, name: 'ENBL B', type: 'ctrl', desc: 'Enable, drive 2 (right-hand drive) (DB-19 pin 9).' },
   { n: 9, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 3).', expect: '0 V' },
   { n: 10, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 4).', expect: '0 V' },
@@ -818,12 +818,12 @@ const duoDb25Pins = [
   { n: 16, name: 'Φ1', type: 'io', desc: 'Stepper phase 1 (DB-19 pin 12).' },
   { n: 17, name: 'Φ2', type: 'io', desc: 'Stepper phase 2 (DB-19 pin 13).' },
   { n: 18, name: 'Φ3', type: 'io', desc: 'Stepper phase 3 (DB-19 pin 14).' },
-  { n: 19, name: '+12 V', type: 'power', desc: '+12 V (DB-19 pin 7).', expect: '+11.3 to +12.5 V' },
-  { n: 20, name: '+12 V', type: 'power', desc: '+12 V (DB-19 pin 8; Apple\'s table prints "12 volts").', expect: '+11.3 to +12.5 V' },
+  { n: 19, name: '+12 V', type: 'power', desc: '+12 V (DB-19 pin 7).', expect: '+12 V' },
+  { n: 20, name: '+12 V', type: 'power', desc: '+12 V (DB-19 pin 8; Apple\'s table prints "12 volts").', expect: '+12 V' },
   { n: 21, name: 'GND', type: 'ground', desc: 'Ground (DB-19 pin 3).', expect: '0 V' },
   { n: 22, name: 'NC', type: 'nc', desc: 'Not connected.' },
-  { n: 23, name: '-12 V', type: 'power', desc: '-12 V (DB-19 pin 5).', expect: '-11 to -13 V' },
-  { n: 24, name: '+5 V', type: 'power', desc: '+5 V (DB-19 pin 16).', expect: '+4.75 to +5.25 V' },
+  { n: 23, name: '-12 V', type: 'power', desc: '-12 V (DB-19 pin 5).', expect: '-12 V' },
+  { n: 24, name: '+5 V', type: 'power', desc: '+5 V (DB-19 pin 16).', expect: '+5 V' },
   { n: 25, name: 'NC', type: 'nc', desc: 'Not connected.' },
 ];
 
@@ -848,7 +848,7 @@ const driveConnectors = {
       verifiedAgainst: 'Apple Tech Info Library TA37054 (5.25 controller DB-19 pinout); Apple IIc TRM Figure 11-26 and Table 11-18',
       summary: 'On a II, II Plus or IIe this is the DB-19 on the UniDisk controller card ribbon (same card as the DuoDisk\'s), carrying ENBL A on 17 and ENBL B on 9 for two drives. On a IIc it is the external drive port (2c-disk): one drive only, pin 9 is /EXTINT and pin 16 is unconnected. The UniDisk\'s own rear DB-19 socket passes the chain to a second UniDisk; its pin table is not in the documents found. Numbered as Apple draws the socket: pin 1 at the top right.',
       pins: ctrlDb19(true),
-      sources: [DUOCABLE_SRC, { label: 'Apple IIc Technical Reference Manual, disk drive connector, Figure 11-26 / Table 11-18, p. 274', url: IIC(301) }, { label: 'UniDisk Owner\'s Manual, connecting a second UniDisk (daisy chain)', url: UNIMAN(13) }, { label: 'A2DP photo: UniDisk 5.25 back (daisy-chain DB-19 socket, captive cable)', url: UNIBACK }] },
+      sources: [DUOCABLE_SRC, { label: 'Apple IIc Technical Reference Manual, Table 11-4 internal converter (+12 V ±10 %), p. 234', url: IIC(261) },{ label: 'Apple IIc Technical Reference Manual, disk drive connector, Figure 11-26 / Table 11-18, p. 274', url: IIC(301) }, { label: 'UniDisk Owner\'s Manual, connecting a second UniDisk (daisy chain)', url: UNIMAN(13) }, { label: 'A2DP photo: UniDisk 5.25 back (daisy-chain DB-19 socket, captive cable)', url: UNIBACK }] },
   ],
 };
 
@@ -1011,9 +1011,9 @@ const d2Power = {
   },
   rails: [
     { rail: '+5 V', expect: '4.75-5.25 V (Sams: 5.0 V at C4 +)', where: '3470 pin 11; 74LS125 pin 14; disk2-ribbon pins 11, 12', note: 'Logic. Nothing on the analog card tolerates +12 V here.' },
-    { rail: '+12 V', expect: '11.3-12.5 V (Sams: 11.6 V at Q1 emitter)', where: '2003 pin 9; 3470 pin 18; disk2-ribbon pins 13, 15, 17, 19', note: 'Motor, stepper, read amp and write driver.' },
+    { rail: '+12 V', expect: '+12 V nominal (Sams: 11.6 V at Q1 emitter)', where: '2003 pin 9; 3470 pin 18; disk2-ribbon pins 13, 15, 17, 19', note: 'Motor, stepper, read amp and write driver.' },
     { rail: '+12 V gated', expect: 'About 11.6 V with the drive enabled; 0 V off', where: 'Q1 (MPSU51) collector; edge contacts 10, 11, 12', note: 'Switched by the 2003 from /ENBL. Missing: Q1 or the 2003.' },
-    { rail: '-12 V', expect: '-11 to -13 V (Sams: -12.0 V at C5 -)', where: 'disk2-ribbon pin 9; C5', note: 'Comparator offset network (R28).' },
+    { rail: '-12 V', expect: '-12 V (Sams: -12.0 V at C5 -)', where: 'disk2-ribbon pin 9; C5', note: 'Comparator offset network (R28).' },
     { rail: 'Controller +5 V (switched)', expect: '+5 V only while a drive is on', where: 'P6 pin 20; 74LS174 pin 16', note: 'Q3 (MPSU51) on the interface card. P5 pin 20 is switched by Q1/Q2 from /I/O SELECT.' },
   ],
   testPoints: [
@@ -1045,7 +1045,7 @@ const d2Power = {
   firstTen: [
     { step: 1, check: 'Look before power', where: 'Analog card: C4 and the 74LS125', expect: 'C4 (470 µF) whole, no scorching round the 74LS125',
       ifNot: 'Burst C4 or a cooked 74LS125: +12 V reached the 5 V net (offset ribbon or a card fitted with power on). Replace both and check the ribbon plug.', source: { label: 'Disk ][ Technical Procedures, visual inspection (C4 and the 74LS125), p. 5.5', url: D2TP(57) } },
-    { step: 2, check: 'Rails on the ribbon', where: 'disk2-ribbon pins 11, 12 (+5 V); disk2-ribbon pins 13, 15, 17, 19 (+12 V); disk2-ribbon pin 9 (-12 V)', expect: '+4.75 to +5.25 V; +11.3 to +12.5 V; -11 to -13 V',
+    { step: 2, check: 'Rails on the ribbon', where: 'disk2-ribbon pins 11, 12 (+5 V); disk2-ribbon pins 13, 15, 17, 19 (+12 V); disk2-ribbon pin 9 (-12 V)', expect: '+5 V; +12 V; -12 V',
       ifNot: 'Present at the slot but not at the drive: the ribbon or the interface card. Low +12 V with the motor on: check the computer supply.', source: d2Sources.analog },
     { step: 3, check: 'Drive enable', where: 'disk2-ribbon pin 14', expect: 'LOW after PR#6 or any disk access; HIGH again about 1 s after the last access',
       ifNot: 'Stays HIGH: the interface card. LOW but no motor: Q1 (MPSU51) or the 2003 on the analog card.', source: d2Sources.sather },
@@ -1068,8 +1068,8 @@ const d2Power = {
 
 const ctrlRails = (iic) => [
   { rail: '+5 V', expect: '4.75-5.25 V', where: `uni-db19 pin 6${iic ? '' : ' and pin 16'}`, note: iic ? 'IIc: from the internal converter (1.5 A total for the whole machine).' : 'From slot pin 25 through the controller card.' },
-  { rail: '+12 V', expect: '11.3-12.5 V', where: 'uni-db19 pins 7, 8', note: iic ? 'IIc: 0.6 A continuous (0.9 A intermittent, 1.5 A surge under 100 ms) for the whole machine, shared with the built-in drive.' : 'From slot pin 50; motor and stepper.' },
-  { rail: '-12 V', expect: '-11 to -13 V', where: 'uni-db19 pin 5', note: iic ? 'IIc: 100 mA max.' : 'From slot pin 33. The UniDisk 5.25 needs it; the later Apple 5.25 Drive does not.' },
+  { rail: '+12 V', expect: iic ? '10.8-13.2 V (+12 V ±10 %, IIc TRM Table 11-4)' : '+12 V nominal', where: 'uni-db19 pins 7, 8', note: iic ? 'IIc: 0.6 A continuous (0.9 A intermittent, 1.5 A surge under 100 ms) for the whole machine, shared with the built-in drive.' : 'From slot pin 50; motor and stepper.' },
+  { rail: '-12 V', expect: '-12 V', where: 'uni-db19 pin 5', note: iic ? 'IIc: 100 mA max.' : 'From slot pin 33. The UniDisk 5.25 needs it; the later Apple 5.25 Drive does not.' },
 ];
 
 const drivePower = {
@@ -1089,8 +1089,8 @@ const drivePower = {
     },
     rails: [
       { rail: '+5 V', expect: '4.75-5.25 V', where: 'duo-db25 pins 7, 24 (duo-db19 pins 6, 16)', note: 'From slot pin 25 through the controller card.' },
-      { rail: '+12 V', expect: '11.3-12.5 V', where: 'duo-db25 pins 19, 20 (duo-db19 pins 7, 8)', note: 'From slot pin 50; motors and steppers of both drives.' },
-      { rail: '-12 V', expect: '-11 to -13 V', where: 'duo-db25 pin 23 (duo-db19 pin 5)', note: 'From slot pin 33.' },
+      { rail: '+12 V', expect: '+12 V nominal', where: 'duo-db25 pins 19, 20 (duo-db19 pins 7, 8)', note: 'From slot pin 50; motors and steppers of both drives.' },
+      { rail: '-12 V', expect: '-12 V', where: 'duo-db25 pin 23 (duo-db19 pin 5)', note: 'From slot pin 33.' },
     ],
     testPoints: [
       { tp: 'Speed (DSPEED)', where: 'Adjustment hole under each drive, near the front', expect: '"Good" range on the Apple 5.25-Inch Disk Drive Diagnostic, as close to 0 as possible; keep the unit flat' },
@@ -1101,7 +1101,7 @@ const drivePower = {
     firstTen: [
       { step: 1, check: 'Fit with the power off', where: 'Controller card in slot 6 and cable 590-0114', expect: 'Card and cable fitted with the computer off',
         ifNot: 'Fuzz on the analog card means C21 burst because the card went in with power on: check the 74LS125 and C21, or return the card.', source: { label: 'DuoDisk Technical Procedures, chip-swap notes (C21), p. 4.5', url: DUOTP(23) } },
-      { step: 2, check: 'Rails at the drive', where: 'duo-db25 pins 7, 24 (+5 V); duo-db25 pins 19, 20 (+12 V); duo-db25 pin 23 (-12 V)', expect: '+4.75 to +5.25 V; +11.3 to +12.5 V; -11 to -13 V',
+      { step: 2, check: 'Rails at the drive', where: 'duo-db25 pins 7, 24 (+5 V); duo-db25 pins 19, 20 (+12 V); duo-db25 pin 23 (-12 V)', expect: '+5 V; +12 V; -12 V',
         ifNot: 'Present at the card but not at the drive: cable 590-0114.', source: DUOCABLE_SRC },
       { step: 3, check: 'Motor', where: 'Drive 1 (the left-hand drive)', expect: 'Motor runs when you boot a system disk on a known-good Apple',
         ifNot: 'Swap in order: interface card, cable, analog board, mechanical assembly.', source: { label: 'DuoDisk Technical Procedures, troubleshooting flowchart, p. 4.2', url: DUOTP(21) } },
@@ -1145,7 +1145,7 @@ const drivePower = {
     ],
     sources: [{ label: 'Apple IIc Technical Reference Manual, IWM pinouts, pp. 247-248', url: IIC(274) }, DUOCABLE_SRC, { label: 'DuoDisk Technical Procedures, same mechanism in DuoDisk, UniDisk and Apple 5.25 Drive, p. 2.2', url: DUOTP(8) }],
     firstTen: [
-      { step: 1, check: 'Port or card power', where: 'uni-db19 pin 6 (+5 V); uni-db19 pins 7, 8 (+12 V); uni-db19 pin 5 (-12 V)', expect: '+4.75 to +5.25 V; +10.8 to +13.2 V on a IIc (+11.3 to +12.5 V on a card); -11 to -13 V',
+      { step: 1, check: 'Port or card power', where: 'uni-db19 pin 6 (+5 V); uni-db19 pins 7, 8 (+12 V); uni-db19 pin 5 (-12 V)', expect: '+5 V; +12 V (10.8 to 13.2 V on a IIc: ±10 %, IIc TRM Table 11-4); -12 V',
         ifNot: 'Missing on a IIc: the internal converter (it also feeds the built-in drive). On a card: the card or the slot supply.', source: { label: 'Apple IIc Technical Reference Manual, Table 11-4 internal converter, p. 234', url: IIC(261) } },
       { step: 2, check: 'Drive count', where: 'Controller card plate or IIc rear port', expect: 'At most two UniDisks on one controller card; one on a IIc port',
         ifNot: 'A third or fourth drive needs a second card. The IIc port power is for one drive only.', source: { label: 'Apple IIc Technical Reference Manual, Disk I/O warning (port power for a drive only), p. 273', url: IIC(300) } },
@@ -1238,7 +1238,7 @@ RCS.add({
     cpu6502: {
       id: 'cpu6502',
       replacements: [
-        { part: '65C02 (Rockwell, NCR or GTE, as in the Enhanced IIe)', kind: 'pin-compatible', note: 'On a IIe fit it only with the enhanced ROM set (342-0303 EF, 342-0304 CD, 342-0265 video); Apple calls any other mix of CPU and ROMs not acceptable.', source: { label: 'Apple IIe logic board identification, enhanced and unenhanced ROM sets, p. 1.2.2 (Apple page bound into the Sams CC10 scan)', url: SAMS2E(4), sams: true } },
+        { part: '65C02 (Rockwell, NCR or GTE, as in the Enhanced IIe)', kind: 'pin-compatible', verify: true, note: 'Documented for the IIe only; no 65C02 pin table seen for the other machines. On a IIe fit it only with the enhanced ROM set (342-0303 EF, 342-0304 CD, 342-0265 video); Apple calls any other mix of CPU and ROMs not acceptable.', source: { label: 'Apple IIe logic board identification, enhanced and unenhanced ROM sets, p. 1.2.2 (Apple page bound into the Sams CC10 scan)', url: SAMS2E(4), sams: true } },
         { part: 'WDC W65C02S', kind: 'modern', note: 'Still made, but pin 1 is VPB, an output, where the NMOS 6502 has ground (Vss); pins 5 (MLB) and 36 (BE) replace no-connects, and BE must be HIGH or the address, data and R/W buffers float.', source: { label: 'WDC W65C02S data sheet, Bus Enable (BE) and pinout, pp. 9-13', url: 'https://www.westerndesigncenter.com/wdc/documentation/w65c02s.pdf#page=9' } },
       ],
       name: '6502 / 65C02 CPU',
@@ -1325,6 +1325,7 @@ RCS.add({
         { label: 'Apple schematic 050-0051-D, Apple IIe (NTSC), sheet 1: MMU UE4 (box reads 344-0100), 6502 UC4 (PDF p. 2)', url: 'https://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/Computers/Apple%20II/Apple%20IIe/Schematics/Apple%20IIe%20-%20Schematics%20050-0051-D.pdf#page=2' },
         { label: 'Sams CC10 Apple IIe, parts list: UE4 Memory Management Unit 344-0010-B, UE5 Input/Output Unit 344-0020-A (scan p. 8)', url: SAMS2E(7), sams: true },
         { label: 'Understanding the Apple IIe (Sather)', url: 'https://archive.org/details/Understanding_the_Apple_IIe', verify: true },
+        { label: 'Understanding the Apple IIe (Sather), p. 7-2: CXXX is the overall $C000-$CFFF I/O enable signal', url: 'https://archive.org/details/Understanding_the_Apple_IIe/page/n169' },
       ],
       pins: [
         { n: 1, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
@@ -1350,7 +1351,7 @@ RCS.add({
         { n: 21, name: 'MD7', type: 'data', dir: 'bidir', desc: 'Data bit 7: the MMU reports its soft-switch state here (shared with the IOU).', terms: ['soft-switch'] },
         { n: 22, name: 'R/W245', type: 'ctrl', dir: 'out', desc: 'Direction control for the 74LS245 data-bus buffer.' },
         { n: 23, name: '/RAMEN', type: 'ctrl', dir: 'out', desc: 'Enables main RAM.', activeLow: true, terms: ['ras-cas'] },
-        { n: 24, name: 'Cxxx', type: 'ctrl', dir: 'out', desc: 'Enables peripheral-card memory ($C100-$CFFF slot ROM space).' },
+        { n: 24, name: 'Cxxx', type: 'ctrl', dir: 'out', desc: 'Enables the $C000-$CFFF I/O and peripheral decoding (built-in I/O at $C0xx and card space), subject to the ROM-select soft switches that take over parts of $C100-$CFFF.' },
         { n: 25, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+5 V' },
         { n: 26, name: 'A15', type: 'addr', dir: 'in', desc: 'Address bus bit 15.' },
         { n: 27, name: 'A14', type: 'addr', dir: 'in', desc: 'Address bus bit 14.' },
@@ -1392,6 +1393,7 @@ RCS.add({
         },
         { label: 'Apple schematic 050-0051-D, Apple IIe (NTSC), sheet 3 timing/video: IOU UE5, 344-0020 (PDF p. 4)', url: 'https://mirrors.apple2.org.za/Apple%20II%20Documentation%20Project/Computers/Apple%20II/Apple%20IIe/Schematics/Apple%20IIe%20-%20Schematics%20050-0051-D.pdf#page=4' },
         { label: 'Understanding the Apple IIe (Sather)', url: 'https://archive.org/details/Understanding_the_Apple_IIe', verify: true },
+        { label: 'Understanding the Apple IIe (Sather), p. 4-2: the IOU pulls RESET low at power-on', url: 'https://archive.org/details/Understanding_the_Apple_IIe/page/n75' },
       ],
       pins: [
         { n: 1, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'] },
@@ -1408,7 +1410,7 @@ RCS.add({
         { n: 12, name: 'AN2', type: 'io', dir: 'out', desc: 'Annunciator 2.' },
         { n: 13, name: 'AN3', type: 'io', dir: 'out', desc: 'Annunciator 3.' },
         { n: 14, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/Write from CPU.', terms: ['rw'] },
-        { n: 15, name: '/RESET', type: 'ctrl', dir: 'bidir', desc: 'Power-on and reset output (open drain). The IOU holds it LOW at power-up.', terms: ['reset', 'open-drain'], activeLow: true, probe: 'HIGH when running.' },
+        { n: 15, name: '/RESET', type: 'ctrl', dir: 'bidir', desc: 'Power-on reset: the IOU holds it LOW at power-up and also responds to RESET (Sather p. 4-2).', terms: ['reset'], activeLow: true, probe: 'HIGH when running.' },
         { n: 16, name: 'NC', type: 'nc', dir: '-', desc: 'No connection.' },
         { n: 17, name: 'RA0', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 0. The IOU drives video and refresh addresses in phase 1.', terms: ['mux'] },
         { n: 18, name: 'RA1', type: 'addr', dir: 'bidir', desc: 'Multiplexed RAM address 1. The IOU drives video and refresh addresses in phase 1.' },
@@ -1454,11 +1456,11 @@ RCS.add({
         { label: 'Apple IIe Technical Reference Manual, The Keyboard, p. 187', url: 'https://archive.org/details/Apple_IIe_Technical_Reference_Manual/page/n220' },
       ],
       pins: [
-        { n: 1, name: 'Option 1', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
-        { n: 2, name: 'Option 2', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
-        { n: 3, name: 'Option 3', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
-        { n: 4, name: 'Option 4', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
-        { n: 5, name: 'Option 5', type: 'ctrl', dir: 'in', desc: 'Option pin: function set by mask (external clock, lockout/rollover, complement, chip enable, any-key-down or B10).' },
+        { n: 1, name: 'Option 1', type: 'ctrl', dir: 'in', desc: 'Option pin (mask, data sheet p. 3-24): external clock input, or one of the three RC pins (1-3) of the internal oscillator.' },
+        { n: 2, name: 'Option 2', type: 'ctrl', dir: 'in', desc: 'Option pin (mask, data sheet p. 3-24): LO/RO (lockout or rollover select) or CC (complement control) input with an external clock; one of the RC oscillator pins (1-3) with the internal oscillator.' },
+        { n: 3, name: 'Option 3', type: 'ctrl', dir: 'in', desc: 'Option pin (mask, data sheet p. 3-24): CC (complement control) or CE (chip enable) input with an external clock; one of the RC oscillator pins (1-3) with the internal oscillator.' },
+        { n: 4, name: 'Option 4', type: 'ctrl', dir: 'bidir', desc: 'Option pin (mask, data sheet p. 3-24): CE input or AKO (any-key output) with an external clock; LO/RO, CC, CE or AKO with the internal oscillator. Input or output depending on the mask option.' },
+        { n: 5, name: 'Option 5', type: 'ctrl', dir: 'bidir', desc: 'Option pin (mask, data sheet p. 3-24): AKO (any-key output) or B10 (data output) with an external clock; CC, CE, AKO or B10 with the internal oscillator. Input or output depending on the mask option.' },
         { n: 6, name: 'B9', type: 'data', dir: 'out', desc: 'Key code bit 9.' },
         { n: 7, name: 'B8', type: 'data', dir: 'out', desc: 'Key code bit 8.' },
         { n: 8, name: 'B7', type: 'data', dir: 'out', desc: 'Key code bit 7.' },
@@ -1502,10 +1504,10 @@ RCS.add({
       name: '9316B / 2316B ROM 2K x 8',
       short: '9316B',
       family: 'Mask ROM (2316B type)',
-      role: 'Monitor, Integer BASIC and Applesoft ROMs',
+      role: '2K x 8 mask ROM: Apple II monitor and BASIC ROMs; TRS-80 ROM C and character generator',
       pkg: 'DIP-24',
       machines: ['apple2', 'apple2plus'],
-      summary: 'Six 24-pin sockets cover $D000-$FFFF with 2 KB mask ROMs, drawn in the manual as 9316B. /CS1 and /CS3 are active LOW and select the block; CS2 is active HIGH and follows /INH, so a card can disable every ROM. A 2716 EPROM has /CE, /OE and Vpp on pins 18, 20 and 21 with other polarities, so it needs an adapter or rewiring.',
+      summary: '24-pin 2 KB mask ROM with three chip selects (pins 18, 20, 21) whose polarity is set by the mask, so it depends on the part. Board wiring, by machine: Apple II and II Plus: six sockets cover $D000-$FFFF (drawn as 9316B); /CS1 (20) and /CS3 (21) are active LOW, tied together and driven by the 74LS138 at F12, one output per 2 KB block; CS2 (18) is active HIGH and follows the slot /INH line, so a card pulling /INH LOW turns every ROM off. TRS-80 Model III: ROM C (U106) has pin 18 grounded, pin 21 tied to +5 V and pin 20 driven by /ROMC (Technical Reference Fig. 6, p. 33). A 2716 EPROM has /CE, /OE and Vpp on pins 18, 20 and 21 with other polarities, so it needs an adapter or rewiring.',
       fails: ['No boot', 'Garbage'],
       heat: 'cool',
       verifiedAgainst: 'Apple II Reference Manual (1979), ROM Memory and Figure 13 (9316B pinout), pp. 94-95',
@@ -1515,6 +1517,7 @@ RCS.add({
           url: 'https://archive.org/details/Apple_II_Reference_Manual_1979_Apple/page/n105',
         },
         { label: 'Apple II Reference Manual (1979), ROM Memory, p. 94', url: 'https://archive.org/details/Apple_II_Reference_Manual_1979_Apple/page/n104' },
+        { label: 'TRS-80 Model III Technical Reference Manual, Figure 6 CPU schematic (U106 ROM C: pin 18 GND, 21 +5 V, 20 /ROMC), p. 33', url: 'https://archive.org/download/Model_III_Technical_Reference_Manual_1981_Tandy/Model_III_Technical_Reference_Manual_1981_Tandy.pdf#page=44' },
       ],
       pins: [
         { n: 1, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bus bit 7.' },
@@ -1534,10 +1537,10 @@ RCS.add({
         { n: 15, name: 'D5', type: 'data', dir: 'out', desc: 'Data bit 5 out.' },
         { n: 16, name: 'D6', type: 'data', dir: 'out', desc: 'Data bit 6 out.' },
         { n: 17, name: 'D7', type: 'data', dir: 'out', desc: 'Data bit 7 out.' },
-        { n: 18, name: 'CS2', type: 'ctrl', dir: 'in', desc: 'Chip select, active HIGH. Common to all six ROMs and tied to the slot /INH line, so a card pulling /INH LOW turns every ROM off. (2716: /CE.)', probe: 'HIGH unless a card asserts /INH' },
+        { n: 18, name: 'CS2', type: 'ctrl', dir: 'in', desc: 'Chip select; polarity set by the mask (board wiring in the summary). (2716: /CE.)' },
         { n: 19, name: 'A10', type: 'addr', dir: 'in', desc: 'Address bus bit 10.' },
-        { n: 20, name: '/CS1', type: 'ctrl', dir: 'in', desc: 'Chip select, active LOW. Tied to /CS3 and driven by the 74LS138 at F12, one output per 2 KB block. (2716: /OE.)', probe: 'Pulses LOW when the CPU reads this ROM block', activeLow: true },
-        { n: 21, name: '/CS3', type: 'ctrl', dir: 'in', desc: 'Chip select, active LOW, tied to /CS1. (2716: Vpp, +5 V in read mode.)', probe: 'Same pulses as pin 20', activeLow: true },
+        { n: 20, name: 'CS1', type: 'ctrl', dir: 'in', desc: 'Chip select; polarity set by the mask (board wiring in the summary). (2716: /OE.)', probe: 'Pulses when the CPU reads this ROM' },
+        { n: 21, name: 'CS3', type: 'ctrl', dir: 'in', desc: 'Chip select; polarity set by the mask (board wiring in the summary). (2716: Vpp, +5 V in read mode.)' },
         { n: 22, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bus bit 9.' },
         { n: 23, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bus bit 8.' },
         { n: 24, name: '+5V', type: 'power', dir: '-', desc: '+5 V.', terms: ['vcc'], probe: '+5 V' },
@@ -1836,7 +1839,7 @@ RCS.add({
         { n: 11, name: '/RESET', type: 'ctrl', dir: 'in', desc: 'Master reset; resets the GLU.', activeLow: true },
         { n: 12, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', probe: '0 V' },
         { n: 13, name: '/GLUEN', type: 'ctrl', dir: 'in', desc: 'Enables the GLU.', verify: true, activeLow: true },
-        { n: 14, name: 'MD7', type: 'data', dir: 'bidir', desc: 'Status of MMU flags on data bit 7.' },
+        { n: 14, name: 'MD7', type: 'data', dir: 'bidir', desc: 'Status of MMU flags on data bit 7.', verify: true },
         { n: 15, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read/write qualifier from the processor.' },
         { n: 16, name: 'TEXT', type: 'video', dir: 'out', desc: 'Video timing signal for double hi-res or non-graphics modes.', verify: true },
         { n: 17, name: 'NC', type: 'nc', dir: '-', desc: 'Not used.' },
@@ -1988,8 +1991,9 @@ RCS.add({
           { label: 'Apple II Reference Manual (1979), Figure 21 side layout, p. 106', url: IIRM(116) },
         ] },
       { id: '2e-aux', name: 'Auxiliary slot (60-pin edge)', kind: '60-pin card edge, 0.10 in pitch', geo: 'edge-30x30-seq',
+        verify: true,
         verifiedAgainst: 'Apple IIe Technical Reference Manual (1985), Table 7-21, pp. 198-199',
-        summary: 'Takes the 80-column / extended 80-column card. Carries most of the internal video and RAM-timing signals, so it is the best probe point on the board. The TRM gives pin numbers only; the drawing assumes 1-30 on one side and 31-60 on the other, like the slots.',
+        summary: 'Takes the 80-column / extended 80-column card. Carries most of the internal video and RAM-timing signals, so it is the best probe point on the board. The TRM gives pin numbers only, not which side or end they start from; the drawing assumes 1-30 on one side and 31-60 on the other, like the slots, and is not checked.',
         pins: [
           { n: 1, name: '3.58M', type: 'clock', desc: '3.58 MHz colour reference.', expect: '3.58 MHz' },
           { n: 2, name: 'VID7M', type: 'clock', desc: 'Clocks the video dots out of the 74166 shift register.' },

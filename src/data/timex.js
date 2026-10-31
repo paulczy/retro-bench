@@ -13,7 +13,7 @@ const um15 = label => ({ label: `Timex Sinclair 1500 User Manual (1983), ${label
 const ZX81SM = { label: 'Sinclair ZX81 Service and Assembly Manual (transcribed), sec. 9 Power supply, p. 8', url: 'https://k1.spdns.de/Vintage/Sinclair/80/Sinclair%20ZX81/Service%20and%20Assembly%20Manual/ZX81%20Service%20and%20Assembly%20Manual%20(transcribed).pdf#page=8' };
 const SUBSET = { label: 'SYNTAX v4 n12 (Dec 1983) p. 1, ZX/TS subset of 2068 pins', url: 'https://archive.org/details/SyntaxMagazine/Syntax%20v4n12/page/n1' };
 const AYDM = { label: 'General Instrument AY-3-8910/8912 Data Manual (transcription), sec. 2.2-2.3 pin functions, p. 11-12', url: 'https://cdn.hackaday.io/files/1689687229126912/AY-3-8910-manual.pdf#page=11' };
-const SUM = { label: 'SUM v4 n1 (Jan 1986) p. 5, 2068 power supply: make it cooler and quieter (outer contact positive)', url: 'https://archive.org/details/SinclairTimexUsersMagazine/SUM%20v4%20n1/page/n5' };
+const SUM = { label: 'SUM v4 n1 (Jan 1986) p. 5, 2068 power supply: make it cooler and quieter (outer contact positive)', url: 'https://archive.org/details/SinclairTimexUsersMagazine/SUM%20v4%20n1/page/n4' };
 
 /* chip pin and connector pin helpers; a leading / sets activeLow */
 const p = (n, name, type, dir, desc, x = {}) => Object.assign({ n, name, type, dir, desc }, name.startsWith('/') ? { activeLow: true } : {}, x);
@@ -159,7 +159,7 @@ RCS.add({
         p(12, 'IOA2', 'io', 'bidir', 'Port A bit 2, on-chip pull-up.', { terms: ['pullup'] }),
         p(13, 'IOA1', 'io', 'bidir', 'Port A bit 1, on-chip pull-up.', { terms: ['pullup'] }),
         p(14, 'IOA0', 'io', 'bidir', 'Port A bit 0, on-chip pull-up.', { terms: ['pullup'] }),
-        p(15, 'CLOCK', 'clock', 'in', 'Timing reference for tone, noise and envelope.', { terms: ['clock'], probe: 'A steady clock at the board PSG rate (see the machine test points: 1.764 MHz TS2068, 1.7734 MHz Spectrum 128, 1 MHz CPC).' }),
+        p(15, 'CLOCK', 'clock', 'in', 'Timing reference for tone, noise and envelope.', { terms: ['clock'], probe: 'A steady clock at the board PSG rate (see the machine test points).' }),
         p(16, '/RESET', 'ctrl', 'in', 'LOW clears all registers. On-chip pull-up.', { terms: ['reset'] }),
         p(17, 'A8', 'addr', 'in', 'Extra chip-select address bit, on-chip pull-up; most boards tie it HIGH.'),
         p(18, 'BDIR', 'ctrl', 'in', 'Bus direction. With BC1 (BC2 HIGH): 0 0 inactive, 0 1 read, 1 0 write, 1 1 latch address.'),
@@ -316,7 +316,7 @@ RCS.add({
       { id: 'ts2068-power', name: 'Power in (AC adapter)', kind: 'DC barrel, 5.5 mm OD x 2.5 mm pin', geo: 'barrel', gender: 'female',
         verifiedAgainst: 'TS2068 Technical Manual sec. 2.1.1 and 2.4.5 (mini-power plug detail)',
         summary: 'Unregulated 14-25 V DC at 1 A. CENTRE NEGATIVE: the 2.5 mm (.097 in) centre is DC return and the .218 in sleeve is positive. A ZX81/TS1000 9 V adapter is too low.',
-        pins: [c(1, 'GND (DC return)', 'ground', 'Centre contact.', { expect: '0 V' }), c(2, '+15 V DC (unregulated)', 'power', 'Sleeve. Through the power switch to the regulators and P1 B3.', { expect: '+14 to +25 V DC; about 21 V unloaded' })],
+        pins: [c(1, 'GND (DC return)', 'ground', 'Centre contact.', { expect: '0 V' }), c(2, '+15 V DC (unregulated)', 'power', 'Sleeve. Through the power switch to the regulators and P1 B3.', { expect: '+14 to +25 V DC (manual); SUM measured about 21 V from the stock adapter' })],
         sources: [tm('2.4.5 AC adapter power plug, p. 63', 71), tm('2.1.1 AC adapter, 2.1.2 voltage regulation, p. 8', 16), SUM], terms: [] },
       { id: 'ts2068-tv', name: 'TV RF output', kind: 'RCA phono, VHF', geo: 'rca', gender: 'female',
         verifiedAgainst: 'TS2068 Technical Manual sec. 2.4.7',
@@ -349,9 +349,9 @@ RCS.add({
           c(9, 'GND', 'ground', 'Power ground per Table 2.4.4-1.', { expect: 'Often open: not connected on stock boards', conflict: 'Table 2.4.4-1 lists pin 9 GND; the Appendix D corrections say the trace was left off the TS2068 PCB, and Technical Memo #6 lists pin 9 unused.' })
         ],
         sources: [tm('Table 2.4.4-1 joystick connector, p. 63', 71), tm('2.1.7 Joystick port operation, p. 33', 41), tm('Appendix D schematic corrections, p. 288', 167), MEMO6], terms: [] },
-      { id: 'ts2068-dock', name: 'Cartridge dock (J4, 2 x 18)', kind: 'Card-edge socket under the TCC door, 18 + 18 contacts', geo: 'edge-18x18-odd-even', pin1: 'right', keys: [2],
+      { id: 'ts2068-dock', name: 'Cartridge dock (J4, 2 x 18)', kind: 'Card-edge socket under the TCC door, 18 + 18 contacts', geo: 'edge-18x18-odd-even', rowA: 'bottom', keys: [2],
         verifiedAgainst: 'TS2068 Technical Manual Table 2.4.2-1 and Figure 2.4.2-2; Timex Technical Memo #6',
-        summary: 'The Timex Command Cartridge (ROS) dock. Odd pins meet the cartridge non-component side, even pins the component side. The manual figure (view from front) has the even row on top with 2 at the left; this drawing is that view turned half a turn, so check by number. Fingers 2 and 36 are long so +5 V and GND make first. Memo #6 puts the cartridge slot between pins 4 and 6. Clean the contacts before blaming the SCLD.',
+        summary: 'The Timex Command Cartridge (ROS) dock. Odd pins meet the cartridge non-component side, even pins the component side. Drawn as the manual figure (view from front): even row on top with 2 at the upper left, odd row below with 1 at the lower left. Fingers 2 and 36 are long so +5 V and GND make first. Memo #6 puts the cartridge slot between pins 4 and 6. Clean the contacts before blaming the SCLD.',
         pins: [
           c(1, 'A14B', 'addr', 'Address bit 14, buffered.'), c(2, '+5 V', 'power', '+5 V DC.', { expect: '+4.75 to +5.25 V' }), c(3, 'A12', 'addr', 'Address bit 12.'),
           c(4, 'A13B', 'addr', 'Address bit 13, buffered.'), c(5, 'D0', 'data', 'Data bit 0.'), c(6, 'D7', 'data', 'Data bit 7.'),
@@ -467,11 +467,11 @@ RCS.add({
       sources: [UM1500]
     },
     ts2068: {
-      supply: { external: true, name: 'Timex TS2068 AC adapter (DVE make; part number not confirmed)', output: '14-25 V DC unregulated at 1 A (15 V 1 A nominal; about 21 V unloaded)',
+      supply: { external: true, name: 'Timex TS2068 AC adapter (DVE make; part number not confirmed)', output: '14-25 V DC unregulated at 1 A (15 V 1 A nominal; SUM reports about 21 V from the stock adapter)',
         connector: 'ts2068-power',
         notes: [
           'Centre NEGATIVE: the centre pin is DC return and the sleeve is positive. Most modern adapters are centre positive.',
-          'Needs at least about 15 V: below that the colour drops out and some peripherals stop. Running nearer 15-16 V than the 21 V unloaded output cuts the heat inside.',
+          'Needs at least about 15 V: below that the colour drops out and some peripherals stop. Running nearer 15-16 V than the 21 V or so from the stock adapter cuts the heat inside.',
           'Above about 13 V the 78S40 switching regulator puts noise on SPKR/TAPE OUT; noisy tape saves can be the supply, not the SCLD (SUM v4 n1).',
           'The raw input also feeds P1 B3. Peripherals drawing on the internal supply have killed the regulator and taken RAM with it (Sinc-Link v7 n1).',
           'Do not use a 9 V ZX81/TS1000 adapter. A substitute must be DC, at least 1 A, centre negative, and inside 14.75-26 V.'
@@ -480,7 +480,7 @@ RCS.add({
           { label: 'Sinc-Link v7 n1 (Jan/Feb 1989) p. 9-10, Power supply and the 2068', url: 'https://archive.org/details/SincLink/Sinc-Link%20Vol%2007%20No%201/page/n9' },
           { label: 'Old Computer Museum: Timex Sinclair 2068 (DVE supply, 15 V 1 A DC)', url: 'https://context.oldcomputermuseum.com/timex_sinclair2068.html', verify: true }] },
       rails: [
-        { rail: 'Power in', expect: '14-25 V DC (about 21 V unloaded)', where: 'Barrel sleeve; P1 B3 after the switch', note: 'Unregulated. Absolute range 14.75-26 V (sec. 2.3).' },
+        { rail: 'Power in', expect: '14-25 V DC (SUM: about 21 V from the stock adapter)', where: 'Barrel sleeve; P1 B3 after the switch', note: 'Unregulated. Absolute range 14.75-26 V (sec. 2.3).' },
         { rail: '+5 V', expect: '4.75-5.25 V', where: '78S40 switching regulator U1 output; Z80A pin 11; SCLD pin 43; AY-3-8912 pin 3; P1 B4', note: '200 mA to 1 A load.' },
         { rail: '+12 V', expect: '11.5-12.5 V', where: '78L12 regulator U8 output', note: '20-100 mA load.' },
         { rail: 'GND', expect: '0 V', where: 'Z80A pin 29; SCLD pin 26; AY-3-8912 pin 6', note: 'Common return.' }

@@ -53,7 +53,7 @@ const expansion = (mid, src) => ({
     c(15, 'A3', 'addr', 'Address bit 3.'), c(16, 'A2', 'addr', 'Address bit 2.'), c(17, 'A1', 'addr', 'Address bit 1.'), c(18, 'A0', 'addr', 'Address bit 0.'),
     c(19, 'D7', 'data', 'Data bit 7.'), c(20, 'D6', 'data', 'Data bit 6.'), c(21, 'D5', 'data', 'Data bit 5.'), c(22, 'D4', 'data', 'Data bit 4.'),
     c(23, 'D3', 'data', 'Data bit 3.'), c(24, 'D2', 'data', 'Data bit 2.'), c(25, 'D1', 'data', 'Data bit 1.'), c(26, 'D0', 'data', 'Data bit 0.'),
-    c(27, '+5 V', 'power', 'Computer +5 V, straight from the monitor supply.', { expect: V5 }),
+    c(27, '+5 V', 'power', 'Computer +5 V, straight from the monitor supply.', { expect: '+5 V DC' }),
     c(28, '/MREQ', 'ctrl', 'Z80 memory request.'), c(29, '/M1', 'ctrl', 'Z80 machine cycle one.'), c(30, '/RFSH', 'ctrl', 'Z80 refresh.'),
     c(31, '/IORQ', 'ctrl', 'Z80 I/O request.'), c(32, '/RD', 'ctrl', 'Z80 read.'), c(33, '/WR', 'ctrl', 'Z80 write.'), c(34, '/HALT', 'ctrl', 'Z80 halt (the manual table prints HALT).'),
     c(35, '/INT', 'ctrl', 'Interrupt request; the Gate Array drives it (300 per second).'), c(36, '/NMI', 'ctrl', 'Non-maskable interrupt.'),
@@ -83,8 +83,9 @@ const printer = (mid, src, extra = '') => ({
     c(9, 'GND (D7)', 'ground', 'Tied to 0 V where a Centronics port has D7.', { expect: '0 V' }),
     c(11, 'BUSY', 'ctrl', 'Printer busy, read on 8255 port B bit 6. The computer waits while it is HIGH or the printer is off line.'),
     c(14, 'GND', 'ground', GND, { expect: '0 V' }), c(16, 'GND', 'ground', GND, { expect: '0 V' }),
-    ...[19, 20, 21, 22, 23, 24, 25, 26, 28, 33].map(n => c(n, 'GND', 'ground', 'Ground return.', { expect: '0 V' })),
-    ...[10, 12, 13, 15, 17, 27, 29, 30, 31, 32, 34, 35].map(n => c(n, 'NC', 'nc', 'Not connected.'))
+    ...[19, 20, 21, 22, 23, 24, 25, 26, ...(mid === 'cpc6128' ? [] : [27]), 28, 33].map(n => c(n, 'GND', 'ground', 'Ground return.', { expect: '0 V' })),
+    ...[10, 12, 13, 15, 17, 29, 30, 31, 32, 34, 35].map(n => c(n, 'NC', 'nc', 'Not connected.')),
+    ...(mid === 'cpc6128' ? [c(27, 'NC', 'nc', 'Not connected according to the 6128 user manual.', { conflict: 'The 6128 user manual (ch. 7, p. 41) leaves pin 27 out (NC); the 6128 service manual CPU schematic (pp. 19-20) lists it with the grounds. Check the board before using it.', verify: true })] : [])
   ],
   sources: [...src, W_PRN], terms: ['edge-connector', 'strobe']
 });
@@ -128,9 +129,9 @@ const fiveV = (mid, src, verify) => Object.assign({
   id: `${mid}-5v`, name: '5V DC socket (from the monitor)', kind: 'DC jack (Hosiden HEC0470-01-630, Amstrad part 170024; spec sheet calls it a 5 mm socket)', geo: 'barrel', gender: 'female',
   verifiedAgainst: 'CPC6128 service manual cassette control circuit diagram (J301: +5 V on the pin); parts lists (J104 on the 464, J301 on the 664/6128, same part 170024)',
   summary: 'The only supply input: regulated +5 V from the monitor (GT64/GT65, CTM640/CTM644) or the MP-1/MP-2 modulator. Centre pin positive. Nothing in the computer regulates it, so 5.5 V on this pin reaches every chip. Measure the monitor lead unloaded and on load before plugging it in.',
-  pins: [c(1, '+5 V', 'power', 'Centre pin. Regulated +5 V from the monitor.', { expect: V5 }), c(2, 'GND', 'ground', 'Outer sleeve.', { expect: '0 V' })],
+  pins: [c(1, '+5 V', 'power', 'Centre pin. Regulated +5 V from the monitor.', { expect: '+5 V DC', ...(verify ? { verify: true } : {}) }), c(2, 'GND', 'ground', 'Outer sleeve.', { expect: '0 V', ...(verify ? { verify: true } : {}) })],
   sources: src, terms: ['regulator']
-}, verify ? { verify: true } : {});
+}, verify ? { verify: true, summary: 'The only supply input: regulated +5 V from the monitor (GT64/CTM640) or the MP-1 modulator. Nothing in the computer regulates it, so 5.5 V on this pin reaches every chip. Measure the monitor lead unloaded and on load before plugging it in. The 464 sources label the socket +5 V and 0 V but do not say which contact is the centre; centre positive is taken from the 664 and 6128 drawing of the same part (verify).' } : {});
 
 const twelveV = (mid, src) => ({
   id: `${mid}-12v`, name: '12V DC lead (to the monitor, for the disc drive)', kind: 'DC plug on a flying lead (cord 14550401), centre negative', geo: 'barrel', gender: 'male',
@@ -211,7 +212,7 @@ RCS.add({
   chipLocations: {
     cpc464: { cpuz80: 'IC111 (Z8400APS)', crtc6845: 'IC108 (HD6845SP)', dram4164: 'IC117-IC124 (HM4864U-2; KM4164B-15 on later boards)', ppi8255: 'IC107 (M5L8255AP-5; TMP8255AP later)', ay8912: 'IC102' },
     cpc664: { cpuz80: 'IC111 (Z8400APS)', crtc6845: 'IC108 (HD6845SP)', dram4164: 'IC117-IC124 (HM4864U-2)', ppi8255: 'IC107 (M5L8255AP-5)', ay8912: 'IC102', rom23128: 'IC204 (AMSDOS ROM, TMM23128P-1951, Amstrad 40015)' },
-    cpc6128: { cpuz80: 'IC111 (Z8400APS)', crtc6845: 'IC108 (HD6845SP)', dram4164: 'IC119-IC126 bank 0, IC127-IC134 bank 1 (HM4864U-2 or MSM3764-20RS)', ppi8255: 'IC107 (M5L8255AP-5)', ay8912: 'IC102', rom23128: 'IC204 (AMSDOS ROM, TMM23128P, Amstrad 40015)' }
+    cpc6128: { cpuz80: 'IC111 (Z8400APS)', crtc6845: 'IC108 (HD6845SP)', dram4164: 'IC127-IC134 bank 0 (first 64K), IC119-IC126 bank 1 (second 64K) (HM4864U-2 or MSM3764-20RS)', ppi8255: 'IC107 (M5L8255AP-5)', ay8912: 'IC102', rom23128: 'IC204 (AMSDOS ROM, TMM23128P, Amstrad 40015)' }
   },
   chips: {
     ga40007: {
@@ -223,7 +224,7 @@ RCS.add({
       heat: 'hot', verifiedAgainst: 'CPC464 service manual circuit diagram p. 15-16 (IC116 20RA043); CPCWiki Gate Array pin-outs (40007)',
       datasheets: [sm464('CPC464 circuit diagram p. 15-16, IC116 gate array', 12), sm464('electrical parts list p. 17 (IC116 20RA043, part 40007)', 13), W_GAPIN],
       replacements: [
-        { part: 'Amstrad 40008', kind: 'pin-compatible', note: 'Updated 40007 on the same pinout; it also needs the cooling plate. The 40010 has a rearranged pinout and does not fit a 40007 board.', source: W_GAPIN },
+        { part: 'Amstrad 40008', kind: 'pin-compatible', verify: true, note: 'Updated 40007 on the same pinout, per CPCWiki; it also needs the cooling plate. No Amstrad pin or electrical sheet for the 40008 was found. The 40010 has a rearranged pinout and does not fit a 40007 board.', source: W_GAPIN },
         { part: 'AMSGateArray, 40007 version', kind: 'modern', note: 'Open prototype: a Xilinx XC95288XL CPLD (5 V-tolerant I/O, own 3.6 V regulator) on a DIP-40 carrier. The author has not tested the 40007 version in a CPC 464.', source: AMSGA }
       ],
       pins: [
@@ -317,7 +318,7 @@ RCS.add({
       id: 'pal40030', name: 'Amstrad 40030 PAL (PAL16L8)', short: '40030', family: 'Programmed PAL16L8 (Amstrad AMG40030)',
       role: '128K RAM banking: second-bank /CAS and the A14/A15 remap for the 6128 RAM configurations', pkg: 'DIP-20',
       machines: ['cpc6128'], location: { cpc6128: 'IC118 (socket J106)' },
-      summary: 'Holds the 6128 RAM configuration register: an OUT to &7Fxx with D7 and D6 both HIGH latches D0-D2. It then steers /CAS to bank 0 (IC119-126) or bank 1 (IC127-134) and rewrites A14/A15 for the multiplexers, so a block of the second 64K appears at &4000 or elsewhere. Without it (64K builds) links LK5, LK6 and LK8 are closed. A bad PAL gives a 6128 that works in BASIC but fails CP/M Plus or |BANK commands.',
+      summary: 'Holds the 6128 RAM configuration register: an OUT to &7Fxx with D7 and D6 both HIGH latches D0-D2. It then steers /CAS to bank 0 (IC127-134) or bank 1 (IC119-126) and rewrites A14/A15 for the multiplexers, so a block of the second 64K appears at &4000 or elsewhere. Without it (64K builds) links LK5, LK6 and LK8 are closed. A bad PAL gives a 6128 that works in BASIC but fails CP/M Plus or |BANK commands.',
       fails: ['Second 64K missing (CP/M Plus will not start, Bank Manager errors)', 'Crash as soon as a bank is switched', 'Dead machine if /CAS0 never goes LOW'],
       heat: 'cool', verifiedAgainst: 'CPC6128 service manual CPU circuit diagram p. 19-20 (IC118 PAL16L8AC AMG40030); CPCWiki Gate Array pin-outs and PAL16L8 pages',
       datasheets: [sm6128('CPU circuit diagram p. 19-20, IC118', 16), W_GAPIN, W_PAL],
@@ -340,8 +341,8 @@ RCS.add({
         p(13, 'NC', 'nc', '-', 'Unused output (signals present, not connected).'),
         p(14, 'NC', 'nc', '-', 'Unused output.'),
         p(15, 'NC', 'nc', '-', 'Unused output.'),
-        p(16, '/CAS1', 'ctrl', 'out', 'CAS for bank 1 (IC127-134) through R160, 47 ohms.', { terms: ['ras-cas'] }),
-        p(17, '/CAS0', 'ctrl', 'out', 'CAS for bank 0 (IC119-126) through R161, 47 ohms.', { terms: ['ras-cas'] }),
+        p(16, '/CAS1', 'ctrl', 'out', 'CAS for bank 1, the second 64K (IC119-126), through R160, 47 ohms.', { terms: ['ras-cas'] }),
+        p(17, '/CAS0', 'ctrl', 'out', 'CAS for bank 0, the first 64K (IC127-134), through R161, 47 ohms.', { terms: ['ras-cas'] }),
         p(18, '/IOWR', 'ctrl', 'in', 'I/O write strobe (from the 74LS32): latches the configuration.'),
         p(19, 'A14OUT', 'addr', 'out', 'Remapped A14 to the 74LS153 multiplexer.'),
         p(20, 'VCC', 'power', '-', '+5 V.', { terms: ['vcc'], probe: V5 })
@@ -349,15 +350,15 @@ RCS.add({
     },
     rom23256: {
       id: 'rom23256', name: '23256 mask ROM 32K x 8', short: '23256', family: 'Mask ROM (Toshiba TMM23256P, 27256-style pinout)',
-      role: 'OS firmware ($0000-$3FFF lower ROM) and Locomotive BASIC ($C000-$FFFF upper ROM 0) in one 32K chip', pkg: 'DIP-28',
+      role: '32K x 8 mask ROM in the 27256 pinout.', pkg: 'DIP-28',
       machines: ['cpc464', 'cpc664', 'cpc6128'],
       location: { cpc464: 'IC103 (TMM23256P-1950; Amstrad 40009 on later boards), BASIC 1.0', cpc664: 'IC103 (TMM23256P-1952, Amstrad 40022)', cpc6128: 'IC103 (TMM23256P-1953; Amstrad 40025 on later boards)' },
-      summary: 'Generic pin table; the 23256 is a 27256-pinout mask ROM. Board wiring on the CPC: A14 (pin 27) picks the half: LOW for the OS lower ROM, HIGH for BASIC. The Gate Array /ROMEN drives /CS (pin 20); /OE (pin 22) is held LOW by 2.2K and pulled HIGH by ROMDIS when an expansion ROM takes over. Each model has its own ROM; they are not interchangeable without the matching firmware. A 27256 EPROM fits with pin 1 (VPP) tied to +5 V. Pin table from the CPC6128 schematic.',
+      summary: 'Generic pin table; the 23256 is a 27256-pinout mask ROM. CPC: the OS firmware ($0000-$3FFF lower ROM) and Locomotive BASIC ($C000-$FFFF upper ROM 0) in one 32K chip. How /CS (pin 20), /OE (pin 22) and A14 (pin 27) are driven depends on the board. CPC 464, 664 and 6128 (IC103): the Gate Array /ROMEN drives /CS; /OE is held LOW by 2.2 kΩ (R112 on the 6128) and pulled HIGH by expansion ROMDIS (pin 43) when an expansion ROM takes over. Each model has its own ROM; they are not interchangeable without the matching firmware. A 27256 EPROM needs pin 1 (VPP) at +5 V. Pin table from the CPC6128 schematic.',
       fails: ['No boot, black or garbage screen', 'Boots but BASIC crashes on certain keywords', 'Wrong sign-on after a ROM swap'],
       heat: 'cool', verifiedAgainst: 'CPC6128 service manual CPU circuit diagram p. 19-20 (IC103 TMM23256P-1953); parts lists of the CPC464, CPC664 and CPC6128 manuals and the amendment',
       datasheets: [sm6128('CPU circuit diagram p. 19-20, IC103 ROM', 16), sm664('electrical parts list (IC103 TMM-23256P-1952, part 40022)', 17), AMEND],
       replacements: [
-        { part: '27256 / 27C256 EPROM', kind: 'pin-compatible', note: 'Same pinout, but pin 1 is VPP and must sit at VCC in read mode (VCC - 0.7 V to VCC); the CPC leaves pin 1 unconnected, so tie it to +5 V. Burn the image for that model: 464, 664 and 6128 firmware differ.', source: MC27C256 }
+        { part: '27256 / 27C256 EPROM', kind: 'adapter', verify: true, note: 'Same pinout except pin 1, which is VPP on the EPROM and must sit at VCC in read mode (VCC - 0.7 V to VCC). Rework: where the board leaves pin 1 open (the CPC), bend pin 1 out of the socket and wire it to +5 V (pin 28). Burn the image for that model: 464, 664 and 6128 firmware differ. No 23256 mask-ROM data sheet was found to compare the other pins.', source: MC27C256 }
       ],
       pins: [
         p(1, 'NC', 'nc', '-', 'Not connected (VPP on a 27256 EPROM).', { terms: ['vpp'] }),
@@ -368,12 +369,12 @@ RCS.add({
         p(14, 'GND', 'ground', '-', '0 V.', { terms: ['gnd'] }),
         p(15, 'D3', 'data', 'out', 'Data bit 3.'), p(16, 'D4', 'data', 'out', 'Data bit 4.'), p(17, 'D5', 'data', 'out', 'Data bit 5.'),
         p(18, 'D6', 'data', 'out', 'Data bit 6.'), p(19, 'D7', 'data', 'out', 'Data bit 7.'),
-        p(20, '/CS', 'ctrl', 'in', 'Chip select from Gate Array /ROMEN.', { terms: ['cs'], probe: 'Pulses LOW on ROM reads' }),
+        p(20, '/CS', 'ctrl', 'in', 'Chip select. Active LOW.', { terms: ['cs'], probe: 'Pulses LOW on ROM reads' }),
         p(21, 'A10', 'addr', 'in', 'Address bit 10.'),
-        p(22, '/OE', 'ctrl', 'in', 'Output enable: 2.2K (R112) to 0 V, HIGH from expansion ROMDIS (pin 43).', { probe: 'LOW while the ROM is selected' }),
+        p(22, '/OE', 'ctrl', 'in', 'Output enable. Active LOW: the outputs drive the bus only while /CS and /OE are both LOW.'),
         p(23, 'A11', 'addr', 'in', 'Address bit 11.'), p(24, 'A9', 'addr', 'in', 'Address bit 9.'), p(25, 'A8', 'addr', 'in', 'Address bit 8.'),
         p(26, 'A13', 'addr', 'in', 'Address bit 13.'),
-        p(27, 'A14', 'addr', 'in', 'Address bit 14: LOW selects the OS half, HIGH the BASIC half.'),
+        p(27, 'A14', 'addr', 'in', 'Address bit 14.'),
         p(28, 'VCC', 'power', '-', '+5 V.', { terms: ['vcc'], probe: V5 })
       ]
     },
@@ -386,8 +387,8 @@ RCS.add({
       heat: 'warm', verifiedAgainst: 'NEC uPD765 data sheet (Dec 1978) pin configuration p. 1 and pin identification p. 3; CPC6128 service manual interface circuit diagram (IC201 pin voltages)',
       datasheets: [upd('pin configuration p. 1', 1), upd('pin identification p. 3', 3), sm6128('interface circuit diagram p. 33-34, IC201', 27), W_FDC],
       replacements: [
-        { part: 'Intel 8272A / UMC UM8272A', kind: 'pin-compatible', note: 'The 8272 is the same design as the uPD765 under a cross-licence; UMC UM8272A parts were fitted in CPCs. Timings scale with the clock: the CPC runs any of them at 4 MHz.', source: W_FDC },
-        { part: 'NEC uPD765AC-2 / Zilog Z765A', kind: 'pin-compatible', note: 'Other makers\' 765s found on CPC boards; all should behave almost identically.', source: W_FDC }
+        { part: 'Intel 8272A / UMC UM8272A', kind: 'pin-compatible', verify: true, note: 'The 8272 is the same design as the uPD765 under a cross-licence; the NEC and Intel DIP-40 pin maps agree. UMC UM8272A parts were fitted in CPCs, but no UMC data sheet was found. Timings scale with the clock: the CPC runs any of them at 4 MHz.', source: W_FDC },
+        { part: 'NEC uPD765AC-2 / Zilog Z765A', kind: 'pin-compatible', verify: true, note: 'Other makers\' 765s found on CPC boards, per CPCWiki. Their own data sheets were not found to compare electrical limits.', source: W_FDC }
       ],
       pins: [
         p(1, 'RESET', 'ctrl', 'in', 'Reset, active HIGH: idles the FDC and drives the drive lines LOW.', { terms: ['reset'], probe: '0 V when running' }),
@@ -448,8 +449,8 @@ RCS.add({
     ],
     cpc6128: [
       { symptom: 'Red power LED on, black screen', suspects: ['ga40010', 'cpuz80', 'rom23256', 'crtc6845', 'dram4164'], note: 'Monitor lead and brightness first. Then 16 MHz at 40010 pin 24, 4 MHz at Z80A pin 6, 1 MHz at 6845 pin 21, /RESET HIGH at Z80A pin 26.' },
-      { symptom: 'BASIC works, CP/M Plus or |BANK commands fail', suspects: ['pal40030', 'dram4164'], note: 'The second 64K (IC127-134) or the 40030 PAL. Check /CAS1 at 40030 pin 16 pulses after a bank switch.' },
-      { symptom: 'Garbage screen, no sign-on', suspects: ['dram4164', 'pal40030', 'ga40010'], note: 'Bank 0 (IC119-126) holds the screen and BASIC. Check /CAS0 at 40030 pin 17 and /RAS from the Gate Array.' },
+      { symptom: 'BASIC works, CP/M Plus or |BANK commands fail', suspects: ['pal40030', 'dram4164'], note: 'The second 64K (IC119-126) or the 40030 PAL. Check /CAS1 at 40030 pin 16 pulses after a bank switch.' },
+      { symptom: 'Garbage screen, no sign-on', suspects: ['dram4164', 'pal40030', 'ga40010'], note: 'Bank 0 (IC127-134) holds the screen and BASIC. Check /CAS0 at 40030 pin 17 and /RAS from the Gate Array.' },
       { symptom: '"Drive A: disc missing"', suspects: ['fdc765'], note: 'Replace the drive belt first, then check the 12 V lead (centre negative) is in the monitor. Then INDEX at 765 pin 17.' },
       { symptom: 'Drive B not seen', suspects: ['fdc765'], note: 'Check the DL-2 lead and the FD-1 supply, then DRIVE SELECT 1 on disc 2 socket pin 23.' },
       { symptom: 'No sound', suspects: ['ay8912', 'ppi8255'], note: 'Check 1 MHz at AY-3-8912 pin 15; the stereo jack bypasses the LA4140 speaker amplifier.' },
@@ -461,13 +462,13 @@ RCS.add({
       fiveV('cpc464', [um464('Appendix V, rear panel (5V DC socket)', 234), sm464('circuit diagram (power connector CP001)', 12), sm464('electrical parts list (J104 DC jack 170024)', 13), ...S6128P.slice(0, 1)], true),
       monitor('cpc464', S464), joystick('cpc464', [...S464, um6128('ch. 7 part 9, Joystick Socket drawing, p. 38', 348)]),
       expansion('cpc464', [...S464, um6128('ch. 7 part 9, Expansion Socket drawing, p. 40', 350)]),
-      printer('cpc464', [...S464, um6128('ch. 7 part 9, Printer Port drawing, p. 41', 351)], ' The 464 transcribed manual lists pins 18 and 27 as GND and omits 16; the 6128 and 664 originals list 16 and not 27.'),
+      printer('cpc464', [...S464, um6128('ch. 7 part 9, Printer Port drawing, p. 41', 351)], ' The 464 transcribed manual lists pins 18 and 27 as GND and omits 16; the 6128 original lists 16 and not 27, and the 664 original lists both.'),
       stereo('cpc464', [um6128('ch. 7 part 9, Stereo Socket, p. 39', 349), sm464('electrical parts list (J103 3.5 mm I/O socket, part 170022, as on the 664/6128)', 13)])
     ],
     cpc664: [
       fiveV('cpc664', [um664('ch. 1 Connecting the computer, p. 2', 12), sm664('electrical parts list (J301 HEC0470-01-630)', 17), ...S6128P.slice(0, 1)]),
       twelveV('cpc664', [um664('ch. 1 Connecting the computer, p. 2', 12), ...S6128P]),
-      monitor('cpc664', S664), joystick('cpc664', S664), expansion('cpc664', S664), printer('cpc664', S664),
+      monitor('cpc664', S664), joystick('cpc664', S664), expansion('cpc664', S664), printer('cpc664', S664, ' The 664 manual lists pin 27 as GND (the 6128 manual leaves it out, so NC there).'),
       disc2('cpc664', [um664('ch. 7 part 9, Disc Drive 2 Socket, p. 40', 304), sm6128('interface circuit diagram p. 33-34 (34-way edge)', 27)]),
       tape('cpc664', [um664('ch. 7 part 9, Tape Socket, p. 39', 303), sm6128('cassette control circuit diagram p. 36 (J302)', 28)]),
       stereo('cpc664', [um664('ch. 7 part 9, Stereo Socket, p. 39', 303), sm664('CPU circuit diagram (J103)', 16)])

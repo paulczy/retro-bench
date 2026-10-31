@@ -17,6 +17,8 @@ const DS6883 = n => `${DS}/MC6883%20Synchronous%20Address%20Multiplexer%20(Motor
 /* TRS-80 Model I, III and 4 sources. archive.org page anchors are PDF pages. */
 const IA = 'https://archive.org/download';
 const TRH = n => `${IA}/TRS-80_Micro_Computer_Technical_Reference_Handbook_2nd_Edition_1982_Radio_Shack/TRS-80_Micro_Computer_Technical_Reference_Handbook_2nd_Edition_1982_Radio_Shack.pdf#page=${n}`;
+/* Same scan, archive.org text-layer copy: the main PDF has returned HTTP 500 at times. */
+const TRH_TXT = n => `${IA}/TRS-80_Micro_Computer_Technical_Reference_Handbook_2nd_Edition_1982_Radio_Shack/TRS-80_Micro_Computer_Technical_Reference_Handbook_2nd_Edition_1982_Radio_Shack_text.pdf#page=${n}`;
 const EISM = n => `${IA}/Expansion_Interface_Service_Manual_19xx_Radio_Shack/Expansion_Interface_Service_Manual_19xx_Radio_Shack.pdf#page=${n}`;
 const M3TRM = n => `${IA}/Model_III_Technical_Reference_Manual_1981_Tandy/Model_III_Technical_Reference_Manual_1981_Tandy.pdf#page=${n}`;
 const M3SVC = n => `${IA}/Model_III_Microcomputer_Service_Manual_19xx_Tandy/Model_III_Microcomputer_Service_Manual_19xx_Tandy.pdf#page=${n}`;
@@ -124,6 +126,9 @@ const PRNPINS = Array.from({ length: 34 }, (_, i) => {
   if (!p) return { n, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' };
   return { n, name: p[0], type: p[1], desc: p[2] || `Printer data bit ${p[0].slice(5)}, latched by U94 on a write to port F8H.`, ...(p[3] ? { expect: p[3] } : {}) };
 });
+/* Model 4: the latch is U66 (Model 4 TRM 3.1.11, p. 21; schematic sheet 4); the spare status routing is not checked. */
+const M4PRNPINS = PRNPINS.map(p => p.name.startsWith('DATA') ? { ...p, desc: p.desc.replace('U94', 'U66') }
+  : p.name === 'STATUS IN' ? { ...p, desc: 'Spare status input. Model 4 routing not checked.', verify: true } : p);
 
 /* Model I cassette DIN (TRH schematic sheet 2, J3); the EI's J6/J7 outputs and J8 input use the same pins. */
 const m1CassPins = [
@@ -350,9 +355,9 @@ RCS.add({
   chips: {
     cpu6809e: {
       id: 'cpu6809e', name: 'MC6809E microprocessor', short: '6809E', family: 'Motorola 6800 family (NMOS)',
-      role: 'Main CPU, 8-bit with 16-bit registers. Same CPU in all CoCo models.', pkg: 'DIP-40',
+      role: 'Main CPU, 8-bit with 16-bit registers. Same CPU in every CoCo and in the Dragon 32 and 64.', pkg: 'DIP-40',
       machines: ['coco1', 'coco2', 'coco3'],
-      summary: 'The 6809E runs the CoCo from the E and Q clocks that the SAM (CoCo 1 and 2) or the GIME (CoCo 3) makes. No clock, no boot. It takes its reset from the power-on circuit. The CoCo 3 runs the same chip at 1.79 MHz in double-speed mode.',
+      summary: 'The 6809E runs the CoCo from the E and Q clocks that the SAM (CoCo 1 and 2) or the GIME (CoCo 3) makes. No clock, no boot. It takes its reset from the power-on circuit. The CoCo 3 runs the same chip at 1.79 MHz in double-speed mode. CoCo 3 (IC1): BS, BA, BUSY, AVMA and LIC (pins 5, 6, 33, 36, 38) are not connected and TSC (pin 39) is tied to ground.',
       fails: ['No boot', 'Dead machine', 'Random crashes'],
       location: { coco3: 'IC1' },
       verifiedAgainst: 'Motorola MC6809E data sheet (DS9846-R2, 1984), Pin Assignment, p. 1',
@@ -363,15 +368,15 @@ RCS.add({
       replacements: [
         { part: 'MC68A09E', kind: 'pin-compatible', note: '1.5 MHz grade of the same chip. Fine for the CoCo 1, 2 and the CoCo 3 at 0.89 MHz; not rated for CoCo 3 double speed (1.78 MHz).', source: { label: 'Motorola MC6809E data sheet, DC Electrical Characteristics, Frequency of Operation, p. 2', url: DS6809E(2) } },
         { part: 'MC68B09E', kind: 'pin-compatible', note: '2.0 MHz grade. The one to fit in a CoCo 3 that runs double speed (POKE 65497,0); the plain MC6809E is rated 1.0 MHz.', source: { label: 'Motorola MC6809E data sheet, DC Electrical Characteristics, Frequency of Operation, p. 2', url: DS6809E(2) } },
-        { part: 'Hitachi HD63B09E / HD63C09E (6309)', kind: 'pin-compatible', note: 'CMOS, object-code compatible, 2 or 3 MHz, same pinout. Trap: it traps illegal opcodes through the $FFF0 vector, so 6809 software that uses undocumented opcodes (for example $10 $20 as LBRA) crashes; the guide warns that a machine whose ROM holds $0000 in that vector may need a new ROM. Native mode needs 6309-aware software.', source: { label: 'HD63B09EP Technical Reference Guide, Error Trapping', url: HD6309TRG(13) } },
+        { part: 'Hitachi HD63B09E / HD63C09E (6309)', kind: 'pin-compatible', note: 'CMOS, object-code compatible, 2 or 3 MHz, same pinout. Trap: it traps illegal opcodes through the $FFF0 vector, so 6809 software that uses undocumented opcodes (for example $10 $20 as LBRA) crashes; the guide warns that a machine whose ROM holds $0000 in that vector may need a new ROM. Native mode needs 6309-aware software.', source: { label: 'HD63B09EP Technical Reference Guide, Error Trapping, p. 14', url: HD6309TRG(14) } },
       ],
       pins: [
         { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
         { n: 2, name: '/NMI', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Non-maskable interrupt. Active LOW.', terms: ['nmi'] },
-        { n: 3, name: '/IRQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Interrupt request. Active LOW. The PIAs and the VDG sync use it.', terms: ['irq'] },
+        { n: 3, name: '/IRQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Interrupt request. Active LOW.', terms: ['irq'] },
         { n: 4, name: '/FIRQ', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Fast interrupt request. Active LOW.', terms: ['irq'] },
-        { n: 5, name: 'BS', type: 'ctrl', dir: 'out', desc: 'Bus status. HIGH with BA means the CPU is halted or in reset.', probe: 'Not connected on the CoCo 3.' },
-        { n: 6, name: 'BA', type: 'ctrl', dir: 'out', desc: 'Bus available. HIGH means the bus is released.', probe: 'Not connected on the CoCo 3.' },
+        { n: 5, name: 'BS', type: 'ctrl', dir: 'out', desc: 'Bus status. Read with BA: BA LOW and BS HIGH is an interrupt or reset acknowledge; BA HIGH and BS LOW is a SYNC acknowledge; both HIGH is a halt acknowledge.' },
+        { n: 6, name: 'BA', type: 'ctrl', dir: 'out', desc: 'Bus available. HIGH means the CPU has stopped and its address and data buses are high impedance.' },
         { n: 7, name: 'Vcc', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.9 to +5.2 V' },
         { n: 8, name: 'A0', type: 'addr', dir: 'out', desc: 'Address bit 0.', terms: ['tristate'] },
         { n: 9, name: 'A1', type: 'addr', dir: 'out', desc: 'Address bit 1.', terms: ['tristate'] },
@@ -398,21 +403,21 @@ RCS.add({
         { n: 30, name: 'D1', type: 'data', dir: 'bidir', desc: 'Data bit 1.', terms: ['tristate'] },
         { n: 31, name: 'D0', type: 'data', dir: 'bidir', desc: 'Data bit 0.', terms: ['tristate'] },
         { n: 32, name: 'R/W', type: 'ctrl', dir: 'out', desc: 'Read / write. HIGH = read, LOW = write.', terms: ['rw'] },
-        { n: 33, name: 'BUSY', type: 'ctrl', dir: 'out', desc: 'Busy. HIGH during the read and modify cycles of a read-modify-write instruction and the first byte of a double-byte access.', probe: 'Not connected on the CoCo 3.' },
+        { n: 33, name: 'BUSY', type: 'ctrl', dir: 'out', desc: 'Busy. HIGH during the read and modify cycles of a read-modify-write instruction and the first byte of a double-byte access.' },
         { n: 34, name: 'E', type: 'clock', dir: 'in', desc: 'E (enable) clock input from the system clock generator (SAM or GIME).', terms: ['clock'], probe: 'Square wave at the E rate. No E clock, no boot.' },
         { n: 35, name: 'Q', type: 'clock', dir: 'in', desc: 'Q clock input. Same rate as E, a quarter cycle ahead.', terms: ['clock'], probe: 'Square wave at the E rate.' },
-        { n: 36, name: 'AVMA', type: 'ctrl', dir: 'out', desc: 'Advanced valid memory address. Tells the bus a valid address is out next cycle.', probe: 'Not connected on the CoCo 3.' },
+        { n: 36, name: 'AVMA', type: 'ctrl', dir: 'out', desc: 'Advanced valid memory address. Tells the bus a valid address is out next cycle.' },
         { n: 37, name: '/RESET', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Reset. LOW holds the CPU in reset. Released after power-up.', terms: ['reset', 'active-low'], probe: 'HIGH once the machine has started. A LOW that stays is a fault.' },
-        { n: 38, name: 'LIC', type: 'ctrl', dir: 'out', desc: 'Last instruction cycle. HIGH on the last cycle of an opcode.', probe: 'Not connected on the CoCo 3.' },
-        { n: 39, name: 'TSC', type: 'ctrl', dir: 'in', desc: 'Three-state control. HIGH floats the address and data bus.', probe: 'Tied to ground on the CoCo 3.' },
-        { n: 40, name: '/HALT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Halt. LOW stops the CPU at the next cycle boundary.', terms: ['active-low'] },
+        { n: 38, name: 'LIC', type: 'ctrl', dir: 'out', desc: 'Last instruction cycle. HIGH on the last cycle of an opcode.' },
+        { n: 39, name: 'TSC', type: 'ctrl', dir: 'in', desc: 'Three-state control. HIGH floats the address and data bus.' },
+        { n: 40, name: '/HALT', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Halt. LOW stops the CPU at the end of the current instruction; it stays halted, with BA and BS HIGH, until the pin goes HIGH again.', terms: ['active-low'] },
       ],
     },
     vdg6847: {
       id: 'vdg6847', name: 'MC6847 video display generator', short: 'VDG', family: 'Motorola NMOS video',
-      role: 'Text, semigraphics and colour video from screen RAM. Used in the CoCo 1, CoCo 2 and MC-10.', pkg: 'DIP-40',
+      role: 'Text, semigraphics and colour video from screen RAM. Used in the CoCo 1 and 2, the MC-10 and the Dragon 32 and 64.', pkg: 'DIP-40',
       machines: ['coco1', 'coco2', 'mc10'],
-      summary: 'The 6847 builds the picture from screen RAM and its character ROM, then sends colour and sync to the RF modulator or the composite out. It runs warm. VDG faults are video-only: a dead VDG gives no picture, but the 6809 keeps running. The CoCo 3 has no separate VDG; the GIME does its job.',
+      summary: 'The 6847 builds the picture from screen RAM and its character ROM, then sends colour and sync to the RF modulator or the composite out. It runs warm. VDG faults are video-only: a dead VDG gives no picture, but the 6809 keeps running. The CoCo 3 has no separate VDG; the GIME does its job. CoCo 1 and 2, Dragon 32 and 64: /HS (pin 38) also feeds SAM pin 9 for DRAM refresh. MC-10: there is no SAM; the 6803 and discrete logic share the video RAM.',
       fails: ['No picture', 'Garbled characters', 'Wrong colours', 'Black screen with working sound'],
       heat: 'warm',
       location: { mc10: 'U11' },
@@ -463,14 +468,14 @@ RCS.add({
         { n: 35, name: '/A/G', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Alphanumeric (LOW) or full graphics (HIGH) select.' },
         { n: 36, name: '/RP', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Row preset output. Clears an external character-row counter; pulses only in alpha and semigraphics modes.' },
         { n: 37, name: '/FS', type: 'video', dir: 'out', activeLow: true, desc: 'Field sync output. Falls at the end of the active display; the CPU may use the RAM freely until it rises.', terms: ['luma-chroma'] },
-        { n: 38, name: '/HS', type: 'video', dir: 'out', activeLow: true, desc: 'Horizontal sync output, coincident with the TV horizontal sync pulse. Goes to SAM pin 9.', terms: ['luma-chroma'] },
+        { n: 38, name: '/HS', type: 'video', dir: 'out', activeLow: true, desc: 'Horizontal sync output, coincident with the TV horizontal sync pulse.', terms: ['luma-chroma'] },
         { n: 39, name: 'CSS', type: 'ctrl', dir: 'in', desc: 'Colour set select input. Picks one of two colour sets in alpha, semigraphics 6 and full graphics modes.' },
         { n: 40, name: 'DD7', type: 'data', dir: 'in', desc: 'Data bus bit 7 from screen RAM.' },
       ],
     },
     sam6883: {
       id: 'sam6883', name: 'MC6883 synchronous address multiplexer', short: 'SAM', family: 'Motorola NMOS, second source SN74LS783',
-      role: 'Makes all clocks from the 14.31818 MHz crystal, the DRAM strobes and address multiplex, and the device selects. CoCo 1 and 2 only.', pkg: 'DIP-40',
+      role: 'Makes all clocks from the 14.31818 MHz crystal, the DRAM strobes and address multiplex, and the device selects. Used in the CoCo 1 and 2 and the Dragon 32 and 64.', pkg: 'DIP-40',
       machines: ['coco1', 'coco2'],
       summary: 'The SAM makes every clock the CoCo needs, the DRAM /RAS and /CAS strobes with the MA0 to MA7 multiplex, and the device selects S0 to S2 for the ROM, I/O and VDG. It also takes the register writes at $FFC0 to $FFDF. A bad SAM looks like a dead machine: it makes the clocks. It runs warm.',
       fails: ['Dead machine (no clocks)', 'No boot', 'No RAM access', 'Wrong video memory'],
@@ -498,7 +503,7 @@ RCS.add({
         { n: 11, name: '/CAS', type: 'ctrl', dir: 'out', activeLow: true, desc: 'DRAM column address strobe. Active LOW.', terms: ['ras-cas'] },
         { n: 12, name: '/RAS0', type: 'ctrl', dir: 'out', activeLow: true, desc: 'Row address strobe for DRAM bank 0.', terms: ['ras-cas'], probe: 'Pulses LOW on every RAM access.' },
         { n: 13, name: 'Q', type: 'clock', dir: 'out', desc: 'Q (quadrature) clock to the 6809E pin 35.', terms: ['clock'], probe: 'Square wave at the E rate, a quarter cycle ahead.' },
-        { n: 14, name: 'E', type: 'clock', dir: 'out', desc: 'E (enable) clock to the 6809E pin 34 and the PIAs. 0.89 MHz.', terms: ['clock'], probe: 'Square wave at about 0.89 MHz.' },
+        { n: 14, name: 'E', type: 'clock', dir: 'out', desc: 'E (enable) clock to the 6809E pin 34 and the PIAs. Crystal / 16 at the slow MPU rate (0.89 MHz with 14.31818 MHz) or crystal / 8 at the fast rate (1.79 MHz), set by the SAM rate bits.', terms: ['clock'], probe: 'Square wave at about 0.89 MHz after reset (slow rate); 1.79 MHz if software has set the fast rate.' },
         { n: 15, name: 'R/W', type: 'ctrl', dir: 'in', desc: 'Read / write from the 6809E. Enables writes to the SAM register, the DRAM (/WE) and device select 0.', terms: ['rw'] },
         { n: 16, name: 'A0', type: 'addr', dir: 'in', desc: 'CPU address bit 0 in.', terms: ['tristate'] },
         { n: 17, name: 'A1', type: 'addr', dir: 'in', desc: 'CPU address bit 1 in.', terms: ['tristate'] },
@@ -541,7 +546,8 @@ RCS.add({
         { label: 'Color Computer 3 Revised Schematic (Ty Sopko), U6 TCC1014', url: SOPKO },
       ],
       replacements: [
-        { part: 'TCC1014 GIME from another CoCo 3', kind: 'pin-compatible', verify: true, note: 'Tandy custom part with no second source or new replacement. Two production versions exist, the 1986 GIME with known bugs and the revised 1987 GIME; software that relies on either one behaves differently.', source: { label: 'CoCopedia, GIME (known versions)', url: COCOPEDIA_GIME } },
+        { part: 'GIME-Z (CoCo Bits)', kind: 'modern', note: 'FPGA replacement that fits the GIME PLCC socket. Adds faster clock modes and up to 2 MB.', source: { label: 'CoCo Bits, GIME-Z FPGA upgrade chip (product page)', url: 'https://cocobits.org/products/gime-z-upgrade-for-the-color-computer-3' } },
+        { part: 'TCC1014 GIME from another CoCo 3', kind: 'pin-compatible', verify: true, note: 'Tandy custom part with no second source. Two production versions exist, the 1986 GIME with known bugs and the revised 1987 GIME; software that relies on either one behaves differently.', source: { label: 'CoCopedia, GIME (known versions)', url: COCOPEDIA_GIME } },
       ],
       pins: [
         { n: 1, name: 'VSS', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
@@ -616,9 +622,10 @@ RCS.add({
       datasheets: [
         { label: 'MC-10 Schematic D-11531, U1 MC6803', url: SCH10 },
         { label: 'MC-10 Service Manual, CPU-6803 and Reset Circuit, p. 12', url: SM10(12) },
+        { label: 'Hitachi 8/16-bit Microprocessor Data Book (1991), HD6803 (compatible with MC6803), PDF p. 353', url: 'https://www.bitsavers.org/components/hitachi/_dataBooks/1991_M21T132_Hitatchi_8_16_Bit_Microprocessor_Data_Book.pdf#page=353' },
       ],
       replacements: [
-        { part: 'HD6803P (Hitachi)', kind: 'pin-compatible', note: 'Tandy lists it as the alternative to the MC6803G for U1. No other part is listed.', source: { label: 'MC-10 Service Manual, parts list, Integrated Circuits (U1 MC6803G or HD6803P), p. 27', url: SM10(27) } },
+        { part: 'HD6803P (Hitachi)', kind: 'pin-compatible', note: 'Tandy lists it as the alternative to the MC6803G for U1. Hitachi data sheet says it is compatible with the MC6803 and MC6803-1 (1991 Hitachi 8/16-bit Microprocessor Data Book, HD6803, PDF p. 353). No Motorola MC6803 data sheet was opened to compare electrical limits.', source: { label: 'MC-10 Service Manual, parts list, Integrated Circuits (U1 MC6803G or HD6803P), p. 27', url: SM10(27) } },
       ],
       pins: [
         { n: 1, name: 'Vss', type: 'ground', dir: '-', desc: 'Ground.', terms: ['gnd'], probe: '0 V' },
@@ -751,7 +758,7 @@ RCS.add({
       ],
       replacements: [
         { part: 'FD1771A-01 or FD1771B-01', kind: 'pin-compatible', note: 'The same controller in a ceramic (A) or plastic (B) package. It needs all three rails: -5 V on pin 1 and +12 V on pin 40.', source: { label: 'Western Digital FD1771-01 data sheet, package outlines (FD1771A ceramic, FD1771B plastic)', url: WD1771(20) } },
-        { part: 'Percom Doubler (with the original 1771)', kind: 'adapter', note: 'Plugs into the 1771 socket in the Expansion Interface, with the 1771 moved onto it, and adds double density. No soldering; needs a doubler-aware DOS (DBLDOS, later most DOSes).', source: { label: 'trs-80.org, Percom Doubler', url: T80_DOUBLER } },
+        { part: 'Percom Doubler (with the original 1771)', kind: 'adapter', verify: true, note: 'Plugs into the 1771 socket in the Expansion Interface, with the 1771 moved onto it, and adds double density. No soldering; needs a doubler-aware DOS (DBLDOS, later most DOSes). The adapter circuit is not in the source, so its wiring is not checked.', source: { label: 'trs-80.org, Percom Doubler', url: T80_DOUBLER } },
       ],
       pins: [
         { n: 1, name: 'VBB', type: 'power', dir: '-', desc: '-5 V substrate supply.', probe: '-4.75 to -5.25 V' },
@@ -928,7 +935,7 @@ RCS.add({
   connectors: {
     coco1: [
       {
-        id: 'coco-cart', name: 'Cartridge slot (Program Pak)', kind: '40-pin card-edge socket', geo: 'edge-20x20-odd-even',
+        id: 'coco-cart', name: 'Cartridge slot (Program Pak)', kind: '40-pin card-edge socket', geo: 'edge-20x20-odd-even', verify: true,
         verifiedAgainst: 'Color Computer Technical Reference Manual (26-3193), Table 5, p. 36',
         summary: `Every CPU bus signal plus E, Q, the interrupts, /CTS ($C000–$FEFF) and /SCS ($FF40–$FF5F). The CoCo 1 also brings -12 V and +12 V out on pins 1 and 2. Never plug a pak in with the power on. ${CART_ROWS}`,
         pins: cartPins(
@@ -994,7 +1001,7 @@ RCS.add({
     ],
     coco2: [
       {
-        id: 'coco-cart', name: 'Cartridge slot (J6)', kind: '40-pin card-edge socket', geo: 'edge-20x20-odd-even',
+        id: 'coco-cart', name: 'Cartridge slot (J6)', kind: '40-pin card-edge socket', geo: 'edge-20x20-odd-even', verify: true,
         verifiedAgainst: 'Color Computer 2 Service Manual (26-3026/3027), Table 3 Cartridge Connector Signals, p. 53',
         summary: `Same signals as the CoCo 1 slot, but pins 1 and 2 are not connected: the CoCo 2 has no ±12 V. Never plug a pak in with the power on. If a pak does not autostart, check Q and /CART to the connector. ${CART_ROWS}`,
         pins: cartPins(NC(1), NC(2), '$C000–$FEFF', '0.89 MHz'),
@@ -1040,7 +1047,7 @@ RCS.add({
     ],
     coco3: [
       {
-        id: 'coco-cart', name: 'Cartridge slot (CN1)', kind: '40-pin card-edge socket', geo: 'edge-20x20-odd-even',
+        id: 'coco-cart', name: 'Cartridge slot (CN1)', kind: '40-pin card-edge socket', geo: 'edge-20x20-odd-even', verify: true,
         verifiedAgainst: 'Color Computer 3 Service Manual (26-3334), Table 3 Cartridge Connector Signals, p. 51',
         summary: `Same pinout as the CoCo 2. E and Q run at 0.89 or 1.78 MHz. /CTS covers $C000–$DFFF on the CoCo 3, per the manual. Pins 1 and 2 are not connected. ${CART_ROWS}`,
         pins: cartPins(NC(1), NC(2), '$C000–$DFFF', '0.89 or 1.78 MHz'),
@@ -1149,7 +1156,7 @@ RCS.add({
     ],
     mc10: [
       {
-        id: 'mc10-expansion', name: 'I/O expansion edge', kind: '34-pin card edge on the main board', geo: 'edge-17x17-odd-even',
+        id: 'mc10-expansion', name: 'I/O expansion edge', kind: '34-pin card edge on the main board', geo: 'edge-17x17-odd-even', verify: true,
         verifiedAgainst: 'MC-10 Service Manual (26-3011), Table 1 I/O Connector Signals, p. 15',
         summary: 'The full CPU bus for the 16K RAM pack and ROM packs: data, address (latched by the 74LS373), R/W, E, /SEL, /RESET, /NMI and +5 V at 250 mA. A pack that is seated wrong can stop the machine. Pin numbers are from the Tandy table; the odd/even row layout is not drawn in the manual (verify).',
         pins: [
@@ -1236,6 +1243,7 @@ RCS.add({
         pins: M1BUS,
         sources: [
           { label: 'TRS-80 Technical Reference Handbook, Pin Connections for Expansion-Port Edge Card, Figure 22, p. 91', url: TRH(92) },
+          { label: 'TRS-80 Technical Reference Handbook, Figure 22, p. 91 (same scan, text-layer mirror)', url: TRH_TXT(92) },
           { label: 'TRS-80 Technical Reference Handbook, Explanation of Expansion Port Signals, pp. 90-92', url: TRH(91) },
           { label: 'trs-80.org, Gold Plug 80 (tin-plated Model I edge connectors oxidise; second source)', url: T80_GOLD },
         ],
@@ -1291,7 +1299,7 @@ RCS.add({
         ],
       },
       {
-        id: 'ei-printer', name: 'Expansion Interface: line printer (J4)', kind: '34-pin PCB edge (17 + 17), cable 600091 to a 36-pin printer plug', geo: 'edge-17x17-odd-even', gender: 'male',
+        id: 'ei-printer', name: 'Expansion Interface: line printer (J4)', kind: '34-pin PCB edge (17 + 17), cable 600091 to a 36-pin printer plug', geo: 'edge-17x17-odd-even', gender: 'male', verify: true,
         verifiedAgainst: 'Expansion Interface Service Manual, Line Printer Interface p. 4 and schematic sheet 2 (J4 line printer bus)',
         summary: 'A latched 8-bit output and a 4-bit status input, both at memory address $37E8. Write the character to $37E8; read $37E8 for BUSY (bit 7), OUT OF PAPER (bit 6), UNIT SELECT (bit 5) and FAULT (bit 4). The strobe is a 1.5 µs LOW pulse. Data 4 is printed as pin 8 on the schematic but sits at 9 in the odd-numbered data run. The row layout (odd pins one side, even the other) is the usual 34-pin numbering, not drawn in the manual.',
         pins: Array.from({ length: 34 }, (_, i) => {
@@ -1310,7 +1318,7 @@ RCS.add({
         ],
       },
       {
-        id: 'ei-disk', name: 'Expansion Interface: floppy disk bus (J5)', kind: '34-pin PCB edge (17 + 17), Shugart SA400 bus', geo: 'edge-17x17-odd-even', gender: 'male',
+        id: 'ei-disk', name: 'Expansion Interface: floppy disk bus (J5)', kind: '34-pin PCB edge (17 + 17), Shugart SA400 bus', geo: 'edge-17x17-odd-even', gender: 'male', verify: true,
         verifiedAgainst: 'Expansion Interface Service Manual, Floppy Disk Interface p. 5 and schematic sheet 3 (J5 Shugart floppy disk bus)',
         summary: 'Up to four single-density drives on one daisy-chained cable, driven by 7438 open-collector buffers from the FD1771 and the drive-select latch at $37E0. The inputs have 150 Ω terminations to +5 V on the EI. MOTOR ON (pin 16) drops two or three seconds after the last drive select unless it is re-selected. Note drive select 4 on pin 32, not 6. All odd pins are ground.',
         pins: diskPins({
@@ -1351,7 +1359,7 @@ RCS.add({
     ],
     model3: [
       {
-        id: 'm3-iobus', name: 'I/O bus (J2, underside)', kind: '50-pin PCB edge (25 + 25)', geo: 'edge-25x25-odd-even', gender: 'male',
+        id: 'm3-iobus', name: 'I/O bus (J2, underside)', kind: '50-pin PCB edge (25 + 25)', geo: 'edge-25x25-odd-even', gender: 'male', verify: true,
         verifiedAgainst: 'Model III Technical Reference Manual, CPU schematic Figure 13 (I/O Bus section, J2) and Model III I/O Bus, p. 19',
         summary: 'Port I/O only: buffered data, A0-A7 and the IN, OUT, M1, IORQ and reset lines, all disabled until software sets port ECH bit 4 (ENEXTIO). Odd pins carry the signals and every even pin is ground. Ports 80H-FFH are reserved for the system. The row layout (odd on one side) is the usual numbering; the manual lists the pins but does not draw the rows.',
         pins: IOBUS,
@@ -1362,7 +1370,7 @@ RCS.add({
         ],
       },
       {
-        id: 'm3-printer', name: 'Printer port (card edge)', kind: '34-pin PCB edge (17 + 17)', geo: 'edge-17x17-odd-even', gender: 'male',
+        id: 'm3-printer', name: 'Printer port (card edge)', kind: '34-pin PCB edge (17 + 17)', geo: 'edge-17x17-odd-even', gender: 'male', verify: true,
         verifiedAgainst: 'Model III Technical Reference Manual, Figure 12 CPU schematic, Line Printer and Real Time Clock section',
         summary: 'Parallel printer at port F8H (and memory $37E8-$37E9 for Model I software). Write the character to F8H; U94 latches it and one-shot U93 strobes pin 1. Read F8H for BUSY (bit 7), OUTPAPER (6), UNIT SELECT (5) and FAULT (4). The row layout is the usual odd/even numbering, not drawn in the manual.',
         pins: PRNPINS,
@@ -1448,7 +1456,7 @@ RCS.add({
     ],
     model4: [
       {
-        id: 'm4-iobus', name: 'I/O bus (J2 on the 1983 board; J4 on the gate-array board)', kind: '50-pin PCB edge (25 + 25)', geo: 'edge-25x25-odd-even', gender: 'male',
+        id: 'm4-iobus', name: 'I/O bus (J2 on the 1983 board; J4 on the gate-array board)', kind: '50-pin PCB edge (25 + 25)', geo: 'edge-25x25-odd-even', gender: 'male', verify: true,
         verifiedAgainst: 'Model 4/4P Technical Reference Manual, Model 4 Gate Array I/O Pin Assignments (J4), p. 53; Model 4 Technical Reference Manual (1983), 3.1.12 I/O Connectors',
         summary: 'Same 50-pin bus as the Model III: odd pins signals, even pins ground, enabled by port ECH bit 4. The gate-array table names the lines XD0-XD7 and XA0-XA7; its label for pin 43 wraps onto 44 in the scan, which shifts the last few labels by one line, but the odd/even pattern and the Model III schematic agree. The row layout is the usual numbering, not drawn in the manual.',
         pins: IOBUS,
@@ -1461,8 +1469,8 @@ RCS.add({
       {
         id: 'm4-printer', name: 'Printer port (card edge)', kind: '34-pin PCB edge (17 + 17)', geo: 'edge-17x17-odd-even', gender: 'male', verify: true,
         verifiedAgainst: 'Model 4 Technical Reference Manual (1983), 3.1.11 Printer Circuitry and the Model 4 Port Bit Map (port F8H)',
-        summary: 'Port F8H-FBH: write the character (latched by U66, strobed by one-shot U65); read BUSY, PAPER, SELECT and FAULT on bits 7-4, as on the Model III. The pin table is the Model III schematic; the Model 4 schematic was not checked pin by pin (verify).',
-        pins: PRNPINS,
+        summary: 'Port F8H-FBH: write the character (latched by U66, strobed by one-shot U65); read BUSY, PAPER, SELECT and FAULT on bits 7-4 through buffer U67, as on the Model III. The pin table is the Model III schematic; the Model 4 schematic was not checked pin by pin (verify). The row layout (odd on one side) is the usual numbering, not drawn in the manual.',
+        pins: M4PRNPINS,
         sources: [
           { label: 'Model 4 Technical Reference Manual (1983), 3.1.11 Printer Circuitry, p. 21', url: M4TRM(37) },
           { label: 'Model 4 Technical Reference Manual (1983), Model 4 Port Bit Map, p. 18', url: M4TRM(34) },
@@ -1859,6 +1867,7 @@ RCS.add({
         ],
         sources: [
           { label: 'TRS-80 Technical Reference Handbook, System Power Supply and AC Adapter, pp. 52-54', url: TRH(53) },
+          { label: 'TRS-80 Technical Reference Handbook, System Power Supply, pp. 52-54 (same scan, text-layer mirror)', url: TRH_TXT(53) },
           { label: 'TRS-80 Technical Reference Handbook, Power Supply Checks and Adjustments, p. 60', url: TRH(61) },
           { label: 'TRS-80 Technical Reference Handbook, power supply troubleshooting (AC adapter), p. 75', url: TRH(76) },
           { label: 'trs-80.org, The Radio Shack Expansion Interface (power supply compartment; second source)', url: T80_EI },
@@ -2501,6 +2510,7 @@ RCS.add({
     { name: 'MC-10 Schematic (D-11531)', url: SCH10, what: 'Full MC-10 schematic on one sheet.' },
     { name: 'TRS-80 Color Computer Archive, hardware manuals', url: `${HW}/`, what: 'Every CoCo and MC-10 manual, schematic and data sheet in one place.' },
     { name: 'TRS-80 Micro Computer Technical Reference Handbook, 2nd ed. (Radio Shack, 1982)', url: TRH(1), what: 'Model I theory, power supply, expansion port pinout, troubleshooting, parts list and master schematic.' },
+    { name: 'TRS-80 Technical Reference Handbook, 2nd ed., text-layer mirror (same archive.org scan)', url: TRH_TXT(1), what: 'Use when the main PDF returns HTTP 500. Same page numbers.' },
     { name: 'TRS-80 Expansion Interface Service Manual (26-1140)', url: EISM(1), what: 'EI address decoding, printer, disk, cassette switching, power supply, schematics and the FD1771 data sheet.' },
     { name: 'TRS-80 Model III Technical Reference Manual (26-2109)', url: M3TRM(1), what: 'Model III CPU board, FDC and RS-232 boards, power supply, video monitor and schematics.' },
     { name: 'TRS-80 Model III Service Manual', url: M3SVC(1), what: 'Model III theory plus power supply troubleshooting, load tables and the SK1-SK4 pinout.' },

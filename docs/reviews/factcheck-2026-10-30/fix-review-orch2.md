@@ -1,0 +1,6 @@
+- **Amstrad: CORRECT.** Pin 27 is GND in the [CPC464 manual, PDF p. 236](https://archive.org/details/cpc464.en/page/n235) and [CPC664 manual, ch. 7 p. 41](https://archive.org/details/amstrad-cpc664-user-manual/page/n305). CPC6128 correctly loads as NC with the conflict note: [user manual p. 41](https://archive.org/details/amstrad-cpc-6128-user-manual/page/n351) omits 27 and says all others NC; [service schematic pp. 19–20](https://archive.org/details/amstrad-cpc-6128-micro-computer-ctm-644-color-monitor-gt-65-green-monitor-service-manual/page/n16) includes 27 among grounds.
+- **Plus/4: CORRECT, with one wording exception.** Node confirms no `expect` on pins 1/4, pin 2 = `0 V`, and pin 6 unchanged. The [CN7 map](https://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/connectors-2.jpg) confirms pin 2 GND.
+
+**Finding:** “Every other pin inherits `expect`” is literally false for pin 8: its C16 `+5 V` expectation is removed because Plus/4 pin 8 is NC—correct according to the map.
+
+Node validation: **0 failures**. Physical CPC6128 continuity remains unproven. No source files modified.

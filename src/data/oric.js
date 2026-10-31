@@ -11,6 +11,7 @@ const WB = 'https://web.archive.org/web/2025/https://wiki.defence-force.org/';
 const SCH1 = { label: 'Oric-1 48K circuit diagram, Oric Products International, issue 7 (24-2-84), sheet 1: CPU, ULA, VIA, AY, PSU, video, cassette, printer, keyboard (Defence Force wiki, archived)', url: WB + 'lib/exe/fetch.php?media=oric:hardware:oric1-1s.gif' };
 const SCH2 = { label: 'Oric-1 48K circuit diagram, issue 7, sheet 2: DRAM, ROM IC9/IC10, PAL colour circuit, expansion PL2 (Defence Force wiki, archived)', url: WB + 'lib/exe/fetch.php?media=oric:hardware:oric1-2s.gif' };
 const OO5 = { label: 'Oric Owner issue 5, circuit diagram pull-out (Oric-1, earlier issue, sharper scan), p. 44', url: 'https://library.defence-force.org/books/content/oric_owner/OricOwner_05.pdf#page=44' };
+const OSM = { label: 'Service Manual for the Oric-1 and Oric Atmos, expansion socket PL2 signals, pp. 12-13 (Defence Force library)', url: 'https://library.defence-force.org/books/content/service_manual_for_the_oric1_and_oric_atmos_microcomputers.pdf#page=12' };
 const SIG = 'https://oric.signal11.org.uk/files/pub/';
 const CHK = { label: 'Mike Brown, Oric/Atmos Mainboard Repair Checksheet v1.0 (signal11)', url: SIG + 'repairguide/OricRepairChecklist1-00.pdf' };
 const DIAG = { label: 'Mike Brown, Quick User Guide for the Oric Diagnostic ROM v1.08k (signal11)', url: SIG + 'diag-rom/OricDiagROM1-08.pdf' };
@@ -31,12 +32,13 @@ const V5 = '+4.95 to +5.05 V DC';
 const expansion = (mid, src, vf) => ({
   id: `${mid}-exp`, name: 'Expansion port (rear)', kind: '34-way 0.1 in PCB edge (17 + 17), odd/even numbering', geo: 'edge-17x17-odd-even', rowA: 'bottom', gender: 'male',
   verifiedAgainst: vf,
-  summary: 'The 6502 bus on bare PCB fingers at the rear. Looking at the back of the machine, the odd row (1-33) is the lower row and the even row (2-34) the upper one, 1 and 2 at the left (Atmos manual Appendix 11). Used by the Microdisc, Cumana and Jasmin drives and the diagnostic ROM board. /MAP (1) swaps the ROM at $C000-$FFFF for the RAM under it, /ROMDIS (2) turns the BASIC ROM off, I/O CONTROL (6) disables the internal VIA so a card can answer in $0310-$03FF; /I/O (5) goes low for any access to $0300-$03FF. Pin 33 is the computer\'s own +5 V. A dirty edge gives random crashes or a dead disc interface.',
+  summary: 'The 6502 bus on bare PCB fingers at the rear. Looking at the back of the machine, the odd row (1-33) is the lower row and the even row (2-34) the upper one, 1 and 2 at the left (Atmos manual Appendix 11). Used by the Microdisc, Cumana and Jasmin drives and the diagnostic ROM board. /MAP (1) swaps the ROM at $C000-$FFFF for the RAM under it, /ROMDIS (2) turns the BASIC ROM off, I/O CONTROL (6) disables the internal VIA so a card can answer in $0310-$03FF; /I/O (5) goes low for any access to $0300-$03FF. Pin 33 is the computer\'s own +5 V. A dirty edge gives random crashes or a dead disc interface.' + (mid === 'oric1' ? ' No Oric-1 drawing of this edge was found: the row layout is taken from the Atmos drawing (verify).' : ''),
+  ...(mid === 'oric1' ? { verify: true } : {}),
   pins: [
     c(1, '/MAP', 'ctrl', 'Input. Low maps RAM in place of the ROM at $C000-$FFFF (ULA pin 26, 2K2 pull-up).', { expect: '+5 V (held high by RP1)' }),
     c(2, '/ROMDIS', 'ctrl', 'Input. Low disables the BASIC ROM (IC9 pin 27, 2K2 pull-up).', { expect: '+5 V (held high by RP1)' }),
     c(3, 'PHI2', 'clock', '6502 phase 2 clock out (6502 pin 39).', { expect: '1 MHz square wave' }),
-    c(4, '/RESET', 'ctrl', 'System reset: 6502 /RES (pin 40) and VIA /RES (pin 34).', { expect: '+5 V; low only during power-on reset' }),
+    c(4, '/RESET', 'ctrl', 'System reset: 6502 /RES (pin 40) and VIA /RES (pin 34). Also an input: an expansion device may pull it LOW to reset the machine.', { expect: '+5 V; LOW during power-on reset or while a device holds reset' }),
     c(5, '/I/O', 'ctrl', 'Output from ULA pin 25: low whenever $0300-$03FF is addressed.', { expect: 'Short low pulses while the VIA is in use' }),
     c(6, 'I/O CONTROL', 'ctrl', 'Input to VIA CS1 (pin 24). Pull low to disable the internal VIA for an external device in page 3.', { expect: '+5 V (pulled up)' }),
     c(7, 'R/W', 'ctrl', '6502 read/write: high = read, low = write.'),
@@ -47,16 +49,17 @@ const expansion = (mid, src, vf) => ({
     c(21, 'A5', 'addr', 'Address bit 5.'), c(22, 'D7', 'data', 'Data bit 7.'), c(23, 'A6', 'addr', 'Address bit 6.'), c(24, 'A15', 'addr', 'Address bit 15.'),
     c(25, 'A7', 'addr', 'Address bit 7.'), c(26, 'A14', 'addr', 'Address bit 14.'), c(27, 'A8', 'addr', 'Address bit 8.'), c(28, 'A13', 'addr', 'Address bit 13.'),
     c(29, 'A9', 'addr', 'Address bit 9.'), c(30, 'A12', 'addr', 'Address bit 12.'), c(31, 'A10', 'addr', 'Address bit 10.'), c(32, 'A11', 'addr', 'Address bit 11.'),
-    c(33, '+5 V', 'power', 'Computer +5 V rail (the same rail as the DC jack centre pin). Light loads only.', { expect: V5 }),
+    c(33, '+5 V', 'power', 'Computer +5 V rail (the same rail as the DC jack centre pin). Light loads only.', { expect: '+5 V DC' }),
     c(34, 'GND', 'ground', GND, { expect: '0 V' })
   ],
-  sources: [...src, W_EXP], terms: ['edge-connector', 'reset', 'irq']
+  sources: [...src, W_EXP, OSM], terms: ['edge-connector', 'reset', 'irq']
 });
 
 const printer = (mid, src, vf) => ({
   id: `${mid}-printer`, name: 'Printer port (rear)', kind: '20-way 0.1 in PCB edge (10 + 10), Centronics-style parallel, odd/even numbering', geo: 'edge-10x10-odd-even', rowA: 'bottom', gender: 'male',
   verifiedAgainst: vf,
-  summary: 'Eight-bit Centronics output from the VIA: data is VIA port A, STROBE is PB4, ACK comes back on CA1. Looking at the back, odd signals (1-19) are the lower row and the even grounds (2-20) the upper row, 1 at the left. Port A is shared with the AY-3-8912 data bus, so the pins toggle during sound and keyboard scans even with no printer; a printer must latch on STROBE. LPRINT and LLIST use it; the Oric MCP-40 is the matching printer.',
+  summary: 'Eight-bit Centronics output from the VIA: data is VIA port A, STROBE is PB4, ACK comes back on CA1. Looking at the back, odd signals (1-19) are the lower row and the even grounds (2-20) the upper row, 1 at the left. Port A is shared with the AY-3-8912 data bus, so the pins toggle during sound and keyboard scans even with no printer; a printer must latch on STROBE. LPRINT and LLIST use it; the Oric MCP-40 is the matching printer.' + (mid === 'oric1' ? ' No Oric-1 drawing of this edge was found: the row layout is taken from the Atmos drawing (verify).' : ''),
+  ...(mid === 'oric1' ? { verify: true } : {}),
   pins: [
     c(1, '/STROBE', 'ctrl', 'Data strobe to the printer, VIA PB4 (pin 14). Normally high, pulses low.', { expect: '+5 V, low pulse per byte' }),
     c(3, 'D0', 'data', 'Data bit 0, VIA PA0 (pin 2).'), c(5, 'D1', 'data', 'Data bit 1, VIA PA1.'), c(7, 'D2', 'data', 'Data bit 2, VIA PA2.'), c(9, 'D3', 'data', 'Data bit 3, VIA PA3.'),
@@ -132,7 +135,7 @@ const keyboard = (mid, src, vf, extra = {}) => Object.assign({
     c(12, 'COL 4', 'kbd', 'AY IOA4 (pin 10).'), c(11, 'COL 5', 'kbd', 'AY IOA5 (pin 9).'), c(9, 'COL 6', 'kbd', 'AY IOA6 (pin 8).'), c(5, 'COL 7', 'kbd', 'AY IOA7 (pin 7).'),
     c(8, 'ROW AD0', 'kbd', 'Row select bit 0, VIA PB0 (pin 10).'), c(7, 'ROW AD1', 'kbd', 'Row select bit 1, VIA PB1 (pin 11).'), c(6, 'ROW AD2', 'kbd', 'Row select bit 2, VIA PB2 (pin 12).'),
     c(13, 'SENSE', 'kbd', 'Key-down sense, via R25 to TR2 and on to VIA PB3 (pin 13).'),
-    c(10, 'GND', 'ground', GND, { expect: '0 V' }), c(14, '+5 V', 'power', 'Keyboard decoder supply.', { expect: V5 })
+    c(10, 'GND', 'ground', GND, { expect: '0 V' }), c(14, '+5 V', 'power', 'Keyboard decoder supply.', { expect: '+5 V DC' })
   ],
   sources: src, terms: []
 }, extra);
@@ -187,7 +190,7 @@ const supplyNotes = [
   'The schematic shows no reverse-polarity diode: a centre-negative adapter can destroy the board. Check polarity with a meter before connecting.',
   'The 7905 is bolted down (the checklist says unbolt it to replace it).'
 ];
-const supplySrc = [SCH1, CHK, W_REP];
+const supplySrc = [SCH1, OO5, CHK, W_REP];
 const rails = [
   { rail: '+5 V', expect: '4.95-5.05 V', where: '6502 pin 8; ULA pin 24; VIA pin 20; AY-3-8912 pin 3; 4164 pin 8; 23128 pin 28', note: 'The jack centre pin. Measure to board 0 V, never to the jack sleeve.' },
   { rail: '0 V (regulated by the 7905)', expect: '0 V reference', where: '6502 pin 1; 6502 pin 21; ULA pin 6; VIA pin 1; AY-3-8912 pin 6; 4164 pin 16', note: 'The 7905 output. The adapter negative is about 4 V below this.' }
@@ -375,28 +378,28 @@ RCS.add({
       printer('oric1', [...S1, SAIO], VF1),
       rgb('oric1', [...S1, SA[1], DIAG], VF1, 'bgr'),
       tape('oric1', [...S1, SA[1], O1M('ch. 11 Saving programs on tape, p. 105-107'), DIAG], `${VF1}; Atmos manual Appendix 11`),
-      powerIn('oric1', [SCH1, CHK], 'Oric-1 48K circuit diagram (SK3, IC1 7905); repair checklist (centre positive)'),
-      rf('oric1', [SCH2, atm('ch. 1 Getting the ATMOS together, p. 3-4', 8), CHK], 'Oric-1 circuit diagram (modulator); Atmos manual ch. 1 and Appendix 11 drawing'),
+      powerIn('oric1', [SCH1, OO5, CHK], 'Oric-1 48K circuit diagram (SK3, IC1 7905); repair checklist (centre positive)'),
+      rf('oric1', [SCH2, OO5, atm('ch. 1 Getting the ATMOS together, p. 3-4', 8), CHK], 'Oric-1 circuit diagram (modulator); Atmos manual ch. 1 and Appendix 11 drawing'),
       keyboard('oric1', [SCH1, OO5, W_KBD], VF1)
     ],
     atmos: [
       expansion('atmos', [...SA, SAIO], VFA),
       printer('atmos', [...SA, SAIO], VFA),
-      rgb('atmos', [...SA, SCH1], VFA, 'rgb'),
+      rgb('atmos', [...SA, SCH1, OO5], VFA, 'rgb'),
       tape('atmos', [...SA, atm('ch. 6 Tapes and Data, p. 62-65', 67)], VFA),
-      powerIn('atmos', [atm('ch. 1 Getting the ATMOS together, p. 3', 8), CHK, SCH1], 'Atmos manual ch. 1 (9 V DC, socket at the left rear); repair checklist (7905, centre positive, Oric/Atmos boards)'),
+      powerIn('atmos', [atm('ch. 1 Getting the ATMOS together, p. 3', 8), CHK, SCH1, OO5], 'Atmos manual ch. 1 (9 V DC, socket at the left rear); repair checklist (7905, centre positive, Oric/Atmos boards)'),
       rf('atmos', [...SA, atm('ch. 1 Getting the ATMOS together, p. 3-4', 8)], 'Atmos manual ch. 1 and Appendix 11 rear-panel drawing'),
-      keyboard('atmos', [SCH1, W_KBD], 'Oric-1 circuit diagram PL3 (Atmos keyboard assumed the same)', { verify: true, summary: 'Not sourced for the Atmos: the pin table is the Oric-1 schematic\'s PL3, assumed unchanged because the Atmos keeps the same 8 x 8 matrix (FUNCT added at row 5, column 4). Columns are AY port A, rows VIA PB0-PB2, sense through TR2 to VIA PB3. Confirm with a meter before relying on it.' })
+      keyboard('atmos', [SCH1, OO5, W_KBD], 'Oric-1 circuit diagram PL3 (Atmos keyboard assumed the same)', { verify: true, summary: 'Not sourced for the Atmos: the pin table is the Oric-1 schematic\'s PL3, assumed unchanged because the Atmos keeps the same 8 x 8 matrix (FUNCT added at row 5, column 4). Columns are AY port A, rows VIA PB0-PB2, sense through TR2 to VIA PB3. Confirm with a meter before relying on it.' })
     ]
   },
   power: {
     oric1: {
       supply: { external: true, name: 'Oric 9 V DC adapter (unregulated)', output: '9 V DC unregulated, 600 mA (schematic rating)', connector: 'oric1-power', notes: supplyNotes, sources: supplySrc },
-      rails, testPoints, firstTen, clocks, sources: [SCH1, SCH2, CHK, DIAG]
+      rails, testPoints, firstTen, clocks, sources: [SCH1, SCH2, OO5, CHK, DIAG]
     },
     atmos: {
       supply: { external: true, name: 'Oric Atmos 9 V DC adapter (unregulated)', output: '9 V DC unregulated (current rating not given in the Atmos manual; the Oric-1 schematic gives 600 mA)', connector: 'atmos-power', notes: supplyNotes, sources: [atm('ch. 1 Getting the ATMOS together, p. 3', 8), ...supplySrc] },
-      rails, testPoints, firstTen, clocks, sources: [CHK, DIAG, SCH1]
+      rails, testPoints, firstTen, clocks, sources: [CHK, DIAG, SCH1, OO5]
     }
   },
   quickref: {

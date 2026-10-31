@@ -315,14 +315,14 @@ RCS.add({
         { n: 33, name: 'KBD0', type: 'kbd', dir: 'in', desc: 'Keyboard line 0.' },
         { n: 34, name: '0V', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V' },
         { n: 35, name: 'OSC', type: 'clock', dir: 'in', desc: 'Oscillator pin: the 6.5 MHz ceramic resonator X1 (CERAM OSC on the diagram) is the only part of the oscillator on the board.', terms: ['crystal'], probe: 'About 6.5 MHz. No oscillation, no display.' },
-        { n: 36, name: "A3'", type: 'addr', dir: 'bidir', desc: "ROM-side address line A3'. Driven with the character code during display refresh cycles." },
+        { n: 36, name: "A3'", type: 'addr', dir: 'bidir', desc: "ROM-side address line A3'. Driven with the character code during display refresh cycles; whether the ULA also reads it is not stated in the sources.", verify: true },
         { n: 37, name: "A4'", type: 'addr', dir: 'bidir', desc: "ROM-side address line A4'. Character code during display refresh cycles." },
         { n: 38, name: "A5'", type: 'addr', dir: 'bidir', desc: "ROM-side address line A5'. Character code during display refresh cycles." },
         { n: 39, name: "A6'", type: 'addr', dir: 'bidir', desc: "ROM-side address line A6'. Character code during display refresh cycles." },
         { n: 40, name: '+5V', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+5 V' }
       ],
       replacements: [
-        { part: '2C210E', kind: 'pin-compatible', note: 'The later ZX81 ULA, with a video back porch. The 2C184E (and the older 2C158E) has none, and most colour TVs will not lock to it: a blank screen on a 2C184E machine can be a working computer.', source: S('retro.engineer, Sinclair ZX81 A (Issue 1, 2C184E ULA: video incompatible with most colour TVs)', 'https://retro.engineer/projects/2021-03-13_Sinclair_ZX81_A/') },
+        { part: '2C210E', kind: 'pin-compatible', verify: true, note: 'The later ZX81 ULA, with a video back porch. The 2C184E (and the older 2C158E) has none, and most colour TVs will not lock to it: a blank screen on a 2C184E machine can be a working computer.', source: S('retro.engineer, Sinclair ZX81 A (Issue 1, 2C184E ULA: video incompatible with most colour TVs)', 'https://retro.engineer/projects/2021-03-13_Sinclair_ZX81_A/') },
         { part: 'vLA81 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement with 2C210E behaviour (back porch). Video level selectable for a 75 ohm monitor or the modulator, and a 50/60 Hz setting: set it to match the machine (60 Hz on a TS1000). Narrow pins fit the existing socket; a soldered-in ULA has to come out first.', source: S('Tindie, vLA81 ZX81 ULA replacement (features)', 'https://www.tindie.com/products/charlieingley/vla81-zx81-ula-replacement/') }
       ],
       datasheets: [
@@ -364,7 +364,7 @@ RCS.add({
     rom_zx81: {
       id: 'rom_zx81', name: 'ZX81 8K BASIC ROM (2364 type)', short: 'ROM', family: 'Mask ROM 8K x 8 (2364 pinout)', role: 'BASIC, editor, character set and floating point at $0000-$1FFF', pkg: 'DIP-24',
       machines: ['zx81'], location: { zx81: 'IC2' },
-      summary: 'An 8K mask ROM in the 24-pin 2364 pinout. Selected by the ULA /ROMCS on pin 20. A0-A8 come from the ULA side of the 1 kohm resistors, so the ULA can fetch character patterns while the CPU is busy. A dead ROM gives a blank or garbage screen.',
+      summary: 'An 8K mask ROM in the 24-pin 2364 pinout, selected on pin 20. Board wiring (ZX81 circuit diagram SRC 049; the TS1000 board follows it): /ROMCS comes from ULA pin 13 through R28 (680 ohm), and an add-on can pull it HIGH from edge pin B23 to switch the ROM out; A0-A8 come from the ULA side of the 1 kohm resistors, so the ULA can fetch character patterns while the CPU is busy. The TS1500 wiring is not confirmed. A dead ROM gives a blank or garbage screen.',
       fails: ['No boot', 'Garbage on the screen', 'Crash on a keyword'],
       heat: 'cool', verifiedAgainst: 'ZX81 circuit diagram SRC 049 (IC2 8K ROM); ZX81 Service and Assembly Manual component list (IC2 2364)',
       pins: [
@@ -387,15 +387,15 @@ RCS.add({
         { n: 17, name: 'D7', type: 'data', dir: 'out', desc: 'Data out bit 7.' },
         { n: 18, name: 'A11', type: 'addr', dir: 'in', desc: 'Address bit 11 (direct from the CPU).' },
         { n: 19, name: 'A10', type: 'addr', dir: 'in', desc: 'Address bit 10 (direct).' },
-        { n: 20, name: '/ROMCS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select from ULA pin 13 through R28 (680 ohm). An add-on can pull it HIGH from edge pin B23.', terms: ['cs'], probe: 'Pulses LOW on ROM access.' },
+        { n: 20, name: '/ROMCS', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip select, active LOW (board wiring: see the summary).', terms: ['cs'], probe: 'Pulses LOW on ROM access.' },
         { n: 21, name: 'A12', type: 'addr', dir: 'in', desc: 'Address bit 12 (direct).' },
         { n: 22, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9 (direct).' },
         { n: 23, name: "A8'", type: 'addr', dir: 'in', desc: "Address bit 8 (A8', ULA side)." },
         { n: 24, name: '+5V', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+5 V' }
       ],
       replacements: [
-        { part: '2764 EPROM on a 24-to-28 pin adapter', kind: 'adapter', note: 'The ZX81 ROM is a 24-pin 2364 type, so a 28-pin 2764 cannot go straight in: it sits in a 28-pin socket wired to a 24-pin plug. Sinc-Link v3 n5 gives the wiring.', source: S('Sinc-Link v3 n5 (1985), ZX81 ROM adapter: 2764 EPROM to replace the Sinclair ROM', 'https://archive.org/details/SincLink/Sinc-Link%20Vol%2003%20No%205/page/n9') },
-        { part: 'AT28C128 / AT28C256 PLCC adapter', kind: 'adapter', note: 'Shared through-hole board for ZX81 Issue 3 carrying a PLCC EEPROM; up to four ROM images, picked with jumpers. Check the board issue before ordering.', source: S('OSH Park shared project, ZX81 ROM adapter for AT28C128/AT28C256-JU', 'https://oshpark.com/shared_projects/22vOyf1p') }
+        { part: '2764 EPROM on a 24-to-28 pin adapter', kind: 'adapter', note: 'The ZX81 ROM is a 24-pin 2364 type, so a 28-pin 2764 cannot go straight in: it sits in a 28-pin socket wired to a 24-pin plug. Sinc-Link v3 n5 gives the wiring.', source: S('Sinc-Link v3 n5 (1985), ZX81 ROM adapter: 2764 EPROM to replace the Sinclair ROM', 'https://archive.org/details/SincLink/Sinc-Link%20Vol%2003%20No%205/page/n8') },
+        { part: 'AT28C128 / AT28C256 PLCC adapter', kind: 'adapter', verify: true, note: 'Shared through-hole board for ZX81 Issue 3 carrying a PLCC EEPROM; up to four ROM images, picked with jumpers. Check the board issue before ordering.', source: S('OSH Park shared project, ZX81 ROM adapter for AT28C128/AT28C256-JU', 'https://oshpark.com/shared_projects/22vOyf1p') }
       ],
       datasheets: [
         S('ZX81 circuit diagram SRC 049, IC2 8K ROM pin numbers', ZX81SCH),
@@ -519,9 +519,9 @@ RCS.add({
         { n: 40, name: 'GND', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V' }
       ],
       replacements: [
-        { part: '6C001E-7', kind: 'pin-compatible', note: 'The only ULA documented for every 48K board, Issue 1 to 6A, and the one Issue 4A and later boards need (their RAM timing changes go with it).', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
-        { part: '6C001E-5 / 6C001E-6', kind: 'pin-compatible', note: 'Issue 1, 2 and 3 boards only; not for 4A/4B, 5 or 6A. The -5 moves the whole picture one character left and lets the EAR bit float until warm, which breaks software that reads the keyboard without masking.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
-        { part: '5C102E / 5C112E', kind: 'pin-compatible', note: 'Issue 1 and 2 boards. A 5C102E needs the "cockroach" 74LS00 mod; a 5C112E in an Issue 1 board needs the cockroach removed.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
+        { part: '6C001E-7', kind: 'pin-compatible', verify: true, note: 'The only ULA documented for every 48K board, Issue 1 to 6A, and the one Issue 4A and later boards need (their RAM timing changes go with it).', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
+        { part: '6C001E-5 / 6C001E-6', kind: 'pin-compatible', verify: true, note: 'Issue 1, 2 and 3 boards only; not for 4A/4B, 5 or 6A. The -5 moves the whole picture one character left and lets the EAR bit float until warm, which breaks software that reads the keyboard without masking.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
+        { part: '5C102E / 5C112E', kind: 'pin-compatible', verify: true, note: 'Issue 1 and 2 boards. A 5C102E needs the "cockroach" 74LS00 mod; a 5C112E in an Issue 1 board needs the cockroach removed.', source: S('Spectrum For Everyone, ZX Spectrum ULA Types', SFE_ULA) },
         { part: 'vLA82 (Charlie Ingley)', kind: 'modern', note: 'Plug-in replacement for a 6C001E-7 or earlier, with 6C001E-7 behaviour; low enough for a rubber-key case. Some sockets only take very thin pins: fit the optional turned-pin socket if it will not seat.', source: S('Tindie, vLA82 Spectrum 48K ULA replacement', 'https://www.tindie.com/products/charlieingley/vla82-spectrum-48k-ula-replacement/') },
         { part: 'Nebula (Retroleum)', kind: 'modern', note: 'Plug-in module for Issue 2 to 6 boards, 6C001E-7 behaviour, supplied with a new socket. The pins are fragile. In a rubber-key case solder in any socketed IC3, IC4, IC24, IC25 under it. On Issue 2 boards set VR1 and VR2 again after fitting.', source: S('Retroleum, Nebula fitting notes (PDF)', 'https://www.retroleum.co.uk/files/spectrum-nebula-fitting-narrow-pins.pdf') }
       ],

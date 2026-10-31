@@ -85,12 +85,12 @@ const antic = [
   { n: 11, name: 'A2', type: 'addr', dir: 'bidir', desc: 'Address bus bit 2.' },
   { n: 12, name: 'A1', type: 'addr', dir: 'bidir', desc: 'Address bus bit 1.' },
   { n: 13, name: 'A0', type: 'addr', dir: 'bidir', desc: 'Address bus bit 0.' },
-  { n: 14, name: 'R/W', type: 'ctrl', dir: 'bidir', desc: 'Read or write.', terms: ['rw'] },
+  { n: 14, name: 'R/W', type: 'ctrl', dir: 'bidir', desc: 'Read or write. Direction not stated in the cited pin figures.', terms: ['rw'], verify: true },
   { n: 15, name: 'RDY', type: 'ctrl', dir: 'out', desc: 'Ready output to the CPU RDY pin. LOW holds the CPU (WSYNC).', terms: ['rdy'], probe: 'HIGH at rest (Sams logic probe H)' },
   { n: 16, name: 'A10', type: 'addr', dir: 'bidir', desc: 'Address bus bit 10.' },
   { n: 17, name: 'A12', type: 'addr', dir: 'bidir', desc: 'Address bus bit 12.' },
   { n: 18, name: 'A13', type: 'addr', dir: 'bidir', desc: 'Address bus bit 13.' },
-  { n: 19, name: 'A14', type: 'addr', dir: 'bidir', desc: 'Address bus bit 14.' },
+  { n: 19, name: 'A14', type: 'addr', dir: 'bidir', desc: 'Address bus bit 14. Direction not stated in the cited pin figures.', verify: true },
   { n: 20, name: 'A15', type: 'addr', dir: 'bidir', desc: 'Address bus bit 15.' },
   { n: 21, name: 'Vdd', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+5.0 V (Sams 130XE)' },
   { n: 22, name: 'A11', type: 'addr', dir: 'bidir', desc: 'Address bus bit 11.' },
@@ -238,10 +238,10 @@ const chipsAtari = {
     ],
     pins: antic,
     replacements: [
-      { part: 'CO12296 (400/800/1200XL) or CO21697 (600XL/800XL/XE), NTSC', kind: 'pin-compatible',
+      { part: 'CO12296 (400/800/1200XL) or CO21697 (600XL/800XL/XE), NTSC', kind: 'pin-compatible', verify: true,
         note: 'Use an NTSC ANTIC with an NTSC GTIA and a 3.58 MHz clock. The 800XL FSM asks for ANTIC Rev. E when the video or ANTIC stress test fails.',
         source: S.chips('ANTIC part numbers') },
-      { part: 'CO14887 (400/800) or CO21698 (XL/XE), PAL and SECAM', kind: 'pin-compatible',
+      { part: 'CO14887 (400/800) or CO21698 (XL/XE), PAL and SECAM', kind: 'pin-compatible', verify: true,
         note: 'PAL ANTIC makes 312 lines instead of 262: it only belongs in a PAL board with a PAL GTIA and the PAL clock.',
         source: S.chips('ANTIC part numbers') },
     ],
@@ -261,10 +261,10 @@ const chipsAtari = {
     ],
     pins: gtia,
     replacements: [
-      { part: 'CO14805 GTIA (NTSC) for a CO12295 CTIA', kind: 'pin-compatible',
+      { part: 'CO14805 GTIA (NTSC) for a CO12295 CTIA', kind: 'pin-compatible', verify: true,
         note: 'GTIA is backward compatible with CTIA and adds three graphics modes; Atari fitted it to later NTSC 400/800s. Test: POKE 623,64 blackens the screen on a GTIA, stays blue on a CTIA.',
         source: S.chips('CTIA/GTIA/FGTIA') },
-      { part: 'CO14889 GTIA (PAL), CO20120 FGTIA (SECAM)', kind: 'pin-compatible',
+      { part: 'CO14889 GTIA (PAL), CO20120 FGTIA (SECAM)', kind: 'pin-compatible', verify: true,
         note: 'Pair with the PAL ANTIC only. FGTIA shows 8 luminances in GTIA mode 1 instead of 16.',
         source: S.chips('CTIA/GTIA/FGTIA') },
     ],
@@ -283,7 +283,7 @@ const chipsAtari = {
     ],
     pins: pokey,
     replacements: [
-      { part: 'C012294 with any maker suffix (-01 AMI, -03 Signetics, -19 National, -22 OKI, -31 IMP)', kind: 'pin-compatible',
+      { part: 'C012294 with any maker suffix (-01 AMI, -03 Signetics, -19 National, -22 OKI, -31 IMP)', kind: 'pin-compatible', verify: true,
         note: 'One part number in every 8-bit machine and the 5200; a POKEY from a dead 5200 or XE fits.',
         source: { label: 'Wikipedia, POKEY: part numbers and maker suffixes (cites the Atari 8-Bit FAQ)', url: 'https://en.wikipedia.org/wiki/POKEY', verify: true } },
       { part: 'PokeyMAX (FPGA)', kind: 'modern',
@@ -312,7 +312,7 @@ const chipsAtari = {
     datasheets: [S.sams(16, 'semiconductor parts list (U6 C061991-29)'), S.sams(5, 'schematic, U6')],
     pins: null,
     replacements: [
-      { part: 'CO61991 or CO61922 FREDDIE from another XE or late 800XL', kind: 'pin-compatible',
+      { part: 'CO61991 or CO61922 FREDDIE from another XE or late 800XL', kind: 'pin-compatible', verify: true,
         note: 'The FAQ lists both numbers for FREDDIE. Sams lists U6 as C061991-29. Check the number on yours before you swap.',
         source: S.chips('FREDDIE') },
     ],
@@ -378,7 +378,7 @@ const controller = (port, sources, extra = {}) => {
       dirn(1, 'FWD', 'forward/up', b), dirn(2, 'BACK', 'back/down', b + 1), dirn(3, 'LEFT', 'left', b + 2), dirn(4, 'RIGHT', 'right', b + 3),
       { n: 5, name: 'POT B', type: 'io', desc: `B potentiometer: paddle ${potB + 1} position, POKEY pot ${potB} (pin ${[15, 13, 11, 9][port - 1]}).`, expect: '0-5 V analog, varies with the knob' },
       { n: 6, name: 'TRIG', type: 'io', desc: `Trigger (fire button) to GTIA T${trig} (pin ${8 + trig}).`, expect: 'HIGH at rest; 0 V with the button pressed' },
-      { n: 7, name: '+5 V', type: 'power', desc: '+5 V for the controller, 50 mA.', expect: '+4.9 to +5.0 V (Sams 130XE: 4.9 V)' },
+      { n: 7, name: '+5 V', type: 'power', desc: '+5 V for the controller, 50 mA.', expect: '+5 V (Sams measured 4.9 V on a 130XE)' },
       { n: 8, name: 'GND', type: 'ground', desc: 'Ground.', expect: '0 V' },
       { n: 9, name: 'POT A', type: 'io', desc: `A potentiometer: paddle ${potA + 1} position, POKEY pot ${potA} (pin ${[14, 12, 10, 8][port - 1]}).`, expect: '0-5 V analog, varies with the knob' },
     ],
@@ -452,10 +452,10 @@ const CART_SUMMARY_XL = 'The cartridge bus, 15/30 edge at 0.1 in. Contacts 1-15 
 const power400 = (j, sources) => ({
   id: 'atari-power', name: 'Power in (9 V AC)', kind: 'Two-contact round power jack (' + j + ')', geo: 'barrel', verify: true,
   verifiedAgainst: VA_FSM + ', Figs. 2-4 and 2-8 (power supply schematics)',
-  summary: `9 V AC from the external transformer. The schematics show a two-contact jack (${j}) feeding the bridge rectifier through the power switch and the cartridge-door interlock. It is AC, so the two contacts have no polarity. The physical plug size is not in the manual; check it against your adapter. This is not a DIN socket.`,
+  summary: `9 V AC from the external transformer. The schematics show a two-contact jack (${j}) feeding the bridge rectifier through the power switch and the cartridge-door interlock. It is AC, so the two contacts have no polarity. The manual draws no physical view, so which contact is centre and which is sleeve is not sourced; the physical plug size is not in the manual either; check it against your adapter. This is not a DIN socket.`,
   pins: [
-    { n: 1, name: '9 V AC', type: 'power', desc: 'One leg of the 9 V AC winding (centre contact).', expect: '9-11 V AC between the two contacts with the console on' },
-    { n: 2, name: '9 V AC', type: 'power', desc: 'Other leg of the 9 V AC winding (sleeve).', expect: '9-11 V AC between the two contacts' },
+    { n: 1, name: '9 V AC', type: 'power', desc: 'One leg of the 9 V AC winding (centre contact).', expect: '9 V AC between the two contacts' },
+    { n: 2, name: '9 V AC', type: 'power', desc: 'Other leg of the 9 V AC winding (sleeve).', expect: '9 V AC between the two contacts' },
   ],
   sources,
 });
@@ -964,20 +964,20 @@ const xeQuickref = {
 };
 
 /* ---------- connectors per machine ---------- */
-const FSM_SIO = [S.trn(131, 'OS Manual Fig. 9-4, Serial Bus Connector, p. 145'), S.trn(537, 'Hardware Manual App. C, Serial I/O Jack, p. C-1'), S.fsm(51, 'Fig. 2-8, 800 power supply schematic, peripheral jack J204'), S.faq('SIO')];
-const XL_SIO = [S.xl(20, 'Fig. 1-9, SIO connector pin assignments, p. 1-12'), S.trn(131, 'OS Manual Fig. 9-4, Serial Bus Connector, p. 145'), S.faq('SIO')];
-const X6_SIO = [S.x6(22, 'Fig. 1-9, SIO connector pin assignments, p. 1-12'), S.trn(131, 'OS Manual Fig. 9-4, Serial Bus Connector, p. 145'), S.faq('SIO')];
+const FSM_SIO = [S.trn(131, 'OS Manual Fig. 9-4, Serial Bus Connector, p. 146'), S.trn(537, 'Hardware Manual App. C, Serial I/O Jack, p. C-1'), S.fsm(51, 'Fig. 2-8, 800 power supply schematic, peripheral jack J204'), S.faq('SIO')];
+const XL_SIO = [S.xl(20, 'Fig. 1-9, SIO connector pin assignments, p. 1-12'), S.trn(131, 'OS Manual Fig. 9-4, Serial Bus Connector, p. 146'), S.faq('SIO')];
+const X6_SIO = [S.x6(22, 'Fig. 1-9, SIO connector pin assignments, p. 1-12'), S.trn(131, 'OS Manual Fig. 9-4, Serial Bus Connector, p. 146'), S.faq('SIO')];
 const XE_SIO = [S.sams(7, 'IC pinouts and terminal guides, J1 front view'), S.sams(2, 'schematic, J1 with +4.9 V READY'), S.xl(20, 'Fig. 1-9, SIO connector (800XL)'), S.faq('SIO')];
 
 const cart800Left = {
-  id: 'atari-cart', name: 'Left cartridge slot (A, 30 contacts)', kind: 'Card edge 15/30, 0.1 in', geo: 'edge-15x15-cbm',
+  id: 'atari-cart', name: 'Left cartridge slot (A, 30 contacts)', kind: 'Card edge 15/30, 0.1 in', geo: 'edge-15x15-cbm', rowA: 'bottom',
   verifiedAgainst: VA_FSM + ', Fig. 2-6A, 800 motherboard schematic (J109)',
-  summary: 'The main cartridge slot (BASIC goes here). Numbers 1-15 on one side, letters A-S on the other. Pin names from the 800 schematic, J109.',
+  summary: 'The main cartridge slot (BASIC goes here). Letters A-S on the console-top side, numbers 1-15 on the console-bottom side, A opposite 1 (FAQ drawing; the Atari 600XL manual labels the sides the same way). Pin names from the 800 schematic, J109.',
   pins: cartPins(leftSlot('800')),
-  sources: [S.fsm(48, 'Fig. 2-6A, 800 motherboard schematic, J108/J109, p. 2-10'), S.faq('cartridge slot')],
+  sources: [S.fsm(48, 'Fig. 2-6A, 800 motherboard schematic, J108/J109, p. 2-10'), S.faq('cartridge slot'), S.x6(24, 'Fig. 1-11, cartridge connector pin assignments (letters CONSOLE TOP, numbers CONSOLE BOTTOM), p. 1-14')],
 };
 const cart800Right = {
-  id: 'atari-cart-right', name: 'Right cartridge slot (B, 800 only)', kind: 'Card edge 15/30, 0.1 in', geo: 'edge-15x15-cbm',
+  id: 'atari-cart-right', name: 'Right cartridge slot (B, 800 only)', kind: 'Card edge 15/30, 0.1 in', geo: 'edge-15x15-cbm', rowA: 'bottom',
   verifiedAgainst: VA_FSM + ', Fig. 2-6A, 800 motherboard schematic (J108); pins 1 and A from the FAQ',
   summary: 'The second slot, for 8 KB cartridges at $8000-$9FFF. Same edge as the left slot, but pin 12 is /S4, pin 14 RD4, and pins 1 and A carry R/W late and PHI2 (FAQ; not legible on the schematic scan).',
   pins: cartPins({
@@ -989,16 +989,16 @@ const cart800Right = {
     R: ['R/W', 'ctrl', 'Read/write (R/W early).'],
     S: ['RASTIME', 'clock', 'RAS time strobe (the schematic labels it RAS).'],
   }),
-  sources: [S.fsm(48, 'Fig. 2-6A, 800 motherboard schematic, J108, p. 2-10'), S.faq('right cartridge slot')],
+  sources: [S.fsm(48, 'Fig. 2-6A, 800 motherboard schematic, J108, p. 2-10'), S.faq('right cartridge slot'), S.x6(24, 'Fig. 1-11, cartridge connector pin assignments (letters CONSOLE TOP, numbers CONSOLE BOTTOM), p. 1-14')],
 };
 const cart400 = {
   ...cart800Left, name: 'Cartridge slot (30 contacts)',
   verifiedAgainst: VA_FSM + ', Fig. 2-6A (800 left slot, same bus); 400 differences from the FAQ',
-  summary: 'The 400 has one cartridge slot, wired as the 800 left slot except that RD4 (A) is not connected (FAQ). Numbers 1-15 on one side, letters A-S on the other.',
+  summary: 'The 400 has one cartridge slot, wired as the 800 left slot except that RD4 (A) is not connected (FAQ). Letters A-S on the console-top side, numbers 1-15 on the console-bottom side, A opposite 1.',
   pins: cartPins(leftSlot('400')),
 };
 const cartXL = (sources, va) => ({
-  id: 'atari-cart', name: 'Cartridge slot (30 contacts)', kind: 'Card edge 15/30, 0.1 in', geo: 'edge-15x15-cbm',
+  id: 'atari-cart', name: 'Cartridge slot (30 contacts)', kind: 'Card edge 15/30, 0.1 in', geo: 'edge-15x15-cbm', rowA: 'bottom',
   verifiedAgainst: va, summary: CART_SUMMARY_XL, pins: cartPins(leftSlot('xl')), sources,
 });
 
@@ -1027,9 +1027,9 @@ const monitorXE = {
 };
 
 const eci = {
-  id: 'atari-eci', name: 'Enhanced Cartridge Interface (ECI, J4B)', kind: 'Card edge 7/14, beside the cartridge slot', geo: 'edge-7x7-cbm',
+  id: 'atari-eci', name: 'Enhanced Cartridge Interface (ECI, J4B)', kind: 'Card edge 7/14, beside the cartridge slot', geo: 'edge-7x7-cbm', rowA: 'bottom',
   verifiedAgainst: VA_SAMS + ', J4B (expansion port)',
-  summary: 'The 130XE replacement for the PBI: 14 extra contacts beside the cartridge slot. A device uses both edges together. Numbers 1-7 on one side, letters A-H on the other.',
+  summary: 'The 130XE replacement for the PBI: 14 extra contacts beside the cartridge slot. A device uses both edges together. Sams J4B front view: letters A-H on top, numbers 1-7 below, A over 1 (so +5 V on 7 is lower right and ground H upper right).',
   pins: ECI_PINS.map(([n, name, type, desc, more]) => ({ n, name, type, desc, ...(name.startsWith('/') ? { activeLow: true } : {}), ...(type === 'power' ? { expect: '+5.0 V (Sams)' } : type === 'ground' ? { expect: '0 V' } : {}), ...(more || {}) })),
   sources: [S.sams(5, 'schematic, J4B expansion port'), S.sams(7, 'IC pinouts and terminal guides, J4B front view'), S.faq('ECI')],
 };

@@ -36,13 +36,13 @@ Object.assign(RCS.terms, {
 /* ---------- connectors (the standard: the same on every machine; ids differ per machine) ---------- */
 const S_CART = [tdb('1.5.2 Cartridge Bus, list of signal pins, p. 32-33', 35), tdb('1.5.4 Cartridge Power Capacity, p. 34', 37)];
 const cartridge = mid => ({
-  id: `${mid}-cart`, name: 'Cartridge slot', kind: '50-way 2.54 mm card-edge socket (25 + 25), odd pins one side, even the other', geo: 'edge-25x25-odd-even',
+  id: `${mid}-cart`, name: 'Cartridge slot', kind: '50-way 2.54 mm card-edge socket (25 + 25), odd pins one side, even the other', geo: 'edge-25x25-odd-even', verify: true,
   verifiedAgainst: 'MSX Technical Data Book 1.5.2 Cartridge Bus (list of signal pins) and 1.5.4 Cartridge Power Capacity',
   summary: 'The Z80 bus plus the slot select for this slot (/SLTSL, pin 4) and three pre-decoded ROM selects (/CS1 $4000-$7FFF, /CS2 $8000-$BFFF, /CS12 $4000-$BFFF; read cycles only, so not usable for RAM). Directions in the book are seen from the computer. Odd pins in one row, even pins in the other, 2 opposite 1; the data book does not say which face of the cartridge carries the odd row, so the drawing puts odd on top by convention. Power budget per the standard: +5 V 300 mA per slot, +12 V and -12 V 50 mA. Pins 5 and 16 are reserved. A worn or dirty slot gives a cartridge that boots once in ten tries.',
   pins: [
     c(1, '/CS1', 'ctrl', 'ROM select, $4000-$7FFF (memory read in this slot).'), c(2, '/CS2', 'ctrl', 'ROM select, $8000-$BFFF.'),
-    c(3, '/CS12', 'ctrl', 'ROM select, $4000-$BFFF (one 32 KB ROM).'), c(4, '/SLTSL', 'ctrl', 'Slot select for this slot, from the slot decoder (8255 port A).'),
-    c(5, 'RSV', 'nc', 'Reserved (the book notes it for 256K ROM). Do not use.'), c(6, '/RFSH', 'ctrl', 'Z80 refresh.'),
+    c(3, '/CS12', 'ctrl', 'ROM select, $4000-$BFFF (one 32 KB ROM; the book notes it for 256K ROM).'), c(4, '/SLTSL', 'ctrl', 'Slot select for this slot, from the slot decoder (8255 port A).'),
+    c(5, 'RSV', 'nc', 'Reserved for future expansion. Do not use.'), c(6, '/RFSH', 'ctrl', 'Z80 refresh.'),
     c(7, '/WAIT', 'ctrl', 'Wait request to the Z80, open-collector from the cartridge.'), c(8, '/INT', 'ctrl', 'Interrupt request to the Z80, open-collector from the cartridge.'),
     c(9, '/M1', 'ctrl', 'Z80 fetch cycle.'), c(10, '/BUSDIR', 'ctrl', 'From the cartridge: LOW while it drives data to the CPU (turns the bus buffers round). Needed by I/O cartridges, not by plain ROM or RAM.'),
     c(11, '/IORQ', 'ctrl', 'Z80 I/O request.'), c(12, '/MREQ', 'ctrl', 'Z80 memory request (the book prints MERQ).'),
@@ -55,9 +55,9 @@ const cartridge = mid => ({
     c(37, 'D5', 'data', 'Data bit 5.'), c(38, 'D4', 'data', 'Data bit 4.'), c(39, 'D7', 'data', 'Data bit 7.'), c(40, 'D6', 'data', 'Data bit 6.'),
     c(41, 'GND', 'ground', GND, { expect: '0 V' }), c(42, 'CLOCK', 'clock', 'CPU clock.', { expect: '3.579545 MHz square wave' }),
     c(43, 'GND', 'ground', GND, { expect: '0 V' }), c(44, 'SW1', 'ctrl', 'Insert/remove detect (protection); paired with SW2.'),
-    c(45, '+5 V', 'power', '+5 V supply, 300 mA per slot.', { expect: V5 }), c(46, 'SW2', 'ctrl', 'Insert/remove detect (protection); paired with SW1.'),
-    c(47, '+5 V', 'power', '+5 V supply.', { expect: V5 }), c(48, '+12 V', 'power', '+12 V supply, 50 mA.', { expect: '+11.4 to +12.6 V DC' }),
-    c(49, 'SOUNDIN', 'audio', 'Sound input from the cartridge, mixed into the computer\'s audio (-5 dBm).'), c(50, '-12 V', 'power', '-12 V supply, 50 mA.', { expect: '-11.4 to -12.6 V DC' })
+    c(45, '+5 V', 'power', '+5 V supply, 300 mA per slot.', { expect: '+5 V DC' }), c(46, 'SW2', 'ctrl', 'Insert/remove detect (protection); paired with SW1.'),
+    c(47, '+5 V', 'power', '+5 V supply.', { expect: '+5 V DC' }), c(48, '+12 V', 'power', '+12 V supply, 50 mA.', { expect: '+12 V DC' }),
+    c(49, 'SOUNDIN', 'audio', 'Sound input from the cartridge, mixed into the computer\'s audio (-5 dBm).'), c(50, '-12 V', 'power', '-12 V supply, 50 mA.', { expect: '-12 V DC' })
   ],
   sources: S_CART, terms: ['edge-connector', 'msx-slot', 'wait']
 });
@@ -84,13 +84,13 @@ const joystick = (mid, n) => ({
 const cassette = mid => ({
   id: `${mid}-tape`, name: 'Cassette interface', kind: '8-pin DIN 270 degrees (DIN 45326)', geo: 'din8-270', gender: 'female',
   verifiedAgainst: 'MSX Technical Data Book 1.4.1 Cassette Interface (table of signal pins and pin connection drawing) and 1.4.8 Connectors',
-  summary: 'FSK at 1200 baud (1200 Hz = 0, two cycles of 2400 Hz = 1) or 2400 baud. The book names DIN 45326 and its drawing (key at the top) turned upright matches the standard 8-pin 270 degree numbering: 1 4 2 5 3 over the top, 6 and 7 either side of the key, 8 in the centre. CMTOUT comes from 8255 port C bit 5 through a filter; CMTIN is shaped and read on PSG port A bit 7; REMOTE is a relay contact closed by 8255 port C bit 4 (LOW = motor on). The usual adapter lead splits this into MIC, EAR and REMOTE plugs.',
+  summary: 'FSK at 1200 baud (1200 Hz = 0, two cycles of 2400 Hz = 1) or 2400 baud. The book names DIN 45326 and its drawing (key at the top) turned upright matches the standard 8-pin 270 degree numbering: 1 4 2 5 3 over the top, 6 and 7 either side of the key, 8 in the centre. CMTOUT comes from 8255 port C bit 5 through a filter; CMTIN is shaped and read on PSG port A bit 7; REMOTE is the motor control from 8255 port C bit 4 (LOW = motor on); the book does not say how it is switched (most machines use a relay). The usual adapter lead splits this into MIC, EAR and REMOTE plugs.',
   pins: [
     c(1, 'GND', 'ground', GND, { expect: '0 V' }), c(2, 'GND', 'ground', GND, { expect: '0 V' }), c(3, 'GND', 'ground', GND, { expect: '0 V' }),
     c(4, 'CMTOUT', 'audio', 'To the recorder MIC input.', { expect: '22 mV p-p (plus or minus 7 mV) at 1200 Hz; -45 dBm' }),
     c(5, 'CMTIN', 'audio', 'From the recorder EAR output.'),
-    c(6, 'REMOTE +', 'ctrl', 'Motor relay contact.', { expect: 'Closed to pin 7 while the motor is on' }),
-    c(7, 'REMOTE -', 'ctrl', 'Motor relay contact (other side).'),
+    c(6, 'REMOTE +', 'ctrl', 'Motor control, pairs with pin 7.', { expect: 'Closed to pin 7 while the motor is on', verify: true }),
+    c(7, 'REMOTE -', 'ctrl', 'Motor control, pairs with pin 6.'),
     c(8, 'GND', 'ground', GND, { expect: '0 V' })
   ],
   sources: [tdb('1.4.1 Cassette Interface, p. 15-17', 18), tdb('1.4.1 table of signal pins, p. 16', 19), tdb('1.7.11 8255 (PPI) Bit Assignments, p. 43', 46), tdb('1.7.12 PSG Bit Assignments, p. 44', 47)], terms: []
@@ -207,7 +207,7 @@ const vdp9938 = {
   summary: 'Runs from a 21.47727 MHz crystal on XTAL1/XTAL2 and hands the Z80 its clock on CPUCLK (crystal / 6 = 3.58 MHz), so a dead V9938 or crystal can stop the whole machine, not just the picture. Ports $98 (VRAM), $99 (registers), $9A (palette), $9B (register pointer). Up to 128 KB VRAM on /CAS0 and /CAS1 (/CASX for 64 KB expansion VRAM), with 16K x 1, 16K x 4, 64K x 1 or 64K x 4 DRAM. Linear R, G, B and composite VIDEO out on pins 21-24 through external buffers. Unlike the TMS9918A, bit 0 of each bus is the LSB (CD0, RD0, AD0). Pin spacing is 1.778 mm: an ordinary 0.1 in socket will not fit.',
   fails: ['No picture and no boot (the Z80 clock comes from CPUCLK)', 'Garbled screen or wrong colours (VRAM, palette)', 'Picture but no sync on RGB', 'Works in SCREEN 0-4, fails in SCREEN 5-8 (upper VRAM)'],
   replacements: [
-    { part: 'Yamaha V9958 (MSX2+ VDP)', kind: 'pin-compatible',
+    { part: 'Yamaha V9958 (MSX2+ VDP)', kind: 'adapter',
       note: 'Same 64-pin SDIP and software compatible, but not a drop-in. Pin 21 becomes VDD/DAC (+5 V in), where the V9938 has composite VIDEO out: the V9958 has no composite output, so a board that takes video from pin 21 loses it and the DAC is unpowered until pin 21 gets +5 V. Pin 4 (/VDS on the V9938) becomes the /VRESET input and /VDS moves onto pin 8 with CPUCLK; pins 26 and 27 (/LPS, /LPD) become /WAIT out and /HRESET in. Upgrades rewire those pins.',
       source: V9958DB },
   ],
