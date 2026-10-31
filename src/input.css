@@ -406,7 +406,7 @@
   .pinhead .n { font: 400 40px/1 var(--font-mono); color: var(--copper); }
   .pinhead .nm { font: 400 30px/1 var(--font-mono); }
   .pinhead .ch { font: 15px var(--font-mono); color: var(--tin); letter-spacing: .06em; }
-  .kv { display: grid; grid-template-columns: 92px 1fr; gap: 6px 12px; margin-top: 16px; font-size: 16px; }
+  .kv { display: grid; grid-template-columns: 92px 1fr; gap: 6px 12px; margin-top: 16px; font-size: 16px; align-items: baseline; }
   .kv dt { font: 13px var(--font-mono); color: var(--tin); letter-spacing: .1em; padding-top: 3px; text-transform: uppercase; }
   .desc { margin-top: 14px; font-size: 17px; }
   .probe { margin-top: 14px; border-left: 3px solid var(--copper); padding: 4px 0 4px 12px; font-size: 16px; }

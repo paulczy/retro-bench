@@ -30,7 +30,7 @@ const MASK_BG = { green: '#1c3829', black: '#17191a', light: '#ebe3cc' };
 const CVIEWS = ['socket', 'plug'];   /* connector drawings: looking into the socket on the machine, or at the cable plug */
 const CVIEW_CAP = { socket: 'Looking into the socket on the machine', plug: 'Looking at the plug on the cable' };
 /* Short board designators for machines. Machines not listed fall back to their own short name. */
-const DES = { c16: 'C16', plus4: '+4', c64: 'C64', c128: 'C128', vic20: 'VIC', pet: 'PET', apple2e: 'IIe', apple2: 'II', apple2plus: 'II+', apple2c: 'IIc', atari800: '800', adam: 'ADAM', colecovision: 'CV', zx81: 'ZX81', spectrum: 'ZX48', ti994a: '99/4A', coco12: 'COCO', coco3: 'COCO3', mc10: 'MC10' };
+const DES = { c16: 'C16', plus4: 'PLUS/4', ti994: '99/4', pc5150: '5150', xt5160: '5160', portable5155: '5155', pcjr: '4860', c64: 'C64', c128: 'C128', vic20: 'VIC', pet: 'PET', apple2e: 'IIe', apple2: 'II', apple2plus: 'II+', apple2c: 'IIc', atari800: '800', adam: 'ADAM', colecovision: 'CV', zx81: 'ZX81', spectrum: 'ZX48', ti994a: '99/4A', coco12: 'COCO', coco3: 'COCO3', mc10: 'MC10' };
 const PANEL_MQ = matchMedia('(max-width: 767.98px)');   /* below this the pin detail is a bottom panel */
 const PHONE_MQ = matchMedia('(max-width: 639.98px)');
 const LIGHT_MQ = matchMedia('(prefers-color-scheme: light)');
@@ -1673,8 +1673,7 @@ function viewAbout() {
     <section class="blk"><span class="lbl">Version</span>
       <dl class="kv mt-0"><dt>Version</dt><dd class="mono">${esc(V.v)}</dd>
         ${built && !isNaN(built) ? `<dt>Built</dt><dd>${esc(built.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }))}</dd>` : ''}
-        ${V.commit ? `<dt>Commit</dt><dd class="mono">${ext(`${REPO}/commit/${V.commit}`, V.commit.slice(0, 7))}</dd>` : ''}
-        <dt>Scheme</dt><dd>v0.&lt;YYDDD&gt;.&lt;rev&gt;: the Julian date of the build (two-digit year and day of the year, US Central time) and the count of that day's commits.</dd></dl>
+        ${V.commit ? `<dt>Commit</dt><dd class="mono">${ext(`${REPO}/commit/${V.commit}`, V.commit.slice(0, 7))}</dd>` : ''}</dl>
     </section>
     <section class="blk"><span class="lbl">Source</span>
       <dl class="kv mt-0"><dt>Repository</dt><dd>${ext(REPO, 'github.com/paulczy/retro-bench')}</dd>
