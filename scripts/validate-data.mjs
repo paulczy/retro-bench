@@ -297,6 +297,20 @@ for (const [mid, q] of Object.entries(R.quickref)) checkSources(`quickref ${mid}
 for (const [mid, q] of Object.entries(R.quickref)) {
   for (const k of ['firstLook', 'keys', 'basic', 'memory']) if (!q[k]) err(`quickref ${mid}`, `missing ${k}`);
   if (q.basic) for (const k of ['dialect', 'essentials', 'groups', 'quirks']) if (!q.basic[k]) err(`quickref ${mid}`, `basic missing ${k}`);
+  /* boot: what the machine powers up into; firstBoot: the short type-in checklist after a repair */
+  const f = `quickref ${mid}`;
+  if (q.boot) { if (!q.boot.to) err(f, 'boot needs to'); if (q.boot.source) checkSources(`${f} boot`, [q.boot.source]); else warn(f, 'boot has no source'); }
+  if (q.firstBoot != null) {
+    if (!Array.isArray(q.firstBoot)) err(f, 'firstBoot must be an array');
+    else {
+      if (q.firstBoot.length > 8) warn(f, `firstBoot has ${q.firstBoot.length} checks (keep it to 8)`);
+      q.firstBoot.forEach((t, i) => {
+        const at = `firstBoot ${i + 1}`;
+        for (const k of ['part', 'type', 'expect']) if (!t || !t[k]) err(f, `${at} needs ${k}`);
+        if (t && t.source) checkSources(`${f} ${at}`, [t.source, ...[].concat(t.also || [])]); else err(f, `${at} has no source`);
+      });
+    }
+  }
 }
 
 const SCH_KINDS = new Set(['schematic', 'layout', 'manual', 'parts']);

@@ -186,8 +186,18 @@ and its page is `docs/verification/measured-how.md`. Brand files set it at the e
            essentials: [{ cmd: 'LOAD "name",8', does: '...' }],           // 10–14 most-used
            groups: [{ group: 'Program control', items: ['RUN [line]', 'LIST'] }],  // the rest, grouped
            quirks: ['3–5 gotchas'] },
-  memory: [{ range: '$0000-$00FF', what: 'Zero page' }] }
+  memory: [{ range: '$0000-$00FF', what: 'Zero page' }],
+  boot: { to: 'Commodore BASIC 2.0', prompt: 'READY.', note?: 'optional, one sentence',
+          source: { label: "C64 User's Guide, ch. 1, p. 4", url: '…#page=…' }, verify?, conflict? },
+  firstBoot: [   // 5–8 checks typed right after a repair, one per part of the machine; first is what the screen shows
+    { part: 'Video' | 'RAM' | 'Sound' | 'Keyboard' | 'Joystick' | 'Disk' | 'Tape' | 'Printer' | …,
+      type: 'POKE 53280,2',               // exactly what to type or do (a key, a switch, a cartridge)
+      expect: 'The border turns red.',     // what a working machine shows
+      source: { label: "C64 Programmer's Reference Guide, App. G, p. 454", url: '…#page=…' }, also?, verify?, conflict? } ] }
 ```
+`boot` and `firstBoot` are shown at the top of the Commands tab. Every check cites the page that proves both
+what to type and what a working machine shows; a check whose result is reasoned from two sources (a register
+map and a color table) cites both, the second as `also: { label, url }`.
 For a machine without BASIC (a robot, an IBM PC) use `basic.dialect` for whatever the built-in language or
 monitor is (HERO monitor commands, IBM Cassette BASIC / DOS commands) and keep the same shape.
 

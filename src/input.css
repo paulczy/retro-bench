@@ -474,7 +474,15 @@
   .mtabs a:hover { color: var(--silk); }
   .mtabs a.on { color: var(--copper); border-bottom-color: var(--copper); }
   .mtabs a.off { color: var(--silk-25); text-decoration: line-through dotted; pointer-events: none; }
+  /* on this page: the view's sections in page order; the lit one follows the scroll (watchTabs in app.js) */
+  .secnav { display: flex; min-width: 0; max-width: 100%; gap: 0 2px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; border-top: var(--w) dashed var(--silk-25); }
+  .secnav[hidden] { display: none; }
+  .secnav::-webkit-scrollbar { display: none; }
+  .secnav button { flex: none; min-height: 36px; padding: 0 10px; font: 13px var(--font-mono); letter-spacing: .04em; color: var(--silk-70); border-bottom: 2px solid transparent; white-space: nowrap; max-width: 26ch; overflow: hidden; text-overflow: ellipsis; }
+  .secnav button:hover { color: var(--silk); }
+  .secnav button.on { color: var(--silk); border-bottom-color: var(--silk); }
   html { scroll-padding-top: calc(var(--mbar-h, 0px) + 8px); }
+  #view section.blk { scroll-margin-top: 14px; }
   .detail { top: calc(var(--mbar-h, 0px) + 14px); max-height: calc(100dvh - var(--mbar-h, 0px) - 28px); }
 
   /* parts list by designator */
@@ -803,7 +811,9 @@
     .mname .nm, .brev, .mbar .region .h, .mbar .region > .tin { display: none; }
     .mbar .region button { min-height: 28px; padding: 2px 8px; font-size: 12px; }
     .bsel select { min-height: 28px; max-width: 9.5rem; padding: 2px 20px 2px 6px; font-size: 12px; background-position: right 6px center; }
-    .mtabs { position: sticky; top: 0; z-index: 25; margin: 0; padding: 0 6px; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
+    .mnav { position: sticky; top: 0; z-index: 25; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
+    .mtabs, .secnav { margin: 0; padding: 0 6px; }
+    .secnav button { min-height: 34px; font-size: 12px; padding: 0 8px; }
     .mtabs a { min-height: 40px; padding: 0 10px; font-size: 14px; }
     .hd { margin-top: 10px; }
     /* chip toolbar: short labels, one line */

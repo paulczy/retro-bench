@@ -662,10 +662,10 @@ function buildIndex() {
   for (const [id, q] of Object.entries(D.quickref)) {
     const m = D.machines[id]; if (!m || !q) continue;
     const basic = q.basic || {};
-    for (const e of arr(basic.essentials)) ix.push({ group: 'BASIC', title: e.cmd, sub: `${m.name}: ${e.does}`, keys: basic.dialect || '', href: `${mPath(m)}/quickref?tab=basic`, mono: true, ...flags(e) });
-    for (const g of arr(basic.groups)) for (const it of arr(g.items)) ix.push({ group: 'BASIC', title: it, sub: `${m.name}: ${g.group}`, keys: basic.dialect || '', href: `${mPath(m)}/quickref?tab=basic`, mono: true });
-    for (const k of arr(q.keys)) ix.push({ group: 'Keys', title: k.keys, sub: `${m.name}: ${k.does}`, keys: '', href: `${mPath(m)}/quickref?tab=keys`, ...flags(k) });
-    for (const r of arr(q.memory)) ix.push({ group: 'Memory', title: `${r.range}  ${r.what}`, sub: m.name, keys: r.what, href: `${mPath(m)}/quickref?tab=memory`, mono: true });
+    for (const e of arr(basic.essentials)) ix.push({ group: 'Commands', title: e.cmd, sub: `${m.name}: ${e.does}`, keys: basic.dialect || '', href: `${mPath(m)}/quickref?at=commands`, mono: true, ...flags(e) });
+    for (const g of arr(basic.groups)) for (const it of arr(g.items)) ix.push({ group: 'Commands', title: it, sub: `${m.name}: ${g.group}`, keys: basic.dialect || '', href: `${mPath(m)}/quickref?at=commands`, mono: true });
+    for (const k of arr(q.keys)) ix.push({ group: 'Keys', title: k.keys, sub: `${m.name}: ${k.does}`, keys: '', href: `${mPath(m)}/quickref?at=keys`, ...flags(k) });
+    for (const r of arr(q.memory)) ix.push({ group: 'Memory', title: `${r.range}  ${r.what}`, sub: m.name, keys: r.what, href: `${mPath(m)}/quickref?at=memory`, mono: true });
   }
   for (const [id, t] of Object.entries(D.terms)) ix.push({ group: 'Glossary', title: t.term, sub: t.short, keys: id + ' ' + t.long, href: `#/glossary?term=${id}` });
   for (const mid of Object.keys(D.connectors)) {
@@ -685,7 +685,7 @@ function buildIndex() {
     { group: 'Pages', title: 'Bench notes', sub: 'Your notes, kept on this device', keys: 'notes export import', href: '#/notes' });
   INDEX = ix;
 }
-const GROUP_ORDER = ['Machines', 'Chips', 'Pins', 'BASIC', 'Keys', 'Memory', 'Glossary', 'Connectors', 'Clocks', 'Pages'];
+const GROUP_ORDER = ['Machines', 'Chips', 'Pins', 'Commands', 'Keys', 'Memory', 'Glossary', 'Connectors', 'Clocks', 'Pages'];
 function search(q, perGroup = 20) {
   q = q.trim().toLowerCase(); if (!q) return [];
   if (!INDEX) buildIndex();
@@ -1011,7 +1011,7 @@ function render() {
         ctx.crumbs[1] = [m.name]; html = viewMachine(m);
       }
       else if (c === 'pinouts' || (chip && !chip.pins)) { ctx.crumbs.push(['Pinouts']); html = viewPinouts(m); }
-      else if (c === 'quickref') { ctx.crumbs.push(['Quick reference']); html = viewQuickref(m, r.q.tab); }
+      else if (c === 'quickref') { ctx.crumbs.push(['Quick reference']); if (r.q.tab && !r.q.at) r.q.at = { keys: 'keys', basic: 'commands', memory: 'memory' }[r.q.tab]; html = viewQuickref(m); }
       else if (c === 'ports' || c === 'power') {
         ctx.crumbs.push([c === 'ports' ? 'Ports' : 'Power']);
         ctx.conns = arr(dataFor(D.connectors, m).data);
@@ -1037,7 +1037,7 @@ function render() {
   state.phone = PHONE_MQ.matches;
   state.ctx = ctx;
   if (ctx.machine) {
-    const tab = !c ? (r.q.at === 'notes' ? 'notes' : 'board') : c === 'pinouts' || c === 'chip' ? 'chips' : c === 'quickref' ? 'ref' : c === 'power' && r.q.at === 'clocks' ? 'clocks' : c;
+    const tab = !c ? 'board' : c === 'pinouts' || c === 'chip' ? 'chips' : c === 'quickref' ? 'ref' : c;
     html = `${mbar(ctx.machine, tab)}<div id="view">${html}</div>`;
   }
   $('#main').innerHTML = html;
@@ -1059,7 +1059,7 @@ function render() {
 }
 
 /* what sticks: the whole bar, or on a phone only its tab row (the machine line scrolls away) */
-const mbarH = () => { const b = $('#mbar'), s = b && (PHONE_MQ.matches ? b.querySelector('.mtabs') : b); return s ? s.offsetHeight : 0; };
+const mbarH = () => { const b = $('#mbar'), s = b && (PHONE_MQ.matches ? b.querySelector('.mnav') : b); return s ? s.offsetHeight : 0; };
 /* the bar's height, for everything else that sticks or scrolls to an anchor (src/input.css, --mbar-h); the current
    tab is scrolled into view in a tab row that scrolls sideways */
 function syncMbar() {
@@ -1068,35 +1068,41 @@ function syncMbar() {
   const on = b && b.querySelector('.mtabs .on'), row = on && on.parentElement;
   if (on && row.scrollWidth > row.clientWidth) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
 }
-/* ---------- tabs that follow the scroll: two tabs share one page (Power and Clocks; Board and Notes). The anchored
-   tab is lit while its section is the one under the sticky bar, or when the page cannot scroll further and the
-   section is in view; the other otherwise. IntersectionObservers only: no scroll listener, nothing animates. ---------- */
-const TAB_ANCHOR = { power: ['power', 'clocks', 'clocks'], '': ['board', 'notes', 'notes'] };
+/* ---------- on this page: every top-level section of the view, in page order, as a strip under the tabs. The lit
+   entry is the last section whose top has passed the line under the sticky bar; at the very end of the page, the
+   last section in view. IntersectionObservers only: no scroll listener, nothing animates. ---------- */
 let tabIO = [];
 const TAB_LINE = 32;   /* px under the bar: a jump to a section lands it within this (scroll padding and margin) */
+const secLabel = sec => { const l = sec.querySelector(':scope > .lbl'); if (!l) return ''; const c = l.cloneNode(true); c.querySelectorAll('.d').forEach(d => d.remove()); return c.textContent.trim(); };
 function watchTabs() {
   tabIO.forEach(o => o.disconnect()); tabIO = [];
-  const m = state.ctx.machine, c = state.ctx.route.segs[2] || '', t = TAB_ANCHOR[c];
-  const sec = t && m && document.getElementById(t[2]); if (!sec || !window.IntersectionObserver) return;
-  const tabs = $$('#mbar .mtabs a'), base = tabs[machineTabs(m).findIndex(x => x[0] === t[0])], anc = tabs[machineTabs(m).findIndex(x => x[0] === t[1])];
-  if (!base || !anc) return;
-  const end = document.createElement('div'); end.setAttribute('aria-hidden', 'true'); $('#view').appendChild(end);
+  const nav = $('#secnav'), view = $('#view'); if (!nav || !view) return;
+  const secs = $$('#view section.blk').filter(x => !x.parentElement.closest('section.blk') && secLabel(x) && !/^pin detail$/i.test(secLabel(x)));
+  secs.forEach((x, i) => { if (!x.id) x.id = 'sec-' + (secLabel(x).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || i); });
+  nav.hidden = secs.length < 2;
+  nav.innerHTML = secs.map(x => `<button type="button" data-sec="${esc(x.id)}">${esc(secLabel(x))}</button>`).join('');
+  syncMbar();
+  if (nav.hidden || !window.IntersectionObserver) return;
+  const btns = $$('button', nav), end = document.createElement('div'); end.setAttribute('aria-hidden', 'true'); view.appendChild(end);
+  let lit = -1;
   const sync = () => {
-    const bar = PHONE_MQ.matches ? $('#mbar .mtabs') : $('#mbar'), y = (bar ? bar.getBoundingClientRect().bottom : 0) + TAB_LINE, r = sec.getBoundingClientRect();
-    const atEnd = end.getBoundingClientRect().top <= innerHeight;
-    const on = (r.top <= y && r.bottom > y) || (atEnd && r.top < innerHeight && r.bottom > y);
-    for (const [el, lit] of [[anc, on], [base, !on]]) if (el.classList.contains('on') !== lit) { el.classList.toggle('on', lit); if (lit) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); }
+    const bar = PHONE_MQ.matches ? $('#mbar .mnav') : $('#mbar'), y = (bar ? bar.getBoundingClientRect().bottom : 0) + TAB_LINE;
+    let i = 0; secs.forEach((x, k) => { if (x.getBoundingClientRect().top <= y) i = k; });
+    if (end.getBoundingClientRect().top <= innerHeight) secs.forEach((x, k) => { if (k > i && x.getBoundingClientRect().top < innerHeight - 40) i = k; });
+    if (i === lit) return; lit = i;
+    btns.forEach((b, k) => { b.classList.toggle('on', k === i); if (k === i) b.setAttribute('aria-current', 'location'); else b.removeAttribute('aria-current'); });
+    const on = btns[i]; if (on && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = on.offsetLeft - (nav.clientWidth - on.offsetWidth) / 2;
   };
   const top = Math.ceil(mbarH() + TAB_LINE);
   tabIO = [new IntersectionObserver(sync, { rootMargin: `-${top}px 0px -${Math.max(0, innerHeight - top - 2)}px 0px` }), new IntersectionObserver(sync, { threshold: [0, 1] })];
-  tabIO[0].observe(sec); tabIO[1].observe(sec); tabIO[1].observe(end);
+  secs.forEach(x => tabIO[0].observe(x)); tabIO[1].observe(end); sync();
 }
-/* a tab for the page already open: jump to its section (or the top) instead of doing nothing */
+/* a strip entry jumps to its section; a tab for the page already open goes back to the top */
 function tabJump(e) {
+  const b = e.target.closest && e.target.closest('#secnav button[data-sec]');
+  if (b) { const el = document.getElementById(b.dataset.sec); if (el) el.scrollIntoView({ block: 'start' }); return; }
   const a = e.target.closest && e.target.closest('#mbar .mtabs a'); if (!a || a.getAttribute('href') !== location.hash) return;
-  e.preventDefault();
-  const at = new URLSearchParams(a.getAttribute('href').split('?')[1] || '').get('at'), el = at && document.getElementById(at);
-  if (el) el.scrollIntoView({ block: 'start' }); else window.scrollTo(0, 0);
+  e.preventDefault(); window.scrollTo(0, 0);
 }
 document.addEventListener('click', tabJump);
 /* ---------- chrome ---------- */
@@ -1147,9 +1153,7 @@ function machineTabs(m) {
     ['chips', 'Chips', `${mPath(m)}/pinouts`, chipsOf(m).length > 0],
     ['ports', 'Ports', `${mPath(m)}/ports`, arr(dataFor(D.connectors, m).data).length > 0],
     ['power', 'Power', `${mPath(m)}/power`, !!pw],
-    ['clocks', 'Clocks', `${mPath(m)}/power?at=clocks`, !!pw && arr(pw.clocks).some(c => c && c.name)],
     ['ref', 'Ref', `${mPath(m)}/quickref`, !!dataFor(D.quickref, m).data],
-    ['notes', 'Notes', `${mPath(m)}?at=notes`, true],
   ];
 }
 /* the board revision on the bench, when RCS.boards lists the machine's boards */
@@ -1165,7 +1169,8 @@ function mbar(m, tab) {
     <div class="ctx"><button type="button" class="mname" data-act="mswitch" aria-label="${esc(m.name)}. Switch machine" title="Switch machine"><span class="des">${esc(mDes(m))}</span><span class="nm">${esc(m.name)}</span><span class="sw" aria-hidden="true">&#9662;</span></button>
       ${boardsOf(m).length ? boardSelect(m) : bl ? `<a class="brev" href="${mPath(m)}?at=boards" title="Boards and schematics">${esc(bl)}</a>` : ''}
       ${machineRegional(m) ? regionBar() : ''}</div>
-    <nav class="mtabs" aria-label="${esc(m.name)} sections">${machineTabs(m).map(([id, label, href, ok]) => `<a href="${href}" class="${id === tab ? 'on' : ''}${ok ? '' : ' off'}"${id === tab ? ' aria-current="page"' : ''}${ok ? '' : ' aria-disabled="true" tabindex="-1"'}>${label}</a>`).join('')}</nav>
+    <div class="mnav"><nav class="mtabs" aria-label="${esc(m.name)} pages">${machineTabs(m).map(([id, label, href, ok]) => `<a href="${href}" class="${id === tab ? 'on' : ''}${ok ? '' : ' off'}"${id === tab ? ' aria-current="page"' : ''}${ok ? '' : ' aria-disabled="true" tabindex="-1"'}>${label}</a>`).join('')}</nav>
+    <nav class="secnav" id="secnav" aria-label="On this page" hidden></nav></div>
   </div>`;
 }
 const emptyBlk = (label, text) => `<div class="empty"><b>${esc(label)}</b>${text}</div>`;
@@ -1510,26 +1515,26 @@ function pinDetail(chip, p, m) {
     <div class="pinnav"><button type="button" class="btn" data-pin="${prev.n}" data-nav="prev" aria-label="Previous pin, ${prev.n} ${esc(prev.name)}">&lsaquo; ${prev.n} ${esc(prev.name)}</button><button type="button" class="btn" data-pin="${next.n}" data-nav="next" aria-label="Next pin, ${next.n} ${esc(next.name)}">${next.n} ${esc(next.name)} &rsaquo;</button></div>`;
 }
 
-function viewQuickref(m, tabQ) {
+function viewQuickref(m) {
   const { data: q, shared } = dataFor(D.quickref, m);
   const basic = (q && q.basic) || {};
   const top = head(mDes(m), 'Quick reference', `${esc(m.name)}${basic.dialect ? ', ' + esc(basic.dialect) : ''}`);
-  if (!q) return top + emptyBlk('NOT CAPTURED', `The ${esc(m.name)} has a cheat sheet but its keys, BASIC and memory map are not in the app yet.`);
-  const tab = ['keys', 'basic', 'memory'].includes(tabQ) ? tabQ : 'keys';
-  const base = `${mPath(m)}/quickref?tab=`;
-  const jumpers = `<nav class="jumpers" aria-label="Quick reference sections">${[['keys', 'Keys'], ['basic', 'BASIC'], ['memory', 'Memory']].map(([id, l]) => `<a href="${base}${id}" class="${tab === id ? 'on' : ''}"${tab === id ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
-  const rt = regionText;
-  let body = '';
-  if (tab === 'keys') body = `<section class="blk keys"><span class="lbl">Keys and quirks</span>${arr(q.keys).length ? `<div class="legend">${q.keys.map(k => `<div class="k silk">${keycaps(k.keys)}</div><div class="v">${esc(rt(k.does))}${vmark(k)}${disagree(k)}</div>`).join('')}</div>` : '<p class="note mt-0">No keys captured.</p>'}</section>`;
-  else if (tab === 'basic') {
-    const ess = arr(basic.essentials), half = Math.ceil(ess.length / 2);
-    const legend = list => `<div class="legend">${list.map(e => `<div class="k">${esc(e.cmd)}</div><div class="v">${esc(rt(e.does))}${vmark(e)}${disagree(e)}</div>`).join('')}</div>`;
-    body = `${ess.length ? `<section class="blk"><span class="lbl">${esc(basic.dialect || 'BASIC')}, essentials</span><div class="grid gap-x-10 lg:grid-cols-2">${legend(ess.slice(0, half))}${legend(ess.slice(half))}</div></section>` : ''}
-      ${arr(basic.groups).length ? `<section class="blk"><span class="lbl">Everything else</span>${basic.groups.map(g => `<details class="grp"><summary>${esc(g.group)}<span class="cnt">${arr(g.items).length}</span></summary><div class="items">${arr(g.items).map(it => `<span>${esc(it)}</span>`).join('')}</div></details>`).join('')}</section>` : ''}
-      ${arr(basic.quirks).length ? `<section class="blk"><span class="lbl">Quirks</span><ul class="bul">${basic.quirks.map(x => `<li>${esc(rt(x))}</li>`).join('')}</ul></section>` : ''}`;
-  } else body = `<section class="blk"><span class="lbl">Memory map</span>${arr(q.memory).length ? `<div class="memmap">${q.memory.map((r, i) => `<div class="k${i === q.memory.length - 1 ? ' last' : ''}">${esc(r.range)}</div><div>${esc(rt(r.what))}</div>`).join('')}</div>` : '<p class="note mt-0">No memory map captured.</p>'}</section>`;
+  if (!q) return top + emptyBlk('NOT CAPTURED', `The ${esc(m.name)} has a cheat sheet but its keys, commands and memory map are not in the app yet.`);
+  const rt = regionText, boot = q.boot, fb = arr(q.firstBoot);
+  const cite = x => x && x.source ? ` <span class="tin sm">${[x.source, ...arr(x.also)].map(d => `<a class="lnk" href="${esc(safeUrl(d.url))}" target="_blank" rel="noopener">${esc(d.label)}</a>`).join('; ')}</span>` : '';
+  /* first boot: what the machine powers up into, then a short checklist that proves each part works */
+  const first = boot || fb.length ? `<section class="blk" id="first-boot"><span class="lbl">First boot</span>
+    ${boot ? `<p class="mt-0">Boots to <b>${esc(rt(boot.to))}</b>${boot.prompt ? `, prompt <span class="mono">${esc(boot.prompt)}</span>` : ''}.${boot.note ? ' ' + esc(rt(boot.note)) : ''}${vmark(boot)}${disagree(boot)}${cite(boot)}</p>` : ''}
+    ${fb.length ? `<div class="legend tri">${fb.map(t => `<div class="k">${esc(t.part)}</div><div class="v mono">${esc(t.type)}</div><div class="v3">${esc(rt(t.expect))}${vmark(t)}${disagree(t)}${cite(t)}</div>`).join('')}</div>` : ''}</section>` : '';
+  const ess = arr(basic.essentials), half = Math.ceil(ess.length / 2);
+  const legend = list => `<div class="legend">${list.map(e => `<div class="k">${esc(e.cmd)}</div><div class="v">${esc(rt(e.does))}${vmark(e)}${disagree(e)}</div>`).join('')}</div>`;
+  const cmds = `${ess.length ? `<section class="blk" id="commands"><span class="lbl">Commands</span><div class="grid gap-x-10 lg:grid-cols-2">${legend(ess.slice(0, half))}${legend(ess.slice(half))}</div></section>` : ''}
+    ${arr(basic.groups).length ? `<section class="blk" id="more-commands"><span class="lbl">More commands</span>${basic.groups.map(g => `<details class="grp"><summary>${esc(g.group)}<span class="cnt">${arr(g.items).length}</span></summary><div class="items">${arr(g.items).map(it => `<span>${esc(it)}</span>`).join('')}</div></details>`).join('')}</section>` : ''}
+    ${arr(basic.quirks).length ? `<section class="blk" id="quirks"><span class="lbl">Quirks</span><ul class="bul">${basic.quirks.map(x => `<li>${esc(rt(x))}</li>`).join('')}</ul></section>` : ''}`;
+  const keys = `<section class="blk keys" id="keys"><span class="lbl">Keys</span>${arr(q.keys).length ? `<div class="legend">${q.keys.map(k => `<div class="k silk">${keycaps(k.keys)}</div><div class="v">${esc(rt(k.does))}${vmark(k)}${disagree(k)}</div>`).join('')}</div>` : '<p class="note mt-0">No keys captured.</p>'}</section>`;
+  const mem = `<section class="blk" id="memory"><span class="lbl">Memory map</span>${arr(q.memory).length ? `<div class="memmap">${q.memory.map((r, i) => `<div class="k${i === q.memory.length - 1 ? ' last' : ''}">${esc(r.range)}</div><div>${esc(rt(r.what))}</div>`).join('')}</div>` : '<p class="note mt-0">No memory map captured.</p>'}</section>`;
   const src = arr(q.sources).length ? `<section class="blk"><span class="lbl">Sources</span>${sourceList(q.sources, '')}</section>` : '';
-  return top + jumpers + body + src + sharedNote(shared);
+  return top + first + cmds + keys + mem + src + sharedNote(shared);
 }
 function keycaps(s) {
   /* "CTRL + 1-8" becomes keycaps; prose-like entries stay one cap */
