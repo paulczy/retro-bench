@@ -79,6 +79,23 @@
   const S_HMS_V = S('IBM Hardware Maintenance Service 6280087 (1986), MAP 0020 Power (PC) steps 007 and 008, system board and drive voltages, pp. 0020-3 to 0020-4', HMS20 + '#page=5');
   const JRHMS = 'https://minuszerodegrees.net/manuals/IBM/IBM%204860%20(PCjr)%20-%20Hardware%20Maintenance%20and%20Service%20-%20SEP83.pdf';
   const G5155 = 'https://minuszerodegrees.net/manuals/IBM/IBM_5155_Guide_to_Operations_6936571_JAN84.pdf';
+  /* First-boot checks: Guide to Operations pages (printed page, then PDF page in the link). */
+  const GTO = 'https://archive.org/download/IBMPCXTGuideToOperations/IBM%20PC_XT%20Guide%20to%20Operations_text.pdf';
+  const GJR = 'https://archive.org/download/ibm-pcjr-guide-to-operations/IBM%20PCjr%20Guide%20To%20Operations.pdf';
+  const gto = (what, p) => S('IBM Personal Computer Guide to Operations (rev. Apr 1984, PC and PC XT), ' + what, GTO + '#page=' + p);
+  const g55 = (what, p) => S('IBM 5155 Portable Guide to Operations (Jan 1984), ' + what, G5155 + '#page=' + p);
+  const gjr = (what, p) => S('IBM PCjr Guide to Operations (6322959), ' + what, GJR + '#page=' + p);
+  const pcBoot = { to: 'POST, then IBM Personal Computer BASIC in ROM', prompt: 'Ok', note: 'A bootable diskette or fixed disk loads its program or DOS instead.',
+    source: gto('Start 30-3, POST responses', 49) };
+  const pcChecks = post => [
+    post,
+    { part: 'Diagnostics', type: 'Boot the Diagnostics diskette in drive A', expect: 'The IBM Personal Computer DIAGNOSTICS menu: 0 RUN DIAGNOSTIC ROUTINES, 1 FORMAT DISKETTE, 2 COPY DISKETTE and so on.', source: gto('Test 010-5', 75) },
+    { part: 'RAM and options', type: '0 (RUN DIAGNOSTIC ROUTINES)', expect: 'THE INSTALLED DEVICES ARE, with the memory size, keyboard, display adapters and drives; S means system unit, E expansion unit. Then IS THE LIST CORRECT (Y/N)?', source: gto('Test 010-8', 78) },
+    { part: 'System board', type: '0 (RUN TESTS ONE TIME)', expect: 'SYSTEM UNIT 100, THIS TEST TAKES UP TO TWO MINUTES, PLEASE STAND BY. That means the system unit test passed.', source: gto('Test 100-1', 81) },
+    { part: 'Keyboard', type: 'When the keyboard test screen appears, press each key once, then hold one down', expect: 'Each block changes to the character of the key. A held key makes its character flash (typematic test).', source: gto('Test 300-1 and 300-2', 91) },
+    { part: 'Video', type: 'Answer the display test screens', expect: 'Monochrome: lines at normal intensity, intensified, reverse video, blinking and underlined. Color: the test patterns appear with the correct colors.', source: gto('Test 400-2', 94), also: gto('Test 500-5', 101) },
+    { part: 'Disk', type: 'Remove the Diagnostics diskette, insert a scratch diskette in drive A, press ENTER', expect: 'SYSTEM UNIT and a 3-digit code, then WARNING DATA WILL BE DESTROYED and INSERT SCRATCH DISKETTE IN DRIVE A. After ENTER, a screen that shows the drive type.', source: gto('Test 600-1', 107), also: gto('Test 600-2', 108) },
+  ];
   const S_MDC = S('minuszerodegrees.net, IBM 5150/5155/5160 minimum diagnostic configuration', MZD + '/5150_5160/MDC/minimum_diag_config.htm');
   const RN = p => 'https://www.renesas.com/us/en/document/dst/' + p + '-datasheet';
   const DS84 = 'Intel 8284A data sheet p. 3-237 (VOL 0.45 V; VOH 4 V on CLK, 2.4 V on OSC and PCLK; CLK 1/3 duty, PCLK 50 percent, p. 3-235)';
@@ -1586,6 +1603,8 @@
           { range: '$F6000-$FDFFF', what: 'Cassette BASIC ROM (U29 to U32)' },
           { range: '$FE000-$FFFFF', what: 'BIOS ROM (U33)' },
         ],
+        boot: pcBoot,
+        firstBoot: pcChecks({ part: 'POST', type: 'Power on with no diskette', expect: 'A blinking cursor at the top left during POST, then one short beep, then The IBM Personal Computer Basic, Version Cx.xx, Bytes free, and Ok.', source: gto('Start 30-2 to 30-3, POST responses', 48) }),
       },
       xt5160: {
         sources: [
@@ -1627,6 +1646,8 @@
           { range: '$C8000-$CBFFF', what: 'Fixed disk adapter ROM' },
           { range: '$F0000-$FFFFF', what: 'Base system ROM: BIOS and ROM BASIC' },
         ],
+        boot: pcBoot,
+        firstBoot: pcChecks({ part: 'POST', type: 'Power on with no diskette', expect: 'A number at the top left counts up to the installed memory, then one short beep, then The IBM Personal Computer Basic, Version Cx.xx, Bytes free, and Ok (or DOS loads from the fixed disk).', source: gto('Start 30-2 to 30-3, POST responses', 48) }),
       },
       pcjr: {
         sources: [
@@ -1649,6 +1670,14 @@
           quirks: ['Video and sound are custom chips, so CGA register tricks may not work (verify).'],
         },
         memory: [{ range: '$B8000-$BFFFF', what: 'Video memory (verify)' }],
+        boot: { to: 'IBM Color Bar screen (self test), then IBM Personal Computer BASIC', prompt: 'Ok', source: gjr('First Things First, p. 6-10', 152) },
+        firstBoot: [
+          { part: 'POST', type: 'Power on with no cartridge or diskette', expect: 'The IBM Color Bar screen with the memory count, one beep, then The IBM Personal Computer Basic, Version C1.20, Bytes free, and Ok.', source: gjr('First Things First, p. 6-10', 152), also: gjr('Getting Started, pp. 2-4 to 2-5', 20) },
+          { part: 'RAM', type: 'Watch the lower right corner of the Color Bar screen during the self test', expect: 'The memory count starts at 4KB and ends at 64KB, or 128KB with the 64KB memory and display expansion.', source: gjr('Running the IBM PCjr Tests, p. 6-21', 163), also: gjr('Running the IBM PCjr Tests, p. 6-25', 167) },
+          { part: 'Diagnostics', type: 'Hold Ctrl and Alt, then press Ins', expect: 'The IBM Color Bar screen, then the first of two IBM PCjr Test Menu screens.', source: gjr('Running the IBM PCjr Tests, p. 6-22', 164), also: gjr('Running the IBM PCjr Tests, p. 6-26', 168) },
+          { part: 'Sound', type: 'Run Test Tag 9 (Sound Test) from the test menu', expect: 'Part 1: one beep from the PCjr and the TV at the same time. Part 2: a low sound that rises smoothly, holds for a second, then dies away.', source: gjr('Test Tag 9 Sound Test, pp. 6-93 to 6-94', 235) },
+          { part: 'Keyboard', type: 'Run Test Tag J (Keyboard Test), then press keys', expect: 'The character of each key you press appears at the top of the screen.', source: gjr('Test Tag J Keyboard Test, pp. 6-103 to 6-104', 245) },
+        ],
       },
       portable5155: {
         sources: [
@@ -1667,6 +1696,16 @@
           quirks: ['Same system board design as the XT: 8 slots, the same 8088 support chips and the same P8 and P9 pinout.'],
         },
         memory: [{ range: '$00000-$9FFFF', what: 'RAM (verify)' }],
+        boot: { to: 'POST, then IBM Personal Computer BASIC in ROM', prompt: 'Ok', note: 'A bootable diskette or fixed disk loads its program or DOS instead.', source: g55('Start 30-3, POST responses', 55) },
+        firstBoot: [
+          { part: 'POST', type: 'Power on with no diskette', expect: 'XXX KB OK at the top left counts up to the installed memory, then one short beep, then The IBM Personal Computer Basic, Version Cx.xx, Bytes free, and Ok.', source: g55('Start 30-2 to 30-3, POST responses', 54) },
+          { part: 'Diagnostics', type: 'Boot the Diagnostics diskette in drive A', expect: 'The IBM Personal Computer DIAGNOSTICS menu: 0 RUN DIAGNOSTIC ROUTINES, 1 FORMAT DISKETTE and so on.', source: g55('Test 010-5', 75) },
+          { part: 'RAM and options', type: '0 (RUN DIAGNOSTIC ROUTINES)', expect: 'THE INSTALLED DEVICES ARE, with the memory size and the installed options, then IS THE LIST CORRECT (Y/N)?', source: g55('Test 010-8', 78) },
+          { part: 'System board', type: '0 (RUN TESTS ONE TIME)', expect: 'SYSTEM UNIT 100, THIS TEST TAKES UP TO TWO MINUTES, PLEASE STAND BY. That means the system unit test passed.', source: g55('Test 100-1', 81) },
+          { part: 'Keyboard', type: 'At PRESS EACH KEY. HOLD FOR TYPEMATIC TEST, press each key once, then hold one down', expect: 'Each block changes to the character of the key. A held key makes its character flash.', source: g55('Test 300-1 and 300-2', 91) },
+          { part: 'Video', type: 'Answer the first display test screen', expect: 'A blinking line and bars labeled BLUE, RED, YELLOW and WHITE.', source: g55('Test 500-1', 95) },
+          { part: 'Disk', type: 'Remove the Diagnostics diskette, insert a scratch diskette in drive A, press ENTER', expect: 'SYSTEM UNIT and a 3-digit code, then WARNING DATA WILL BE DESTROYED and INSERT SCRATCH DISKETTE IN DRIVE A. After ENTER, a screen that shows the drive type.', source: g55('Test 600-1', 105), also: g55('Test 600-2', 106) },
+        ],
       },
     },
     resources: [

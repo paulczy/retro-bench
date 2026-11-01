@@ -15,6 +15,7 @@ const H1ERR = (n, p, what) => ({ label: `Heathkit ET-18 Technical Manual Errata 
 const H1BLOCK = what => H1ERR(1, 10, `Block/Interconnect Diagram replacement section (page 9 of 9), ${what}`);
 const H1APB = (p, what) => ({ label: `HERO 1 Advanced Programming and Interfacing, ${what}, p. ${p} (archive.org, lending; secondary)`, url: `https://archive.org/details/hero1advancedpro0000robi/page/${p}` });
 const JRTM = (p, what) => ({ label: `HERO Jr Technical Manual 595-3271 (Heath), ${what} (archive.org)`, url: `https://archive.org/download/hero-jr-technical/HeroJr%20595-3271%20Technical.pdf#page=${p}` });
+const JROG = (p, what) => ({ label: `HERO Jr Owner's Guide (Heath), ${what}, p. ${p} (archive.org)`, url: `https://archive.org/download/HEROJrOwnersGuide/HERO%20Jr%20Owner%27s%20Guide.pdf#page=${p + 2}` });
 // HERO Jr J1: round 4-pin, key at top, 1 4 over 2 3 as drawn on schematic sheet 1.
 const JR_J1_PADS = [{ n: 1, x: 35, y: 38 }, { n: 4, x: 65, y: 38 }, { n: 2, x: 35, y: 66 }, { n: 3, x: 65, y: 66 }];
 
@@ -1661,7 +1662,7 @@ RCS.add({
         { keys: 'A E addr', does: 'Examine memory at addr. F and B step forward and back.' },
         { keys: 'C', does: 'Change the byte shown, then type the new byte.' },
         { keys: 'A A addr', does: 'Auto-numbered deposit: type bytes; the address advances after each one.' },
-        { keys: 'A D addr', does: 'Run the program at addr (AD0090 runs the speech demo at $0090).', verify: true },
+        { keys: 'A D addr', does: 'Run the program at addr (ET-18 Technical Manual p. 58: A D 0200 runs the speech test program).' },
         { keys: 'ABORT', does: 'Stop the program now; shows the program counter.' },
         { keys: 'SLEEP + RESET', does: 'Sleep switch in SLEEP, then RESET: the robot sleeps.' }
       ],
@@ -1674,7 +1675,7 @@ RCS.add({
           { cmd: 'F / B', does: 'Step forward or back through memory while examining.' },
           { cmd: 'C', does: 'Change the displayed byte.' },
           { cmd: 'A A addr', does: 'Enter bytes at addr; the address auto-increments.' },
-          { cmd: 'A D addr', does: 'Run the program at addr.', verify: true },
+          { cmd: 'A D addr', does: 'Run the program at addr (ET-18 Technical Manual p. 58).' },
           { cmd: '3F', does: 'In Program Mode, switch to Repeat Mode (Robot Language), per the Advanced book.' },
           { cmd: '7', does: 'Learn Mode.' },
           { cmd: 'A', does: 'Repeat Mode.' },
@@ -1714,7 +1715,17 @@ RCS.add({
         { range: '$C2E0', what: 'Write: power control U311 (display bit 4, speech bit 3, sleep bit 6).' },
         { range: '$C300', what: 'Read: RTC data and abort button (U314). Write: RTC control and clock data (U316).' },
         { range: '$E000-$FFFF', what: 'U418, 8K monitor ROM.' }
-      ]
+      ],
+      boot: { to: 'Executive Mode (keypad monitor)', prompt: 'A moving dash on the display', note: 'Speech option says "ready".',
+        source: H1TM(64, 'Operation Check, 1. Power Up, p. 54') },
+      firstBoot: [
+        { part: 'Display and power', type: 'Charger connected. Sleep switch OFF, then charger and robot power ON', expect: 'The display reads HEro1.0 for about ten seconds, then a moving dash. With the speech option the robot says "ready".', source: H1TM(64, 'Operation Check, 1. Power Up, p. 54') },
+        { part: 'Reset', type: 'RESET', expect: 'HEro1.X appears again and the robot says "ready" (speech option).', source: H1TM(65, 'Initial Tests, Power Supply Test step 2, p. 55') },
+        { part: 'Keypad and display', type: 'RESET, A, E, 0123, C, 45, E, 6789, C, AB, E, CDEF', expect: 'In turn: HEro1.X, A. and five blanks, ----Ad., 0123XX, 0123--, 012345, ----Ad., 6789XX, 6789--, 6789Ab, ----Ad., C.dEFXX. A wrong character or an unlit segment points at the display.', source: H1TM(65, 'Initial Tests, Display Tests step 2, p. 55') },
+        { part: 'Motion', type: '31 (initialize)', expect: 'Arm goes fully in, shoulder fully down, wrist fully counterclockwise and up, gripper closes. Head turns to its clockwise limit, drive wheel turns left to its limit, then both return to center. The robot returns to Executive Mode and shows HEro1.X; with the speech option it says "ready". The arm steps need the arm option; without it the robot still waits for the arm time.', source: H1TM(64, 'Operation Check, 2. Initialize, p. 54') },
+        { part: 'Speech', type: 'Speech option only. RESET, A, A, 0200, 72, FA, 4B, 20FE, RESET, A, D, 0200', expect: 'At the first RESET the robot says "ready". After the last digit the display goes blank and the robot says "Hello, my name is Hero." RESET, then A D 0200, repeats it.', source: H1TM(68, 'Initial Tests, Speech Tests, p. 58') },
+        { part: 'Clock', type: '35, then two digits each for hour, minute and second, then D (AM), E (PM) or F (24-hour). Then 37', expect: 'After 35 the display reads HH, two blanks, SS. After the six digits it reads A P 24. 37 shows the time until you press RESET.', source: H1TM(65, 'Initial Tests, Clock Check, p. 55') },
+      ],
     },
 
     herojr: {
@@ -1784,7 +1795,16 @@ RCS.add({
         { range: '$D840-$D85F', what: 'U215 PIA: speech, sense, A/D select, sonar echo.' },
         { range: '$D880-$DFFF', what: 'U216 RS-232 ACIA (accessory). A0 selects the register.' },
         { range: '$E000-$FFFF', what: 'U208 monitor ROM, upper range.' }
-      ]
+      ],
+      boot: { to: 'Spoken self-test and clock setting, then "ready" for keypad commands', prompt: 'The robot speaks; the red data LEDs flicker with the speech', note: 'Left idle, it says "timed out" and runs on its own personality.',
+        source: JROG(8, 'Start-up Procedure, Turning it On'), also: JROG(13, 'Start-up Procedure, step 13 note') },
+      firstBoot: [
+        { part: 'Power', type: 'POWER switch ON, SLEEP switch to NORM, then press RESET', expect: 'The green POWER LED lights. The red data LEDs flicker as the robot speaks. Keep it on the floor: it moves a few inches.', source: JROG(8, 'Start-up Procedure, Turning it On') },
+        { part: 'Sensors', type: 'Follow the spoken self-test: wave a hand in front of each sensor it names', expect: 'The robot runs each test as you respond. "motion detector malfunction" is normal when the optional infrared detector is not fitted.', source: JROG(9, 'Self-Diagnostics') },
+        { part: 'Speech and clock', type: 'SPEAK, then 0 and 1', expect: 'The robot speaks the time and date, then waits for the next command.', source: JROG(19, 'Manual Entry, Speak') },
+        { part: 'Keypad', type: 'HELP, then GUARD', expect: 'The robot speaks the help text for the Guard key.', source: JROG(39, 'About the Help Key') },
+        { part: 'Motion', type: 'DEMO', expect: 'The robot demonstrates its features and moves around. When it asks who you are, clap three times.', source: JROG(41, 'Demo Program') },
+      ],
     }
   },
 

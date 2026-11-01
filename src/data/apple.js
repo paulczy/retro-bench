@@ -724,7 +724,7 @@ const d2Ribbon = {
     d2Sources.analog, d2Sources.card, d2Sources.sather,
     { label: 'Disk II analog card photo (650-0103, header pin 1 and 20 marked) (A2DP)', url: D2PHOTO },
     { label: 'Disk ][ Technical Procedures, replacing the cable (arrow to pin 1), p. 1.5', url: D2TP(7) },
-    { label: 'Disk II Installation and Operating Manual, centring the connector, p. 2', url: D2MAN(6) },
+    { label: 'Disk II Installation and Operating Manual, centering the connector, p. 2', url: D2MAN(6) },
   ],
   terms: ['stepper'],
 };
@@ -861,6 +861,29 @@ const d2FirstLook = [
   'P6 and the 74LS174 have +5 V only while a drive is on, and P5 only during $C6xx reads: 0 V on those VCC pins at rest is normal.',
 ];
 
+/* First-boot checks (quickref boot / firstBoot): manual pages, printed page then PDF page.
+   Each link is the archive.org PDF that was read. Log: docs/verification/first-boot-a.md. */
+const FB_IA = 'https://archive.org/download';
+const fbDoc = (path, label) => (p, page) => ({ label: `${label}, ${typeof p === 'number' ? `p. ${p}` : p}`, url: `${FB_IA}/${path}#page=${page}` });
+const FB_A2RM = fbDoc('Apple_II_Reference_Manual_1979_Apple/Apple_II_Reference_Manual_1979_Apple_text.pdf', 'Apple II Reference Manual (1979)');
+const FB_ASOFT = fbDoc('Applesoft_BASIC_Programming_Reference_Manual_Apple_Computer/Applesoft_BASIC_Programming_Reference_Manual_Apple_Computer.pdf', 'Applesoft BASIC Programming Reference Manual');
+const FB_DOS = fbDoc('The_DOS_Manual_HQ/The_DOS_Manual_HQ_text.pdf', 'The DOS Manual (DOS 3.3)');
+const FB_D2INST = fbDoc('Disk_II_Floppy_Disk_Subsystem_Installation_and_Operating_Manual/Disk_II_Floppy_Disk_Subsystem_Installation_and_Operating_Manual_text.pdf', 'Disk II Installation and Operating Manual');
+const FB_IIEOM = fbDoc('apple-iie-owner-manual/Image081917200555.merged_text.pdf', 'Apple IIe Owner\'s Manual');
+const FB_IIETRM = fbDoc('Apple_IIe_Technical_Reference_Manual/Apple_IIe_Technical_Reference_Manual_text.pdf', 'Apple IIe Technical Reference Manual');
+const FB_IICOM = fbDoc('AppleIIcOwnersManual/Apple%20IIc%20Manual_text.pdf', 'Apple IIc Owner\'s Manual');
+const FB_IICTRM = fbDoc('Apple_IIc_Technical_Reference_Manual/Apple_IIc_Technical_Reference_Manual_text.pdf', 'Apple IIc Technical Reference Manual');
+const FB_DUO = fbDoc('addom/DUODISK_OwnersManual_text.pdf', 'DuoDisk Owner\'s Manual');
+const FB_UNI = fbDoc('Apple_II_UniDisk_Owners_Manual/Apple_II_UniDisk_Owners_Manual_text.pdf', 'UniDisk Owner\'s Manual');
+/* Shared Applesoft and DOS 3.3 checks: the same commands on every Apple II with Applesoft. */
+const FB_LORES = { part: 'Video (color)', type: 'GR, then COLOR=13, then PLOT 20,20', expect: 'The top of the screen goes black with four text lines below, and a small yellow square appears in the center. Not yellow: adjust the TV tint.', source: FB_ASOFT(5, 20) };
+const FB_HIRES = { part: 'Video (high-res)', type: 'HGR, then HCOLOR=3, then HPLOT 130,100', expect: 'A white dot at x=130, y=100 on the high-resolution screen.', source: FB_ASOFT(26, 41) };
+const FB_PDL = { part: 'Game controls', type: 'PRINT PDL(0), turn the paddle, PRINT PDL(0) again', expect: 'A number from 0 to 255 that follows the paddle knob.', source: FB_ASOFT(90, 102) };
+const FB_BOOT6 = { part: 'Disk', type: 'System Master in drive 1, then PR#6', expect: 'The red IN USE light comes on, the drive whirrs and clacks, and within 10 seconds DOS VERSION 3.3 and the System Master title appear.', source: FB_DOS(12, 24), also: FB_DOS(11, 23) };
+const FB_CATALOG = { part: 'Read', type: 'CATALOG', expect: 'A list of the files: a type letter (I for Integer BASIC, A for Applesoft), the size in sectors and the name.', source: FB_DOS(16, 28) };
+const FB_SAVELOAD = { part: 'Write and read back', type: 'Type a short program, SAVE TEST, NEW, then LOAD TEST and LIST', expect: 'LOAD whirrs the disk for about two seconds and LIST shows the program again.', source: FB_DOS(15, 27), also: FB_DOS(16, 28) };
+const FB_INIT = { part: 'Format', type: 'Blank disk. NEW, type 10 PRINT "HELLO", then INIT HELLO', expect: 'The disk spins for nearly a minute with soft clacks; the prompt returns and the IN USE light goes out. PR#6 then boots it and prints HELLO.', source: FB_DOS(14, 26) };
+const FB_D2 = { part: 'Drive 2', type: 'Disk in drive 2, then CATALOG,D2', expect: 'The catalog of the disk in drive 2. Later commands use drive 2 until you give D1.', source: FB_DOS(22, 34) };
 const diskQuick = (extra) => ({
   sources: [
     { label: 'The DOS Manual (Apple, DOS 3.3), Appendix G command summary (INIT, CATALOG, SAVE, LOAD, RUN)', url: DOSMAN(162) },
@@ -873,6 +896,8 @@ const diskQuick = (extra) => ({
     ...(extra.sources || []),
   ],
   firstLook: extra.firstLook,
+  boot: extra.boot,
+  firstBoot: extra.firstBoot,
   keys: [
     { keys: 'IN USE light on', does: 'The drive is enabled: motor on, head and read/write active. Never pull a disk while it is lit.' },
     { keys: 'Light and motor stay on ~1 s after access', does: 'Normal: the controller\'s 556 timer delays motor-off by about one second ($C0E8 in slot 6).' },
@@ -929,8 +954,20 @@ const diskQuick = (extra) => ({
 });
 
 const driveQuickref = {
-  disk2: diskQuick({ firstLook: d2FirstLook }),
+  disk2: diskQuick({
+    firstLook: d2FirstLook,
+    boot: { to: 'No screen of its own: the computer boots DOS from drive 1', note: 'The IN USE light shows the drive is running.', source: FB_DOS(12, 24) },
+    firstBoot: [FB_BOOT6, FB_CATALOG, FB_SAVELOAD, FB_INIT, FB_D2],
+  }),
   duodisk: diskQuick({
+    boot: { to: 'No screen of its own: the computer boots DOS from drive 1 (left)', note: 'The computer scans from slot 7 down; drive 1 on the first controller it finds is the startup drive.', source: FB_DUO('Identifying Your Startup Drive, p. 3', 11) },
+    firstBoot: [
+      { ...FB_BOOT6, expect: 'The left drive red light comes on, the drive whirrs, and DOS VERSION 3.3 and the System Master title appear. The red lights are on only while a drive is in use.', also: FB_DUO('Operating Your Drive, PDF p. 27', 27) },
+      FB_CATALOG,
+      { ...FB_D2, part: 'Right drive (drive 2)' },
+      FB_SAVELOAD,
+      FB_INIT,
+    ],
     firstLook: [
       'Two drives on one analog card; the left drive is drive 1. The controller card (same as the UniDisk / Apple 5.25 card) goes in slot 6, its DB-19 in a back-panel opening.',
       'One controller card runs one DuoDisk. Not for the IIc. On a IIgs use the disk port or a 5.25 controller; some units need Apple\'s IIgs modification.',
@@ -943,6 +980,14 @@ const driveQuickref = {
     sources: [{ label: 'DuoDisk Technical Procedures, product description and connection, p. 1.2', url: DUOTP(6) }, { label: 'DuoDisk Technical Procedures, troubleshooting flowchart, p. 4.3', url: DUOTP(21) }],
   }),
   unidisk525: diskQuick({
+    boot: { to: 'No screen of its own: the computer boots DOS from it', note: 'The red IN USE light is the only indicator.', source: FB_UNI('Getting Better Acquainted, PDF p. 14', 14), also: FB_DOS(12, 24) },
+    firstBoot: [
+      { ...FB_BOOT6, also: FB_UNI('Getting Better Acquainted, PDF p. 14', 14) },
+      FB_CATALOG,
+      FB_SAVELOAD,
+      FB_INIT,
+      { ...FB_D2, part: 'Second UniDisk (drive 2)', type: 'Disk in the daisy-chained second UniDisk, then CATALOG,D2' },
+    ],
     firstLook: [
       'On a II, II Plus or IIe: UniDisk controller card in slot 6, two UniDisks per card (the second daisy-chains off the back of the first). A third and fourth need a second card (slot 4).',
       'On a IIc: one UniDisk 5.25 on the external drive port; it is slot 6, drive 2, driven by the IIc IWM. An original IIc boots it only with ProDOS and PR#7.',
@@ -2418,6 +2463,14 @@ RCS.add({
   quickref: {
     apple2: {
       sources: [{ label: 'Apple II Reference Manual (1979), Figure 5 system memory map, p. 68', url: IIRM(78) }, { label: 'Apple II Reference Manual (1979): keyboard, monitor and I/O chapters', url: 'https://archive.org/details/Apple_II_Reference_Manual_1979_Apple' }],
+      boot: { to: 'System Monitor (old Monitor ROM)', prompt: '*', note: 'CTRL-B gives Integer BASIC (>). A Revision 0 board needs RESET after power-on. An Autostart ROM beeps, shows APPLE ][ and boots the disk instead.', source: FB_A2RM(26, 37), also: [FB_A2RM(33, 44), FB_A2RM(36, 47), FB_A2RM(54, 65)] },
+      firstBoot: [
+        { part: 'Screen', type: 'Switch on. Press RESET (Revision 0 boards have no power-on reset).', expect: 'The Monitor prompt * at the left edge with a flashing cursor.', source: FB_A2RM(40, 51), also: FB_A2RM(26, 37) },
+        { part: 'BASIC ROMs', type: 'CTRL-B, then RETURN', expect: 'The Integer BASIC prompt >.', source: FB_A2RM(54, 65), also: FB_A2RM(33, 44) },
+        { part: 'Sound', type: 'CTRL-G, then RETURN', expect: 'A short beep from the speaker (0.1 second). The cursor does not move for it.', source: FB_A2RM(31, 42) },
+        { part: 'Video (graphics switch)', type: 'At the * prompt: C050, then C051', expect: 'C050 switches the display to graphics; C051 switches back to text.', source: FB_A2RM(13, 24), verify: true },
+        { part: 'Disk', type: 'Master disk in drive 1, then PR#6 from BASIC (or 6 CTRL-P from the Monitor)', expect: 'The IN USE light comes on, the drive clicks and whirrs, and the DOS title appears. CATALOG then lists the disk.', source: FB_D2INST(8, 12), also: FB_DOS(11, 23) },
+      ],
       firstLook: [
         'Integer BASIC at the > prompt. No decimals; FP switches to Applesoft only if it is loaded.',
         'No disk or ROM card? PR#6 boots slot 6, drive 1.',
@@ -2486,6 +2539,15 @@ RCS.add({
     },
     apple2plus: {
       sources: [{ label: 'Apple II Reference Manual (1979), Figure 5 system memory map, p. 68', url: IIRM(78) }, { label: 'Applesoft BASIC Programming Reference Manual (Apple)', url: 'https://archive.org/details/Applesoft_BASIC_Programming_Reference_Manual_Apple_Computer' }],
+      boot: { to: 'Applesoft II BASIC (Autostart ROM)', prompt: ']', note: 'With a Disk II controller fitted it boots the disk first; RESET again skips to BASIC.', source: FB_A2RM(36, 47) },
+      firstBoot: [
+        { part: 'Screen', type: 'Switch on.', expect: 'A beep, then APPLE ][ top and center. With no disk controller (or after RESET) the Applesoft prompt ] and a flashing cursor.', source: FB_A2RM(36, 47), also: FB_A2RM(33, 44) },
+        { part: 'Sound', type: 'CTRL-G, then RETURN', expect: 'A short beep from the speaker (0.1 second).', source: FB_A2RM(31, 42) },
+        FB_LORES,
+        FB_HIRES,
+        FB_PDL,
+        FB_BOOT6,
+      ],
       firstLook: [
         'Applesoft at the ] prompt. With no disk, BASIC comes up; PR#6 boots slot 6.',
         'Dead machine or no beep: the 6502, its 1.023 MHz clock, or the ROM. Garbage or no boot: swap the 4116 RAM banks.',
@@ -2555,6 +2617,17 @@ RCS.add({
     },
     "apple2e": {
       sources: [{ label: 'Apple IIe Technical Reference Manual, Figure 4-1 system memory map, p. 73', url: IIE(106) }, { label: 'Apple IIe Technical Reference Manual, The Reset Routine, p. 91', url: IIE(124) }, { label: 'Applesoft BASIC Programming Reference Manual (Apple)', url: 'https://archive.org/details/Applesoft_BASIC_Programming_Reference_Manual_Apple_Computer' }],
+      boot: { to: 'Startup disk in drive 1, else Applesoft BASIC', prompt: ']', note: 'Ch. 1 of the same manual: an original IIe shows Apple ][ at the top during startup; an enhanced IIe shows Apple //e.', source: FB_IIETRM('ch. 4, The Cold-Start Procedure, p. 92', 126) },
+      firstBoot: [
+        { part: 'Screen', type: 'Startup disk in drive 1. Switch on.', expect: 'A beep. The POWER light on the keyboard and the drive 1 light come on; the drive whirrs, then stops and the program starts. With no controller card (or after CONTROL-RESET) you get the Applesoft prompt ].', source: FB_IIEOM(32, 36), also: FB_IIETRM('ch. 4, The Cold-Start Procedure, p. 92', 126) },
+        { part: 'RAM and ROM self-test', type: 'Hold SOLID-APPLE, press and release CONTROL-RESET, then let go of SOLID-APPLE.', expect: 'Moving patterns, then a message. Original IIe: KERNEL OK after about 20 seconds (Owner\'s Manual p. 108). Enhanced IIe: System OK after several seconds (Technical Reference Manual p. 95). Any other message: switch off for a few seconds, switch on and run the test again; if it still fails, the board needs service.', source: FB_IIEOM(108, 112), also: FB_IIETRM('Automatic Self-Test, p. 95 (enhanced IIe)', 129) },
+        { part: 'Keyboard', type: 'CAPS LOCK up, type a few letters; CAPS LOCK down, type again', expect: 'Lower case with CAPS LOCK up, upper case with it down.', source: FB_IIEOM(36, 40) },
+        { part: 'Sound', type: 'CONTROL-G, then RETURN', expect: 'A 1000 Hz beep for 0.1 second.', source: FB_IIETRM('Control Characters With COUT1 and BASICOUT, p. 52', 86) },
+        FB_LORES,
+        { part: '80-column card', type: 'PR#3 (80-column card in the auxiliary slot)', expect: '80 characters per line. ESC then CONTROL-Q turns the card off.', source: FB_IIEOM(75, 79) },
+        FB_PDL,
+        FB_BOOT6,
+      ],
       "firstLook": [
         "Four-rail switching supply: +5, +12, -5, -12. A ticking PSU with the board connected means a short.",
         "MMU and IOU custom chips replace the TTL jungle of the II+. Dead machine = MMU/ROM/CPU; bad video or keys = IOU.",
@@ -2899,6 +2972,17 @@ RCS.add({
         { label: 'Apple IIc Technical Reference Manual, Table 6-1 disk I/O and startup, pp. 120-122', url: IIC(147) },
         { label: 'Apple IIc Technical Reference Manual, Chapter 10 Monitor: invoking it and command summary, pp. 204, 227-229', url: IIC(231) },
         { label: 'Applesoft BASIC Programming Reference Manual (Apple)', url: 'https://archive.org/details/Applesoft_BASIC_Programming_Reference_Manual_Apple_Computer' },
+      ],
+      boot: { to: 'Disk in the built-in drive, else Check Disk Drive', prompt: ']', note: 'CONTROL-RESET before the startup ends drops to Applesoft BASIC.', source: FB_IICTRM(51, 79) },
+      firstBoot: [
+        { part: 'Screen', type: 'Set the 80/40 switch (down for a TV, up for a monitor). Disk in the drive. Switch on.', expect: 'A beep, the Power light and the Disk Use light come on and the drive whirrs.', source: FB_IICOM(12, 28) },
+        { part: 'No disk', type: 'Switch on with the drive empty, then CONTROL-RESET', expect: 'The drive spins briefly, then Check Disk Drive at the bottom of the screen. CONTROL-RESET gives the Applesoft prompt ].', source: FB_IICTRM(51, 79) },
+        { part: 'Keyboard', type: 'Press the Keyboard switch down, type S', expect: 'O appears: the Dvorak layout is on. Switch up for the standard layout.', source: FB_IICOM(20, 36) },
+        { part: 'Sound', type: 'CONTROL-G, then RETURN', expect: 'A 1000 Hz beep for 0.1 second.', source: FB_IICTRM('Control characters with COut1, p. 65', 93) },
+        FB_LORES,
+        { part: '80 columns', type: 'Set the 80/40 switch up (80), then switch on', expect: 'Programs that use 80 columns show 80 characters across on a monitor.', source: FB_IICOM(19, 35) },
+        FB_PDL,
+        { part: 'Disk restart', type: 'Startup disk in the drive. Hold Open Apple and CONTROL, press and release RESET', expect: 'A forced cold start: the drive spins and the disk boots again.', source: FB_IICTRM(52, 80) },
       ],
       firstLook: [
         'Three versions: PRINT PEEK(64447) gives 255 on the original IIc, 0 on the UniDisk 3.5 IIc, 3 on the memory-expansion IIc.',

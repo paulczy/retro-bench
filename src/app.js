@@ -1524,8 +1524,8 @@ function viewQuickref(m) {
   const cite = x => x && x.source ? ` <span class="tin sm">${[x.source, ...arr(x.also)].map(d => `<a class="lnk" href="${esc(safeUrl(d.url))}" target="_blank" rel="noopener">${esc(d.label)}</a>`).join('; ')}</span>` : '';
   /* first boot: what the machine powers up into, then a short checklist that proves each part works */
   const first = boot || fb.length ? `<section class="blk" id="first-boot"><span class="lbl">First boot</span>
-    ${boot ? `<p class="mt-0">Boots to <b>${esc(rt(boot.to))}</b>${boot.prompt ? `, prompt <span class="mono">${esc(boot.prompt)}</span>` : ''}.${boot.note ? ' ' + esc(rt(boot.note)) : ''}${vmark(boot)}${disagree(boot)}${cite(boot)}</p>` : ''}
-    ${fb.length ? `<div class="legend tri">${fb.map(t => `<div class="k">${esc(t.part)}</div><div class="v mono">${esc(t.type)}</div><div class="v3">${esc(rt(t.expect))}${vmark(t)}${disagree(t)}${cite(t)}</div>`).join('')}</div>` : ''}</section>` : '';
+    ${boot ? `<p class="mt-0">Boots to <b>${esc(rt(boot.to))}</b>${!boot.prompt ? '.' : /^\S{1,12}$/.test(boot.prompt) ? `, prompt <span class="mono">${esc(boot.prompt)}</span>${/[.!?]$/.test(boot.prompt) ? '' : '.'}` : `. ${esc(rt(boot.prompt))}${/[.!?]$/.test(boot.prompt) ? '' : '.'}`}${boot.note ? ' ' + esc(rt(boot.note)) : ''}${vmark(boot)}${disagree(boot)}${cite(boot)}</p>` : ''}
+    ${fb.length ? `<div class="legend tri fb">${fb.map(t => `<div class="k">${esc(t.part)}</div><div class="v mono">${esc(t.type)}</div><div class="v3">${esc(rt(t.expect))}${vmark(t)}${disagree(t)}${cite(t)}</div>`).join('')}</div>` : ''}</section>` : '';
   const ess = arr(basic.essentials), half = Math.ceil(ess.length / 2);
   const legend = list => `<div class="legend">${list.map(e => `<div class="k">${esc(e.cmd)}</div><div class="v">${esc(rt(e.does))}${vmark(e)}${disagree(e)}</div>`).join('')}</div>`;
   const cmds = `${ess.length ? `<section class="blk" id="commands"><span class="lbl">Commands</span><div class="grid gap-x-10 lg:grid-cols-2">${legend(ess.slice(0, half))}${legend(ess.slice(half))}</div></section>` : ''}

@@ -350,6 +350,15 @@ const memory1 = [
   { range: 'I/O $90-$91 / $98-$99 / $A0-$A2 / $A8-$AB', what: 'Printer / VDP / PSG (latch, write, read) / PPI (A slots, B keyboard columns, C keyboard row, tape, Caps LED, click; mode)' }
 ];
 const S_QR1 = [tdb('2.1.9 Special keys (function keys, STOP), p. 62-63', 65), tdb('2.1 MSX-BASIC Reference Guide, p. 46 on', 49), tdb('1.7 Address Maps and 1.7.11 PPI bits, p. 38-44', 41), rb('ch. 1 PPI and slots', 'chapter_1'), rb('ch. 4 ROM BIOS standard routines', 'chapter_4'), rb('ch. 6 Memory Map and Workspace Area', 'chapter_6'), rb('keyboard decoder (STOP, CTRL-STOP, GRAPH, CODE)', '0f46h')];
+/* First-boot checks: MSX Technical Data Book (ASCII, 1984) for MSX-BASIC 1.0; MSX2 Technical Handbook for 2.0 additions. */
+const FB_BOOT = { to: 'MSX-BASIC', prompt: 'Ok', note: 'At startup MSX-BASIC scans the slots for cartridges and passes control to each one it finds; a game cartridge need not return to BASIC.', source: tdb('2.1.1 Modes of Operation, p. 46', 49), also: tdb('Advanced Programming Guide, PROGRAM CARTRIDGE search procedure, p. 162', 165) };
+const fbCommon = [
+  { part: 'Video', type: 'Power on with no cartridge', expect: 'MSX-BASIC starts and shows the Ok prompt.', source: tdb('2.1.1 Modes of Operation, p. 46', 49) },
+  { part: 'Sound', type: 'BEEP', expect: 'A beep, the same sound as PRINT CHR$(7).', source: tdb('2.1 MSX-BASIC Reference Guide, BEEP, p. 93', 96) },
+  { part: 'PSG', type: 'PLAY "CDEFGAB"', expect: 'The seven notes C to B in the current octave, one after another.', source: tdb('2.1 MSX-BASIC Reference Guide, PLAY, p. 93', 96), verify: true },
+  { part: 'RAM', type: 'PRINT FRE(0)', expect: 'The number of bytes free for BASIC programs.', source: tdb('2.1 MSX-BASIC Reference Guide, FRE, p. 80', 83) },
+  { part: 'Tape', type: 'MOTOR ON, then MOTOR OFF', expect: 'The cassette motor relay switches on, then off.', source: tdb('2.1 MSX-BASIC Reference Guide, MOTOR, p. 93', 96) },
+];
 
 /* ---------- power ---------- */
 const supply = (mid, extraNotes = []) => ({
@@ -553,6 +562,8 @@ RCS.add({
       keys,
       basic: { dialect: 'MSX-BASIC 1.0 (Microsoft)', essentials, groups, quirks },
       memory: memory1,
+      boot: FB_BOOT,
+      firstBoot: fbCommon,
       sources: S_QR1
     },
     msx2: {
@@ -587,6 +598,13 @@ RCS.add({
         ...memory1.slice(7, 9),
         { range: 'I/O $98-$9B', what: 'V9938: VRAM data, command / status, palette, register pointer' },
         { range: 'I/O $B4-$B5 / $FC-$FF', what: 'Clock IC (RP5C01: address latch, data) / memory mapper segment registers' }
+      ],
+      boot: FB_BOOT,
+      firstBoot: [
+        ...fbCommon,
+        { part: 'Clock', type: 'GET TIME T$:PRINT T$', expect: 'The time from the clock chip as HH:MM:SS. SET TIME "hh:mm:ss" sets it.', source: th2('ch. 2.9 Additions for Timer Features, GET TIME and SET TIME', 'th-2.txt') },
+        { part: 'Clock RAM (battery)', type: 'SET TITLE "REPAIR",3, then switch off and on', expect: 'The startup screen is red with the title REPAIR and waits for a key (a 6-character title waits). SET TITLE is kept in the battery-powered RAM of the clock chip.', source: th2('ch. 2.10 Additions for Memory Switch, SET TITLE', 'th-2.txt'), verify: true },
+        { part: 'Sound', type: 'SET BEEP 2,4, then BEEP', expect: 'A low tone beep. SET BEEP 1,4 goes back to the high beep of MSX1.', source: th2('ch. 2.10 Additions for Memory Switch, SET BEEP', 'th-2.txt') },
       ],
       sources: [th2('ch. 1 sec. 2 hardware overview and address map', 'th-1.txt'), th2('ch. 2 MSX-BASIC version 2.0 additions', 'th-2.txt'), th2('APPENDIX I/O map', 'th-ap.txt'), ...S_QR1.slice(0, 2)]
     }

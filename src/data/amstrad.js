@@ -15,6 +15,8 @@ const AMEND = { label: 'Amstrad CPC464 / CPC6128 / GT65 / CTM644 / MP3 Service M
 const um464 = (label, n) => ({ label: `Amstrad CPC464 User Manual (transcribed edition), ${label}`, url: `${AO}cpc464.en/page/n${n}` });
 const um664 = (label, n) => ({ label: `Amstrad CPC664 User Instructions, ${label}`, url: `${AO}amstrad-cpc664-user-manual/page/n${n}` });
 const um6128 = (label, n) => ({ label: `Amstrad CPC6128 User Instructions, ${label}`, url: `${AO}amstrad-cpc-6128-user-manual/page/n${n}` });
+/* First-boot checks. um* take the archive.org leaf, which is the PDF page minus 1. */
+const joyCheck = src => ({ part: 'Joystick', type: 'PRINT JOY(0) while you hold the joystick left; again with Fire 2 held too', expect: '4 for left. Fire 2 is bit 4 (16); each direction and button has its own bit in the result.', source: src });
 const WB = 'https://web.archive.org/web/2025/https://www.cpcwiki.eu/index.php/';
 const W_GAPIN = { label: 'CPCWiki, Gate Array and ASIC Pin-Outs (archived copy)', url: WB + 'Gate_Array_and_ASIC_Pin-Outs' };
 const W_GA = { label: 'CPCWiki, Gate Array (registers, RAM configurations; archived copy)', url: WB + 'Gate_Array' };
@@ -157,7 +159,7 @@ const tape = (mid, src) => ({
 });
 
 const disc2 = (mid, src) => ({
-  id: `${mid}-disc2`, name: 'Disc drive 2 socket (second drive)', kind: '34-way 0.1 in PCB edge (17 + 17), odd/even numbering', geo: 'custom',
+  id: `${mid}-disc2`, name: 'Disk drive 2 socket (second drive)', kind: '34-way 0.1 in PCB edge (17 + 17), odd/even numbering', geo: 'custom',
   pads: [...Array.from({ length: 17 }, (_, i) => ({ n: 2 * i + 2, x: 4 + i * 5.75, y: 40 })), ...Array.from({ length: 17 }, (_, i) => ({ n: 2 * i + 1, x: 4 + i * 5.75, y: 60 }))],
   outline: 'M 1 32 L 99 32 L 99 68 L 1 68 Z M 12.6 32 L 12.6 68',
   verifiedAgainst: 'CPC6128 / CPC664 User Instructions ch. 7 part 9 (Disc Drive 2 Socket, viewed from rear); CPC6128 service manual interface circuit diagram (34-way edge)',
@@ -447,7 +449,7 @@ RCS.add({
       { symptom: 'Red power LED on, black screen', suspects: ['ga40010', 'cpuz80', 'rom23256', 'crtc6845', 'dram4164'], note: 'Monitor lead and brightness first. Then 16 MHz at 40010 pin 24, 4 MHz at Z80A pin 6, 1 MHz at 6845 pin 21, /RESET HIGH at Z80A pin 26.' },
       { symptom: 'Garbage screen, no sign-on', suspects: ['dram4164', 'ga40010', 'rom23256'], note: 'Check the eight 4164s and the Gate Array RAM strobes.' },
       { symptom: '"Drive A: disk missing"', suspects: ['fdc765'], note: 'Almost always the drive: replace the rubber belt, then check the 12 V lead is plugged into the monitor. Then INDEX pulses at 765 pin 17.' },
-      { symptom: 'Disc reads but will not write', suspects: ['fdc765'], note: 'Check the write-protect hole of the 3 in disk, then WE at 765 pin 25 and the 74LS38 buffers.' },
+      { symptom: 'Disk reads but will not write', suspects: ['fdc765'], note: 'Check the write-protect hole of the 3 in disk, then WE at 765 pin 25 and the 74LS38 buffers.' },
       { symptom: 'No sound', suspects: ['ay8912', 'ppi8255'], note: 'Check 1 MHz at AY-3-8912 pin 15 and the LA4140 amplifier.' },
       { symptom: 'Dead keys or joystick', suspects: ['ay8912', 'ppi8255'], note: 'Membrane and connector first; then the 74LS145 row decoder and AY port A.' }
     ],
@@ -703,6 +705,15 @@ RCS.add({
             'Keywords may be typed in lower case; LIST shows them in capitals.'
           ] },
         memory: mem464,
+        boot: { to: 'Locomotive BASIC 1.0', prompt: 'Ready', source: um464('1 setting up, sign-on screen (PDF p. 8; the transcription has no printed page numbers)', 7) },
+        firstBoot: [
+          { part: 'Video', type: 'Monitor on, then the computer POWER switch', expect: 'The red ON lamp lights. Amstrad 64K Microcomputer <v1>, ©1984 Amstrad Consumer Electronics plc and Locomotive Software Ltd., BASIC 1.0, then Ready and the cursor.', source: um464('1 setting up, sign-on screen (PDF p. 8)', 7) },
+          { part: 'Color', type: 'border 0', expect: 'The border changes from blue to black.', source: um464('Foundations 3, PEN, PAPER and BORDER (PDF p. 34)', 33) },
+          { part: 'Sound', type: '10 sound 1,478,200, then run', expect: 'Middle C for 2 seconds from the speaker in the computer. No sound: check the volume control.', source: um464('Foundations 3, SOUND (PDF p. 47)', 46) },
+          { part: 'Tape', type: 'load"" and press PLAY on the datacorder, then any key', expect: 'Press PLAY then any key:, then Loading <name> block 1. The block number counts up, then Ready.', source: um464('1.6 Loading other software cassettes (PDF p. 15)', 14) },
+          joyCheck(um464('ch. 8 keyword list, JOY (PDF p. 150)', 149)),
+          { part: 'Reset', type: 'CTRL + SHIFT + ESC', expect: 'The screen clears and the sign-on message comes back, as at power on.', source: um464('1.6 Loading other software cassettes (PDF p. 15)', 14) },
+        ],
         sources: [um464('Appendix V, keyboard and memory map, p. 233-234', 232), um464('ch. 8 BASIC keyword list', 129)]
       },
       cpc664: {
@@ -722,6 +733,14 @@ RCS.add({
             'Error "Drive A: disk missing" offers Retry, Ignore or Cancel: R, I or C.'
           ] },
         memory: mem664,
+        boot: { to: 'Locomotive BASIC 1.1 with AMSDOS', prompt: 'Ready', source: um664('ch. 1 Foundation Course, p. 4', 14), also: um664('ch. 1 Foundation Course, Part 10, What is AMSDOS?, p. 72', 82) },
+        firstBoot: [
+          { part: 'Video', type: 'Monitor on, then the computer POWER switch', expect: 'Amstrad 64K Microcomputer (v2), ©1984 Amstrad Consumer Electronics plc and Locomotive Software Ltd., BASIC 1.1, then Ready.', source: um664('ch. 1 Foundation Course, p. 4', 14) },
+          { part: 'Color', type: 'border 13', expect: 'The border changes from blue to white.', source: um664('ch. 1 Foundation Course, p. 47', 57) },
+          { part: 'Sound', type: '10 sound 1,478,200, then run', expect: 'Middle C for 2 seconds. No sound: check that the VOLUME control is not at zero.', source: um664('ch. 1 Foundation Course, p. 66', 76) },
+          { part: 'Disk', type: 'cat, with a formatted disk in the drive', expect: 'Drive A: user 0, one line per file with its size, then the free space (the manual shows 168K free after one 1K file).', source: um664('ch. 1 Foundation Course, Catalog, p. 41', 51) },
+          joyCheck(um664('ch. 3 Complete List of Keywords, JOY, p. 37', 138)),
+        ],
         sources: [um664('ch. 3 complete list of BASIC keywords', 102), um664('ch. 5 AMSDOS', 195), um664('ch. 1 foundation course', 12)]
       },
       cpc6128: {
@@ -744,6 +763,15 @@ RCS.add({
           ...mem664,
           { range: 'RAM config &C0 / &C1 / &C2 / &C3', what: 'Normal / bank 1 block 3 at $C000 / all four bank 1 blocks / bank 1 block 3 at $C000, block 3 at $4000' },
           { range: 'RAM config &C4-&C7', what: 'Bank 1 block 0-3 at $4000-$7FFF (the usual way to reach the extra 64K)' }
+        ],
+        boot: { to: 'Locomotive BASIC 1.1 with AMSDOS', prompt: 'Ready', source: um6128('ch. 1 Foundation Course, p. 5', 17), also: um6128('ch. 1 Foundation Course, Part 10, What is AMSDOS?, p. 75', 87) },
+        firstBoot: [
+          { part: 'Video', type: 'Monitor on, then the computer POWER switch', expect: 'Amstrad 128K Microcomputer (v3), ©1985 Amstrad Consumer Electronics plc and Locomotive Software Ltd., BASIC 1.1, then Ready.', source: um6128('ch. 1 Foundation Course, p. 5', 17) },
+          { part: 'Color', type: 'border 13', expect: 'The border changes from blue to white.', source: um6128('ch. 1 Foundation Course, p. 49', 61) },
+          { part: 'Sound', type: '10 sound 1,239,200, then run', expect: 'A note for 2 seconds. No sound: check that the VOLUME control is not at zero.', source: um6128('ch. 1 Foundation Course, Part 9 Using Sound, p. 69', 81), also: um664('ch. 1 Foundation Course, pp. 65-66', 76),
+            conflict: 'This manual calls tone period 239 middle C; the CPC664 manual (ch. 1 pp. 65-66) and the CPC464 manual use 478 for middle C. Either value gives a 2-second note.' },
+          { part: 'Disk', type: 'cat, with a formatted disk in the drive', expect: 'Drive A: user 0, one line per file with its size, then the free space (the manual shows 177K free after one 1K file).', source: um6128('ch. 1 Foundation Course, Catalog, p. 44', 56) },
+          joyCheck(um6128('ch. 3 Complete List of Keywords, JOY, p. 37', 155)),
         ],
         sources: [um6128('ch. 3 complete list of BASIC keywords', 119), um6128('ch. 5 AMSDOS and CP/M', 229), um6128('ch. 1 foundation course', 14), W_GA, W_GA_M]
       }

@@ -301,6 +301,10 @@ const sram6810Pins = [
 /* 44-pin I/O port, console card edge seen from the right side: even pins (2-44) on the top row, odd (1-43) below, pin 1 at the keyboard end */
 const tiIoPads = Array.from({ length: 44 }, (_, i) => ({ n: i + 1, x: 4 + Math.floor(i / 2) * 4.2, y: i % 2 ? 42 : 58 }));
 
+/* First-boot checks (quickref boot / firstBoot): TI-99/4A User's Reference Guide, printed page then PDF page.
+   Log: docs/verification/first-boot-a.md. */
+const FB_URG = (p, page) => ({ label: `TI-99/4A User's Reference Guide, p. ${p}`, url: `https://archive.org/download/userrefguide/userrefguide_text.pdf#page=${page}` });
+
 RCS.add({
   brand: {
     id: 'ti',
@@ -817,6 +821,15 @@ RCS.add({
   },
   quickref: {
     ti994a: {
+      boot: { to: 'Master title screen, then the master selection list', prompt: '>', note: 'Press any key for the list, then 1 for TI BASIC.', source: FB_URG('II-4', 24) },
+      firstBoot: [
+        { part: 'Screen', type: 'Switch on. Press any key, then 1.', expect: 'The master title screen, then the master selection list. 1 gives a blank screen with TI BASIC READY, the > prompt and a flashing cursor.', source: FB_URG('II-4', 24) },
+        { part: 'Keyboard', type: 'Press ALPHA LOCK and type letters; press it again. Then FCTN and = (QUIT).', expect: 'Letters lock to upper case and go back to normal. QUIT returns to the master title screen and erases the program.', source: FB_URG('I-5', 13) },
+        { part: 'Video', type: '10 CALL SCREEN(7) / 20 GOTO 20 / RUN', expect: 'The whole screen turns dark red. Stop it with FCTN 4 (CLEAR): the screen goes cyan when a program stops.', source: FB_URG('II-75', 95), also: FB_URG('II-6, FCTN 4 (CLEAR)', 26) },
+        { part: 'Sound', type: 'CALL SOUND(1000,440,2), then CALL SOUND(500,-1,2)', expect: 'A one-second tone, then a short burst of noise.', source: FB_URG('II-85', 105), also: FB_URG('II-84, duration in milliseconds', 104) },
+        { part: 'Joysticks', type: 'ALPHA LOCK up. 10 CALL JOYST(1,X,Y) / 20 PRINT X;Y / 30 GOTO 10 / RUN', expect: 'X and Y read 0 at rest and -4 or 4 as the lever moves left, right, up or down.', source: FB_URG('II-90', 110), also: FB_URG('I-5', 13) },
+        { part: 'Tape', type: 'OLD CS1 (recorder on the cassette cable, tape rewound)', expect: 'The screen prompts REWIND CASSETTE TAPE CS1, then PRESS CASSETTE PLAY CS1, then READING and DATA OK. ERROR - NO DATA FOUND means it did not read.', source: FB_URG('II-42', 62) },
+      ],
       firstLook: [
         'Power on: the title screen. BYE from TI BASIC returns to it and keeps your program.',
         'FCTN + = (QUIT) goes to the title screen and erases the program in memory.',

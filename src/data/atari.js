@@ -848,7 +848,35 @@ const XL_PSU_SRC = [S.x6(20, 'Power Supply, p. 1-10'), S.xl(19, 'Fig. 1-8, power
 const pw600xl = { supply: supplyXL, rails: xlRails, testPoints: tp600xl, firstTen: ft600xl, clocks: [{ name: 'Crystal', where: 'Y1', ntsc: '3.58 MHz', source: S.x6(59, 'Symptom checklist: verify 3.58 MHz frequency of Y1, p. 3-1'), note: 'PAL 600XL crystal not in the documents read.' }, ...clocksXL(S.x6(60, 'Symptom checklist, verify 3.58 MHz oscillator, p. 3-2')).slice(1)], sources: [...XL_PSU_SRC, S.x6(71, 'parts list, 5 Volt DC Power Supply CA061982, p. 5-5')] };
 const pw800xl = { supply: supplyXL, rails: xlRails, testPoints: tp800xl, firstTen: ft800xl, clocks: clocksXL(S.sxl(7, 'Troubleshooting, Clock and dividers (1.78977 MHz at ANTIC pin 34)')), sources: [...XL_PSU_SRC, S.xl(42, 'parts list, p. 5-5'), S.sxl(27, 'Preliminary service checks, Computer dead')] };
 const pw130xe = { supply: supplyXL, rails: xeRails, testPoints: tp130xe, firstTen: ft130xe, clocks: clocks130xe, sources: [...XL_PSU_SRC, S.sams(2, 'schematic voltages (+5.0 V)'), S.sams(12, 'Troubleshooting, Power supply')] };
+/* First-boot checks (quickref boot / firstBoot): manual pages, printed page then PDF page.
+   Each link is the archive.org PDF that was read. Log: docs/verification/first-boot-a.md. */
+const FB_IA = 'https://archive.org/download';
+const fbDoc = (path, label) => (p, page) => ({ label: `${label}, ${typeof p === 'number' ? `p. ${p}` : p}`, url: `${FB_IA}/${path}#page=${page}` });
+const FB_800OG = fbDoc('Atari_800_Owners_Guide_1981_Atari/Atari_800_Owners_Guide_1981_Atari_text.pdf', 'Atari 800 Owner\'s Guide (1981)');
+const FB_ABAS = fbDoc('atari-400-800-basic-ref/Image091917210858.merged_text.pdf', 'Atari BASIC Reference Manual');
+const FB_XLFSM = fbDoc('atari-800-xl-computer-field-service-manual-rev-01-feb-1984/Atari_800XL_Computer_Field_Service_Manual_Rev_01_Feb_1984_text.pdf', 'Atari 800XL Field Service Manual Rev. 01');
+const FB_400OM = fbDoc('Atari400OperatorsManual/Atari%20400%20Operators%20Manual_text.pdf', 'Atari 400 Operators Manual');
+const FB_600FSM = fbDoc('Atari600XLComputerFieldServiceManualRev1/Atari_600XL_Computer_Field_Service_Manual_Rev_1_text.pdf', 'Atari 600XL Field Service Manual Rev. 1');
+const FB_ABAS_READY = FB_ABAS('Appendix G, Glossary (Prompt: READY), p. G-4', 104);
+const FB_XESM = (p, page) => ({ ...fbDoc('manual_130XE_SM_ATARI_EN/130XE_SM_ATARI_EN_text.pdf', 'Sams Computerfacts Atari 130XE')(p, page), sams: true });
+/* Atari BASIC checks shared by every model. */
+const FB_ATSOUND = { part: 'Sound', type: 'SOUND 0,121,10,8', expect: 'A steady pure tone (middle C) from the TV speaker until END or another SOUND 0.', source: FB_ABAS(57, 67), also: FB_ABAS(58, 68) };
+const FB_ATGFX = { part: 'Video (graphics)', type: 'GRAPHICS 3, then SETCOLOR 0,2,8, COLOR 1, PLOT 17,1, DRAWTO 17,18', expect: 'An orange vertical line on the graphics screen, with the text window below.', source: FB_ABAS(51, 61), also: FB_ABAS(50, 60) };
+const FB_ATSTICK = { part: 'Joystick', type: 'Joystick in jack 1: PRINT STICK(0) and PRINT STRIG(0) while holding the stick', expect: 'STICK changes with the direction: 14 up, 13 down, 11 left, 7 right. STRIG is 0 with the button pressed, 1 when released.', source: FB_ABAS(59, 69), also: FB_ABAS(60, 70) };
+const FB_ATTAPE = { part: 'Tape', type: 'CLOAD (program recorder, tape positioned)', expect: 'One bell rings: press PLAY, then RETURN. The program loads from tape into memory.', source: FB_ABAS(24, 34) };
+const FB_ATDISK = { part: 'Disk', type: 'Drive on and idle, DOS disk in, then switch the computer on. Type DOS.', expect: 'DOS boots and the screen shows READY. DOS brings up the DOS Menu; A lists the directory.', source: FB_ABAS(31, 41) };
 const atariQuickref = {
+  boot: { to: 'ATARI COMPUTER - MEMO PAD, or Atari BASIC with the cartridge', prompt: 'READY', note: 'The cartridge door switches the computer off while open.', source: FB_800OG('Turning on, PDF p. 6', 6), also: [FB_800OG('Cartridges, PDF p. 7', 7), FB_ABAS_READY] },
+  firstBoot: [
+    { part: 'Screen', type: 'No cartridge. Close the cartridge door and switch on.', expect: 'ATARI COMPUTER - MEMO PAD and a white square cursor; whatever you type appears. The colors shift now and then to protect the TV: that is normal.', source: FB_800OG('Turning on, PDF p. 6', 6) },
+    { part: 'Keyboard', type: 'In MEMO PAD: press the Atari logo key, then type', expect: 'Letters appear in inverse video, dark on light. The logo key again returns to normal.', source: FB_800OG('The Atari 800 keyboard, PDF p. 8', 8) },
+    { part: 'BASIC cartridge', type: 'POWER switch on. Open the cartridge door, BASIC cartridge in the left slot, close the door', expect: 'Opening the door switches the computer off; closing it switches it back on. The red power light comes on and the BASIC prompt READY appears.', source: FB_800OG('Cartridges, PDF p. 7', 7), also: FB_ABAS_READY },
+    FB_ATGFX,
+    FB_ATSOUND,
+    FB_ATSTICK,
+    FB_ATTAPE,
+    FB_ATDISK,
+  ],
   firstLook: [
     'The 400 has a membrane keyboard and one cartridge slot; the 800 has a full keyboard and two slots.',
     'SYSTEM RESET restarts the machine. Cycle the power to clear RAM (verify).',
@@ -925,8 +953,30 @@ atariQuickref.sources = [
   S.fsm(16, 'console keys, p. 1-3'),
 ];
 
+/* The 400 has its own manual: one cartridge slot, same door interlock. */
+const atari400Quickref = {
+  ...atariQuickref,
+  boot: { ...atariQuickref.boot, source: FB_400OM('5. Power Up, PDF p. 10', 10), also: [FB_400OM('Screen Display, PDF p. 11', 11), FB_400OM('11. Writing BASIC Source Programs, PDF p. 21', 21)] },
+  firstBoot: [
+    { part: 'Screen', type: 'No cartridge. Close the cartridge door and switch on.', expect: 'ATARI COMPUTER - MEMO PAD and a square cursor; whatever you type appears.', source: FB_400OM('Screen Display, PDF p. 11', 11), also: FB_400OM('6. Using the Keyboard, PDF p. 12', 12) },
+    { part: 'Keyboard', type: 'In MEMO PAD: press the Atari logo key, then type', expect: 'Letters appear in inverse video. The logo key again returns to normal display.', source: FB_400OM('Special Computer Keys, PDF p. 15', 15) },
+    { part: 'BASIC cartridge', type: 'POWER switch on. Open the cartridge door, BASIC cartridge in the slot, close the door', expect: 'With the door open the power light goes out and the screen goes blank. Closing it restarts the computer: the power light comes on and the BASIC prompt READY appears.', source: FB_400OM('5. Power Up, PDF p. 10', 10), also: [FB_400OM('7. Inserting Cartridges, PDF p. 16', 16), FB_400OM('11. Writing BASIC Source Programs, PDF p. 21', 21)] },
+    ...atariQuickref.firstBoot.slice(3),
+  ],
+};
 const xlQuickref = {
   ...atariQuickref,
+  boot: { to: 'Built-in Atari BASIC', prompt: 'READY', note: 'Hold OPTION at power-on to switch BASIC off; with no cartridge or disk that gives the Self Test menu.', source: FB_XLFSM('Function keys, p. I-1', 9), also: FB_XLFSM('Self Test (exit with RESET: the Basic Ready prompt), p. 2-1', 25) },
+  firstBoot: [
+    { part: 'Screen', type: 'No cartridge, OPTION not held. Switch on.', expect: 'The built-in BASIC comes up with the READY prompt.', source: FB_XLFSM('Function keys, p. I-1', 9), also: FB_XLFSM('Self Test (exit with RESET: the Basic Ready prompt), p. 2-1', 25) },
+    { part: 'Self Test menu', type: 'No cartridge or disk. Hold OPTION while switching on.', expect: 'The Self Test menu: Memory, Audio Visual, Keyboard, All Test. SELECT moves, START runs, HELP returns to the menu.', source: FB_XLFSM('Self Test, p. 2-1', 25), also: FB_XLFSM('Self Test, p. 2-2', 26) },
+    { part: 'RAM and ROM', type: 'Self Test: Memory', expect: 'Two bars for the OS ROM, then one block per 1K of RAM (48 on an 800XL). Each turns white while tested, then light green if good, red if bad.', source: FB_XLFSM('Memory test, p. 2-2', 26) },
+    { part: 'Sound and video', type: 'Self Test: Audio Visual', expect: 'A music staff; six tones play on each channel 1 to 4 with the note shown. A note with no sound, or sound with no note, is a fault.', source: FB_XLFSM('Audio Visual test, p. 2-2', 26) },
+    { part: 'Keyboard', type: 'Self Test: Keyboard, then press each key', expect: 'Each key turns inverse on the on-screen keyboard and a tone sounds.', source: FB_XLFSM('Keyboard test, p. 2-2', 26) },
+    FB_ATSTICK,
+    FB_ATTAPE,
+    FB_ATDISK,
+  ],
   firstLook: [
     'BASIC is built in. Hold OPTION while you switch on to turn it off; with no cartridge or disk the Self-Test menu appears.',
     'A cartridge takes over from the built-in BASIC.',
@@ -959,8 +1009,34 @@ const xlQuickref = {
     { label: 'Mapping the Atari, memory map (atariarchives.org)', url: 'https://www.atariarchives.org/mapping/memorymap.php' },
   ],
 };
+/* The 600XL has its own field service manual: 16K of RAM, so sixteen blocks in the memory test. */
+const x6Quickref = {
+  ...xlQuickref,
+  boot: { ...xlQuickref.boot, source: FB_600FSM('Function keys, p. 1-1', 11), also: FB_600FSM('Self Test (exit with RESET: the Basic Ready prompt), p. 2-1', 27) },
+  firstBoot: [
+    { part: 'Screen', type: 'No cartridge, OPTION not held. Switch on.', expect: 'The built-in BASIC comes up with the READY prompt.', source: FB_600FSM('Function keys, p. 1-1', 11), also: FB_600FSM('Self Test (exit with RESET: the Basic Ready prompt), p. 2-1', 27) },
+    { part: 'Self Test menu', type: 'No cartridge or disk. Hold OPTION while switching on.', expect: 'The Self Test menu: Memory, Audio Visual, Keyboard, All Test. SELECT moves, START runs, HELP returns to the menu.', source: FB_600FSM('Self Test, p. 2-1', 27), also: FB_600FSM('Self Test, p. 2-2', 28) },
+    { part: 'RAM and ROM', type: 'Self Test: Memory', expect: 'Two bars for the two 8K ROMs, then sixteen blocks, one per 1K of RAM. Each turns white while tested, then light green if good, red if bad.', source: FB_600FSM('Memory test, p. 2-2', 28) },
+    { part: 'Sound and video', type: 'Self Test: Audio Visual', expect: 'A music staff; six tones play on each channel 1 to 4 with the note shown. A note with no sound, or sound with no note, is a fault.', source: FB_600FSM('Audio Visual test, p. 2-2', 28) },
+    { part: 'Keyboard', type: 'Self Test: Keyboard, then press each key', expect: 'Each key turns inverse on the on-screen keyboard and a tone sounds. CONTROL and SHIFT change only with another key; RESET, HELP and BREAK give no tone.', source: FB_600FSM('Keyboard test, p. 2-2', 28), also: FB_600FSM('Keyboard test, p. 2-3', 29) },
+    FB_ATSTICK,
+    FB_ATTAPE,
+    FB_ATDISK,
+  ],
+};
 const xeQuickref = {
   ...xlQuickref,
+  boot: { to: 'Built-in Atari BASIC', prompt: 'READY', note: 'Hold OPTION at power-on, or type BYE in BASIC, for the self-test menu.', source: FB_XESM('General operating instructions, PDF p. 14', 14), also: FB_XESM('Self-test, PDF p. 9', 9), verify: true },
+  firstBoot: [
+    { part: 'Screen', type: 'Switch on.', expect: 'The computer comes up in BASIC with READY. The screen is blue.', source: FB_XESM('General operating instructions, PDF p. 14', 14) },
+    { part: 'Self Test menu', type: 'Hold OPTION while switching on (or type BYE in BASIC)', expect: 'The self-test menu. SELECT picks a test, START runs it, HELP returns to the menu, RESET goes back to BASIC.', source: FB_XESM('Self-test, PDF p. 9', 9) },
+    { part: 'RAM and ROM', type: 'Self Test: Memory', expect: 'Two bars for the OS ROM, then 48 squares, one per 1K of RAM. White while tested, green if good, red if bad. Entered with BYE, only 40 squares show.', source: FB_XESM('Self-test, PDF p. 9', 9) },
+    { part: 'Sound and video', type: 'Self Test: Audio-Visual', expect: 'A music staff and a six-tone tune on channels 1 to 4. A note with no sound points at POKEY; a tone with no note points at ANTIC or GTIA.', source: FB_XESM('Self-test, PDF p. 9', 9) },
+    { part: 'Keyboard', type: 'Self Test: Keyboard, then press each key', expect: 'The key turns inverse on screen and a tone sounds. CONTROL and SHIFT work only with another key; RESET, HELP and BREAK are not tested.', source: FB_XESM('Self-test, PDF p. 9', 9) },
+    FB_ATSTICK,
+    FB_ATTAPE,
+    FB_ATDISK,
+  ],
   firstLook: xlQuickref.firstLook.map(s => s.startsWith('ANTIC, CPU') ? 'The extra 64 KB is banked in at $4000-$7FFF by PORTB ($D301) bits; a failing bank shows up only in software that uses it.' : s),
   basic: { ...xlQuickref.basic, dialect: 'Atari BASIC, built in (8 KB ROM, part C024947 on the Sams board)' },
   memory: [...xlQuickref.memory, { range: '$4000-$7FFF', what: 'Bank window for the extra 64 KB (PORTB $D301 selects).', verify: true }],
@@ -1119,7 +1195,7 @@ RCS.add({
   power: {
     atari400: pw400, atari800: pw800, atari600xl: pw600xl, atari800xl: pw800xl, atari130xe: pw130xe,
   },
-  quickref: { atari400: atariQuickref, atari800: atariQuickref, atari600xl: xlQuickref, atari800xl: xlQuickref, atari130xe: xeQuickref },
+  quickref: { atari400: atari400Quickref, atari800: atariQuickref, atari600xl: x6Quickref, atari800xl: xlQuickref, atari130xe: xeQuickref },
   resources: [
     { name: 'Atari 400/800 Field Service Manual (May 1983)', url: 'https://archive.org/details/atari400800fieldservicemanualmay1983', what: 'Chip pin assignments, schematics, power supplies, parts lists, diagnostic flowcharts.' },
     { name: 'Atari 800XL Field Service Manual Rev. 01 (Feb 1984)', url: 'https://archive.org/details/atari-800-xl-computer-field-service-manual-rev-01-feb-1984', what: 'SALLY, ANTIC, GTIA, POKEY, PIA pinouts; power, SIO, controller, cartridge and PBI pinouts; Self-Test; parts list.' },

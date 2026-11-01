@@ -7,6 +7,8 @@
 const DF = 'https://www.defence-force.org/computing/oric/library/lib_manual_oric/files/';
 const atm = (label, page) => ({ label: `Oric Atmos manual (Oric Products International), ${label}`, url: `${DF}manual_atmos.pdf#page=${page}` });
 const O1M = (label) => ({ label: `Oric-1 BASIC Programming Manual (John Scriven, 1983), ${label}`, url: `${DF}oric1manual.pdf` });
+const o1m = (label, page) => ({ label: `Oric-1 BASIC Programming Manual (John Scriven, 1983), ${label}`, url: `${DF}oric1manual.pdf#page=${page}` });
+const ZAP_SRC1 = o1m('ch. 10 Sound, p. 97', 80);
 const WB = 'https://web.archive.org/web/2025/https://wiki.defence-force.org/';
 const SCH1 = { label: 'Oric-1 48K circuit diagram, Oric Products International, issue 7 (24-2-84), sheet 1: CPU, ULA, VIA, AY, PSU, video, cassette, printer, keyboard (Defence Force wiki, archived)', url: WB + 'lib/exe/fetch.php?media=oric:hardware:oric1-1s.gif' };
 const SCH2 = { label: 'Oric-1 48K circuit diagram, issue 7, sheet 2: DRAM, ROM IC9/IC10, PAL color circuit, expansion PL2 (Defence Force wiki, archived)', url: WB + 'lib/exe/fetch.php?media=oric:hardware:oric1-2s.gif' };
@@ -428,6 +430,14 @@ RCS.add({
           'Attributes are serial: each color change takes a character cell on screen, which shows as a blank.'
         ] },
       memory,
+      boot: { to: 'Oric Extended BASIC V1.0', prompt: 'READY', source: o1m('ch. 2 Setting the Computer Up, p. 12', 8) },
+      firstBoot: [
+        { part: 'Video', type: 'Plug in the power supply and tune the TV to about channel 36', expect: 'ORIC EXTENDED BASIC V1.0, © 1983 TANGERINE, the bytes free, then READY.', source: o1m('ch. 2 Setting the Computer Up, pp. 11-12', 7) },
+        { part: 'Keyboard', type: 'Press a few letter keys, then CTRL + F', expect: 'Each letter key gives a high beep; CTRL, RETURN and other control keys give a low beep. CTRL + F turns the key sound off; again turns it on.', source: ZAP_SRC1 },
+        { part: 'Sound', type: 'ZAP, then PING, SHOOT and EXPLODE', expect: 'ZAP: a rapidly falling whistle. PING: a bell-like tone (CTRL + G too). SHOOT: a gun shot. EXPLODE: an explosion.', source: ZAP_SRC1 },
+        { part: 'Color', type: 'PAPER 1', expect: 'The background turns red without clearing the screen. PAPER and INK take 0 to 7: black, red, green, yellow, blue, magenta, cyan, white.', source: o1m('ch. 4 Colour and Graphics, p. 33', 26), also: atm('ch. 7 Graphics and colour, p. 72', 77) },
+        { part: 'Tape', type: 'CLOAD "", then PLAY on the recorder', expect: 'Searching.... on the status line, then Loading and the program name when it is found.', source: o1m('ch. 11 Saving programs on tape, pp. 105-106', 87) },
+      ],
       sources: [O1M('ch. 2 Setting the computer up, p. 11-13; ch. 11 Saving programs on tape, p. 105-107'), atm('Appendix 5 Memory map, p. 240-242', 245), atm('ch. 9 Oric BASIC Keywords, p. 108', 113), HCAC, SCH1]
     },
     atmos: {
@@ -449,6 +459,14 @@ RCS.add({
           'Serial attributes: each color or style change takes a screen cell.'
         ] },
       memory,
+      boot: { to: 'Oric Extended BASIC V1.1', prompt: 'READY', source: atm('ch. 1 Getting the ATMOS together, p. 3', 8) },
+      firstBoot: [
+        { part: 'Video and RAM', type: 'Plug in the power supply (there is no switch) and tune the TV to channel 36', expect: 'The screen fills with random white blocks for a few seconds while the Oric checks itself, then ORIC EXTENDED BASIC V1.1, © 1983 TANGERINE, the bytes free, and READY.', source: atm('ch. 1 Getting the ATMOS together, p. 3', 8) },
+        { part: 'Keyboard', type: 'Press a few keys, then CTRL-F, then press keys again', expect: 'Each key press makes a sound. CTRL-F turns the key click off; CTRL-F again turns it on.', source: atm('ch. 2 The Language Lesson, control keys, p. 12', 17) },
+        { part: 'Sound', type: 'ZAP, then SHOOT, PING and EXPLODE', expect: 'Each makes the noise its name suggests, loudly. ZAP sounds like a laser cannon blast.', source: atm('ch. 8 The sound of music, p. 93', 98) },
+        { part: 'Color', type: 'PAPER 1', expect: 'Black characters on red paper, at once.', source: atm('ch. 7 Graphics and colour, p. 72', 77) },
+        { part: 'Tape', type: 'CLOAD "name", then PLAY on the recorder', expect: 'SEARCHING... at the top of the screen, then LOADING and the name with the file type B, then READY. ERRORS FOUND means a bad load: adjust volume and tone.', source: atm('ch. 6 Tapes and Data, p. 64', 69) },
+      ],
       sources: [atm('ch. 2 The Language Lesson, p. 8, 12 and 18 (reset, CTRL keys)', 13), atm('ch. 6 Tapes and Data, p. 61-66', 66), atm('ch. 9 Oric BASIC Keywords, p. 108', 113), atm('Appendix 5 Memory map, p. 240-242', 245), atm('Appendix 12 BASIC Reserved Words and Tokens, p. 288', 293), W_KBD, HCAC]
     }
   },

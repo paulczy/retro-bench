@@ -357,6 +357,17 @@ const d64Connectors = [
 ];
 
 /* ---------- quickref pieces ---------- */
+const BOOT_SRC = { label: 'Dragon 32 Introduction to BASIC Programming (Dragon Data, 1982), Connecting Your Dragon 32, p. iv', url: MAN(8) };
+const boot = { to: 'Dragon BASIC (Microsoft)', prompt: 'OK', source: BOOT_SRC };
+const firstBoot = d64 => [
+  { part: 'Video', type: 'Switch on the TV and the computer', expect: 'A green square with a black border, holding (C) 1982 DRAGON DATA LTD, 16K BASIC INTERPRETER 1.0, (C) 1982 BY MICROSOFT, then OK.', source: BOOT_SRC,
+    ...(d64 ? { verify: true, also: { label: 'Dragon 64 Supplement (Dragon Data, 1983), Using the Extra RAM (boots configured like a Dragon 32), p. 3', url: SUP(5) } } : {}) },
+  { part: 'Color', type: 'CLS 3', expect: 'The background turns blue. CLS 0 to 8 gives black, green, yellow, blue, red, buff, cyan, magenta, orange.', source: { label: 'Dragon 32 Introduction to BASIC Programming (Dragon Data, 1982), CLS, p. 26', url: MAN(40) } },
+  { part: 'Sound', type: 'SOUND 89,16', expect: 'Middle C for about 1 second.', source: { label: 'Dragon 32 Introduction to BASIC Programming (Dragon Data, 1982), SOUND, p. 31', url: MAN(45) } },
+  { part: 'Tape', type: 'CLOAD, with a recorded tape in PLAY', expect: 'The cassette motor starts and an S shows at the top left while it searches. S changes to F and the program name when found. OK when it has loaded and the motor stops.', source: { label: 'Dragon 32 Introduction to BASIC Programming (Dragon Data, 1982), Loading Programs into Memory, p. 36', url: MAN(50) } },
+  { part: 'Joystick', type: 'PRINT JOYSTK(0), with the left joystick at full left, then at full right', expect: 'A number between 0 and 63 that follows the stick. JOYSTK(0) is the left joystick, horizontal.', source: { label: 'Dragon 32 Introduction to BASIC Programming (Dragon Data, 1982), joysticks, p. 86', url: MAN(100) }, also: { label: 'Dragon 32 Introduction to BASIC Programming (Dragon Data, 1982), JOYSTK, p. 68', url: MAN(82) } },
+  ...(d64 ? [{ part: 'Upper 32K RAM', type: 'EXEC (or EXEC 48000)', expect: 'The cursor now flashes blue rather than black (64K mode). BASIC then has 41241 bytes free.', source: { label: 'Dragon 64 Supplement (Dragon Data, 1983), Using the Extra RAM, p. 3', url: SUP(5) } }] : []),
+];
 const keys = d64 => [
   { keys: 'BREAK', does: 'Stop a running program (the red key).' },
   { keys: 'SHIFT + @', does: 'Pause a listing or output; any key resumes.' },
@@ -756,6 +767,8 @@ RCS.add({
         { range: '$FFC0–$FFDF', what: 'SAM control bits (write even address to clear, odd to set)' },
         { range: '$FFF0–$FFFF', what: 'Vectors (from $BFF0 in ROM)' },
       ],
+      boot,
+      firstBoot: firstBoot(false),
     },
     dragon64: {
       sources: [
@@ -798,6 +811,8 @@ RCS.add({
         { range: '$FFC0–$FFDF', what: 'SAM control bits (map type 1 switches in the upper 32 KB)' },
         { range: '$FFF2–$FFFF', what: 'Processor vectors' },
       ],
+      boot: { ...boot, also: { label: 'Dragon 64 Supplement (Dragon Data, 1983), Using the Extra RAM (boots configured like a Dragon 32), p. 3', url: SUP(5) } },
+      firstBoot: firstBoot(true),
     },
   },
   resources: [

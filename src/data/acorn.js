@@ -235,7 +235,7 @@ const bbcbConnectors = [
     summary: 'Fitted only when the Econet upgrade is in (68B54 IC89, line driver IC93, receivers IC94/IC95). Balanced data on pins 1 and 4, network clock on 3 and 5. With no network clock the ADLC never gets clear-to-send, which looks like a dead station.',
     pins: econetPins, terms: ['econet'],
     sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, Econet connector SK7', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), Econet connector SK7', CDM), S('Master Series Service Manual, SK7 ECONET figure, p. 52', MSM(52)), S('BBC Microcomputer Service Manual, 3.12 Econet', SM)] },
-  { id: 'bbcb-disk', name: 'Disc drive (PL8)', kind: '34-way IDC header under the case', geo: 'custom', pads: hdrPads(34), outline: hdrOutline(34), gender: 'male', verifiedAgainst: 'Model B circuit diagram 103,000/C (PL8)',
+  { id: 'bbcb-disk', name: 'Disk drive (PL8)', kind: '34-way IDC header under the case', geo: 'custom', pads: hdrPads(34), outline: hdrOutline(34), gender: 'male', verifiedAgainst: 'Model B circuit diagram 103,000/C (PL8)',
     summary: 'Shugart-style floppy bus from the 8271 (IC78) through open-collector 7438 drivers. Odd pins are ground. Pins 2, 4 and 34 go to links S4/S10 and were not traced. Drive power comes from the auxiliary power socket, not this header. Drawing: odd row below, pin 1 at the left; find the pin-1 arrow on the board.',
     pins: discPins(false),
     sources: [S('Circuit diagram for BBC Microcomputer 103,000/C, disk connector PL8', CD), S('Circuit diagram for BBC Microcomputer 103,000/C (goffart.co.uk copy), disk connector PL8', CDM), S('BBC Microcomputer Service Manual, 3.10 Disc interface', SM)] },
@@ -736,7 +736,7 @@ RCS.add({
       role: 'Single-density (FM) floppy disk controller with internal CRC, seek and head positioning.', pkg: 'DIP-40',
       machines: ['bbcb'], location: { bbcb: 'IC78 (disk upgrade)' },
       summary: 'A high-level single-density controller at &FE80-&FE84 with internal CRC and head positioning; the BBC uses its non-DMA mode and services each byte on NMI. Data separation is external (IC81, IC82, IC87). Disk upgrades also need the DFS ROM, MOS 1.2 and a supply with the auxiliary socket. Double density needs a 1770 board instead. On the Model B: SELECT 0 (pin 2) drives disk connector pin 10 through a 7438, INT (pin 11) goes to the CPU NMI and /CS (pin 24) decodes &FE80-&FE9F.',
-      fails: ['Disc fault / Drive fault errors on every disk', 'Drive light never comes on', 'Reads but will not write'],
+      fails: ['Disk fault / Drive fault errors on every disk', 'Drive light never comes on', 'Reads but will not write'],
       heat: 'warm',
       verifiedAgainst: 'Intel 1979 Peripheral Design Handbook, 8271 data sheet pp. 1-108 to 1-109 (pin configuration and pin descriptions)',
       datasheets: [S('Intel 1979 Peripheral Design Handbook, 8271 Programmable Floppy Disk Controller, p. 1-108', INTEL79), S('Advanced User Guide, 25.1 The 8271 floppy disc controller', AUG)],
@@ -910,7 +910,7 @@ RCS.add({
       role: 'Decodes SHEILA chip selects (VIDPROC, ACIA, SERPROC, ADC, FDC), drives RDY and turns FDC DRQ into NMI.', pkg: 'DIP-40',
       machines: ['bbcmaster'], location: { bbcmaster: 'IC15' },
       summary: 'Pins named in the service manual: 1 FDCON and 4 FDC (disk selects), 5 DRQ in, 17 READY to the CPU and PBC, 18-19 two data bits, 34 SERPROC select, 35 ADC select, 36 ACIA select, 38 FIT to the PBC. The full pinout is on the Master drawing but not transcribed here.',
-      fails: ['Disc, serial or ADC dead together', 'Hangs with 1 MHz bus devices'], heat: 'warm', verify: true,
+      fails: ['Disk, serial or ADC dead together', 'Hangs with 1 MHz bus devices'], heat: 'warm', verify: true,
       verifiedAgainst: 'Master Series Service Manual 7.5-7.13 (pin references only)', datasheets: [S('Master main PCB circuit diagram 0143,000 (IC15)', MSCH)], pins: null },
     mc_memctl: { id: 'mc_memctl', name: 'Master memory controller gate array (CF30058)', short: 'MEMCTRL', family: 'Acorn custom gate array',
       role: 'ROMSEL (&FE30) and ACCCON (&FE34): pages ROMs, sideways RAM, shadow LYNNE, HAZEL and ANDY.', pkg: 'DIP-40',
@@ -1145,7 +1145,7 @@ RCS.add({
       { symptom: 'Typed text repeated two or more times round the screen', suspects: ['crtc6845', 'mc_crtcmux'], note: 'Check TP7-TP20 (CRTC outputs), MA13 on 6845 pin 17, and C0/C1 from IC10 pins 4-5 to IC31 pins 38-39 (SM 7.1.12).' },
       { symptom: 'MODE 7 shows a cursor but no text', suspects: ['saa5050'], note: '6 MHz at SAA5050 pin 19 from IC39 and IC25 (SM 7.3.6).' },
       { symptom: 'No color on the TV output', suspects: ['mc_chroma'], note: 'Set VC2 for 17.7345 MHz at IC43 pin 12; check IC40 pin 11 and +5 V on IC40 pin 20 (SM 7.3.3).' },
-      { symptom: 'Disc drive dead or catalog unreadable', suspects: ['fdc1770', 'mc_ioctl'], note: '1770 pin 18 8 MHz, pin 19 read data wiggling, DRQ on pin 27 pulsing every 32 us and reaching NMI (65SC12 pin 6), INTRQ pin 28 not stuck high (SM 7.8).' },
+      { symptom: 'Disk drive dead or catalog unreadable', suspects: ['fdc1770', 'mc_ioctl'], note: '1770 pin 18 8 MHz, pin 19 read data wiggling, DRQ on pin 27 pulsing every 32 us and reaching NMI (65SC12 pin 6), INTRQ pin 28 not stuck high (SM 7.8).' },
       { symptom: 'RS423 dead', suspects: ['serproc', 'acia6850'], note: 'Cable upside down? -5 V at the driver IC50 pin 8, 1.23 MHz at SERPROC pin 25, CTS/RTS on SERPROC pins 20/23 not stuck (SM 7.6).' },
       { symptom: 'Analog port reads nonsense', suspects: ['adc7002'], note: 'About 1.8 V between 7002 pins 8 and 9, 1 MHz on 7002 pin 2, select on 7002 pin 23. Over 5.5 V on a port pin kills it (SM 7.5).' }
     ],
@@ -1211,7 +1211,7 @@ RCS.add({
           scope: { period: '4 µs', pp: '4.6 V', shape: 'pulse', duty: '75%', basis: 'capture',
             source: S('BBC Microcomputer Service Manual (Oct 1985), 6.5.1 test program and IC73 pin 23 waveform, 1 V/cm, 1 µs/cm, p. 44', SM85P(54)),
             note: `Only with the SM test program running (a closed LDA loop on the address typed in). A slow (1 MHz) device is selected for a full 1 µs, then high for 3 µs. About 4.6 V p-p (${SM_PHOTO}). No pulse: the address decode to this chip is broken.` } },
-        { tp: 'Disc controller select (SM test loop at &FE80)', where: '8271 pin 24', expect: 'Low 500 ns in every 3.5 µs while the SM 6.5.1 test program reads &FE80',
+        { tp: 'Disk controller select (SM test loop at &FE80)', where: '8271 pin 24', expect: 'Low 500 ns in every 3.5 µs while the SM 6.5.1 test program reads &FE80',
           scope: { period: '3.5 µs', pp: '4.6 V', shape: 'pulse', duty: '86%', basis: 'capture',
             source: S('BBC Microcomputer Service Manual (Oct 1985), 6.5.1 IC78 pin 24 waveform, 1 V/cm, 1 µs/cm, p. 45', SM85P(55)),
             note: `Only with the SM test program running. A fast (2 MHz) device is selected for 500 ns, then high for 3 µs. About 4.6 V p-p (${SM_PHOTO}).` } },
@@ -1295,7 +1295,7 @@ RCS.add({
         { tp: 'PAL subcarrier', where: 'IC43 pin 12', expect: '17.7345 MHz (trim VC2)' },
         { tp: 'Serial clock', where: 'SERPROC pin 25', expect: '1.23 MHz' },
         { tp: 'RTC crystal', where: 'RTC pin 2', expect: '32.768 kHz (trim VC1)' },
-        { tp: 'Disc clock', where: '1770 pin 18', expect: '8 MHz' }
+        { tp: 'Disk clock', where: '1770 pin 18', expect: '8 MHz' }
       ],
       firstTen: [
         { step: 1, check: 'Supply alive', where: 'Keyboard power LED; supply leads on the push-on tabs (red +5V, black 0V, purple -5V)', expect: 'Power LED lit and the power-on beep',
@@ -1325,7 +1325,7 @@ RCS.add({
         { name: 'RTC clock out to TP1 (CKFS high: time base / 1)', where: 'RTC pin 21 (TP1)', f: '32.768 kHz', verify: true, source: S('Motorola MC146818A data sheet ADI-1026: CKFS high gives CKOUT = OSC1 frequency, pp. 8-10', 'https://www.scs.stanford.edu/22wi-cs212/pintos/specs/mc146818a.pdf#page=8'), note: 'Drawing 0143,000 ties CKFS (pin 20) to +5VB and takes CKOUT to test point TP1, the buffered clock output the service manual names.' },
         { name: 'System VIA Φ2 (1 MHz bus rate)', where: 'VIA pin 25 (system VIA)', f: '1 MHz', source: { ...S('Master Series Service Manual, 1 MHz internal I/O: only the system VIA works at this speed, p. 22', MSM(22)), note: 'VIA pin 25 is Φ2 (6522 data sheet).' }, note: 'The user VIA clock was not traced on 0143,000.' },
         { name: 'Teletext character clock F1', where: 'SAA5050 pin 20', f: '1 MHz', verify: true, source: S('BBC Microcomputer Service Manual (Oct 1985), 3.1: the VIDPROC 1 MHz is used only by the teletext chip, p. 9', SM85P(19)), note: 'As on the Model B; the 1 MHz feed was not traced on the Master drawing 0143,000.' },
-        { name: 'Disc controller clock', where: '1770 pin 18', f: '8 MHz', source: S('Master Series Service Manual, 7.7 step 6 (8 MHz at IC3 pin 18), p. 44', MSM(44)) },
+        { name: 'Disk controller clock', where: '1770 pin 18', f: '8 MHz', source: S('Master Series Service Manual, 7.7 step 6 (8 MHz at IC3 pin 18), p. 44', MSM(44)) },
         { name: 'Sound reference', where: 'SN76489 pin 14', f: '4 MHz', source: { ...S('Master Series Service Manual, 5 sound generator (4 MHz from central timing), p. 20', MSM(20)), note: 'Pins from the Master main PCB circuit diagram 0143,000.' } },
         { name: '6845 character clock (2 MHz in MODEs 0-3, 1 MHz in 4-7, as the Model B)', where: 'VIDPROC pin 28 to 6845 pin 21', f: '2 MHz', verify: true, source: S('BBC Micro Advanced User Guide, 19.1.4 6845 clock rate select (video ULA control register bit 4)', AUG) },
         { name: 'Teletext dot clock (generator IC39 and IC25)', where: 'SAA5050 pin 19', f: '6 MHz', source: { ...S('Master Series Service Manual, 7.3 MODE 7 faults, p. 40', MSM(40)), note: 'Pins from the Master main PCB circuit diagram 0143,000.' } },
@@ -1486,6 +1486,16 @@ RCS.add({
         { range: '$FE00-$FEFF', what: 'SHEILA: &00 6845, &08 ACIA, &10 SERPROC, &20 VIDPROC, &30 ROM select, &40 system VIA, &60 user VIA, &80 8271, &A0 ADLC, &C0 7002, &E0 Tube' },
         { range: '$FF00-$FFFF', what: 'MOS ROM: OS call entry points and vectors' }
       ],
+      boot: { to: 'BBC BASIC', prompt: '>', note: 'The User Guide shows a message "similar to" Acorn OS 64K, BASIC; the first line differs by model and MOS.',
+        source: S('BBC Microcomputer System User Guide (1984), 1 Getting started, p. 3', UG(15)) },
+      firstBoot: [
+        { part: 'Power and video', type: 'Switch on at the back, then tune the TV', expect: 'A short beep, the red CAPS LOCK light comes on, then a sign-on message, BASIC and the > prompt.', source: S('BBC Microcomputer System User Guide (1984), 1 Getting started, p. 3', UG(15)) },
+        { part: 'Keyboard', type: 'Hold any letter key down', expect: 'The character appears, a short pause, then it repeats until you let go. RETURN on a nonsense line gives Mistake.', source: S('BBC Microcomputer System User Guide (1984), 1 Getting started, p. 5', UG(17)) },
+        { part: 'Color', type: 'MODE 5, then COLOUR 129, then type a few letters', expect: 'COLOUR 129 selects a red background behind the text.', source: S('BBC Microcomputer System User Guide (1984), 1 Experimenting, p. 6', UG(18)) },
+        { part: 'Sound', type: 'SOUND 1,-15,100,200', expect: 'A simple, crude tone from the speaker.', source: S('BBC Microcomputer System User Guide (1984), 1 Experimenting, p. 6', UG(18)) },
+        { part: 'Tape', type: '*TAPE (only on a machine with a disk, Econet or other interface), then *CAT and press PLAY', expect: 'A catalog of the programs on the tape, one line per program, as the tape plays.', source: S('BBC Microcomputer System User Guide (1984), 4 Cataloguing a tape, p. 28', UG(40)), also: S('BBC Microcomputer System User Guide (1984), Running the WELCOME programs (*TAPE), p. 8', UG(20)) },
+        { part: 'Joystick', type: 'PRINT ADVAL(1), with the stick at one end, then the other', expect: 'A number from 0 to 65520 that follows the stick.', source: S('BBC Microcomputer System User Guide (1984), ADVAL, p. 175', UG(187)) },
+      ],
       sources: [S('BBC Microcomputer System User Guide (1984), The BREAK key, p. 120', UG(132)), S('BBC Microcomputer System User Guide (1984), Appendix J memory map, pp. 494-495', UG(507)), S('BBC Microcomputer System User Guide (1984), SHEILA addresses', UG(434)), S('BBC Microcomputer System User Guide (1984), Running the WELCOME programs (*TAPE, PAGE=&E00), p. 8', UG(20)), S('Advanced User Guide for the BBC Microcomputer (SHEILA, FRED, JIM)', AUG), S('BBC Microcomputer Service Manual, 2.2 and Figure 2 memory map', SM)]
     },
     bbcmaster: {
@@ -1549,6 +1559,15 @@ RCS.add({
         { range: '$FC00-$FDFF', what: 'FRED and JIM: 1 MHz bus or cartridge I/O (ACCCON bit IFJ)' },
         { range: '$FE00-$FEFF', what: 'SHEILA I/O: &FE30 ROMSEL, &FE34 ACCCON, plus the Model B devices (VIAs, 6845, ACIA, SERPROC, VIDPROC, 1770, 7002, Tube)' },
         { range: '$FF00-$FFFF', what: 'MOS ROM vectors and entry points' }
+      ],
+      boot: { to: 'BBC BASIC IV', prompt: '>', verify: true, note: 'The MOS shows a startup message on reset by default; the Reference Manual does not print its text.',
+        source: S('Master Reference Manual Part 1, OSBYTE 215 startup message, p. D.2-69', MRM1(115)) },
+      firstBoot: [
+        { part: 'ROMs', type: '*ROMS', expect: 'All sixteen ROM sockets, each with its title and version. ? means an empty socket or a ROM with no valid header.', source: S('Master Reference Manual Part 1, *ROMS, p. C.5-10', MRM1(39)) },
+        { part: 'CMOS RAM', type: '*STATUS', expect: 'A full list of the configuration settings held in the CMOS RAM.', source: S('Master Reference Manual Part 1, *STATUS, p. C.5-12', MRM1(41)) },
+        { part: 'Clock', type: '*TIME', expect: 'Day, date and time from the CMOS clock, as Day,dd mmm yyyy.hh:mm:ss.', source: S('Master Reference Manual Part 1, *TIME, pp. C.5-12 to C.5-13', MRM1(41)) },
+        { part: 'Sound', type: 'CTRL + G', expect: 'The BELL sound. *CONFIGURE LOUD sets it to full volume.', source: S('Master Reference Manual Part 1, *CONFIGURE LOUD, p. C.5-4', MRM1(33)) },
+        { part: 'Disk', type: '*CAT, with a disk in the drive', expect: 'The disk or directory catalog.', source: S('Master Reference Manual Part 1, C.4 MOS command summary, p. C.4-1', MRM1(28)) },
       ],
       sources: [S('Master Reference Manual Part 1, C.4 MOS commands', MRM1(28)), S('Master Reference Manual Part 1, BREAK and associated effects', MRM1(51)), S('Master Reference Manual Part 1, F.2 ROMSEL and ACCCON', MRM1(228)), S('Master Reference Manual Part 2, K.1 BASIC IV differences', MRM2(11)), S('Master Series Service Manual, 5.2 Memory Map and 7.1.5', MSM(13))]
     },
@@ -1618,6 +1637,15 @@ RCS.add({
         { range: '$FD00-$FDFF', what: 'JIM: expansion paged memory page' },
         { range: '$FE00-$FE0F', what: 'ULA (repeated every 16 bytes up to &FEFF): &00 interrupt status/enable, &02-&03 screen start, &04 cassette data, &05 interrupt clear and ROM select, &06 counter (tape baud or sound pitch), &07 MODE, tape motor, CAPS LED and sound/tape mode, &08-&0F palette' },
         { range: '$FF00-$FFFF', what: 'OS ROM: OS call entry points and the 6502 vectors' }
+      ],
+      boot: { to: 'BBC BASIC', prompt: '>', source: S('Acorn Electron User Guide, 2 Getting started, p. 5', EUG(15)) },
+      firstBoot: [
+        { part: 'Power', type: 'Plug in the mains adapter (there is no switch)', expect: 'A bleep, and the yellow CAPS LK light on the left of the case comes on.', source: S('Acorn Electron User Guide, 2 Connecting the Electron to the mains, p. 4', EUG(14)) },
+        { part: 'Video', type: 'Tune the TV', expect: 'Acorn Electron, BASIC and the > prompt.', source: S('Acorn Electron User Guide, 2 Tuning the TV to the Electron, p. 5', EUG(15)) },
+        { part: 'Keyboard', type: 'Hold SHIFT and press CAPS LK, then type letters', expect: 'The yellow light goes out and letters come out in lower case. SHIFT + CAPS LK again locks capitals.', source: S('Acorn Electron User Guide, 2 Now try something, p. 6', EUG(16)) },
+        { part: 'Color', type: 'MODE 1, COLOUR 1, COLOUR 130, then CLS', expect: 'Red text, then a yellow background; CLS turns the whole screen yellow.', source: S('Acorn Electron User Guide, 20 Graphics, The COLOUR command, pp. 90-91', EUG(100)) },
+        { part: 'Sound', type: 'SOUND 1,-15,0,100', expect: 'A single tone of fairly long duration from the internal loudspeaker.', source: S('Acorn Electron User Guide, 22 Making sounds, The SOUND command, p. 116', EUG(126)) },
+        { part: 'Tape', type: 'CHAIN "INTRO", then press PLAY on the recorder', expect: 'Searching, then Loading INTRO with block numbers counting up. The program then runs.', source: S('Acorn Electron User Guide, 4 The Introductory Cassette, p. 10', EUG(20)) },
       ],
       sources: [S('Acorn Electron User Guide, 5 How to use the keyboard (BREAK, CTRL-BREAK, SHIFT and CAPS LK, FUNC), pp. 17-19', EUG(27)), S('Acorn Electron User Guide, 10 The FUNC key and BASIC keywords, pp. 42-43', EUG(52)), S('Acorn Electron User Guide, 26 Cassette file handling (*CAT, *OPT), pp. 196-197', EUG(206)), S('Electron Advanced User Guide, 12 Memory allocation and usage, p. 183', EAUG(184)), S('Electron Advanced User Guide, 13 SHEILA and the ULA and 14.1 ULA registers, pp. 210-224', EAUG(211)), S('Electron Advanced User Guide, Appendix C screen mode layouts', EAUG(256)), S('Electron Service Manual, 3.1-3.3 Specification and 5.1 General (CPU speeds), pp. 3-7', ESM(10)), S('Acorn Application Note 015, 5.0 Sideways ROMs (&FE05, ROM numbers), pp. 8-9', AN15(8))]
     }

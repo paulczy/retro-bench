@@ -50,6 +50,22 @@ const M4OM = 'https://archive.org/details/Model_4_Disk_System_Owners_Manual_1983
 const T80_EI = 'https://www.trs-80.org/radio-shack-expansion-interface.html';
 const T80_KB = 'https://www.trs-80.org/model-1-keybounce.html';
 const T80_GOLD = 'https://www.trs-80.org/gold-plug-80.html';
+/* First-boot sources: Tandy owner manuals. Each check cites the printed page; front matter has none. */
+const GSCB = n => `${HW}/Getting%20Started%20With%20Color%20Basic%20(Tandy).pdf#page=${n}`;
+const GSCB2 = n => `${HW}/Getting%20Started%20With%20Color%20Basic%20-%20TRS-80%20Color%20Computer%202%20(Tandy).pdf#page=${n}`;
+const GSECB = n => `${HW}/Getting%20Started%20With%20Extended%20Color%20Basic%20(Tandy).pdf#page=${n}`;
+const CC1OP = n => `${HW}/Color%20Computer%20Operation%20Manual%20(Tandy).pdf#page=${n}`;
+const CC2OP = n => `${HW}/Color%20Computer%202%20Operation%20Manual%20(Tandy).pdf#page=${n}`;
+const CC3EB = n => `${HW}/Color%20Computer%203%20Extended%20Basic%20(Tandy).pdf#page=${n}`;
+const MC10OP = n => `${MC10}/MC-10%20Operation%20and%20Language%20Reference%20Manual/MC-10%20Operation%20and%20Language%20Reference%20Manual%20(Tandy).pdf#page=${n}`;
+const L2PDF = n => `${IA}/Level_II_BASIC_Reference_Manual_1979_Radio_Shack/Level_II_BASIC_Reference_Manual_1979_Radio_Shack.pdf#page=${n}`;
+const M3OP = n => `${IA}/Model_3_Operation_and_Language_Reference_Manual_1980_Tandy/Model_3_Operation_and_Language_Reference_Manual_1980_Tandy_text.pdf#page=${n}`;
+const M3DSK = n => `${IA}/Model_3_Disk_System_Owners_Manual_1980_Tandy/Model_3_Disk_System_Owners_Manual_1980_Tandy_text.pdf#page=${n}`;
+const M4OMP = n => `${IA}/Model_4_Disk_System_Owners_Manual_1983_Tandy_a/Model_4_Disk_System_Owners_Manual_1983_Tandy_a_text.pdf#page=${n}`;
+const COLOR_TEST = 'NEW, then 5 FOR X = 0 TO 63 / 10 FOR Y = 0 TO 31 / 15 C = INT(X/8 + 1) / 20 SET(X,Y,C) / 25 NEXT Y, X / 30 GOTO 30, then RUN';
+const COLOR_BARS = 'Eight color bars on a black background, in order: green, yellow, blue, red, buff, cyan, magenta, orange. BREAK stops it.';
+const PMODE_TEST = { part: 'Graphics (Extended BASIC)', type: '5 PMODE 1,1 / 10 PCLS / 20 SCREEN 1,1 / 30 PSET(10,20,8) / 40 GOTO 40, then RUN', expect: 'A buff screen with a small orange dot near the top left corner. BREAK stops it.', source: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), ch. 14 Let\'s Get to the Point, p. 85', url: GSECB(88) } };
+const MEM_TEST = { part: 'RAM', type: 'PRINT MEM', expect: 'The computer prints how much memory is free, in bytes.', source: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), For Long Programs, p. 76', url: GSECB(79) } };
 
 /* Model I 40-pin expansion edge (TRH Figure 22). The EI's J2 input and J3 screen-printer bus use the same numbering. */
 const M1BUS = [
@@ -2145,6 +2161,21 @@ RCS.add({
         { range: '$FFC0–$FFDF', what: 'SAM registers (write to set video, page and memory map)', verify: true },
         { range: '$FFF0–$FFFF', what: 'Interrupt vectors (6809E)', verify: true },
       ],
+      boot: { to: 'Color BASIC (Extended Color BASIC when the Extended ROM is fitted)', prompt: 'OK',
+        source: { label: 'Getting Started With Color BASIC (Radio Shack, 1980), To Get Started, p. 2', url: GSCB(6) },
+        also: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), This Is How to Start (unnumbered page)', url: GSECB(7) } },
+      firstBoot: [
+        { part: 'Video', type: 'Power on with no cartridge', expect: 'COLOR BASIC v.r, © 1980 TANDY, then OK. With Extended BASIC the first line reads EXTENDED COLOR BASIC v.r.',
+          source: { label: 'Getting Started With Color BASIC (Radio Shack, 1980), To Get Started, p. 2', url: GSCB(6) },
+          also: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), This Is How to Start (unnumbered page)', url: GSECB(7) } },
+        { part: 'Video', type: 'CLS(3)', expect: 'The screen turns blue with a green stripe at the top.', source: { label: 'Getting Started With Color BASIC (Radio Shack, 1980), It\'s a Show Off, Too, p. 12', url: GSCB(16) } },
+        { part: 'Color', type: COLOR_TEST, expect: COLOR_BARS, source: { label: 'TRS-80 Color Computer Operation Manual (Radio Shack), Color Adjustment Test, p. 24', url: CC1OP(25) } },
+        { part: 'Sound', type: 'SOUND 1, 100', expect: 'About 6 seconds of the lowest tone. No sound: turn up the TV volume and try again.', source: { label: 'Getting Started With Color BASIC (Radio Shack, 1980), Computer Sound Off, p. 13', url: GSCB(17) } },
+        { part: 'Keyboard', type: 'SHIFT + 0, then type a few letters', expect: 'Lower case letters show in reverse: a green letter on a black background. SHIFT + 0 again goes back to capitals.', source: { label: 'TRS-80 Color Computer Operation Manual (Radio Shack), Using the Keyboard, p. 18', url: CC1OP(19) } },
+        MEM_TEST,
+        PMODE_TEST,
+        { part: 'Joystick', type: 'PRINT JOYSTK(0) with the right joystick at full left, then at full right', expect: 'A number from 0 at the left to 63 at the right.', source: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), If You Have the Joysticks, pp. 129-130', url: GSECB(132) } },
+      ],
     },
     coco2: {
       sources: [{ label: 'Color Computer 2 Quick Reference Card (Tandy)', url: `${HW}/Color%20Computer%202%20Quick%20Reference%20Card%20(Tandy).pdf` }, { label: 'Getting Started With Extended Color BASIC (Tandy)', url: `${HW}/Getting%20Started%20With%20Extended%20Color%20Basic%20(Tandy).pdf` }],
@@ -2209,6 +2240,21 @@ RCS.add({
         { range: '$FFC0–$FFDF', what: 'SAM registers', verify: true },
         { range: '$FFF0–$FFFF', what: 'Interrupt vectors (6809E)', verify: true },
       ],
+      boot: { to: 'Color BASIC (Extended Color BASIC when the Extended ROM is fitted)', prompt: 'OK',
+        source: { label: 'Getting Started With Color BASIC, Color Computer 2 edition (Tandy), To Get Started (unnumbered page)', url: GSCB2(6) },
+        also: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), This Is How to Start (unnumbered page)', url: GSECB(7) } },
+      firstBoot: [
+        { part: 'Video', type: 'Power on with no cartridge', expect: 'COLOR BASIC v.r, © 1980 TANDY, then OK. With Extended BASIC the first line reads EXTENDED COLOR BASIC v.r.',
+          source: { label: 'Getting Started With Color BASIC, Color Computer 2 edition (Tandy), To Get Started (unnumbered page)', url: GSCB2(6) },
+          also: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), This Is How to Start (unnumbered page)', url: GSECB(7) } },
+        { part: 'Video', type: 'CLS(7)', expect: 'The screen turns magenta (pinkish purple) with a green stripe at the top.', source: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), ch. 1, p. 17', url: GSECB(20) } },
+        { part: 'Color', type: COLOR_TEST, expect: COLOR_BARS, source: { label: 'TRS-80 Color Computer 2 Operation Manual (Tandy), Color Adjustment Test, p. 24', url: CC2OP(25) } },
+        { part: 'Sound', type: 'SOUND 1, 100', expect: 'About 6 seconds of the lowest tone. No sound: turn up the volume and try again.', source: { label: 'Getting Started With Extended Color BASIC (Tandy, 1984), Computer Sound Off, p. 17', url: GSECB(20) } },
+        { part: 'Keyboard', type: 'SHIFT + 0, then type a few letters', expect: 'Lower case letters show in reverse: a green letter on a black background. SHIFT + 0 again goes back to capitals.', source: { label: 'TRS-80 Color Computer 2 Operation Manual (Tandy), Using the Keyboard, p. 18', url: CC2OP(19) } },
+        MEM_TEST,
+        PMODE_TEST,
+        { part: 'Joystick', type: 'PRINT JOYSTK(0) with the right joystick at full left, then at full right', expect: 'A number from 0 at the left to 63 at the right.', source: { label: 'Getting Started With Color BASIC, Color Computer 2 edition (Tandy), joystick program, p. 85', url: GSCB2(90) } },
+      ],
     },
     coco3: {
       sources: [{ label: 'Color Computer 3 BASIC Quick Reference Manual (Tandy)', url: `${HW}/Color%20Computer%203%20BASIC%20Quick%20Reference%20Manual%20(Tandy).pdf` }, { label: 'Color Computer 3 Service Manual, 1.3 Memory Map and 1.4 I/O Control Registers, pp. 8-9', url: SM3(8) }],
@@ -2262,6 +2308,18 @@ RCS.add({
         { range: '$FF20–$FF23', what: 'U4 PIA: sound, cassette, serial', verify: true },
         { range: '$FF90–$FFBF', what: 'GIME registers: control, MMU banks ($FFA0–$FFAF), palette ($FFB0–$FFBF)', verify: true },
         { range: '$FFF0–$FFFF', what: 'Interrupt vectors (6809E)', verify: true },
+      ],
+      boot: { to: 'Extended Color BASIC (Color Computer 3 version)', prompt: 'OK',
+        source: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 1 This Is How to Start, p. 3', url: CC3EB(12) },
+        also: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 1 Entering a Command, p. 4', url: CC3EB(13) } },
+      firstBoot: [
+        { part: 'Video', type: 'Power on with no cartridge', expect: 'EXTENDED COLOR BASIC v.r, COPR. 1982, 1986 BY TANDY, UNDER LICENSE FROM MICROSOFT AND MICROWARE SYSTEMS CORP. Press ENTER: OK, the BASIC prompt.', source: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 1 This Is How to Start, p. 3', url: CC3EB(12) }, also: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 1 Entering a Command, p. 4', url: CC3EB(13) } },
+        { part: 'Color', type: 'CLS8 (on an RGB monitor, type PALETTE RGB first)', expect: 'The screen turns orange with a green stripe at the top.', source: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 1 The CLS Command, p. 8', url: CC3EB(17) }, also: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 1 The Standard Colors (PALETTE RGB), p. 9', url: CC3EB(18) } },
+        { part: 'Sound', type: 'SOUND 1,100', expect: 'About six seconds of the lowest tone. No sound: turn up the volume and try again.', source: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 1 The SOUND Command, p. 10', url: CC3EB(19) } },
+        { part: 'GIME text modes', type: 'WIDTH 40, then WIDTH 80, then WIDTH 32', expect: 'WIDTH 40 gives a 40 × 24 screen with a green border and an underline cursor. WIDTH 80 gives 80 × 24 with thinner characters. WIDTH 32 goes back.', source: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 7 The WIDTH Command, p. 45', url: CC3EB(54) } },
+        { part: 'RAM', type: 'PRINT MEM, right after power on', expect: '24872, then OK.', source: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 39 For Long Programs (MEM), p. 226', url: CC3EB(243) } },
+        { part: 'Keyboard', type: 'SHIFT + 0, then type a few letters', expect: 'Lower case letters appear in reversed colors. SHIFT + 0 again goes back to capitals.', source: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 1 Using the Keyboard, pp. 3-4', url: CC3EB(12) } },
+        { part: 'Joystick', type: 'PRINT JOYSTK(0) with the right joystick at full left, then at full right', expect: 'A number from 0 at the left to 63 at the right.', source: { label: 'Color Computer 3 Extended BASIC (Tandy, 1986), ch. 19 Joysticks, pp. 115-116', url: CC3EB(124) } },
       ],
     },
     mc10: {
@@ -2322,6 +2380,16 @@ RCS.add({
         { range: '$4000–$4FFF', what: '4 KB static RAM. Text screen starts at $4000 (16384).' },
         { range: '$6000–$6FFF', what: 'Mirror of the 4 KB RAM (partial address decoding).' },
         { range: '$E000–$FFFF', what: 'Micro Color BASIC ROM, 8 KB', verify: true },
+      ],
+      boot: { to: 'Micro Color BASIC', prompt: 'OK',
+        source: { label: 'MC-10 Operation and Language Reference Manual (Radio Shack), Turning the Power On, p. 13', url: MC10OP(25) } },
+      firstBoot: [
+        { part: 'Video', type: 'Power on', expect: 'The screen turns green and shows MICROCOLOR BASIC v.r, COPYRIGHT 1982 MICROSOFT, then OK.', source: { label: 'MC-10 Operation and Language Reference Manual (Radio Shack), Turning the Power On, p. 13', url: MC10OP(25) } },
+        { part: 'Reset', type: 'Press the red RESET button on the back', expect: 'The screen clears and the OK prompt returns.', source: { label: 'MC-10 Operation and Language Reference Manual (Radio Shack), Pressing the RESET Button, p. 14', url: MC10OP(26) } },
+        { part: 'RAM', type: 'PRINT MEM, right after power on', expect: '3142 on a stock 4K machine.', source: { label: 'MC-10 Operation and Language Reference Manual (Radio Shack), Using the MC-10 (MEM function), p. 15', url: MC10OP(27) } },
+        { part: 'Keyboard', type: 'SHIFT + 0, then type a few letters', expect: 'Lower case letters show in reverse video. SHIFT + 0 again goes back to capitals.', source: { label: 'MC-10 Operation and Language Reference Manual (Radio Shack), The SHIFT Key, p. 16', url: MC10OP(28) } },
+        { part: 'Color', type: 'CLS 8', expect: 'The screen turns orange with a green stripe across the top.', source: { label: 'MC-10 Operation and Language Reference Manual (Radio Shack), The CLS Command, p. 52', url: MC10OP(66) } },
+        { part: 'Sound', type: 'SOUND 1,100', expect: 'The lowest tone for about 7.5 seconds.', source: { label: 'MC-10 Operation and Language Reference Manual (Radio Shack), The SOUND Command, p. 53', url: MC10OP(67) } },
       ],
     },
     model1: {
@@ -2393,6 +2461,15 @@ RCS.add({
         { range: '$8000-$BFFF', what: 'EI RAM, first 16 KB (the 32K select)' },
         { range: '$C000-$FFFF', what: 'EI RAM, second 16 KB (the 48K select)' },
       ],
+      boot: { to: 'Level II BASIC (asks MEMORY SIZE? first)', prompt: '>', note: 'A Level I machine boots to Level I BASIC instead.',
+        source: { label: 'Level II BASIC Reference Manual (Radio Shack, 1979), Power-Up, pp. 1-1 to 1-2', url: L2PDF(13) } },
+      firstBoot: [
+        { part: 'Video', type: 'Power on, then press ENTER at MEMORY SIZE?', expect: 'MEMORY SIZE? appears. After ENTER: RADIO SHACK LEVEL II BASIC, READY, and the > prompt.', source: { label: 'Level II BASIC Reference Manual (Radio Shack, 1979), Power-Up, pp. 1-1 to 1-2', url: L2PDF(13) } },
+        { part: 'RAM', type: 'PRINT MEM', expect: 'The free bytes. The manual gives 3,284 for a 4K machine and 15,572 for a 16K machine.', source: { label: 'Level II BASIC Reference Manual (Radio Shack, 1979), Power-Up, p. 1-1', url: L2PDF(13) }, also: { label: 'Level II BASIC Reference Manual (Radio Shack, 1979), MEM, p. 8-5', url: L2PDF(99) } },
+        { part: 'Graphics', type: 'CLS:SET(0,0):SET(127,47)', expect: 'One block lights at the extreme upper left and one at the extreme lower right.', source: { label: 'Level II BASIC Reference Manual (Radio Shack, 1979), SET(x,y), p. 8-1', url: L2PDF(95) } },
+        { part: 'Tape', type: 'CLOAD, with a recorded tape in PLAY', expect: 'The recorder motor starts. File names and a blinking * appear in the upper right corner of the screen.', source: { label: 'Level II BASIC Reference Manual (Radio Shack, 1979), CLOAD, p. 2-2', url: L2PDF(24) } },
+        { part: 'Reset', type: 'Press Reset (with the Expansion Interface, hold BREAK while you press it)', expect: 'MEMORY SIZE? appears again.', source: { label: 'Level II BASIC Reference Manual (Radio Shack, 1979), Reset, p. 1-2', url: L2PDF(14) } },
+      ],
     },
     model3: {
       sources: [
@@ -2446,6 +2523,17 @@ RCS.add({
         { range: '$3C00-$3FFF', what: 'Video RAM, 1 KB (U81, U82)' },
         { range: '$4000-$7FFF', what: 'RAM, 16 KB (U7-U14)' },
         { range: '$8000-$FFFF', what: 'RAM, 32 KB more on 48 KB units (U25-U32, U43-U50)' },
+      ],
+      boot: { to: 'Model III BASIC (asks Cass? and Memory Size? first); TRSDOS from a disk in drive 0', prompt: '>',
+        source: { label: 'TRS-80 Model III Operation and BASIC Language Reference Manual (Radio Shack, 1980), Power-On and Start-Up, pp. 3/1 to 3/3', url: M3OP(15) },
+        also: { label: 'TRS-80 Model III Disk System Owner\'s Manual (1980), System Start-Up and TRSDOS Start-Up Dialog, pp. 6-7', url: M3DSK(14) } },
+      firstBoot: [
+        { part: 'Video', type: 'Power on, then press ENTER at Cass? and at Memory Size?', expect: 'Cass? appears after a few seconds. Then Memory Size?, then Radio Shack Model III Basic, (c) \'80 Tandy, READY and >.', source: { label: 'TRS-80 Model III Operation and BASIC Language Reference Manual (Radio Shack, 1980), Power-On, pp. 3/1 to 3/3', url: M3OP(15) } },
+        { part: 'Keyboard', type: 'SHIFT + 0, then type a few letters', expect: 'The A-Z keys now give lower case. SHIFT + 0 again goes back to capitals.', source: { label: 'TRS-80 Model III Operation and BASIC Language Reference Manual (Radio Shack, 1980), Capitals and Lower Case, p. 4/1', url: M3OP(24) } },
+        { part: 'Video', type: 'SHIFT + right arrow, then CLEAR', expect: 'SHIFT + right arrow gives 32 characters per line. CLEAR erases the screen and goes back to 64 characters per line.', source: { label: 'TRS-80 Model III Operation and BASIC Language Reference Manual (Radio Shack, 1980), Special Keys, p. 4/1', url: M3OP(24) } },
+        { part: 'RAM', type: 'PRINT MEM', expect: 'The number of bytes not in use.', source: { label: 'TRS-80 Model III Operation and BASIC Language Reference Manual (Radio Shack, 1980), MEM, p. 8/4', url: M3OP(180) } },
+        { part: 'Tape', type: 'CLOAD, with a recorded tape in PLAY', expect: 'Two asterisks appear at the upper right. The right one blinks after every 64 characters received. READY when done.', source: { label: 'TRS-80 Model III Operation and BASIC Language Reference Manual (Radio Shack, 1980), Loading a BASIC Program from Tape, p. 6/3', url: M3OP(34) } },
+        { part: 'Disk', type: 'TRSDOS disk in drive 0, door closed, press RESET', expect: 'The TRSDOS version and date, the RAM (32K or 48K) and the number of drives, then a date prompt. After date and time: TRSDOS READY. DISKETTE? or NOT A SYSTEM DISK means no boot.', source: { label: 'TRS-80 Model III Disk System Owner\'s Manual (1980), System Start-Up and TRSDOS Start-Up Dialog, pp. 6-7', url: M3DSK(14) } },
       ],
     },
     model4: {
@@ -2508,6 +2596,16 @@ RCS.add({
         { range: '$F400-$F7FF', what: 'Map III (TRSDOS 6): keyboard' },
         { range: '$F800-$FFFF', what: 'Map III (TRSDOS 6): video RAM, 2 KB' },
         { range: '$8000-$FFFF', what: 'Map IV: all RAM (second 32 KB bank)' },
+      ],
+      boot: { to: 'TRSDOS 6 from the disk in drive 0', prompt: 'TRSDOS Ready',
+        source: { label: 'Model 4 Disk System Owner\'s Manual (Tandy, 1983), Loading TRSDOS, p. 1-6', url: M4OMP(18) } },
+      firstBoot: [
+        { part: 'Disk', type: 'TRSDOS 6 disk in drive 0, power on, then type the date as mm/dd/yy', expect: 'The TRSDOS start-up logo and a date prompt. After the date: the date in long form and TRSDOS Ready.', source: { label: 'Model 4 Disk System Owner\'s Manual (Tandy, 1983), Loading TRSDOS, p. 1-6', url: M4OMP(18) }, also: { label: 'Model 4 Disk System Owner\'s Manual (Tandy, 1983), BASIC, Loading BASIC, p. 2-9', url: M4OMP(173) },
+          conflict: 'p. 2-9 asks for the date as DD/MM/YY; p. 1-6 says mm/dd/yy. The examples on both pages put the month first.' },
+        { part: 'Keyboard', type: 'LIB', expect: 'A list of the TRSDOS library commands, then TRSDOS Ready again.', source: { label: 'Model 4 Disk System Owner\'s Manual (Tandy, 1983), Executing a Command, p. 1-7', url: M4OMP(19) } },
+        { part: 'Disk', type: 'FREE', expect: 'One line per drive: disk name, date, free space in K out of the total, and directory entries available out of the total.', source: { label: 'Model 4 Disk System Owner\'s Manual (Tandy, 1983), FREE, p. 1-97', url: M4OMP(109) } },
+        { part: 'BASIC', type: 'BASIC', expect: 'A paragraph of copyright notices, then Ready.', source: { label: 'Model 4 Disk System Owner\'s Manual (Tandy, 1983), BASIC, Loading BASIC, p. 2-9', url: M4OMP(173) } },
+        { part: 'Sound', type: 'SOUND 7,31 (in BASIC)', expect: 'The highest tone (7) for the longest time (31).', source: { label: 'Model 4 Disk System Owner\'s Manual (Tandy, 1983), BASIC, SOUND, p. 2-160', url: M4OMP(324) } },
       ],
     },
   },

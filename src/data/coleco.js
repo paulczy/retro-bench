@@ -190,6 +190,16 @@ const ls541Pins = [
   { n: 20, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+4.75 to +5.25 V' },
 ];
 
+/* First-boot checks (quickref boot / firstBoot): manual pages, printed page then PDF page.
+   Each link is the archive.org PDF that was read. Log: docs/verification/first-boot-a.md. */
+const FB_IA = 'https://archive.org/download';
+const fbDoc = (path, label) => (p, page) => ({ label: `${label}, ${typeof p === 'number' ? `p. ${p}` : p}`, url: `${FB_IA}/${path}#page=${page}` });
+const FB_CVOM = fbDoc('Colecovision_Owners_Manual_1982_Coleco/Colecovision_Owners_Manual_1982_Coleco_text.pdf', 'ColecoVision Owner\'s Manual (1982)');
+const FB_CVTM = (p, page) => ({ label: `ColecoVision Technical (Repair) Manual, ${p}`, url: `https://cvaddict.com/manuals/Colecovision_Technical_Manual.pdf#page=${page}` });
+const FB_ADCHK = fbDoc('ADAM_System_Check-Out_and_Trouble-Shooting_Guide_1983_Coleco/ADAM_System_Check-Out_and_Trouble-Shooting_Guide_1983_Coleco_text.pdf', 'ADAM System Check-Out and Trouble-Shooting Guide (1983)');
+const FB_SBAS = { label: 'Coleco ADAM SmartBASIC Manual, Loading SmartBASIC, p. 9', url: 'https://archive.org/details/coleco-adam-smart-basic-manual/page/n20' };
+const FB_ADSET = fbDoc('ADAM_Family_Computer_System_Set-Up_Manual_1984_Coleco/ADAM_Family_Computer_System_Set-Up_Manual_1984_Coleco_text.pdf', 'ADAM Family Computer System Set-Up Manual (1984)');
+
 RCS.add({
   brand: {
     id: 'coleco',
@@ -734,6 +744,15 @@ RCS.add({
   },
   quickref: {
     colecovision: {
+      boot: { to: 'The cartridge: its title screen, then the SKILL/PLAYER OPTION screen', note: 'No BASIC. Insert or remove a cartridge only with the power off.', source: FB_CVOM('To start play, PDF p. 8', 8), also: FB_CVOM('Inserting the cartridge, PDF p. 7', 7) },
+      firstBoot: [
+        { part: 'Screen and cartridge', type: 'Power off, cartridge in, power ON, press RESET', expect: 'The game title screen, then the SKILL/PLAYER OPTION screen.', source: FB_CVOM('To start play, PDF p. 8', 8), also: FB_CVOM('Inserting the cartridge, PDF p. 7', 7) },
+        { part: 'Keypad', type: 'On the option screen, press a keypad button 1 to 8', expect: 'The game option is chosen and play starts. After a game, * replays it and # returns to the option screen.', source: FB_CVOM('Hand controllers, PDF p. 8', 8) },
+        { part: 'ROM and RAM (diagnostic cartridge)', type: 'Diagnostic cartridge in, power on', expect: 'The screen says whether the ROM and RAM tests passed. Bad ROM: U2. Bad RAM: U3 or U4.', source: FB_CVTM('VI-1, diagnostic cartridge', 29) },
+        { part: 'Video (diagnostic cartridge)', type: 'Let the diagnostic run on to the video test', expect: 'The video and color test screens match the pictures on page VI-3.', source: FB_CVTM('VI-1, diagnostic cartridge', 29), also: FB_CVTM('VI-3, video and color test pictures', 31) },
+        { part: 'Sound (diagnostic cartridge)', type: 'Let the diagnostic run on to the sound test', expect: 'The three tone generators sound, then the noise generator. One sound missing: replace U20.', source: FB_CVTM('VI-1, diagnostic cartridge', 29) },
+        { part: 'Controllers (diagnostic cartridge)', type: 'At the controller test, press every key and move the stick on each controller', expect: 'Each function shows on the screen and blanks out once it has been pressed and works.', source: FB_CVTM('VI-1, diagnostic cartridge', 29) },
+      ],
       firstLook: [
         'No BASIC. The console boots a cartridge; with no cartridge you see the BIOS title screen only.',
         'Dead console: check the supply first (most common failure), then the Z80 clock and the BIOS ROM U2.',
@@ -779,6 +798,16 @@ RCS.add({
       sources: [tm(8, 'III-5, memory'), tm(9, 'III-6, hand control interface'), sch(5, 'reset switch S1'), sch(9, 'processor, BIOS, RAM and decoders U5/U6'), trm(26, 'section 2.1.9a, CVRST memory map'), trm(47, 'Fig. 2-5, controller configuration'), DSKULL_CTRL],
     },
     adam: {
+      boot: { to: 'SmartWRITER electronic typewriter', note: 'SmartBASIC is loaded from its digital data pack: pack in drive A, then pull COMPUTER RESET.', source: FB_ADCHK('Check out your system, p. 3', 4), also: [FB_ADSET(44, 46), FB_SBAS] },
+      firstBoot: [
+        { part: 'Power and screen', type: 'No data pack, no cartridge. Printer OFF/ON switch to ON, then turn on the TV.', expect: 'The red light at the bottom right of the keyboard comes on. The screen shows a ruler at the top and ADAM\'S ELECTRONIC TYPEWRITER at the bottom.', source: FB_ADCHK('Check out your system, pp. 2-3', 4) },
+        { part: 'Printer', type: 'Watch the printer at power-on', expect: 'The print mechanism moves left, spins the daisy wheel, moves about one inch right and stops. Moving right first, or sticking at the left, is a fault.', source: FB_ADCHK('Check out your system, p. 3', 4) },
+        { part: 'Keyboard and printer', type: 'Paper in. Type: The quick brown fox jumped over the lazy dogs.', expect: 'Each letter appears on the screen and prints, with a key tone after each key.', source: FB_ADCHK('Checking the keyboard, p. 5', 5) },
+        { part: 'Game controller', type: 'Press ESCAPE/WP, then keypad 1 to 9, * and #, then move the stick and press a side button', expect: 'A key tone and the number for each key; * gives a period, # a return symbol. The stick moves the cursor; a side button sends it to the first character.', source: FB_ADCHK('Checking the game controller, p. 6', 6) },
+        { part: 'Data pack drive', type: 'Data pack in drive A. In word processing press GET, then Smart Key VI (GET) and Smart Key III (Drive A).', expect: 'The file directory appears (empty on a blank pack). Cannot Access This File means a game pack or a pack not seated.', source: FB_ADCHK('Using data packs in word processing, p. 8', 7), also: FB_ADCHK('Checking the data pack drives, p. 7', 6) },
+        { part: 'SmartBASIC from tape', type: 'SmartBASIC data pack in drive A, pull COMPUTER RESET', expect: 'After several seconds Coleco SmartBASIC V1.0 at the top of the screen and the ] prompt. With no pack in drive A it comes up in electronic typewriter mode.', source: FB_SBAS, also: FB_ADSET(44, 46) },
+        { part: 'Cartridge', type: 'Power off, ColecoVision cartridge in, power on, pull the cartridge reset switch', expect: 'The name of the game appears on the screen, then the game begins.', source: FB_ADSET(44, 46) },
+      ],
       firstLook: [
         'The printer holds the power supply. No printer power, no ADAM.',
         'Dead ADAMnet: no tape, keyboard or printer, even if the console boots.',

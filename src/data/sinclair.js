@@ -179,6 +179,22 @@ const sinclairJoyPins = () => [
   P(9, 'DOWN', 'io', 'Down switch to common.')
 ];
 
+/* First-boot checks (quickref boot / firstBoot). World of Spectrum pages are transcriptions of the
+   Sinclair and Amstrad manuals, cited by chapter or page. Log: docs/verification/first-boot-a.md. */
+const FB_WOS = 'https://worldofspectrum.org';
+const FB_INTRO = (ch, what) => ({ label: `ZX Spectrum Introduction booklet, ch. ${what}`, url: `${FB_WOS}/ZXSpectrumIntroduction/chapter_${ch}.html` });
+const FB_128 = (p, what) => ({ label: `ZX Spectrum 128 Introduction, p. ${p} (${what})`, url: `${FB_WOS}/ZXSpectrum128Manual/sp128p${String(p).padStart(2, '0')}.html` });
+const FB_P3 = (page, what) => ({ label: `Spectrum +3 Manual, ${what}`, url: `${FB_WOS}/ZXSpectrum128+3Manual/${page}.html` });
+const FB_ZX80 = (p, page) => ({ label: `Sinclair ZX80 Operating Manual, p. ${p}`, url: `https://archive.org/download/zx80operatingmanual/ZX80%20Operating%20Manual_text.pdf#page=${page}` });
+const FB_ZX81SAM = (p, page, what) => ({ label: `ZX81 Service and Assembly Manual (transcribed), p. ${p}, ${what}`, url: `https://k1.spdns.de/Vintage/Sinclair/80/Sinclair%20ZX81/Service%20and%20Assembly%20Manual/ZX81%20Service%20and%20Assembly%20Manual%20(transcribed).pdf#page=${page}` });
+const FB_SPTAPE = { part: 'Tape (write)', type: 'Type a short program, SAVE "squares", then press any key with no recorder running', expect: 'The border shows 5 seconds of red and pale blue stripes moving up, a short burst of blue and yellow, a gap, then the pattern again. 0 OK at the end.', source: FB_INTRO('six', '6, Using the cassette recorder') };
+const FB_SPVERIFY = { part: 'Tape (read)', type: 'Record it, rewind, VERIFY "squares" and play the tape', expect: 'The border alternates red and pale blue until the program is found, Program: squares shows, then 0 OK. R Tape loading error means it did not read back.', source: FB_INTRO('six', '6, Using the cassette recorder') };
+const FB_128MENU = { part: 'Screen', type: 'Switch on, or press the reset button', expect: 'The main menu: Tape Loader, 128 BASIC, Calculator, 48 BASIC, Tape Tester, with a blue bar on Tape Loader. The cursor keys move the bar; ENTER selects.', source: FB_128(4, 'Getting started') };
+const FB_128TV = { part: 'Video and sound (TV test)', type: 'Hold BREAK while pressing reset or switching on', expect: 'A multi-colored pattern of bars and numbers and an intermittent tone from the TV.', source: FB_128(2, 'TV test screen') };
+const FB_128COL = { part: 'Video (color)', type: 'Select 128 BASIC. 10 BORDER 1:PAPER 6:INK 2:CLS, then RUN', expect: 'A blue border and a yellow screen.', source: FB_128(6, 'Start typing'), also: FB_INTRO('seven', '7, Colours') };
+const FB_128TAPE = { part: 'Tape', type: 'Tape in the player. Select Tape Tester and start the tape', expect: 'A horizontal blue bar with a light blue square at the left; the square moves right with the signal. Set the volume for the square furthest right.', source: FB_128(5, 'Using the Tape Tester') };
+const FB_12848 = { part: '48K mode', type: 'Select 48 BASIC', expect: 'The screen clears and the 1982 copyright message appears; it now behaves as a 48K Spectrum. Only reset returns to the menu.', source: FB_128(4, '48 BASIC') };
+
 RCS.add({
   brand: { id: 'sinclair', name: 'Sinclair', blurb: 'ZX80 to ZX Spectrum +3. Z80 and Ferranti ULA, with the Spectrum multi-rail supply.' },
   machines: {
@@ -1168,6 +1184,13 @@ RCS.add({
   },
   quickref: {
     zx81: {
+      boot: { to: 'BASIC command mode: a clear screen with the cursor', source: FB_ZX81SAM(4, 5, 'faultfinding'), verify: true },
+      firstBoot: [
+        { part: 'Power', type: 'Switch on and leave it a couple of minutes', expect: 'The regulator is warm to the touch. Cold: check the supply and that the plug is in the socket nearest the keyboard.', source: FB_ZX81SAM(4, 5, 'faultfinding (a)') },
+        { part: 'Screen', type: 'Tune the TV (UHF channels 33 to 39)', expect: 'The screen goes clear and the cursor appears. Clear but no cursor: unplug the supply, wait a few seconds, try again.', source: FB_ZX81SAM(4, 5, 'faultfinding (a), (d)') },
+        { part: 'Keyboard', type: 'Press a few keys', expect: 'They enter on the screen. A cursor with no key response points at the keyboard tails, the diodes or the connectors.', source: FB_ZX81SAM(4, 5, 'faultfinding (c)') },
+        { part: 'Power supply', type: 'Watch the picture for a minute', expect: 'No horizontal black and white stripes running through it. Stripes point at a poorly smoothed or weak supply.', source: FB_ZX81SAM(4, 5, 'faultfinding (e)') },
+      ],
       firstLook: [
         'Keywords are typed one key at a time. The flashing cursor shows the mode.',
         'Floating-point 8K BASIC. Black-and-white, no sound.',
@@ -1227,6 +1250,15 @@ RCS.add({
       ]
     },
     spectrum: {
+      boot: { to: 'Sinclair BASIC: the copyright message', note: 'No power switch: plugging in the 9 V supply turns it on. Pressing a key clears the copyright message.', source: FB_INTRO('one', '1, The computer and setting it up') },
+      firstBoot: [
+        { part: 'Screen', type: 'Plug in the 9V DC supply and tune the TV', expect: 'The copyright message at the bottom of the screen. Border and paper white, ink black.', source: FB_INTRO('one', '1, The computer and setting it up'), also: FB_INTRO('seven', '7, Colours') },
+        { part: 'Keyboard', type: 'Press P, then CAPS SHIFT and 2 (CAPS LOCK)', expect: 'P gives the keyword PRINT and the cursor changes from K to L. CAPS LOCK changes the L cursor to a flashing C.', source: FB_INTRO('two', '2, The keyboard') },
+        { part: 'Video (color)', type: 'BORDER 2, then PAPER 5 and ENTER twice', expect: 'The border, including the bottom input area, turns red. After the second ENTER the center turns pale blue.', source: FB_INTRO('seven', '7, Colours') },
+        { part: 'Sound', type: 'BEEP 2,0', expect: 'Middle C from the built-in speaker for two seconds.', source: FB_INTRO('eight', '8, Sound') },
+        FB_SPTAPE,
+        FB_SPVERIFY,
+      ],
       firstLook: [
         'Attributes: each 8 x 8 cell has one ink, one paper and a bright bit. Color is per cell, so the attribute clash is normal.',
         'Lower 16K is 4116 DRAM and needs -5 V and +12 V. A dead lower RAM is a power-rail problem first.',
@@ -1289,6 +1321,13 @@ RCS.add({
     },
     zx80: {
       sources: [S('ZX80 Operating Manual, chapter 1 Getting started, pp. 6-9', ZX80OMP(6)), S('ZX80 Operating Manual, the keyboard and editing, pp. 17-22', ZX80OMP(17)), S('ZX80 Operating Manual, chapter 12 Help, pp. 74-75', ZX80OMP(74)), S('ZX80 Operating Manual, Appendix 1 error codes, p. 87', ZX80OMP(87)), S('ZX80 Operating Manual, Appendix 2 4K BASIC for ZX-80, pp. 89-101', ZX80OMP(89)), S('ZX80 Operating Manual, Appendix 3 system variables, pp. 105-107', ZX80OMP(105))],
+      boot: { to: 'BASIC command mode', prompt: 'K', note: 'A black square with a white K at the bottom left.', source: FB_ZX80(11, 8) },
+      firstBoot: [
+        { part: 'Screen', type: 'Switch on and tune the TV', expect: 'The gray mess clears and a black square with a white K appears at the bottom left.', source: FB_ZX80(11, 8) },
+        { part: 'Keyboard and BASIC', type: '10 PRINT "THIS IS A STRING", NEWLINE, then R (RUN) and NEWLINE', expect: 'A brief flicker, the string printed, and the report 0/10: the program ran with no errors.', source: FB_ZX80(21, 18) },
+        { part: 'Tape (write)', type: 'Recorder on record, then SAVE (E key) and NEWLINE', expect: 'The screen goes gray for about 5 seconds, horizontal streaks cross it, then the listing comes back.', source: FB_ZX80(11, 8), also: FB_ZX80(12, 9) },
+        { part: 'Tape (read)', type: 'Rewind to the silence before the program, play, then LOAD (W key) and NEWLINE', expect: 'The screen goes gray or black, looks agitated after a few seconds, then clears to show the program listing.', source: FB_ZX80(12, 9) },
+      ],
       firstLook: [
         'Integer BASIC only: whole numbers from -32768 to 32767.',
         'The screen goes blank while a command or program runs and comes back when it stops.',
@@ -1343,6 +1382,8 @@ RCS.add({
     },
     spectrum128: {
       sources: [S('Spectrum 128 Introduction, setting up and the TV test screen, p. 2 (WoS)', UM128P('02')), S('Spectrum 128 Introduction, main menu, p. 4', UM128P('04')), S('Spectrum 128 Introduction, 128 BASIC and the editor, pp. 6-8', UM128P('06')), S('Spectrum 128 Introduction, RAM disk and PLAY, p. 9', UM128P('09')), S('Spectrum 128 Introduction, PLAY strings, pp. 10-14', UM128P('10')), S('Spectrum 128 Service Manual 4.1-4.4 memory organization and bank register, pp. 1.5-1.6', SM128(6)), S('Spectrum 128 Service Manual 5.5-5.6 ULA sound and programmable sound generator, p. 1.17', SM128(20))],
+      boot: { to: 'Main menu: Tape Loader, 128 BASIC, Calculator, 48 BASIC, Tape Tester', source: FB_128(4, 'Getting started') },
+      firstBoot: [FB_128MENU, FB_128TV, FB_128COL, FB_128TAPE, FB_12848],
       firstLook: [
         'Switch on or press RESET (left end) for the main menu: Tape Loader, 128 BASIC, Calculator, 48 BASIC, Tape Tester.',
         'Hold BREAK while pressing RESET or switching on for the TV test screen: color bars and an intermittent tone.',
@@ -1395,6 +1436,8 @@ RCS.add({
     },
     spectrumplus2: {
       sources: [S('Spectrum +2 user manual, chapter 2 operating the +2 and Having problems, pp. 11-16', P2MAN(12)), S('Spectrum +2 user manual, chapters 3-4 loading 128 and 48 software, pp. 17-20', P2MAN(18)), S('Spectrum +2 user manual, chapter 6 using 128 BASIC and the edit menu, pp. 23-28', P2MAN(24)), S('Spectrum +2 Service Manual, test software, p. 4', P2SM(9)), S('Spectrum 128 Introduction, RAM disk and PLAY, p. 9', UM128P('09'))],
+      boot: { to: 'Main menu: Tape Loader, 128 BASIC, Calculator, 48 BASIC, Tape Tester', note: 'Taken from the Spectrum 128 manual; no +2 manual was read.', source: FB_128(4, 'Getting started'), verify: true },
+      firstBoot: [FB_128MENU, FB_128TV, FB_128COL, FB_128TAPE, FB_12848].map(c => ({ ...c, verify: true })),
       firstLook: [
         'A 128 with a built-in datacorder: the opening menu offers Tape Loader, 128 BASIC, Calculator and 48 BASIC.',
         'Hold BREAK and press RESET (left side) for the test signal: sixteen color bars and a repeating tone.',
@@ -1438,6 +1481,16 @@ RCS.add({
     },
     spectrumplus3: {
       sources: [S('Spectrum +3 manual, chapter 2 operating the +3 (test signal, menu, Having problems)', P3MANC('chapter2')), S('Spectrum +3 manual, chapter 3 loading disk software', P3MANC('chapter3')), S('Spectrum +3 manual, chapter 5 the disk drive', P3MANC('chapter5')), S('Spectrum +3 manual, chapter 8 part 20 file operations', P3MANC('chapter8pt20')), S('Spectrum +3 manual, chapter 8 part 24 the memory (ports $7FFD and $1FFD)', P3MANC('chapter8pt24')), S('Spectrum +2A/+3 Service Manual, self-test activation', P3SM)],
+      boot: { to: 'Opening menu: Loader, +3 BASIC, Calculator, 48 BASIC', note: 'The menu shows (C) 1982, 1986, 1987 Amstrad Plc. and Drives A: and M: available.', source: FB_P3('chapter2', 'ch. 2, The opening menu') },
+      firstBoot: [
+        { part: 'Screen and drives', type: 'Switch on, or press RESET', expect: 'The opening menu (128 +3, Loader, +3 BASIC, Calculator, 48 BASIC), (C) 1982, 1986, 1987 Amstrad Plc. and Drives A: and M: available. Drive B: also shows if an external drive is connected.', source: FB_P3('chapter2', 'ch. 2, The opening menu') },
+        { part: 'Video and sound (test signal)', type: 'Hold BREAK, press and release RESET, keep BREAK held a few seconds more', expect: 'Sixteen vertical color bars overprinted with characters, and a repeating tone from the TV.', source: FB_P3('chapter2', 'ch. 2, Preparing to tune-in your TV') },
+        { part: 'Sound (AY chip)', type: '+3 BASIC: PLAY "cdefgabC"', expect: 'The C major scale; the last C is an octave higher.', source: FB_P3('chapter8pt19', 'ch. 8 part 19, Sound') },
+        { part: 'Sound (beeper)', type: 'BEEP 0.5,9', expect: 'The A above middle C for half a second.', source: FB_P3('chapter8pt19', 'ch. 8 part 19, Sound') },
+        { part: 'Disk', type: 'Disk in drive A, then cat', expect: 'The file names on that side of the disk with their sizes, and the free space (for example 172K free).', source: FB_P3('chapter6', 'ch. 6, Disk catalog') },
+        { part: 'Tape', type: 'SAVE "t:", then SAVE "squares" with a program in memory. At Press REC & PLAY, then any key, press a key with no recorder running', expect: 'Five seconds of red and cyan stripes moving up the border, then a very short burst of blue and yellow. A short pause, then two seconds of red and cyan and another short burst of blue and yellow.', source: FB_P3('chapter8pt20', 'ch. 8 part 20, File operations') },
+        { part: '48K mode', type: 'Select 48 BASIC from the opening menu', expect: 'The screen shows (C) 1982 Amstrad and the +3 behaves as a 48K Spectrum.', source: FB_P3('chapter7', 'ch. 7, Using 48 BASIC') },
+      ],
       firstLook: [
         'Opening menu: Loader, +3 BASIC, Calculator, 48 BASIC. It lists the drives: A: built-in, B: a second drive, M: the RAMdisk.',
         'Loader boots +3, +2 and 128 software from the disk in A:. 48K tape software loads from 48 BASIC.',

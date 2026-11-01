@@ -477,6 +477,7 @@
   /* on this page: the view's sections in page order; the lit one follows the scroll (watchTabs in app.js) */
   .secnav { display: flex; min-width: 0; max-width: 100%; gap: 0 2px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; border-top: var(--w) dashed var(--silk-25); }
   .secnav[hidden] { display: none; }
+  .legend.fb .v.mono { font-size: 15px; overflow-wrap: anywhere; }
   .secnav::-webkit-scrollbar { display: none; }
   .secnav button { flex: none; min-height: 36px; padding: 0 10px; font: 13px var(--font-mono); letter-spacing: .04em; color: var(--silk-70); border-bottom: 2px solid transparent; white-space: nowrap; max-width: 26ch; overflow: hidden; text-overflow: ellipsis; }
   .secnav button:hover { color: var(--silk); }
@@ -814,6 +815,7 @@
     .mnav { position: sticky; top: 0; z-index: 25; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
     .mtabs, .secnav { margin: 0; padding: 0 6px; }
     .secnav button { min-height: 34px; font-size: 12px; padding: 0 8px; }
+    .legend.fb .v.mono { font-size: 13px; }
     .mtabs a { min-height: 40px; padding: 0 10px; font-size: 14px; }
     .hd { margin-top: 10px; }
     /* chip toolbar: short labels, one line */

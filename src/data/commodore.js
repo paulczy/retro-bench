@@ -317,6 +317,23 @@ const CBMD_IEC = (id, where, extra, sources) => ({
 const CBMD_ROW = ns => ns.map((n, i) => ({ n, x: Math.round(10 + i * (80 / Math.max(1, ns.length - 1))), y: 50 }));
 const CBMD_ROW_OUTLINE = 'M3 38 H97 V62 H3 Z';
 const CBMD_HDR34 = Array.from({ length: 34 }, (_, i) => ({ n: i + 1, x: Math.round(4 + Math.floor(i / 2) * 5.75), y: i % 2 ? 40 : 60 }));
+/* First-boot checks (quickref boot / firstBoot): manual pages, printed page then PDF page.
+   Log: docs/verification/first-boot-a.md. */
+const FB_Z = 'http://www.zimmers.net/anonftp/pub/cbm/manuals';
+const fbPg = (doc, label) => (p, page) => ({ label: `${label}, ${typeof p === 'number' ? `p. ${p}` : p}`, url: `${FB_Z}/${doc}#page=${page}` });
+const FB_C64UG = fbPg('c64/C64_Users_Guide.pdf', 'Commodore 64 User\'s Guide');
+const FB_C64PRG = fbPg('c64/C64_Programmers_Reference_Guide.pdf', 'Commodore 64 Programmer\'s Reference Guide');
+const FB_VICPCG = fbPg('vic20/VIC-20_Personal_Computing_Guide.pdf', 'VIC-20 Personal Computing Guide');
+const FB_C16OG = fbPg('plus4/C16_Owners_Guide.pdf', 'Commodore 16 Owner\'s Guide');
+const FB_P4UM = fbPg('plus4/Plus_4_Users_Manual.pdf', 'Commodore Plus/4 User\'s Manual');
+const FB_C128IG = fbPg('c128/C128_Introductory_Guide_(US).pdf', 'Commodore 128 Introductory Guide');
+const FB_C128SG = fbPg('c128/C128_System_Guide.pdf', 'Commodore 128 System Guide');
+const FB_PET = fbPg('pet/CBM_Models_2001-16,_2016N,_2032,_2032N_and_3016,_3016N,_3032_%26_3032N.pdf', 'CBM User Manual, models 2001-16 to 3032');
+const FB_PETHB = fbPg('pet/PET%20Users%20Handbook.pdf', 'PET User\'s Handbook');
+const FB_B4 = fbPg('pet/BASIC_v4_Users_Reference_Manual.pdf', 'Commodore BASIC 4.0 User\'s Reference Manual');
+const FB_1541 = fbPg('drives/1541_Users_Guide.pdf', '1541 User\'s Guide');
+const FB_1571 = fbPg('drives/1571_Users_Guide.pdf', '1571 User\'s Guide');
+const FB_1581 = fbPg('drives/1581_Users_Guide.pdf', '1581 User\'s Guide');
 RCS.add({
   brand: {
     id: 'commodore',
@@ -4014,6 +4031,15 @@ RCS.add({
         { label: 'Commodore Plus/4 User\'s Manual (BASIC 3.5 reference, memory map)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/plus4/Plus_4_Users_Manual.pdf' },
         { label: 'TED System Hardware Manual (memory map, TED registers)', url: 'http://www.zimmers.net/anonftp/pub/cbm/schematics/computers/plus4/Plus_4_Technical_Docs.pdf#page=1' },
       ],
+      boot: { to: 'Commodore BASIC 3.5', prompt: 'READY.', note: 'C16 and Plus/4 alike; only the bytes-free figure differs.', source: FB_C16OG(9, 19), also: { label: "Commodore Plus/4 User's Manual, p. 16", url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/plus4/Plus_4_Users_Manual.pdf#page=22' } },
+      firstBoot: [
+        { part: 'Screen and RAM', type: 'Switch on.', expect: 'Red POWER light. "COMMODORE BASIC V3.5 12277 BYTES FREE", READY. and a flashing cursor. Black letters, white background, purple border. A Plus/4 shows 60671 BYTES FREE.', source: FB_C16OG(9, 19), also: FB_P4UM(16, 22) },
+        { part: 'Video', type: 'COLOR 4,3,0 then COLOR 4,3,7', expect: 'The border turns dark red, then bright red.', source: FB_C16OG(52, 76) },
+        { part: 'Keyboard', type: 'Press SHIFT and C= together.', expect: 'Typing switches to upper and lower case letters.', source: FB_C16OG(18, 30) },
+        { part: 'Sound', type: 'VOL 8 then SOUND 1,266,60', expect: 'A note plays for about a second and stops.', source: FB_C16OG(45, 67) },
+        { part: 'Tape', type: 'LOAD (Datassette connected, tape rewound)', expect: 'PRESS PLAY ON TAPE. Press PLAY: the screen goes blank while it searches.', source: FB_C16OG(28, 42) },
+        { part: 'Disk', type: 'DIRECTORY (or F3)', expect: 'The drive runs and the screen lists every file on the disk. If the red drive light blinks, PRINT DS$ shows the error.', source: FB_P4UM(41, 49) },
+      ],
       firstLook: [
         'Powers from 9 V DC via a round DIN. Not the same brick as a C64.',
         'TED chip does video, sound, memory and keyboard. It runs hot and is the usual failure.',
@@ -4197,6 +4223,16 @@ RCS.add({
         { label: 'C64 Programmer\'s Reference Guide (BASIC 2.0, memory map)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/c64/C64_Programmers_Reference_Guide.pdf#page=1' },
         { label: 'Commodore 64 User\'s Guide (keys, BASIC)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/c64/C64_Users_Guide.pdf' },
       ],
+      boot: { to: 'Commodore 64 BASIC V2', prompt: 'READY.', source: FB_C64UG(8, 17) },
+      firstBoot: [
+        { part: 'Screen and RAM', type: 'Switch on.', expect: '"**** COMMODORE 64 BASIC V2 ****", "64K RAM SYSTEM 38911 BASIC BYTES FREE", READY. and a flashing cursor. Dark blue screen, light blue border and letters.', source: FB_C64UG(8, 17), also: FB_C64UG(9, 18) },
+        { part: 'Video', type: 'POKE 53280,2', expect: 'The border turns red. POKE 53280,14 puts it back to light blue.', source: FB_C64UG(60, 67), also: FB_C64UG(61, 68), verify: true },
+        { part: 'Keyboard', type: 'Hold C= and press SHIFT.', expect: 'The screen switches to upper and lower case. C= and SHIFT again switches back.', source: FB_C64UG(17, 26) },
+        { part: 'Sound', type: 'The sample program: 5 FOR L=54272 TO 54296:POKE L,0:NEXT / 10 POKE 54296,15 / 20 POKE 54277,190 / 30 POKE 54278,248 / 40 POKE 54273,17:POKE 54272,37 / 50 POKE 54276,17 / 60 FOR T=1 TO 250:NEXT / 70 POKE 54276,16, then RUN', expect: 'One short note (about a quarter note), then silence.', source: FB_C64UG(80, 87), also: FB_C64UG(81, 88) },
+        { part: 'Joystick', type: '10 PRINT PEEK(56320),PEEK(56321):GOTO 10, then RUN', expect: 'One of the two numbers changes as the stick moves and the fire button is pressed. Each switch clears its own bit.', source: FB_C64PRG(344, 363), verify: true },
+        { part: 'Tape', type: 'LOAD (Datasette connected, no key down)', expect: 'PRESS PLAY ON TAPE. Press PLAY: the screen blanks to the border color while it searches.', source: FB_C64UG(20, 29) },
+        { part: 'Disk', type: 'LOAD "$",8 then LIST', expect: 'SEARCHING FOR $, FOUND $, LOADING, READY. LIST shows the directory: the files on the disk.', source: FB_1541(10, 16), also: FB_1541(9, 15) },
+      ],
       firstLook: [
         'PLA and VIC-II run hot. The PLA is the number one failure: check it before the CPU.',
         'Power is +5 V DC and 9 V AC from the brick. Do not use a C16 or VIC-20 supply.',
@@ -4354,6 +4390,15 @@ RCS.add({
         { label: 'VIC-20 Programmer\'s Reference Guide (BASIC 2.0, memory map)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/vic20/VIC-20_Programmers_Reference_Guide_1st_Edition_6th_Printing.pdf#page=1' },
         { label: 'VIC-20 Personal Computing Guide (keys, BASIC)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/vic20/VIC-20_Personal_Computing_Guide.pdf' },
       ],
+      boot: { to: 'CBM BASIC V2', prompt: 'READY.', source: FB_VICPCG(4, 14) },
+      firstBoot: [
+        { part: 'Screen and RAM', type: 'Switch on.', expect: '"**** CBM BASIC V2 ****", "3583 BYTES FREE", READY. on an unexpanded VIC. White screen, blue cursor.', source: FB_VICPCG(4, 14), also: FB_VICPCG(6, 16) },
+        { part: 'Video', type: 'POKE 36879,26', expect: 'White screen with a red border. POKE 36879,8 gives black on black; POKE 36879,27 gives a white screen with a cyan border.', source: FB_VICPCG(37, 47), also: FB_VICPCG(36, 46), verify: true },
+        { part: 'Keyboard', type: 'Press SHIFT and C= together.', expect: 'Text switches to upper and lower case. SHIFT and C= again switches back.', source: FB_VICPCG(20, 30) },
+        { part: 'Sound', type: 'POKE 36878,15:POKE 36874,128', expect: 'A low note from the TV speaker. POKE 36874,0 stops it.', source: FB_VICPCG(71, 81), also: FB_VICPCG(72, 82) },
+        { part: 'Tape', type: 'Type a one-line program, SAVE "T", rewind, then VERIFY "T"', expect: 'PRESS PLAY ON TAPE, SEARCHING FOR T, FOUND T, VERIFYING, then OK. VERIFY ERROR means the tape did not read back.', source: FB_VICPCG(110, 120), also: FB_VICPCG(109, 119) },
+        { part: 'Disk', type: 'LOAD "$",8 then LIST', expect: 'SEARCHING FOR $, FOUND $, LOADING, READY. LIST shows the directory: the files on the disk.', source: FB_1541(10, 16), also: FB_1541(9, 15) },
+      ],
       firstLook: [
         'VIC 6560/6561 makes the picture, the three tones and the noise, and reads the paddles.',
         'Runs from +5 V only. There is no +12 V rail on this machine.',
@@ -4469,6 +4514,14 @@ RCS.add({
         { label: 'Commodore BASIC 4.0 User\'s Reference Manual', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/pet/BASIC_v4_Users_Reference_Manual.pdf' },
         { label: 'PET User Manual, model 2001-8 (keys, BASIC 1.0/2.0)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/pet/PET_User_Manual_(2001-8).pdf' },
       ],
+      boot: { to: 'Commodore BASIC', prompt: 'READY.', note: 'The banner and bytes-free figure depend on the ROM set and the RAM fitted.', source: FB_PET('ch. 2, PDF p. 12', 12) },
+      firstBoot: [
+        { part: 'Screen and RAM', type: 'Switch on.', expect: 'The screen blanks, then "***COMMODORE BASIC***", the bytes free and READY. 16K: 15359 BYTES FREE; 32K: 31743. A lower number points at a RAM fault.', source: FB_PET('ch. 2, PDF p. 12', 12), also: FB_PET('ch. 2, PDF p. 13', 13) },
+        { part: 'Screen and RAM (8K 2001)', type: 'Switch on an 8K PET 2001.', expect: '"*** COMMODORE BASIC ***", "7167 BYTES FREE", READY.', source: FB_PETHB(3, 8) },
+        { part: 'Character ROM', type: 'POKE 59468,14', expect: 'The second character set: lower case letters replace the graphics. POKE 59468,12 switches back.', source: FB_PET('ch. 2, PDF p. 14', 14) },
+        { part: 'Keyboard and video', type: 'Type HI, press RVS, type THERE, press SHIFT+RVS, type PET', expect: 'THERE shows in reverse field, black and white swapped. HI and PET stay normal.', source: FB_PET('reverse field, PDF p. 34', 34) },
+        { part: 'Disk (BASIC 4.0)', type: 'DIRECTORY', expect: 'The disk directory lists on the screen. Unit 8 is the default.', source: FB_B4(36, 36) },
+      ],
       firstLook: [
         'Early PETs have no sound chip: one beep from the VIA CB2 line.',
         'Screen RAM at $8000. I/O page at $E800: PIA1 $E810, PIA2 $E820, VIA $E840.',
@@ -4582,6 +4635,16 @@ RCS.add({
         { label: 'Commodore 128 System Guide (BASIC 7.0, keys, modes)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/c128/C128_System_Guide.pdf' },
         { label: 'C128 Programmer\'s Reference Guide (memory map, BASIC 7.0)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/c128/C128_Programmers_Reference_Guide.pdf#page=1' },
       ],
+      boot: { to: 'Commodore BASIC V7.0 (C128 mode)', prompt: 'READY.', note: 'Hold C= at power-on for C64 mode. A CP/M disk in the drive boots CP/M.', source: FB_C128IG(18, 24), also: [FB_C128IG(19, 25), FB_C128IG(20, 26), FB_C128IG(21, 27)] },
+      firstBoot: [
+        { part: 'Screen and RAM', type: '40/80 key up, drive off, switch on.', expect: 'The red light by the keyboard comes on. "COMMODORE BASIC V7.0 122365 BYTES FREE", the copyright lines and READY.', source: FB_C128IG(19, 25), also: FB_C128IG(14, 20) },
+        { part: '80-column video', type: 'Press and release ESC, then press X.', expect: 'Output moves to the other screen: 40 to 80 columns or back. Needs an RGBI monitor on the 80-column port.', source: FB_C128IG(19, 25), also: FB_C128SG(164, 178) },
+        { part: 'Video', type: 'COLOR 4,3', expect: 'The 40-column border turns red. COLOR 4,1 makes it black.', source: FB_C128SG(97, 111), also: FB_C128SG(99, 113), verify: true },
+        { part: 'Sound', type: 'PLAY "CDEFGAB"', expect: 'The scale C to B plays in the piano voice. RUN/STOP + RESTORE resets the sound chip.', source: FB_C128SG(144, 158) },
+        { part: 'Joystick', type: 'PRINT JOY(2) while holding the stick in port 2', expect: '0 at rest, 1 to 8 for the direction, plus 128 with fire pressed.', source: FB_C128SG(311, 325) },
+        { part: 'C64 mode', type: 'GO 64, then Y and RETURN at ARE YOU SURE?', expect: 'The C64 start-up screen. Switch off to leave C64 mode.', source: FB_C128IG(20, 26) },
+        { part: 'Disk', type: 'DIRECTORY (or F3)', expect: 'The directory lists without erasing the program in memory. The top line ends in 2A on a 1571.', source: FB_1571(11, 19) },
+      ],
       firstLook: [
         '8502 is the normal CPU; the Z80 runs CP/M. The 8722 MMU picks which one drives the bus.',
         'Dead in every mode points at the 8502, the MMU or the PLA.',
@@ -4678,6 +4741,14 @@ RCS.add({
         { label: '1540/1541 Service Manual 314002-01, flash code, PDF p. 7', url: CBMD_SM41(7) },
         CBMD_SRC.rc41, RCWB.rc41,
       ],
+      boot: { to: 'No screen of its own: a power-up LED sequence', note: 'Switch the drive on first and the computer last.', source: FB_1541(6, 12) },
+      firstBoot: [
+        { part: 'Power and LEDs', type: 'Drive empty. Switch the drive on, then the computer.', expect: 'Green power light on. The red drive light blinks, then goes out. It is then safe to use.', source: FB_1541(6, 12) },
+        { part: 'Error channel', type: '10 OPEN 15,8,15 / 20 INPUT#15,A$,B$,C$,D$ / 30 PRINT A$,B$,C$,D$ / RUN', expect: 'Right after power-up: 73, CBM DOS V2.6 1541. After that, 00, OK means no error.', source: FB_1541(18, 24), also: FB_1541(56, 62) },
+        { part: 'Read', type: 'LOAD "$",8 then LIST', expect: 'SEARCHING FOR $, FOUND $, LOADING, READY. LIST shows the directory: the files on the disk.', source: FB_1541(10, 16), also: FB_1541(9, 15) },
+        { part: 'Format', type: 'Blank disk: OPEN 15,8,15,"N:TEST,01"', expect: 'The drive formats the whole disk. A fresh disk shows 664 BLOCKS FREE in the directory.', source: FB_1541(15, 21), also: FB_1541(28, 34) },
+        { part: 'Write', type: 'Type a short program, then SAVE "T",8', expect: 'READY. and the red light does not flash. A flashing red light means the save failed.', source: FB_1541(12, 18) },
+      ],
       firstLook: [
         'Power-up: green power LED on; red LED and spindle run about 2 s, then stop. No stepper movement (Carlsen). Anything else is a startup fault.',
         'Red LED on and motor running for good: DOS ROM UB4, 5 V bridge, 6502, VIA UC2 (in that order of likelihood).',
@@ -4744,6 +4815,14 @@ RCS.add({
         { label: 'zimmers.net 1571 memory map (1571 and 1571CR)', url: `${CBMD_Z}/1571/memorymap.txt` },
         { label: '1571 Service Manual 314002-04, memory map, p. 3', url: CBMD_SM71(6) },
       ],
+      boot: { to: 'No screen of its own: a self test, then 1541 mode', note: 'It powers up in 1541 mode; a C128 switches it to 1571 mode on the first fast transfer.', source: FB_1571(5, 13) },
+      firstBoot: [
+        { part: 'Power and self test', type: 'Drive empty. Switch the drive on, then the computer.', expect: 'The green light flashes once and the red power light stays on. A green light that keeps flashing means the self test failed.', source: FB_1571(5, 13) },
+        { part: 'Error channel', type: '10 OPEN15,8,15 / 20 INPUT#15,EN,EM$,ET,ES / 30 PRINT EN,EM$,ET,ES / 40 CLOSE15 / RUN', expect: 'Before any other disk command: 73, CBM DOS 3.0 1571. After that, 0 means no error.', source: FB_1571(14, 22), also: FB_1571(15, 23) },
+        { part: 'Read', type: 'DIRECTORY on a C128, or LOAD "$",8 then LIST on a C64', expect: 'The directory lists. The top line ends in 2A.', source: FB_1571(11, 19) },
+        { part: 'Format, both sides', type: 'C128 mode, blank disk: HEADER "TEST",I01,D0 then DIRECTORY', expect: '1328 BLOCKS FREE: both sides formatted in 1571 mode. 664 means it formatted single-sided (1541 mode).', source: FB_1571(10, 18), also: FB_1571(12, 20) },
+        { part: 'Load', type: 'Test/Demo disk: LOAD "HOW TO USE",8 (DLOAD "HOW TO USE" in C128 mode)', expect: 'SEARCHING FOR 0:HOW TO USE, LOADING, READY. RUN starts it.', source: FB_1571(9, 17) },
+      ],
       firstLook: [
         'Board 310420: 6502 U1, ROM U2, RAM U3, VIAs U4 (disk) and U9 (serial), gate arrays U5 (251829) and U6 (251828), WD1770 U11, 6526 U20.',
         'Power-up: the green drive light flashes once and the red power light stays on. A green light that keeps flashing = self-test failure.',
@@ -4803,6 +4882,14 @@ RCS.add({
         { label: '1581 User\'s Guide (scan)', url: 'http://www.zimmers.net/anonftp/pub/cbm/manuals/drives/1581_Users_Guide.pdf' },
         { label: '1581 Service Manual 314982-01, memory map and self test, pp. 2-4', url: CBMD_SM81(5) },
         CBMD_SRC.rc81, RCWB.rc81,
+      ],
+      boot: { to: 'No screen of its own: a self test on power-up', source: FB_1581(5, 14) },
+      firstBoot: [
+        { part: 'Power and self test', type: 'Drive empty. Switch the drive on, then the computer.', expect: 'The green light flashes once and the red power light stays on. A red light that keeps flashing means the self test failed.', source: FB_1581(5, 14) },
+        { part: 'Error channel', type: '10 OPEN15,8,15 / 20 INPUT#15,EN,EM$,ET,ES / 30 PRINT EN,EM$,ET,ES / 40 CLOSE15 / RUN', expect: 'Before any other disk command: 73, COPYRIGHT CBM DOS V10 1581. After that, 0 means no error.', source: FB_1581(16, 25), also: FB_1581(17, 26) },
+        { part: 'Read', type: 'DIRECTORY on a C128 or Plus/4, or LOAD "$",8 then LIST on a C64', expect: 'The directory lists. The top line ends in 3D, the DOS version.', source: FB_1581(12, 21) },
+        { part: 'Load', type: 'Test/Demo disk: LOAD "HOW TO USE",8 (DLOAD "HOW TO USE" on a C128 or Plus/4)', expect: 'SEARCHING FOR 0:HOW TO USE, LOADING, READY. RUN starts it.', source: FB_1581(9, 18) },
+        { part: 'Format', type: 'Blank 3.5-inch disk: HEADER "TEST",I01,D0 (C128), or OPEN 15,8,15,"N0:TEST,01" then CLOSE 15 (C64)', expect: 'The disk formats. The directory then shows 3160 BLOCKS FREE.', source: FB_1581(11, 20), also: FB_1581(12, 21) },
       ],
       firstLook: [
         'Board 250471: 6502 U1, DOS ROM U2 (socketed), 8K RAM U3, WD1770/1772 U4, 8520 U5.',

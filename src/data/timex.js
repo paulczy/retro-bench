@@ -28,6 +28,14 @@ const REA = { label: 'Andy Rea, ZX81 ULA notes (oldcomputer.info): osc pin 35, /
 const z80clk = (f, from) => ({ f, low: '0.45 V', high: '4.4 V', shape: 'square', basis: 'datasheet', source: Z80PS,
   note: `Levels are the Z80A clock-input limits (LOW below 0.45 V, HIGH above VCC - 0.6 V = 4.4 V); the rate is ${from}. A clock that does not reach both limits makes the CPU flaky; a flat line means no clock.` });
 
+/* First-boot checks (quickref boot / firstBoot): Timex user manuals on archive.org, printed page then PDF page.
+   Log: docs/verification/first-boot-a.md. */
+const FB_IA = 'https://archive.org/download';
+const fbDoc = (path, label) => (p, page) => ({ label: `${label}, ${typeof p === 'number' ? `p. ${p}` : p}`, url: `${FB_IA}/${path}#page=${page}` });
+const FB_TS1000 = fbDoc('timex-sinclair-1000-user-manual/Timex-Sinclair1000UserManual_text.pdf', 'Timex Sinclair 1000 User Manual');
+const FB_TS1500 = fbDoc('timexsinclair-1500-user-manual/timexsinclair-1500-user-manual_text.pdf', 'Timex Sinclair 1500 User Manual');
+const FB_TS2068 = fbDoc('timex-2068-user-manual/Timex%202068%20User%20Manual_text.pdf', 'Timex Sinclair 2068 User Manual');
+
 RCS.add({
   brand: { id: 'timex', name: 'Timex Sinclair', blurb: 'TS1000, TS1500 and TS2068. The American Sinclairs, with their own extras.' },
   machines: {
@@ -535,6 +543,12 @@ RCS.add({
   },
   quickref: {
     ts1000: {
+      boot: { to: 'BASIC command mode: the cursor at the lower left', source: FB_TS1000(8, 16) },
+      firstBoot: [
+        { part: 'Screen', type: 'Switch on and tune the TV', expect: 'The cursor in the lower left-hand corner: the computer is ready.', source: FB_TS1000(8, 16) },
+        { part: 'Keyboard', type: 'With the cursor showing, press J', expect: 'The keyword LOAD appears and the cursor changes: the next key is taken as a letter.', source: FB_TS1000(10, 18) },
+        { part: 'Tape', type: 'LOAD "name" (SHIFT P for quotes), ENTER, then start the tape', expect: 'Thin squiggly black-and-white stripes while it searches, thick straight ones while it loads, then the report 0/0 at the lower left.', source: FB_TS1000(11, 19), also: FB_TS1000(10, 18) },
+      ],
       firstLook: [
         'Same 8K BASIC as the ZX81: keyword-per-key entry, same editing keys.',
         '2K RAM on board, not the ZX81 1K. Check the RAM count before assuming a ZX81 fault.',
@@ -581,6 +595,11 @@ RCS.add({
       sources: [UM1000]
     },
     ts1500: {
+      boot: { to: 'BASIC command mode: the cursor at the lower left', source: FB_TS1500(9, 19) },
+      firstBoot: [
+        { part: 'Screen', type: 'Switch on and tune the TV', expect: 'The cursor in the lower left-hand corner: the T/S 1500 is ready.', source: FB_TS1500(9, 19) },
+        { part: 'Keyboard', type: 'Press P', expect: 'PRINT appears at the bottom of the screen and the cursor moves to the right of it and changes: the next key is read as a letter.', source: FB_TS1500(13, 23) },
+      ],
       firstLook: [
         'ZX81-family 8K BASIC with keyword-per-key entry, and 16K RAM on the board (16384-32767).',
         'No on/off switch: plugging the 9 V DC adapter in turns it on.',
@@ -632,6 +651,15 @@ RCS.add({
       sources: [um15('ch. 1 How to set up (no switch, channel 2/3, interference), pp. 5-9'), um15('ch. 2 Moving around the keyboard, summary, p. 19'), um15('ch. 3 Using ready-to-run programs (LOAD faults), pp. 25-26'), um15('ch. 12 Graphics and other wonders (SLOW and FAST)'), um15('Appendix D Organization of Storage, pp. 153-154'), um15('Appendix E The System Variables, p. 159'), um15('Appendix H Report Codes, p. 175')]
     },
     ts2068: {
+      boot: { to: 'Timex Sinclair BASIC: the copyright notice', note: 'The notice reads (C)1982 Sinclair Research Ltd and (C)1983 Timex Computer Corp.', source: FB_TS2068('ch. 1, How to set up the computer', 23) },
+      firstBoot: [
+        { part: 'Screen', type: 'Switch on with the switch on the left side', expect: 'The copyright notice at the bottom of the screen: (C)1982 Sinclair Research Ltd, (C)1983 Timex Computer Corp. The computer is ready.', source: FB_TS2068('ch. 1, How to set up the computer', 23) },
+        { part: 'Video (color)', type: 'BORDER 1, then BORDER 2 up to BORDER 7, then BORDER 0', expect: 'BORDER 1 gives dark blue, the color written above the 1 key. BORDER 7 (white) matches the screen again.', source: FB_TS2068(56, 70) },
+        { part: 'Sound (beeper)', type: 'BEEP 1,0', expect: 'Middle C for one second.', source: FB_TS2068(66, 80) },
+        { part: 'Sound (AY chip)', type: '10 SOUND 0,124;1,0;8,13;7,62 / 20 PAUSE 60 / RUN', expect: 'The note A plays for one second on channel A. The sound chip turns off when the program ends.', source: FB_TS2068(186, 200) },
+        { part: 'Joystick', type: 'Joystick 1: PRINT STICK(1,1), and PRINT STICK(2,1) with the button held', expect: 'STICK(1,1): 0 centered, 1 up, 2 down, 4 left, 8 right. STICK(2,1): 1 while the button is pushed, 0 when not.', source: FB_TS2068(174, 188) },
+        { part: 'Tape', type: 'SAVE "name" to tape, rewind, VERIFY "name", ENTER, then play', expect: 'Program: and the name appear, the border shows the loading patterns, then 0 OK at the lower left. R Tape loading error means the tape did not read back.', source: FB_TS2068(50, 64) },
+      ],
       firstLook: [
         'Spectrum superset BASIC. Most Spectrum BASIC runs, not all Spectrum machine code.',
         '48 KB RAM and 24 KB ROM, bank-switched in 8K chunks, plus a cartridge dock under the front-right door.',
