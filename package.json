@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Retro Bench: offline pinouts and quick reference for 8-bit computer repair",
   "scripts": {
-    "build": "node scripts/version.mjs && tailwindcss -i src/input.css -o dist/app.css --minify && node scripts/build-photo-licenses.mjs && node scripts/build-sw-manifest.mjs",
+    "build": "node scripts/version.mjs && tailwindcss -i src/input.css -o dist/app.css --minify && node scripts/build-photo-licenses.mjs && node scripts/build-seo.mjs && node scripts/build-sw-manifest.mjs",
     "watch": "tailwindcss -i src/input.css -o dist/app.css --watch",
     "icons": "node scripts/make-icons.mjs"
   },

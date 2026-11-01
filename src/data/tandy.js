@@ -232,7 +232,7 @@ RCS.add({
   },
   machines: {
     coco1: {
-      id: 'coco1',
+      id: 'coco1', family: 'coco',
       brand: 'tandy',
       name: 'Color Computer 1',
       aka: 'CoCo 1',
@@ -248,7 +248,7 @@ RCS.add({
       tagline: 'The 6809E with a 6847 VDG, 6883 SAM and two 6821 PIAs.',
     },
     coco2: {
-      id: 'coco2',
+      id: 'coco2', family: 'coco',
       brand: 'tandy',
       name: 'Color Computer 2',
       aka: 'CoCo 2',
@@ -264,7 +264,7 @@ RCS.add({
       tagline: 'Same chipset as the CoCo 1, with 4164 DRAM and a bigger ROM.',
     },
     coco3: {
-      id: 'coco3',
+      id: 'coco3', family: 'coco',
       brand: 'tandy',
       name: 'Color Computer 3',
       aka: 'CoCo 3',
@@ -296,7 +296,7 @@ RCS.add({
       tagline: 'Micro Color BASIC in 4 KB.',
     },
     model1: {
-      id: 'model1',
+      id: 'model1', family: 'trs80',
       brand: 'tandy',
       name: 'TRS-80 Model I',
       aka: 'TRS-80 Micro Computer (Level I or Level II BASIC), with the Expansion Interface 26-1140/1/2',
@@ -312,7 +312,7 @@ RCS.add({
       tagline: 'Keyboard unit with an external supply and monitor; the Expansion Interface adds RAM, disk, printer and a clock.',
     },
     model3: {
-      id: 'model3',
+      id: 'model3', family: 'trs80',
       brand: 'tandy',
       name: 'TRS-80 Model III',
       aka: 'Model III (26-1061, 26-1063)',
@@ -328,7 +328,7 @@ RCS.add({
       tagline: 'Model I compatible all-in-one with internal switching supply, monitor and up to two drives.',
     },
     model4: {
-      id: 'model4',
+      id: 'model4', family: 'trs80',
       brand: 'tandy',
       name: 'TRS-80 Model 4',
       aka: 'Model 4 (26-1067/8/9), Model 4P portable and Model 4D; later units use the gate-array board',

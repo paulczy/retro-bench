@@ -31,6 +31,8 @@ c16: { id: 'c16', brand: 'commodore', name: 'Commodore 16', aka: 'C16 / C116 (26
   cpu: '7501/8501 @ 0.89/1.76 MHz', ram: '16 KB (12,277 free)', rom: 'BASIC 3.5 + KERNAL (2 × 16 KB)',
   video: 'TED 7360: 40×25 text, 320×200, 121 colors', sound: 'TED, 2 voices', os: 'Commodore BASIC 3.5',
   chips: ['ted7360', 'cpu7501', ...],        // ids; order = display order (hottest first is fine)
+  family: 'apple2',                          // optional; groups a line (II, II Plus, IIe, IIc) so it sorts together
+  // Order: brands by name; in a brand, families by earliest year, machines by year, drives (kind: 'drive') last.
   tagline: 'One sentence a tech would say about it.' }
 ```
 A chip fitted in several machines is defined once. If another brand file already defines it (the 6502 is in

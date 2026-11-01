@@ -268,10 +268,17 @@ window.RCS = (() => {
     "what": "Search for obscure parts (AY-5-3600, MM5740)."
   }
 ] } };
-  /* A brand file calls RCS.add({ brand:{id,name,blurb}, machines:{}, chips:{}, symptoms:{}, connectors:{}, power:{}, quickref:{}, resources:[] }). Machine order inside the brand follows the object's key order. */
+  /* A brand file calls RCS.add({ brand:{id,name,blurb}, machines:{}, chips:{}, symptoms:{}, connectors:{}, power:{}, quickref:{}, resources:[] }).
+     Brands sort by name. Inside a brand, machines group by `family` (default: each machine its own), families
+     ordered by their earliest year, machines by year, drives last; ties and missing years keep the object's key order. */
+  const yr = m => parseInt(m && m.year, 10) || Infinity;
   R.add = d => {
-    const ids = Object.keys(d.machines || {});
+    const ms = d.machines || {}, keys = Object.keys(ms), fam = id => ms[id].family || id, first = {}, famPos = {};
+    keys.forEach((id, i) => { first[fam(id)] = Math.min(first[fam(id)] ?? Infinity, yr(ms[id])); famPos[fam(id)] ??= i; });
+    const drv = id => ms[id].kind === 'drive' ? 1 : 0;
+    const ids = [...keys].sort((a, b) => drv(a) - drv(b) || first[fam(a)] - first[fam(b)] || famPos[fam(a)] - famPos[fam(b)] || yr(ms[a]) - yr(ms[b]) || keys.indexOf(a) - keys.indexOf(b));
     R.brands.push({ ...d.brand, machines: ids });
+    R.brands.sort((a, b) => a.name.localeCompare(b.name));
     Object.assign(R.machines, d.machines || {});
     /* A chip id may be defined once with pins. A later file may replace a stub (pins: null); the stub's
        machines and designators are kept. Two definitions with pins are a data error the validator reports. */

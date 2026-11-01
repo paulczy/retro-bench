@@ -1181,7 +1181,7 @@ RCS.add({
   brand: { id: 'apple', name: 'Apple', blurb: 'II, II+, IIe, IIc. 6502, slots, Applesoft.' },
   machines: {
     apple2: {
-      id: 'apple2', brand: 'apple', name: 'Apple II', aka: 'Apple ][', year: 1977, status: 'ready',
+      id: 'apple2', family: 'apple2', brand: 'apple', name: 'Apple II', aka: 'Apple ][', year: 1977, status: 'ready',
       cpu: '6502 @ 1.02 MHz', ram: '4-48 KB (4116)', rom: 'Integer BASIC + Monitor',
       video: 'Discrete TTL + 2513 character ROM: 40-col text, lo-res, hi-res', sound: '1-bit speaker',
       os: 'Integer BASIC',
@@ -1189,7 +1189,7 @@ RCS.add({
       tagline: 'Discrete TTL video, no custom chips.',
     },
     apple2plus: {
-      id: 'apple2plus', brand: 'apple', name: 'Apple II Plus', aka: 'Apple ][+', year: 1979, status: 'ready',
+      id: 'apple2plus', family: 'apple2', brand: 'apple', name: 'Apple II Plus', aka: 'Apple ][+', year: 1979, status: 'ready',
       cpu: '6502 @ 1.02 MHz', ram: '48 KB (4116)', rom: 'Applesoft + Monitor',
       video: 'Discrete TTL + 2513 character ROM: 40-col text, lo-res, hi-res', sound: '1-bit speaker',
       os: 'Applesoft BASIC, DOS 3.3 (optional)',
@@ -1197,7 +1197,7 @@ RCS.add({
       tagline: 'Applesoft in ROM.',
     },
     "apple2e": {
-      "id": "apple2e",
+      "id": "apple2e", "family": "apple2",
       "brand": "apple",
       "name": "Apple IIe",
       "aka": "Apple //e, Enhanced IIe, Platinum IIe",
@@ -1221,7 +1221,7 @@ RCS.add({
       "chipBoards": { "dram4164": ["reva", "revb", "enh"] }
     },
     apple2c: {
-      id: 'apple2c', brand: 'apple', name: 'Apple IIc', aka: 'Apple //c', year: 1984, status: 'ready',
+      id: 'apple2c', family: 'apple2', brand: 'apple', name: 'Apple IIc', aka: 'Apple //c', year: 1984, status: 'ready',
       cpu: '65C02 @ 1.023 MHz', ram: '128 KB', os: 'Applesoft, ProDOS',
       chips: ['cpu6502', 'mmu2c', 'iou2c', 'tmg2c', 'glu2c', 'iwm344', 'acia6551'],
       tagline: 'Portable 65C02 machine: MMU, IOU, TMG and GLU custom chips, an IWM for the built-in drive, two 6551 serial ports and an external 15 V brick.',
