@@ -100,3 +100,26 @@ Date: 2026-11-02. License and author read on each file page (Commons: MediaWiki 
 
 - The originals are in `.tmp/c64-photo-b/orig/`. Each was resized with Pillow (Lanczos, EXIF orientation applied, WebP q80, method 6), and an original under 1600 px was not upscaled. The script is in `.tmp/c64-photo-b/scripts/resize.py`.
 - The box overlays are `.tmp/c64-photo-b/{250466,250469a,250469b}-ov.png`. Magenta marks a box read from its designator; orange marks a box in `verify`. Every box was checked by eye.
+
+## C64 outline proof, 2026-11-02
+
+Each c64 box that was in `verify` was checked against a drawing that shows where each designator sits on that board. Designators come from `location` in src/data/commodore.js (CIA U1/U2, ROMs U3/U4, character ROM U5, 2114 U6, 6510 U7, PLA U17, SID U18) and from `locByBoard` for 250469. The layout drawings were overlaid on the photos (`.tmp/c64-photo-verify/ov/*-blend.png`; script `.tmp/c64-photo-verify/blend.py`). Every proven box sits on the outline of the right designator. No box was moved. No box needed a split: each box that covers two chips covers two of the same part (U1+U2 are both 6526; U3+U4 are both 2364).
+
+Sources (zimmers.net and archive.org, as linked in `RCS.addSchematics` c64):
+- C64 Service Manual 314001-02 (Feb 1985): p. 18, board layout #326298-01 (also `manual/c64-18.gif`); p. 28, board layout #250425-01 (`manual/c64-28.gif`). The 250425 drawing shows each chip outline, but its designator text is not legible in either scan.
+- C64/C64C Service Manual 314001-03 (Mar 1992): p. 36 (PDF p. 46), B-3 board layout (titled "#250446", silkscreen ASSY NO. 250466); p. 40 (PDF p. 50), parts list #250469-01; p. 41 (PDF p. 51), E board layout #250469 (PCB 252311).
+- Sams Computerfacts CC17, C64 (1984 version): p. VII (PDF p. 3), a board photo with callouts for U1, U2, U4, U7, U17, U18 and U19; p. 5 (PDF p. 12), GridTrace location guide (board grid: rows A-L top to bottom, columns 1-28 left to right).
+- Sams Computerfacts CC20, 64C (1986 version): p. 5 (PDF p. 14), GridTrace location guide; p. 10 (PDF p. 19), parts list.
+- KU-14194HB Rev B KiCad replica by bwack (github.com/bwack/KU-14194HB-RevB-KiCad): footprint positions in `KU-14194HB-REV-B-KiCad.kicad_pcb`. This is a redraw of the board, not a Commodore drawing.
+
+Per board:
+
+- **326298 (C64motherboard.jpg): 7 proven.** cia6526 (U1+U2), rom2364 (U3+U4), rom2332 (U5), sram2114 (U6), cpu6510 (U7), pla82s100 (U17) and sid6581 (U18), all against 314001-02 p. 18. The designators are legible on that drawing, and its outlines sit on the photo's chips (overlay `326298-blend.png`). Unproven: none.
+- **KU-14194HB: 2 proven.** rom2364 (U3+U4) and rom2332 (U5), against the bwack KiCad layout. U3, U4 and U5 are DIP24 at x = 96.52, 121.92 and 147.32 mm, y = 95.25 mm. Mapped linearly with U1/U2 and U7 as anchors, they fall at 0.211, 0.274 and 0.337 of the photo width. The box centers are 0.243 (U3+U4) and 0.337 (U5). Unproven: none. Caveat: the source is a community redraw, not a Commodore drawing; it is the only layout the app links for this board.
+- **250425: 5 proven.** cia6526 (U1+U2), rom2364 (U3+U4), rom2332 (U5), cpu6510 (U7) and sid6581 (U18). CC17 p. VII calls out U1, U2, U4, U7 and U18 (pin 1) on a board with the same layout. The CC17 GridTrace guide puts U3 at E-6, U4 at E-7 and U5 at E-9 (left to right), U18 at D-12 (right of U7 at D-10) and U17 at H-13. The CC17 parts list (PDF p. 16) gives U3 901226-01, U4 901227-03, U5 901225-01, U18 6581. The chip outlines on 314001-02 p. 28 match the photo (overlay `250425-blend.png`). Unproven: none.
+- **250466: 1 proven.** sram2114 (U6). On 314001-03 p. 36 the 18-pin outline labeled U6 is in the lower row, below the 6510 (U7). CC20 GridTrace puts U6 at K-10, the same column as U7 at D-10. CC20 p. 10 lists U6 as MN2114-2. Overlay `250466-blend.png`. Unproven: none.
+- **250469 rev A (Platine-C64-469A.jpg): 6 proven.** cia6526 (U2), rom2332 (U5), cpu6510 (U6), sram2114 (U19), vic2 (U7) and sid6581 (U9), against 314001-03 p. 41 with parts list p. 40 (U1, U2 6526; U5 901225-01; U6 8500; U7 8562/8567 VIC; U9 8580/6581; U19 2114). The overlay `250469a-blend.png` puts every outline on its chip. One label caveat: in the scan, the label of the leftmost 40-pin outline reads like "U7" (the base stroke of the 2 is lost). It is U2 by elimination: the drawing labels U1 at the right next to the SID, U6 (CPU) and U7 (VIC), and U2 appears nowhere else. That outline is a CIA either way. The drawing is PCB 252311 "REV.3". It has the 18-pin U19 between U8 and U7, as on the rev A photo; the rev B board has no chip there. Unproven: none.
+
+Still unproven across the c64 entries: none. `verify` is now empty for all seven c64 photos.
+
+Lead review, 2026-11-02: `verify` was put back on two items. KU-14194HB rom2364 and rom2332 match only bwack's KiCad redraw, which is a community drawing, not a primary source. On 250469 rev A, the cia6526 label in the scan reads like "U7", so U2 was identified by elimination. The other 18 proofs stand. I checked the 326298 proof by eye: the 314001-02 p. 18 layout overlays the photo line for line.

@@ -33,8 +33,8 @@
       cpu6510: [0.452, 0.200, 0.037, 0.266], pla82s100: [0.449, 0.498, 0.045, 0.186],
       sid6581: [0.508, 0.499, 0.045, 0.186], vic2: [0.617, 0.552, 0.043, 0.262],
       dram4164: [0.099, 0.565, 0.140, 0.302] },
-    verify: ['cia6526', 'rom2364', 'rom2332', 'sram2114', 'cpu6510', 'pla82s100', 'sid6581'],
-    note: 'Flat scan, 2048 px wide, so most designators are too small to read. Identified as 326298 because the silkscreen reads "ASSY 3262" (last two digits blurred) and "REV A ©1982 COMMODORE", the file page says Rev A PAL 1982, and the layout matches 326298: eight 4164s at U9-U12 and U21-U24, separate 2364 BASIC and KERNAL ROMs, 2332 character ROM. Legible: U9-U12, U21-U24 and U19 (VIC-II, inner shield lid off). The other chips were placed by part marking (MOS 6526, 901226-01, 901227-02, 901225-01, 6510, 6581, 2114) or, for the PLA, by its 28-pin position beside the 6510; their designators are not legible.' },
+    verify: [],
+    note: 'Flat scan, 2048 px wide, so most designators are too small to read. Identified as 326298 because the silkscreen reads "ASSY 3262" (last two digits blurred) and "REV A ©1982 COMMODORE", the file page says Rev A PAL 1982, and the layout matches 326298: eight 4164s at U9-U12 and U21-U24, separate 2364 BASIC and KERNAL ROMs, 2332 character ROM. Legible: U9-U12, U21-U24 and U19 (VIC-II, inner shield lid off). The other designators are not legible on the photo. Positions of U1, U2 (6526), U3, U4 (901226-01, 901227-02), U5 (901225-01), U6 (2114), U7 (6510), U17 (PLA) and U18 (6581) proven against the C64 Service Manual 314001-02, p. 18 (board layout #326298-01).' },
   {
     board: 'KU-14194HB (no assy number)', boards: ['ku14194hb'], rev: 'Revision not visible',
     file: 'photos/c64-ku14194hb.webp', w: 1471, h: 725, side: 'component', rotate: 0,
@@ -46,7 +46,7 @@
       cpu6510: [0.443, 0.199, 0.039, 0.276], pla82s100: [0.444, 0.475, 0.037, 0.198],
       sid6581: [0.505, 0.479, 0.040, 0.194], dram4164: [0.099, 0.560, 0.140, 0.308] },
     verify: ['rom2364', 'rom2332'],
-    note: 'Copper text "©1982 COMMODORE INTL KU-14194HB"; no assy number. The VIC-II (U19) is under the closed RF shield. The ROM designators (U3-U5) are not legible; the ROMs were placed by part marking (901226-01, 901227-02, 901225-01). The cia6526 box covers U1 (legible) and U2. The PLA is marked C64A 93459 DC (a Fairchild 82S100 type).' },
+    note: 'Copper text "©1982 COMMODORE INTL KU-14194HB"; no assy number. The VIC-II (U19) is under the closed RF shield. The ROM designators (U3-U5) are not legible on the photo; the positions of U3, U4 (901226-01, 901227-02) and U5 (901225-01) are proven against the KU-14194HB Rev B KiCad layout by bwack (a redraw of the board, not a Commodore drawing). The cia6526 box covers U1 (legible) and U2. The PLA is marked C64A 93459 DC (a Fairchild 82S100 type).' },
   {
     board: 'Assy 250407 (A, CR)', boards: ['250407'], rev: 'Rev A',
     file: 'photos/c64-250407-reva.webp', w: 1600, h: 822, side: 'component', rotate: 0,
@@ -70,8 +70,8 @@
       sid6581: [0.383, 0.194, 0.043, 0.190], pla82s100: [0.413, 0.510, 0.045, 0.200],
       vic2: [0.561, 0.678, 0.133, 0.095], sram2114: [0.339, 0.764, 0.020, 0.142],
       dram4164: [0.098, 0.598, 0.137, 0.298] },
-    verify: ['cia6526', 'rom2364', 'rom2332', 'cpu6510', 'sid6581'],
-    note: 'Silkscreen "ASSY NO. 250425", ©1984, made in Hong Kong. The RF shield is off: the VIC-II (U19, 6569R3) and the 7701 clock chip (U31) are visible. Legible: U9-U12, U21-U24 (MCM6665, a 4164 type), U6, U17 (906114-01) and U19. The CIAs, ROMs (901226-01, 901227-03, 901225-01), 6510 and SID were placed by part marking; their designators are not legible.' },
+    verify: [],
+    note: 'Silkscreen "ASSY NO. 250425", ©1984, made in Hong Kong. The RF shield is off: the VIC-II (U19, 6569R3) and the 7701 clock chip (U31) are visible. Legible: U9-U12, U21-U24 (MCM6665, a 4164 type), U6, U17 (906114-01) and U19. The designators of the CIAs, ROMs (901226-01, 901227-03, 901225-01), 6510 and SID are not legible on the photo. Positions of U1, U2, U3-U5, U7 and U18 proven against Sams Computerfacts CC17, p. VII (board photo calling out U1, U2, U4, U7, U17, U18) and p. 5 (GridTrace: U3 E-6, U4 E-7, U5 E-9); they match the outlines on board layout #250425-01, C64 Service Manual 314001-02, p. 28.' },
     {
   board: 'Assy 250466 (B-3)', boards: ['250466'], rev: 'Assy 250466, 1986',
   file: 'photos/c64-250466.webp', w: 1600, h: 767, side: 'component', rotate: 0,
@@ -82,8 +82,8 @@
     rom2332: [0.262, 0.287, 0.037, 0.169], cpu6510: [0.318, 0.198, 0.038, 0.266],
     sid6581: [0.379, 0.202, 0.039, 0.186], pla82s100: [0.413, 0.511, 0.034, 0.184],
     sram2114: [0.336, 0.753, 0.021, 0.122], vic2: [0.554, 0.672, 0.127, 0.088] },
-  verify: ['sram2114'],
-  note: 'RF shield lid removed, so the VIC-II (U19, 6569R5, PAL) is visible. The CIA box is U2 (MOS 8521R0, a 6526-type CIA); U1 (6526A) is to its left, and its designator is hidden. The 2364 box covers U3 (BASIC) and U4 (KERNAL). Color RAM U6 (AM2114-2) placed by part marking; its designator is not legible. Two 64K x 4 DRAMs at U9 and U10 replace the eight 4164s. GFDL: the app must ship the GFDL text.' },
+  verify: [],
+  note: 'RF shield lid removed, so the VIC-II (U19, 6569R5, PAL) is visible. The CIA box is U2 (MOS 8521R0, a 6526-type CIA); U1 (6526A) is to its left, and its designator is hidden. The 2364 box covers U3 (BASIC) and U4 (KERNAL). Color RAM U6 (AM2114-2): its designator is not legible on the photo; its position is proven against the C64/C64C Service Manual 314001-03, p. 36 (B-3 board layout) and Sams Computerfacts CC20, p. 5 (GridTrace: U6 K-10, below U7 at D-10). Two 64K x 4 DRAMs at U9 and U10 replace the eight 4164s. GFDL: the app must ship the GFDL text.' },
 {
   board: 'Assy 250469 rev A (E, short board)', boards: ['250469a'], rev: 'PCB 252311 Rev A',
   file: 'photos/c64-250469a.webp', w: 1024, h: 404, side: 'component', rotate: 0,
@@ -93,8 +93,8 @@
     cia6526: [0.027, 0.446, 0.039, 0.329], rom2332: [0.081, 0.571, 0.040, 0.204],
     cpu6510: [0.226, 0.300, 0.041, 0.322], sram2114: [0.385, 0.548, 0.020, 0.150],
     vic2: [0.427, 0.464, 0.043, 0.328], sid6581: [0.566, 0.602, 0.041, 0.232] },
-  verify: ['cia6526', 'rom2332', 'cpu6510', 'sram2114', 'vic2', 'sid6581'],
-  note: 'Small original (1024 x 404, shown at its own size), so no designators are legible. Every box was placed by layout, matched to the rev B photo (same PCB 252311 artwork), and by the legible markings (VIC 8565R2, character ROM 901225-01). The CIA box is U2; U1 is at the right, next to the SID. The 2114 (U19) is the 18-pin chip between the memory controller (U8) and the VIC; the rev B board has no chip there. GFDL: the app must ship the GFDL text.' },
+  verify: ['cia6526'],
+  note: 'Small original (1024 x 404, shown at its own size), so no designators are legible. Positions of U2 (6526), U5 (901225-01), U6 (CPU), U19 (2114), U7 (VIC) and U9 (SID) proven against the C64/C64C Service Manual 314001-03, p. 41 (E board layout, PCB 252311) and p. 40 (parts list #250469-01). The CIA box is U2; U1 is at the right, next to the SID. The 2114 (U19) is the 18-pin chip between the memory controller (U8) and the VIC; the rev B board has no chip there. GFDL: the app must ship the GFDL text.' },
 {
   board: 'Assy 250469 rev B (E, short board)', boards: ['250469b'], rev: 'PCB 252311 Rev B (1992)',
   file: 'photos/c64-250469b.webp', w: 1600, h: 570, side: 'component', rotate: 0,
