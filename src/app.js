@@ -2092,10 +2092,9 @@ function stepPin(d) {
 function setRegion(r, inPanel) {
   if (!REGIONS.includes(r)) return;
   state.region = r; LS.set('rb-region', r);
-  const y = scrollY, p = $('#panel'), py = p.scrollTop, d = $('#detail'), dy = d ? d.scrollTop : 0;
+  const y = scrollY, p = $('#panel'), py = p.scrollTop;
   render();
   window.scrollTo(0, y); p.scrollTop = py;
-  const d2 = $('#detail'); if (d2) d2.scrollTop = dy;
   const b = $(`${inPanel ? '#panel' : '#main'} [data-act="region"][data-r="${r}"]`); if (b) b.focus({ preventScroll: true });
   drawWire();
 }

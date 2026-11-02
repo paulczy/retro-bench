@@ -396,7 +396,7 @@
   svg.dip .pin.dim { opacity: .3; }
   svg.dip .chipname { font-size: 15px; letter-spacing: .14em; fill: var(--silk-45); }
   svg.dip .caption { font: 400 14px var(--font-sans); fill: var(--tin); }
-  .detail { position: sticky; top: 14px; max-height: calc(100dvh - 28px); overflow-y: auto; overscroll-behavior: contain; }
+  /* no inner scroll box: the detail grows the page, so the copper trace always lands on it */
   .detail > .blk { margin-top: 12px; }
   /* pin detail before any pin is picked: the box is there from the start, so the first pick does not move the page */
   .pempty { font: 15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk-70); margin: 0; }
@@ -485,7 +485,6 @@
   .secnav button.on { color: var(--silk); border-bottom-color: var(--silk); }
   html { scroll-padding-top: calc(var(--mbar-h, 0px) + 8px); }
   #view section.blk { scroll-margin-top: 14px; }
-  .detail { top: calc(var(--mbar-h, 0px) + 14px); max-height: calc(100dvh - var(--mbar-h, 0px) - 28px); }
 
   /* parts list by designator */
   .pfilter { margin: 0 0 10px; }
