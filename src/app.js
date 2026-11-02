@@ -150,7 +150,8 @@ const brandOf = m => D.brands.find(b => b.id === m.brand);
 const mPath = m => `#/${m.brand}/${m.id}`;
 const chipPath = (m, c) => `${mPath(m)}/chip/${c.id}`;
 const ptype = t => D.pinTypes[t] || { label: t || 'Other', hint: '' };
-const statusOf = m => STATUS[m.status] || String(m.status || '').toUpperCase();
+/* only an incomplete machine is labeled: nearly all are ready, so READY/FITTED would say nothing */
+const statusOf = m => (m.status === 'ready' ? '' : STATUS[m.status] || String(m.status || '').toUpperCase());
 /* the UNVERIFIED stamp: tap it (any screen, no hover needed) for what it means, from the glossary */
 const chk = () => '<span class="chk" data-term="unverified" role="button" tabindex="0" aria-label="Unverified. What this means">Unverified</span>';
 /* verify and conflict on any record (rail, test point, clock, step, scope, replacement, supply, note): the UNVERIFIED
@@ -1244,7 +1245,7 @@ function viewMachine(m) {
       ${measuredFold(pw.data)}
       <a class="lnk" href="${mPath(m)}/power">All rails and test points</a></section>`;
   }
-  const sub = `${esc(m.aka || '')}${m.year ? (m.aka ? ', ' : '') + m.year : ''}${m.aka || m.year ? '. ' : ''}${esc(m.tagline || '')} <span class="mono tin">${esc(statusOf(m))}</span>`;
+  const sub = `${esc(m.aka || '')}${m.year ? (m.aka ? ', ' : '') + m.year : ''}${m.aka || m.year ? '. ' : ''}${esc(m.tagline || '')}${statusOf(m) ? ` <span class="mono tin">${esc(statusOf(m))}</span>` : ''}`;
   return head(mDes(m), esc(m.name), sub) + `
     ${facts.length ? `<div class="facts grid gap-x-6 gap-y-1.5 mt-3.5 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">${facts.map(f => `<div><span>${f[0]}</span><div>${esc(f[1])}</div></div>`).join('')}</div>` : ''}
     <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-3.5"><button type="button" class="btn" data-act="print">Print card</button><span class="tin sm">One page where it fits, two at most, black on white: chips, supply and rail warnings, rails, first checks, clocks, connector pins.</span></div>
