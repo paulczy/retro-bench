@@ -97,6 +97,10 @@
 
   /* ---------- the board: one silkscreen outline, four copper-ringed mounting holes ---------- */
   .board { position: relative; max-width: 1320px; min-height: calc(100dvh - 24px); margin: 12px auto; padding: 18px 28px 60px; border: var(--w) solid var(--silk); border-radius: 10px; }
+  /* one quiet line under the board: the source repo */
+  .sitefoot { max-width: 1320px; margin: -4px auto 14px; padding: 0 6px; font: 13px var(--font-mono); letter-spacing: .04em; color: var(--tin); }
+  .sitefoot a { color: inherit; text-decoration: underline; text-decoration-color: var(--silk-25); text-underline-offset: 3px; }
+  .sitefoot a:hover { color: var(--copper-hi); }
   .hole { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--hole); box-shadow: 0 0 0 3px var(--copper), 0 0 0 4.5px var(--mask); }
   .hole.tl { top: 8px; left: 8px; } .hole.tr { top: 8px; right: 8px; } .hole.bl { bottom: 8px; left: 8px; } .hole.br { bottom: 8px; right: 8px; }
 
@@ -765,7 +769,7 @@
   /* ---------- phone ---------- */
   @media (width < 640px) {
     body { font-size: 17px; }
-    .board { margin: 6px; padding: 10px 12px calc(96px + env(safe-area-inset-bottom)); min-height: calc(100dvh - 12px); }
+    .board { margin: 6px; padding: 10px 12px 24px; min-height: calc(100dvh - 12px); }
     .hole { width: 10px; height: 10px; }
     .hole.bl, .hole.br { display: none; }
     .strip { gap: 10px; padding: 4px 6px 10px; }
@@ -840,6 +844,7 @@
     .ctab td:empty { display: none; }
     .panel { bottom: calc(66px + env(safe-area-inset-bottom)); }
     body.panel-open .board { padding-bottom: calc(50dvh + 90px); }
+    .sitefoot { margin: 0 6px; padding: 0 6px calc(72px + env(safe-area-inset-bottom)); }
     .edgebar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; position: fixed; left: 6px; right: 6px; bottom: 0; z-index: 35; height: calc(64px + env(safe-area-inset-bottom)); background: var(--mask); border-top: var(--w) solid var(--silk); padding: 0 8px env(safe-area-inset-bottom); }
     .edgebar a { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; font: 13px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--tin); min-height: 56px; }
     .edgebar a .fg { width: 100%; height: 22px; background: var(--tin-dim); border-radius: 0 0 3px 3px; }
