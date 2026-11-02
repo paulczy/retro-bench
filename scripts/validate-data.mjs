@@ -418,7 +418,7 @@ for (const [mid, list] of Object.entries(R.photos || {})) {
         if (licText && !licText.includes(p.file.replace(/^photos\//, ''))) warn(f, `${at} is not listed in photos/LICENSES.md (npm run build writes it)`);
       }
     }
-    if (p.board && R.schematics[mid] && !R.schematics[mid].some(s => s.board === p.board)) warn(f, `${at} board "${p.board}" matches no board in schematics.js`);
+    if (p.board && R.schematics[mid] && !R.schematics[mid].some(s => s.board === p.board) && !((p.boards || []).length && p.boards.every(id => (R.boards[mid] || []).some(b => b.id === id)))) warn(f, `${at} board "${p.board}" matches no board in schematics.js`);
     const chips = p.chips && typeof p.chips === 'object' ? p.chips : {};
     for (const [cid, b] of Object.entries(chips)) {
       if (!(m.chips || []).includes(cid)) err(f, `${at} box for ${cid}, which is not a chip of ${mid}`);

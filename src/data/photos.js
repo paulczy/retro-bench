@@ -1,5 +1,6 @@
 /* Board photos: freely licensed main-board photos and where each chip sits on them. See docs/data-schema.md, "Board photos".
-   Every photo comes from Wikimedia Commons, resized to a 1600 px long edge (WebP q80), otherwise unaltered.
+   Photos come from Wikimedia Commons or C64-Wiki (GFDL 1.2 or later, credited to the uploader), resized to a 1600 px
+   long edge (WebP q80; a smaller original keeps its size), otherwise unaltered.
    Boxes are [x, y, w, h] as fractions of the image before `rotate`. Chips in `verify` were placed without a legible
    designator (by part marking or board layout). Per-photo findings: docs/verification/photos.md. */
 (() => {
@@ -10,7 +11,7 @@
 
   RCS.addPhotos({
     c64: [{
-      board: 'Assy 250407', boards: ['250407'], rev: 'Rev B',
+      board: 'Assy 250407 (A, CR)', boards: ['250407'], rev: 'Rev B',
       file: 'photos/c64-250407.webp', w: 1600, h: 837, side: 'component', rotate: 0,
       author: 'Sven.petersen', license: 'CC BY-SA 4.0', licenseUrl: BYSA('4.0'),
       source: src('0430 - C64 Mainboard ASSY250407 RevB.jpg'),
@@ -20,7 +21,91 @@
         pla82s100: [0.407, 0.182, 0.047, 0.167], sid6581: [0.406, 0.423, 0.049, 0.171],
         sram2114: [0.375, 0.500, 0.022, 0.090], dram4164: [0.118, 0.498, 0.125, 0.268] },
       verify: [],
-      note: 'Board still in the lower case. The VIC-II (U19) sits under the closed RF shield and is not marked. The 2114 box is U6, the color RAM.' }],
+      note: 'Board still in the lower case. The VIC-II (U19) sits under the closed RF shield and is not marked. The 2114 box is U6, the color RAM.'  },
+    {
+    board: 'Assy 326298 (original)', boards: ['326298'], rev: 'Rev A (PAL, 1982)',
+    file: 'photos/c64-326298.webp', w: 1600, h: 745, side: 'component', rotate: 0,
+    author: 'Bill Bertram', license: 'CC BY 2.0', licenseUrl: BY('2.0'),
+    source: src('C64motherboard.jpg'),
+    chips: {
+      cia6526: [0.062, 0.200, 0.108, 0.262], rom2364: [0.188, 0.202, 0.108, 0.164],
+      rom2332: [0.318, 0.199, 0.044, 0.163], sram2114: [0.407, 0.211, 0.019, 0.110],
+      cpu6510: [0.452, 0.200, 0.037, 0.266], pla82s100: [0.449, 0.498, 0.045, 0.186],
+      sid6581: [0.508, 0.499, 0.045, 0.186], vic2: [0.617, 0.552, 0.043, 0.262],
+      dram4164: [0.099, 0.565, 0.140, 0.302] },
+    verify: ['cia6526', 'rom2364', 'rom2332', 'sram2114', 'cpu6510', 'pla82s100', 'sid6581'],
+    note: 'Flat scan, 2048 px wide, so most designators are too small to read. Identified as 326298 because the silkscreen reads "ASSY 3262" (last two digits blurred) and "REV A ©1982 COMMODORE", the file page says Rev A PAL 1982, and the layout matches 326298: eight 4164s at U9-U12 and U21-U24, separate 2364 BASIC and KERNAL ROMs, 2332 character ROM. Legible: U9-U12, U21-U24 and U19 (VIC-II, inner shield lid off). The other chips were placed by part marking (MOS 6526, 901226-01, 901227-02, 901225-01, 6510, 6581, 2114) or, for the PLA, by its 28-pin position beside the 6510; their designators are not legible.' },
+  {
+    board: 'KU-14194HB (no assy number)', boards: ['ku14194hb'], rev: 'Revision not visible',
+    file: 'photos/c64-ku14194hb.webp', w: 1471, h: 725, side: 'component', rotate: 0,
+    author: 'Shmendric (C64-Wiki)', license: 'GFDL 1.2 or later', licenseUrl: 'https://www.gnu.org/licenses/old-licenses/fdl-1.2.html',
+    source: { label: 'C64-Wiki: Datei:Platine-KU-14194HB.jpg', url: 'https://www.c64-wiki.de/wiki/Datei:Platine-KU-14194HB.jpg' },
+    chips: {
+      cia6526: [0.067, 0.193, 0.100, 0.278], rom2364: [0.193, 0.204, 0.099, 0.175],
+      rom2332: [0.318, 0.206, 0.037, 0.175], sram2114: [0.390, 0.227, 0.021, 0.125],
+      cpu6510: [0.443, 0.199, 0.039, 0.276], pla82s100: [0.444, 0.475, 0.037, 0.198],
+      sid6581: [0.505, 0.479, 0.040, 0.194], dram4164: [0.099, 0.560, 0.140, 0.308] },
+    verify: ['rom2364', 'rom2332'],
+    note: 'Copper text "©1982 COMMODORE INTL KU-14194HB"; no assy number. The VIC-II (U19) is under the closed RF shield. The ROM designators (U3-U5) are not legible; the ROMs were placed by part marking (901226-01, 901227-02, 901225-01). The cia6526 box covers U1 (legible) and U2. The PLA is marked C64A 93459 DC (a Fairchild 82S100 type).' },
+  {
+    board: 'Assy 250407 (A, CR)', boards: ['250407'], rev: 'Rev A',
+    file: 'photos/c64-250407-reva.webp', w: 1600, h: 822, side: 'component', rotate: 0,
+    author: 'Sven.petersen', license: 'CC BY-SA 4.0', licenseUrl: BYSA('4.0'),
+    source: src('0431 - C64 Mainboard ASSY250407 RevA.jpg'),
+    chips: {
+      cia6526: [0.077, 0.182, 0.093, 0.248], rom2364: [0.187, 0.280, 0.090, 0.153],
+      rom2332: [0.286, 0.279, 0.035, 0.152], cpu6510: [0.339, 0.184, 0.038, 0.251],
+      pla82s100: [0.406, 0.184, 0.037, 0.176], sid6581: [0.407, 0.436, 0.036, 0.174],
+      sram2114: [0.371, 0.498, 0.016, 0.104], dram4164: [0.118, 0.502, 0.123, 0.281] },
+    verify: [],
+    note: 'Silkscreen "ASSY NO 250407 REV A". Board in the lower case. The VIC-II (U19) is under the closed RF shield. U5 holds a TMS2532 EPROM labeled "NEWCHAR U5" in place of the 2332 character ROM. U11 and U12 are ceramic 4164s and U24 sits in a socket, so the RAM has been worked on. The PLA is marked 93459PC (a Fairchild 82S100 type).' },
+  {
+    board: 'Assy 250425 / 250441 (B, B-2)', boards: ['250425'], rev: 'Revision not visible (PAL, 1984)',
+    file: 'photos/c64-250425.webp', w: 1600, h: 764, side: 'component', rotate: 0,
+    author: 'Gona.eu', license: 'CC BY-SA 3.0', licenseUrl: BYSA('3.0'),
+    source: src('C64 ASSY NO 250425 motherboard 1984.jpg'),
+    chips: {
+      cia6526: [0.058, 0.181, 0.094, 0.277], rom2364: [0.160, 0.275, 0.096, 0.177],
+      rom2332: [0.263, 0.277, 0.044, 0.175], cpu6510: [0.319, 0.187, 0.044, 0.277],
+      sid6581: [0.383, 0.194, 0.043, 0.190], pla82s100: [0.413, 0.510, 0.045, 0.200],
+      vic2: [0.561, 0.678, 0.133, 0.095], sram2114: [0.339, 0.764, 0.020, 0.142],
+      dram4164: [0.098, 0.598, 0.137, 0.298] },
+    verify: ['cia6526', 'rom2364', 'rom2332', 'cpu6510', 'sid6581'],
+    note: 'Silkscreen "ASSY NO. 250425", ©1984, made in Hong Kong. The RF shield is off: the VIC-II (U19, 6569R3) and the 7701 clock chip (U31) are visible. Legible: U9-U12, U21-U24 (MCM6665, a 4164 type), U6, U17 (906114-01) and U19. The CIAs, ROMs (901226-01, 901227-03, 901225-01), 6510 and SID were placed by part marking; their designators are not legible.' },
+    {
+  board: 'Assy 250466 (B-3)', boards: ['250466'], rev: 'Assy 250466, 1986',
+  file: 'photos/c64-250466.webp', w: 1600, h: 767, side: 'component', rotate: 0,
+  author: 'Werner (C64-Wiki)', license: 'GFDL 1.2 or later', licenseUrl: 'https://www.gnu.org/licenses/old-licenses/fdl-1.2.html',
+  source: { label: 'C64-Wiki: Datei:C64-Platine-Assy-No-250466.jpg', url: 'https://www.c64-wiki.de/wiki/Datei:C64-Platine-Assy-No-250466.jpg' },
+  chips: {
+    cia6526: [0.090, 0.199, 0.054, 0.263], rom2364: [0.161, 0.287, 0.089, 0.169],
+    rom2332: [0.262, 0.287, 0.037, 0.169], cpu6510: [0.318, 0.198, 0.038, 0.266],
+    sid6581: [0.379, 0.202, 0.039, 0.186], pla82s100: [0.413, 0.511, 0.034, 0.184],
+    sram2114: [0.336, 0.753, 0.021, 0.122], vic2: [0.554, 0.672, 0.127, 0.088] },
+  verify: ['sram2114'],
+  note: 'RF shield lid removed, so the VIC-II (U19, 6569R5, PAL) is visible. The CIA box is U2 (MOS 8521R0, a 6526-type CIA); U1 (6526A) is to its left, and its designator is hidden. The 2364 box covers U3 (BASIC) and U4 (KERNAL). Color RAM U6 (AM2114-2) placed by part marking; its designator is not legible. Two 64K x 4 DRAMs at U9 and U10 replace the eight 4164s. GFDL: the app must ship the GFDL text.' },
+{
+  board: 'Assy 250469 rev A (E, short board)', boards: ['250469a'], rev: 'PCB 252311 Rev A',
+  file: 'photos/c64-250469a.webp', w: 1024, h: 404, side: 'component', rotate: 0,
+  author: 'Shmendric (C64-Wiki)', license: 'GFDL 1.2 or later', licenseUrl: 'https://www.gnu.org/licenses/old-licenses/fdl-1.2.html',
+  source: { label: 'C64-Wiki: Datei:Platine-C64-469A.jpg', url: 'https://www.c64-wiki.de/wiki/Datei:Platine-C64-469A.jpg' },
+  chips: {
+    cia6526: [0.027, 0.446, 0.039, 0.329], rom2332: [0.081, 0.571, 0.040, 0.204],
+    cpu6510: [0.226, 0.300, 0.041, 0.322], sram2114: [0.385, 0.548, 0.020, 0.150],
+    vic2: [0.427, 0.464, 0.043, 0.328], sid6581: [0.566, 0.602, 0.041, 0.232] },
+  verify: ['cia6526', 'rom2332', 'cpu6510', 'sram2114', 'vic2', 'sid6581'],
+  note: 'Small original (1024 x 404, shown at its own size), so no designators are legible. Every box was placed by layout, matched to the rev B photo (same PCB 252311 artwork), and by the legible markings (VIC 8565R2, character ROM 901225-01). The CIA box is U2; U1 is at the right, next to the SID. The 2114 (U19) is the 18-pin chip between the memory controller (U8) and the VIC; the rev B board has no chip there. GFDL: the app must ship the GFDL text.' },
+{
+  board: 'Assy 250469 rev B (E, short board)', boards: ['250469b'], rev: 'PCB 252311 Rev B (1992)',
+  file: 'photos/c64-250469b.webp', w: 1600, h: 570, side: 'component', rotate: 0,
+  author: 'Bill Bertram', license: 'CC BY-SA 3.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
+  source: { label: 'Wikimedia Commons: File:C64Cmotherboard.jpg', url: 'https://commons.wikimedia.org/wiki/File:C64Cmotherboard.jpg' },
+  chips: {
+    cia6526: [0.024, 0.455, 0.039, 0.345], rom2332: [0.077, 0.590, 0.040, 0.210],
+    cpu6510: [0.227, 0.308, 0.037, 0.341], vic2: [0.426, 0.495, 0.045, 0.335],
+    sid6581: [0.566, 0.643, 0.041, 0.237] },
+  verify: [],
+  note: 'Flatbed scan of a 1992 PAL board (8500 CPU, 8565R2 VIC, 8580R5 SID). The CIA box is U2; U1 is at the right, next to the SID. The color RAM is inside the 252535-01 at U8, so there is no 2114. The file page also offers GFDL and CC BY-SA 2.0.' }],
 
     vic20: [{
       board: 'VIC-20 main board (assy number not visible)', rev: 'Grid-designator board, PAL',
