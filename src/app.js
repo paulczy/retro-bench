@@ -2164,13 +2164,16 @@ function drawWire() { drawStageWire(); drawPhoneWire(); drawConnWire(); }
    here it is placed on the page and finished straight down to the PIN DETAIL box, or on a phone to the
    panel's copper edge. Clipped to the drawing's visible width, so a pad scrolled out of a wide card edge
    draws nothing. */
-function connRoute(sel, svgEl, wrap, ox, oy, endY, r, id, label) {
+function connRoute(sel, svgEl, wrap, ox, oy, endY, r, id, label, box) {
   const sv = svgEl.getBoundingClientRect(), w = wrap.getBoundingClientRect();
   const x = sv.left - ox, y = sv.top - oy, ex = x + Number(sel.dataset.rx), ey = sv.bottom - oy;
   /* the clip sits on an untransformed group: on the path itself it would move with the translate */
   /* land beside the box's PIN DETAIL label, never on it */
   const lb = label && label.getBoundingClientRect(), lx = lb ? lb.right - ox + 16 : 0;
-  const pts = lb && ex > lb.left - ox - 10 && ex < lx ? [[ex, ey], [ex, endY - 14], [lx, endY - 14], [lx, endY]] : [[ex, ey], [ex, endY]];
+  /* past the box's right edge (it is capped at 480 px): jog left and land on its top edge */
+  const br = box ? box.getBoundingClientRect().right - ox - 36 : Infinity;
+  const tx = lb && ex > lb.left - ox - 10 && ex < lx ? lx : ex > br ? Math.max(br, lx) : ex;
+  const pts = tx !== ex ? [[ex, ey], [ex, endY - 14], [tx, endY - 14], [tx, endY]] : [[ex, ey], [ex, endY]];
   const end = pts[pts.length - 1];
   return `<defs><clipPath id="${id}"><rect x="${w.left - ox}" y="${-oy - 9999}" width="${w.width}" height="${19998 + innerHeight}"/></clipPath></defs>
     <g clip-path="url(#${id})"><path transform="translate(${x} ${y})" d="${sel.dataset.route}"/></g>${endY > ey && ex >= w.left - ox && ex <= w.right - ox ? `<path d="${chamfer(pts, 9)}"/><circle cx="${end[0]}" cy="${end[1]}" r="${r}"/>` : ''}`;
@@ -2182,7 +2185,7 @@ function drawConnWire() {
   const stage = sel.closest('.cstage'), box = stage && stage.querySelector('.cdetail .blk'); if (!box) return;
   const S = stage.getBoundingClientRect(), wire = stage.querySelector('.wire');
   wire.setAttribute('viewBox', `0 0 ${S.width} ${S.height}`);
-  wire.innerHTML = connRoute(sel, sel.ownerSVGElement, sel.closest('.cwrap'), S.left, S.top, box.getBoundingClientRect().top - S.top, 4, 'cw-clip', box.querySelector('.lbl'));
+  wire.innerHTML = connRoute(sel, sel.ownerSVGElement, sel.closest('.cwrap'), S.left, S.top, box.getBoundingClientRect().top - S.top, 4, 'cw-clip', box.querySelector('.lbl'), box);
 }
 /* desktop and tablet: a chamfered copper trace from the selected pad to the PIN DETAIL box,
    around the top or bottom of the chip (whichever is nearer) when the pad is on the far side */
