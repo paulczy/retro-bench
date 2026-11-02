@@ -1010,7 +1010,7 @@ function render() {
         if (r.q.hl && fits(m, r.q.hl)) state.ph.sel = r.q.hl;
         ctx.crumbs[1] = [m.name]; html = viewMachine(m);
       }
-      else if (c === 'pinouts' || (chip && !chip.pins)) { ctx.crumbs.push(['Pinouts']); html = viewPinouts(m); }
+      else if (c === 'pinouts' || (chip && !chip.pins)) { ctx.crumbs.push(['Chips']); html = viewPinouts(m); }
       else if (c === 'quickref') { ctx.crumbs.push(['Quick reference']); if (r.q.tab && !r.q.at) r.q.at = { keys: 'keys', basic: 'commands', memory: 'memory' }[r.q.tab]; html = viewQuickref(m); }
       else if (c === 'ports' || c === 'power') {
         ctx.crumbs.push([c === 'ports' ? 'Ports' : 'Power']);
@@ -1027,7 +1027,7 @@ function render() {
         const pn = Number(r.q.pin);
         if (r.q.pin && chip.pins.some(p => p.n === pn)) state.pin = pn;
         state.compact = wantCompact(chip); state.stack = wantStack(chip);
-        ctx.crumbs.push(['Pinouts', mPath(m) + '/pinouts'], [chip.short]);
+        ctx.crumbs.push(['Chips', mPath(m) + '/pinouts'], [chip.short]);
         html = viewChip(m, chip);
       } else html = viewNotFound();
     }
@@ -1106,7 +1106,7 @@ function tabJump(e) {
 }
 document.addEventListener('click', tabJump);
 /* ---------- chrome ---------- */
-const edgeField = (value = '', id = 'q') => `<form class="edge" data-act="search-form" role="search" autocomplete="off"><input id="${id}" type="search" placeholder="Chips, pins, BASIC, keys, terms" value="${esc(value)}" aria-label="Search" spellcheck="false"><span class="hint">/</span></form>`;
+const edgeField = (value = '', id = 'q') => `<form class="edge" data-act="search-form" role="search" autocomplete="off"><input id="${id}" type="search" placeholder="Chips, pins, commands, keys, terms" value="${esc(value)}" aria-label="Search" spellcheck="false"><span class="hint">/</span></form>`;
 function renderStrip() {
   const a = state.ctx.route.segs[0], m = mask(), next = MASKS[(MASKS.indexOf(m) + 1) % MASKS.length];
   $('#strip').className = 'strip' + (a === 'search' || !a ? ' no-edge' : '');
@@ -1191,7 +1191,7 @@ function viewHome() {
       </div>
       <div>
         ${edgeField('', 'q-home')}
-        <p class="text-[17px] text-silk-70 mt-2 mb-1">Type a chip, a pin like <span class="mono">/RAS</span> or <span class="mono">pin 40</span>, a BASIC keyword or a term. Press <span class="mono">/</span> anywhere to find.</p>
+        <p class="text-[17px] text-silk-70 mt-2 mb-1">Type a chip, a pin like <span class="mono">/RAS</span> or <span class="mono">pin 40</span>, a command or a term. Press <span class="mono">/</span> anywhere to find.</p>
         <div class="try mono sm tin">TRY <a href="#/search?q=ras">ras</a><a href="#/search?q=reset">reset</a><a href="#/search?q=sound">sound</a><a href="#/search?q=pin%2040">pin 40</a></div>
       </div>
     </div>
@@ -1219,11 +1219,10 @@ function viewBrand(br) {
 }
 
 function viewMachine(m) {
-  const chips = chipsOf(m), captured = chips.filter(c => c.pins).length;
+  const chips = chipsOf(m);
   const onPhoto = new Set(photosOf(m).flatMap(p => Object.keys(p.chips || {})));
-  const qr = dataFor(D.quickref, m), sy = dataFor(D.symptoms, m), cn = dataFor(D.connectors, m), pw = dataFor(D.power, m);
+  const qr = dataFor(D.quickref, m), sy = dataFor(D.symptoms, m), pw = dataFor(D.power, m);
   const facts = [['CPU', m.cpu], ['RAM', m.ram], ['ROM', m.rom], ['VIDEO', m.video], ['SOUND', m.sound], ['OS', m.os]].filter(f => f[1]);
-  const door = (href, j, t, meta, off, pour) => `<a class="door${off ? ' off' : ''}${pour && !off ? ' pour' : ''}" href="${href}"${off ? ' aria-disabled="true" tabindex="-1"' : ''}><div class="j">${j}</div><div class="t">${t}</div><div class="m">${meta}</div></a>`;
   let tp = '';
   if (pw.data) {
     let i = 1;
@@ -1236,13 +1235,6 @@ function viewMachine(m) {
   const sub = `${esc(m.aka || '')}${m.year ? (m.aka ? ', ' : '') + m.year : ''}${m.aka || m.year ? '. ' : ''}${esc(m.tagline || '')} <span class="mono tin">${esc(statusOf(m))}</span>`;
   return head(mDes(m), esc(m.name), sub) + `
     ${facts.length ? `<div class="facts grid gap-x-6 gap-y-1.5 mt-3.5 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">${facts.map(f => `<div><span>${f[0]}</span><div>${esc(f[1])}</div></div>`).join('')}</div>` : ''}
-    <div class="grid gap-3.5 mt-5.5 grid-cols-2 lg:grid-cols-4">
-      ${door(`${mPath(m)}/pinouts`, 'J1', 'Pinouts', chips.length ? `${captured} of ${chips.length} chips drawn` : 'No chips captured yet', !chips.length, true)}
-      ${door(`${mPath(m)}/quickref`, 'J2', 'Quick reference', qr.data ? 'Keys, BASIC, memory map' : 'Not captured yet', !qr.data)}
-      ${door(`${mPath(m)}/ports`, 'J3', 'Ports', cn.data ? `${arr(cn.data).length} connectors` : 'Not captured yet', !cn.data)}
-      ${door(`${mPath(m)}/power`, 'J4', 'Power', pw.data ? `${pw.data.supply && pw.data.supply.name ? esc(pw.data.supply.name) + ', ' : ''}${arr(pw.data.rails).length} rails, ${arr(pw.data.testPoints).length} test points` : 'Not captured yet', !pw.data)}
-      ${pw.data && arr(pw.data.firstTen).length ? `<a class="lnk col-start-2 lg:col-start-4 -mt-2 mono sm uppercase" href="${mPath(m)}/power?at=first-ten">First ten minutes &rsaquo;</a>` : ''}
-    </div>
     <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-3.5"><button type="button" class="btn" data-act="print">Print card</button><span class="tin sm">One page where it fits, two at most, black on white: chips, supply and rail warnings, rails, first checks, clocks, connector pins.</span></div>
     ${chips.length ? `<section class="blk boardarea" id="boardarea"><span class="lbl"><span class="d">U</span>Chips</span>${boardGrid(m, chips, onPhoto)}<p class="note">Tap a footprint for its pinout. Designators follow the ${boardOf(m) ? esc(boardOf(m).name) : `${esc(m.name)} board`} where the sheet records them.${onPhoto.size ? ' The crosshair shows a chip on the board photo below.' : ''}</p></section>`
       : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} is ${m.status === 'planned' ? 'planned' : 'on paper'}: its chips have not been entered yet.`)}
@@ -1413,7 +1405,7 @@ function viewPinouts(m) {
         ${arr(c.fails).length ? `<div class="f">FAILS AS: ${esc(c.fails.join(' / '))}</div>` : ''}</div>`;
     return c.pins ? `<a class="chiprow" href="${chipPath(m, c)}">${inner}</a>` : `<div class="chiprow nc">${inner}</div>`;
   }).join('');
-  return head(mDes(m), 'Pinouts', `${esc(m.name)}. Hottest chips first. Tap one for the footprint.`) +
+  return head(mDes(m), 'Chips', `${esc(m.name)}. Hottest chips first. Tap one for the footprint.`) +
     (chips.length ? `<section class="blk"><span class="lbl"><span class="d">U</span>Parts</span>${rows}</section>${partsList(m, chips)}` : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} cheat sheet exists but its chips have not been entered.`));
 }
 /* the parts list by designator, with a filter box; a chip with no designator in the data goes last */
@@ -1690,11 +1682,11 @@ function searchResults(q) {
   state.hits = []; state.hitIdx = -1;
   if (!q.trim()) return `<p class="note">Try <a href="#/search?q=ras">ras</a>, <a href="#/search?q=pin%2040">pin 40</a>, <a href="#/search?q=sound">sound</a> or <a href="#/search?q=reset">reset</a>. Arrow keys move, Enter opens.</p>`;
   const groups = search(q);
-  if (!groups.length) return emptyBlk(`NOTHING MATCHED "${String(q).toUpperCase()}"`, 'Try a pin name without the slash, a chip number, or a BASIC keyword.');
+  if (!groups.length) return emptyBlk(`NOTHING MATCHED "${String(q).toUpperCase()}"`, 'Try a pin name without the slash, a chip number, or a command.');
   let i = 0;
   return groups.map(g => `<div class="grp-h">${g.group} <span class="tin">${g.items.length}</span></div>${g.items.map(it => { state.hits.push(it); return resultItem(it, i++); }).join('')}`).join('');
 }
-const viewSearch = q => head('', 'Search', 'Chips, pins (<span class="mono">/RAS</span>, <span class="mono">pin 40</span>), BASIC commands, keys, glossary terms and connectors. Results carry their board designator: <span class="mono">U1.10</span> is pin 10 of U1.') +
+const viewSearch = q => head('', 'Search', 'Chips, pins (<span class="mono">/RAS</span>, <span class="mono">pin 40</span>), commands, keys, glossary terms and connectors. Results carry their board designator: <span class="mono">U1.10</span> is pin 10 of U1.') +
   `<div class="mt-3.5 max-w-[560px]">${edgeField(q, 'q-page')}</div><div class="results" id="results">${searchResults(q)}</div>`;
 
 const resRow = r => `<a class="row" href="${esc(r.url)}" target="_blank" rel="noopener"><span class="n">${esc(r.name)}${vmark(r)}${disagree(r, 'conflict', 'span')}</span><span class="w">${esc(r.what || '')}</span><span class="u">${esc(r.url)}</span></a>`;
@@ -2309,7 +2301,7 @@ function openPalette(prefill = '', mode = '') {
   closePop();
   state.palMode = mode;
   $('#palette').hidden = false;
-  const inp = $('#pal-input'); inp.value = prefill; inp.placeholder = mode ? 'Switch machine: name, model, brand' : 'Chip, pin (/RAS, pin 40), BASIC, key, term';
+  const inp = $('#pal-input'); inp.value = prefill; inp.placeholder = mode ? 'Switch machine: name, model, brand' : 'Chip, pin (/RAS, pin 40), command, key, term';
   state.palIdx = 0; renderPalette(); inp.focus(); inp.select();
 }
 function closePalette() { const p = $('#palette'); if (p.hidden) return; p.hidden = true; state.palMode = ''; if (p.contains(document.activeElement)) document.activeElement.blur(); }
@@ -2329,7 +2321,7 @@ function renderPalette() {
   const q = $('#pal-input').value, groups = state.palMode ? machineGroups(q) : search(q, 5), items = groups.flatMap(g => g.items);
   state.palItems = items; if (state.palIdx >= items.length) state.palIdx = 0;
   let i = 0;
-  $('#pal-results').innerHTML = !q.trim() && !state.palMode ? '<p class="note">Type a chip, a pin like <span class="mono">/RAS</span> or <span class="mono">pin 40</span>, a BASIC keyword, a key or a term.</p>'
+  $('#pal-results').innerHTML = !q.trim() && !state.palMode ? '<p class="note">Type a chip, a pin like <span class="mono">/RAS</span> or <span class="mono">pin 40</span>, a command, a key or a term.</p>'
     : !items.length ? `<p class="note">Nothing matched "${esc(q)}".</p>`
     : groups.map(g => `<div class="grp-h">${g.group}</div>${g.items.map(it => { const idx = i++; return resultItem(it, idx, idx === state.palIdx); }).join('')}`).join('');
   const act = $('#pal-results .it.act'); if (act) act.scrollIntoView({ block: 'nearest' });

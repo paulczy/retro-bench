@@ -39,9 +39,9 @@ Test points carry an idealized waveform drawn from the sourced frequency, levels
 - **Replacement parts** per chip: pin-compatible equivalents, modern drop-ins and adapters, with the differences that bite.
 - **Boards and schematics**: links to board drawings per board revision, with the hosting archive named.
 - **Video signals** (`#/video`): composite levels, NTSC and PAL line and field timing, RGBI, analog RGB, luma/chroma, RF channels, drawn as one PAL line and tabled with a source on every row.
-- **Quick reference** per machine: keys and quirks, BASIC essentials, memory map.
+- **Quick reference** per machine: first boot checklist, commands (BASIC, DOS, monitor), keys, memory map.
 - **Glossary** with tap-to-explain: any dotted term anywhere in the app opens its definition in place.
-- **Search** (`/` or Ctrl+K): a chip, a pin like `/RAS` or `pin 40`, a BASIC keyword, a term.
+- **Search** (`/` or Ctrl+K): a chip, a pin like `/RAS` or `pin 40`, a command, a term.
 - **Print card**: one Letter page per machine in black on white, with footprints, rails, first ten minutes, clocks and every connector's pins.
 - **Bench notes** on every machine and chip page, kept in the browser on your device only, with export and import as a text file. No account, no sync.
 - **Three solder masks**: green, black, and light (bare FR-4) for bright benches.

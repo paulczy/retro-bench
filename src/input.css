@@ -226,17 +226,6 @@
   /* ---------- machine ---------- */
   .facts > div { display: grid; grid-template-columns: 64px 1fr; gap: 10px; padding: 5px 0; border-top: 1px solid var(--silk-12); font-size: 16px; }
   .facts > div > span { font: 13px var(--font-mono); color: var(--tin); letter-spacing: .1em; padding-top: 3px; }
-  /* J1-J4: connector doors; J1 is the copper pour */
-  .door { display: block; border: var(--w) solid var(--silk); border-radius: var(--radius-silk); padding: 12px 14px; min-height: 76px; color: var(--silk); }
-  .door .j { font: 14px var(--font-mono); letter-spacing: .1em; color: var(--copper); }
-  .door .t { font: 500 20px/1.1 var(--font-sans); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
-  .door .m { font: 14px var(--font-mono); color: var(--tin); margin-top: 4px; }
-  .door:hover { border-color: var(--copper); color: var(--silk); }
-  .door.pour { border-color: var(--copper-dk); color: var(--copper-ink); }
-  .door.pour:hover { background: var(--copper-hi); color: var(--copper-ink); }
-  .door.pour .j, .door.pour .m { color: var(--copper-ink); opacity: .75; }
-  .door.off { border-style: dashed; border-color: var(--silk-45); color: var(--silk-70); pointer-events: none; }
-  .door.off .j { color: var(--tin); }
   /* machine board: footprints wrap at --fpw; the bus sits one gap left of the first column, so the same
      gap-wide stub that joins footprints in a row also joins the first one to the bus */
   .board-grid { --gx: 18px; --fpw: 196px; position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--fpw), 1fr)); gap: 22px var(--gx); padding: 14px 12px 0 calc(8px + var(--gx)); margin-top: 6px; }
