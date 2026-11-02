@@ -1076,14 +1076,27 @@ function syncMbar() {
 let tabIO = [];
 const TAB_LINE = 32;   /* px under the bar: a jump to a section lands it within this (scroll padding and margin) */
 const secLabel = sec => { const l = sec.querySelector(':scope > .lbl'); if (!l) return ''; const c = l.cloneNode(true); c.querySelectorAll('.d').forEach(d => d.remove()); return c.textContent.trim(); };
-let stuckIO = null;
+let stuckOff = null;
 function watchStuck() {
-  if (stuckIO) stuckIO.disconnect(); stuckIO = null;
-  const b = $('#mbar'); if (!b || !window.IntersectionObserver) return;
+  if (stuckOff) stuckOff(); stuckOff = null;
+  const b = $('#mbar'); if (!b) return;
+  document.querySelectorAll('.mbar-sentinel').forEach(x => x.remove());
   const s = document.createElement('div'); s.className = 'mbar-sentinel'; s.setAttribute('aria-hidden', 'true'); b.before(s);
-  /* the cards show their count line until the bar sticks; then one line each, and the strip re-measures */
-  stuckIO = new IntersectionObserver(([e]) => { const on = !e.isIntersecting && e.boundingClientRect.top < 0; if (b.classList.contains('stuck') !== on) { b.classList.toggle('stuck', on); watchTabs(); } });
-  stuckIO.observe(s);
+  /* the cards show their count line until the bar sticks; then one line each, and the strip re-measures.
+     Collapsing makes the page shorter by `gap`, and scroll anchoring then moves the sentinel back down by that much.
+     So the bar only unsticks once the sentinel is past `gap`; without that margin it flips back and forth at one spot. */
+  let gap = 0, raf = 0;
+  const check = () => {
+    raf = 0; if (!b.isConnected) return;
+    const top = s.getBoundingClientRect().top, was = b.classList.contains('stuck'), on = was ? top < gap + 2 : top < 0;
+    if (on === was) return;
+    const h = b.offsetHeight; b.classList.toggle('stuck', on); if (on) gap = Math.max(0, h - b.offsetHeight);
+    watchTabs();
+  };
+  const onScroll = () => { if (!raf) raf = requestAnimationFrame(check); };
+  addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll);
+  stuckOff = () => { removeEventListener('scroll', onScroll); removeEventListener('resize', onScroll); };
+  check();
 }
 function watchTabs() {
   tabIO.forEach(o => o.disconnect()); tabIO = [];
