@@ -69,43 +69,48 @@
       rom2332: [0.263, 0.277, 0.044, 0.175], cpu6510: [0.319, 0.187, 0.044, 0.277],
       sid6581: [0.383, 0.194, 0.043, 0.190], pla82s100: [0.413, 0.510, 0.045, 0.200],
       vic2: [0.561, 0.678, 0.133, 0.095], sram2114: [0.339, 0.764, 0.020, 0.142],
-      dram4164: [0.098, 0.598, 0.137, 0.298] },
+      dram4164: [0.098, 0.598, 0.137, 0.298], clk8701: [0.638, 0.600, 0.052, 0.050] },
     verify: [],
-    note: 'Silkscreen "ASSY NO. 250425", ©1984, made in Hong Kong. The RF shield is off: the VIC-II (U19, 6569R3) and the 7701 clock chip (U31) are visible. Legible: U9-U12, U21-U24 (MCM6665, a 4164 type), U6, U17 (906114-01) and U19. The designators of the CIAs, ROMs (901226-01, 901227-03, 901225-01), 6510 and SID are not legible on the photo. Positions of U1, U2, U3-U5, U7 and U18 proven against Sams Computerfacts CC17, p. VII (board photo calling out U1, U2, U4, U7, U17, U18) and p. 5 (GridTrace: U3 E-6, U4 E-7, U5 E-9); they match the outlines on board layout #250425-01, C64 Service Manual 314001-02, p. 28.' },
+    note: 'Silkscreen "ASSY NO. 250425", ©1984, made in Hong Kong. The RF shield is off: the VIC-II (U19, 6569R3) and the clock chip (U31) are visible. U31 is legible; its part marking is not (the parts list allows a 7701 or an 8701 there). Legible: U9-U12, U21-U24 (MCM6665, a 4164 type), U6, U17 (906114-01) and U19. The designators of the CIAs, ROMs (901226-01, 901227-03, 901225-01), 6510 and SID are not legible on the photo. Positions of U1, U2, U3-U5, U7 and U18 proven against Sams Computerfacts CC17, p. VII (board photo calling out U1, U2, U4, U7, U17, U18) and p. 5 (GridTrace: U3 E-6, U4 E-7, U5 E-9); they match the outlines on board layout #250425-01, C64 Service Manual 314001-02, p. 28.' },
     {
   board: 'Assy 250466 (B-3)', boards: ['250466'], rev: 'Assy 250466, 1986',
   file: 'photos/c64-250466.webp', w: 1600, h: 767, side: 'component', rotate: 0,
   author: 'Werner (C64-Wiki)', license: 'GFDL 1.2 or later', licenseUrl: 'https://www.gnu.org/licenses/old-licenses/fdl-1.2.html',
   source: { label: 'C64-Wiki: Datei:C64-Platine-Assy-No-250466.jpg', url: 'https://www.c64-wiki.de/wiki/Datei:C64-Platine-Assy-No-250466.jpg' },
   chips: {
-    cia6526: [0.090, 0.199, 0.054, 0.263], rom2364: [0.161, 0.287, 0.089, 0.169],
+    cia6526: [[0.106, 0.201, 0.040, 0.265, 'U2'], [0.056, 0.201, 0.039, 0.265, 'U1']], rom2364: [0.161, 0.287, 0.089, 0.169],
     rom2332: [0.262, 0.287, 0.037, 0.169], cpu6510: [0.318, 0.198, 0.038, 0.266],
     sid6581: [0.379, 0.202, 0.039, 0.186], pla82s100: [0.413, 0.511, 0.034, 0.184],
-    sram2114: [0.336, 0.753, 0.021, 0.122], vic2: [0.554, 0.672, 0.127, 0.088] },
+    sram2114: [0.336, 0.753, 0.021, 0.122], vic2: [0.554, 0.672, 0.127, 0.088],
+    dram4464: [[0.100, 0.606, 0.019, 0.114, 'U10'], [0.1375, 0.606, 0.020, 0.114, 'U9']], clk8701: [0.631, 0.597, 0.049, 0.047] },
   verify: [],
-  note: 'RF shield lid removed, so the VIC-II (U19, 6569R5, PAL) is visible. The CIA box is U2 (MOS 8521R0, a 6526-type CIA); U1 (6526A) is to its left, and its designator is hidden. The 2364 box covers U3 (BASIC) and U4 (KERNAL). Color RAM U6 (AM2114-2): its designator is not legible on the photo; its position is proven against the C64/C64C Service Manual 314001-03, p. 36 (B-3 board layout) and Sams Computerfacts CC20, p. 5 (GridTrace: U6 K-10, below U7 at D-10). Two 64K x 4 DRAMs at U9 and U10 replace the eight 4164s.' },
+  note: 'RF shield lid removed, so the VIC-II (U19, 6569R5, PAL) is visible. CIAs: U1 (6526A) at the left edge and U2 (MOS 8521R0, a 6526-type CIA) next to it. U2 is legible; U1 is faint, and both positions match the C64/C64C Service Manual 314001-03, p. 36 (B-3 board layout). The 2364 box covers U3 (BASIC) and U4 (KERNAL). Color RAM U6 (AM2114-2): its designator is not legible on the photo; its position is proven against the same p. 36 and Sams Computerfacts CC20, p. 5 (GridTrace: U6 K-10, below U7 at D-10). Two 64K x 4 DRAMs (OKI, U10 and U9, both legible) replace the eight 4164s. The clock chip U31 is legible and marked 8701.' },
 {
   board: 'Assy 250469 rev A (E, short board)', boards: ['250469a'], rev: 'PCB 252311 Rev A',
   file: 'photos/c64-250469a.webp', w: 1024, h: 404, side: 'component', rotate: 0,
   author: 'Shmendric (C64-Wiki)', license: 'GFDL 1.2 or later', licenseUrl: 'https://www.gnu.org/licenses/old-licenses/fdl-1.2.html',
   source: { label: 'C64-Wiki: Datei:Platine-C64-469A.jpg', url: 'https://www.c64-wiki.de/wiki/Datei:Platine-C64-469A.jpg' },
   chips: {
-    cia6526: [0.027, 0.446, 0.039, 0.329], rom2332: [0.081, 0.571, 0.040, 0.204],
-    cpu6510: [0.226, 0.300, 0.041, 0.322], sram2114: [0.385, 0.548, 0.020, 0.150],
-    vic2: [0.427, 0.464, 0.043, 0.328], sid6581: [0.566, 0.602, 0.041, 0.232] },
+    cia6526: [[0.027, 0.446, 0.039, 0.329, 'U2'], [0.653, 0.509, 0.039, 0.325, 'U1']], rom2332: [0.081, 0.571, 0.040, 0.204],
+    rom23128: [0.132, 0.538, 0.043, 0.232], cpu6510: [0.226, 0.300, 0.041, 0.322],
+    dram4464: [[0.231, 0.683, 0.023, 0.145, 'U10'], [0.267, 0.683, 0.023, 0.145, 'U11']],
+    mc251715: [0.320, 0.479, 0.051, 0.359], sram2114: [0.385, 0.548, 0.020, 0.150],
+    vic2: [0.427, 0.464, 0.043, 0.328], clk8701: [0.483, 0.645, 0.026, 0.124], sid6581: [0.566, 0.602, 0.041, 0.232] },
   verify: ['cia6526'],
-  note: 'Small original (1024 x 404, shown at its own size), so no designators are legible. Positions of U5 (901225-01), U6 (CPU), U19 (2114), U7 (VIC) and U9 (SID) proven against the C64/C64C Service Manual 314001-03, p. 41 (E board layout, PCB 252311) and p. 40 (parts list #250469-01). The CIA box is U2 and stays unverified: its label in the scan reads like U7, so it was identified by elimination. U1 is at the right, next to the SID. The 2114 (U19) is the 18-pin chip between the memory controller (U8) and the VIC; the rev B board has no chip there.' },
+  note: 'Small original (1024 x 404, shown at its own size), so the designators and part markings are not legible. Positions of U5 (901225-01), U4 (23128 BASIC/KERNAL ROM), U6 (CPU), U10 and U11 (64K x 4 DRAMs), U8 (251715-01 memory controller), U19 (2114), U7 (VIC), U20 (8701 clock) and U9 (SID) proven against the C64/C64C Service Manual 314001-03, p. 41 (E board layout, PCB 252311) and p. 40 (parts list #250469-01). Both CIA boxes stay unverified: the left one (U2) is labeled like U7 in the scanned layout, so it was identified by elimination; U1 is the one at the right, next to the SID. The 2114 (U19) is the 18-pin chip between U8 and the VIC; the rev B board has no chip there.' },
 {
   board: 'Assy 250469 rev B (E, short board)', boards: ['250469b'], rev: 'PCB 252311 Rev B (1992)',
   file: 'photos/c64-250469b.webp', w: 1600, h: 570, side: 'component', rotate: 0,
   author: 'Bill Bertram', license: 'CC BY-SA 3.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
   source: { label: 'Wikimedia Commons: File:C64Cmotherboard.jpg', url: 'https://commons.wikimedia.org/wiki/File:C64Cmotherboard.jpg' },
   chips: {
-    cia6526: [0.024, 0.455, 0.039, 0.345], rom2332: [0.077, 0.590, 0.040, 0.210],
-    cpu6510: [0.227, 0.308, 0.037, 0.341], vic2: [0.426, 0.495, 0.045, 0.335],
-    sid6581: [0.566, 0.643, 0.041, 0.237] },
+    cia6526: [[0.024, 0.455, 0.039, 0.345, 'U2'], [0.652, 0.543, 0.041, 0.340, 'U1']], rom2332: [0.077, 0.590, 0.040, 0.210],
+    rom23128: [0.130, 0.559, 0.037, 0.240], cpu6510: [0.227, 0.308, 0.037, 0.341],
+    dram4464: [[0.2235, 0.711, 0.023, 0.146, 'U10'], [0.261, 0.711, 0.023, 0.146, 'U11']],
+    mc251715: [0.315, 0.503, 0.053, 0.373], vic2: [0.426, 0.495, 0.045, 0.335],
+    clk8701: [0.482, 0.681, 0.024, 0.131], sid6581: [0.566, 0.643, 0.041, 0.237] },
   verify: [],
-  note: 'Flatbed scan of a 1992 PAL board (8500 CPU, 8565R2 VIC, 8580R5 SID). The CIA box is U2; U1 is at the right, next to the SID. The color RAM is inside the 252535-01 at U8, so there is no 2114. The file page also offers GFDL and CC BY-SA 2.0.' }],
+  note: 'Flatbed scan of a 1992 PAL board (8500 CPU, 8565R2 VIC, 8580R5 SID). Legible on the photo: U2 (CIA, 6526A), U4 (251913-01, the 23128 BASIC/KERNAL ROM), U5, U10 and U11 (TI 64K x 4 DRAMs), U8 (Sharp 252535-01 memory controller) and U20 (8701). The second CIA (6526A) at the right, next to the SID, shows no designator; it is U1 on the C64/C64C Service Manual 314001-03, p. 41 (E board layout). The color RAM is inside the 252535-01 at U8, so there is no 2114. The file page also offers GFDL and CC BY-SA 2.0.' }],
 
     vic20: [{
       board: 'VIC-20 main board (assy number not visible)', rev: 'Grid-designator board, PAL',
@@ -114,10 +119,10 @@
       source: src('4860 - VIC-20 Mainboard.JPG'),
       chips: {
         via6522: [0.090, 0.178, 0.104, 0.242], vic6560: [0.338, 0.336, 0.128, 0.082],
-        sram2114: [0.085, 0.590, 0.235, 0.250], rom2332: [0.356, 0.585, 0.035, 0.159],
+        sram2114: [[0.131, 0.590, 0.189, 0.106, 'UD2-UD6'], [0.085, 0.732, 0.235, 0.110, 'UE1-UE6']], rom2332: [0.356, 0.585, 0.035, 0.159],
         cpu6502: [0.528, 0.722, 0.130, 0.076], rom2364: [0.680, 0.690, 0.093, 0.160] },
       verify: [],
-      note: 'PAL board (6561E VIC, KERNAL 901486-07). Grid designators (UAB1, UB7, UE10) match the 324001 family; the assy number is not visible. Loose wires cross the top half.' }],
+      note: 'PAL board (6561E VIC, KERNAL 901486-07). Grid designators (UAB1, UB7, UE10) match the 324001 family; the assy number is not visible. Loose wires cross the top half. The 2114 boxes cover the eleven 2114s at UD2-UD6 and UE1-UE6 (all legible). UD1 and UC2-UC6 are not 2114s: UC4-UC6 are 16-pin Mitsubishi 74LS parts, and the parts list puts no 2114 at UD1.' }],
 
     plus4: [{
       board: 'Plus/4 board (schematic 310164)', rev: 'Assy 310163',
@@ -126,10 +131,10 @@
       source: src('Plus4 main board.jpg'),
       chips: {
         cpu7501: [0.559, 0.445, 0.157, 0.093], acia6551: [0.739, 0.445, 0.113, 0.093],
-        pio6529: [0.626, 0.370, 0.083, 0.042], rom23128: [0.314, 0.597, 0.248, 0.204],
+        pio6529: [[0.626, 0.370, 0.083, 0.042, 'U5'], [0.207, 0.723, 0.026, 0.145, 'U27']], rom23128: [0.314, 0.597, 0.248, 0.204],
         pla82s100: [0.580, 0.597, 0.044, 0.204], dram4164: [0.719, 0.619, 0.141, 0.254] },
       verify: ['rom23128', 'pla82s100'],
-      note: 'The TED (U1) is under the RF shield. The 6529 box is U5; the second 6529 (U27) is at the lower left. ROM and PLA placed by part marking (318004/318006/317053/317054, 251641-02); their designators are not legible.' }],
+      note: 'The TED (U1) is under the RF shield. Both 6529s are legible: U5 (6529B) and U27 (6529B) at the lower left. ROM and PLA placed by part marking (318004/318006/317053/317054, 251641-02); their designators are not legible.' }],
 
     c128: [{
       board: 'C128 (flat)', rev: 'Flat C128 board',
@@ -137,13 +142,15 @@
       author: 'Bill Bertram', license: 'CC BY-SA 2.5', licenseUrl: BYSA('2.5'),
       source: src('C128mobo.jpg'),
       chips: {
-        cia6526: [0.049, 0.284, 0.040, 0.177], vdc8563: [0.228, 0.239, 0.037, 0.217],
+        cia6526: [[0.049, 0.284, 0.040, 0.177, 'U4'], [0.832, 0.603, 0.039, 0.189, 'U1']], vdc8563: [0.228, 0.239, 0.037, 0.217],
         dram4416: [0.287, 0.383, 0.055, 0.075], vic2e: [0.456, 0.239, 0.038, 0.217],
         sid6581: [0.589, 0.266, 0.039, 0.130], mmu8722: [0.791, 0.340, 0.038, 0.221],
         pla8721: [0.492, 0.644, 0.041, 0.217], cpu8502: [0.681, 0.602, 0.039, 0.191],
-        cpuz80: [0.737, 0.602, 0.038, 0.191], dram4164: [0.051, 0.714, 0.234, 0.176] },
+        cpuz80: [0.737, 0.602, 0.038, 0.191], dram4164: [0.051, 0.714, 0.234, 0.176],
+        rom23128: [[0.049, 0.512, 0.039, 0.129, 'U32'], [0.100, 0.513, 0.038, 0.128, 'U33'], [0.150, 0.513, 0.039, 0.128, 'U34'], [0.150, 0.336, 0.039, 0.130, 'U35']],
+        rom2364: [0.361, 0.774, 0.039, 0.118], sram6116: [0.427, 0.778, 0.039, 0.116], clk8701: [0.417, 0.256, 0.019, 0.069] },
       verify: [],
-      note: 'The CIA box is U4; the second CIA (U1) is at the lower right, next to the Z80. The file page template says CC BY-SA 2.5; the author\'s text on the same page says CC BY 2.5. Treated as BY-SA (the stricter reading).' }],
+      note: 'CIAs: U4 at the upper left and U1 at the lower right, next to the Z80 (both legible). ROMs, all legible: U32 251913-01, U33 318018-02, U34 318019-02 (partly legible) and U35 318020-03, all 23128s; U36 is an empty socket. U18 is the 390059-01 character ROM, U19 an HM6116P-4 (the parts lists give a 2016), and U28 the 8701 clock chip inside the video shield frame. The file page template says CC BY-SA 2.5; the author\'s text on the same page says CC BY 2.5. Treated as BY-SA (the stricter reading).' }],
 
     c1541: [{
       board: 'Assy 250442, 250446 (1541A, 1541A-2)', boards: ['250442'], rev: 'Assy 250442, PCB 251830 Rev A',
@@ -153,9 +160,9 @@
       chips: {
         cpu6502: [0.435, 0.378, 0.190, 0.123], via6522: [0.396, 0.480, 0.211, 0.237],
         ga325572: [0.378, 0.678, 0.194, 0.135], rom2364: [0.293, 0.343, 0.139, 0.213],
-        sram6116: [0.273, 0.556, 0.121, 0.096], ttl7406: [0.299, 0.682, 0.072, 0.070] },
-      verify: [],
-      note: 'Photo taken at an angle of about 15 degrees, so boxes are approximate. The VIA box covers UC3 and UC2. The 7406 box is UB1; the second 7406 (UD1) is to the right of the gate array.' }],
+        sram6116: [0.273, 0.556, 0.121, 0.096], ttl7406: [[0.299, 0.682, 0.072, 0.070, 'UB1'], [0.576, 0.759, 0.069, 0.071, 'UD1']] },
+      verify: ['ttl7406@UD1'],
+      note: 'Photo taken at an angle of about 15 degrees, so boxes are approximate. The VIA box covers UC3 and UC2. Two EL7406s: UB1 (legible) and UD1, right of the gate array. UD1 shows no designator, and the board layout in the 1541 Service Manual 314002-01 is too blurred to read, so the UD1 box stays unverified.' }],
 
     apple2: [{
       board: 'Apple II main board', rev: 'Revision not readable',
@@ -164,9 +171,9 @@
       source: src('Apple II motherboard (53171103722).jpg'),
       chips: {
         cpu6502: [0.372, 0.290, 0.207, 0.054], rom2316: [0.216, 0.376, 0.483, 0.086],
-        dram4116: [0.220, 0.506, 0.422, 0.259] },
+        dram4116: [0.220, 0.506, 0.422, 0.259], rom2513: [0.291, 0.917, 0.121, 0.050] },
       verify: [],
-      note: 'The board prints function labels (6502, ROM-F8 to ROM-D0, RAM) and a row/column grid. RAM rows C, D and E. The keyboard encoder (MM5740) is on the keyboard PCB, not shown.' }],
+      note: 'The board prints function labels (6502, ROM-F8 to ROM-D0, RAM, 2513) and a row/column grid. RAM rows C, D and E. The 2513 box is the character ROM at A5 (a GI RO-3-2513). The keyboard encoder (MM5740) is on the keyboard PCB, not shown. The KEYBOARD socket and the game I/O socket are empty.' }],
 
     apple2e: [{
       board: 'IIe main board 820-0087-C', boards: ['enhcf'], rev: '607-0187-C, 1986 (enhanced, 65C02)',
@@ -175,9 +182,12 @@
       source: src('Apple IIe 1986 Mobo.png'),
       chips: {
         cpu6502: [0.310, 0.405, 0.065, 0.172], mmu344: [0.310, 0.596, 0.065, 0.166],
-        iou344: [0.437, 0.596, 0.063, 0.166], kbd3600: [0.899, 0.594, 0.064, 0.166] },
-      verify: [],
-      note: 'Late 1986 board (820-0087-C), not the 820-0064 in the schematics list. It has two 64K x 4 RAMs (columns 8-9, row F) instead of a 4164 row, and an SMC KR9600-PRO keyboard encoder (silk AY3600931 PRO).' }],
+        iou344: [0.437, 0.596, 0.063, 0.166], kbd3600: [0.899, 0.594, 0.064, 0.166],
+        'rom-iie-cf': [0.553, 0.644, 0.068, 0.117], rom2716: [0.785, 0.663, 0.065, 0.097],
+        rom2732: [0.309, 0.854, 0.066, 0.098], 'hal-timing-iie': [0.048, 0.600, 0.035, 0.080],
+        dram4464: [0.587, 0.878, 0.080, 0.071] },
+      verify: ['hal-timing-iie'],
+      note: 'Late 1986 board (820-0087-C), not the 820-0064 in the schematics list. The board prints function labels: CF ROM (342-0349, one 16K ROM in place of the CD and EF ROMs; its socket wiring is unchecked, so the CF ROM record is marked verify and gives no pin table), KEYBOARD ROM (342-0132-D, boxed as the 2716-wired keyboard ROM the IIe schematic draws), VIDEO ROM (342-0265-A) and 64KX4 RAM (two HM50464 parts in place of a 4164 row). The keyboard encoder is an SMC KR9600-PRO (silk AY3600931 PRO). The timing HAL (HAL16R8, 342-0170-A) has only a HAL label, so it was placed by its marking. No schematic of this board was found, so its designators are not given.' }],
 
     apple2c: [{
       board: 'IIc main board', rev: 'Original',
@@ -188,9 +198,12 @@
         cpu6502: [0.597, 0.849, 0.180, 0.056], mmu2c: [0.597, 0.754, 0.180, 0.058],
         iou2c: [0.597, 0.652, 0.180, 0.059], iwm344: [0.454, 0.160, 0.127, 0.049],
         tmg2c: [0.475, 0.273, 0.091, 0.027], glu2c: [0.477, 0.361, 0.104, 0.040],
-        acia6551: [0.465, 0.443, 0.126, 0.150] },
+        acia6551: [0.465, 0.443, 0.126, 0.150], kbd3600: [0.221, 0.757, 0.180, 0.047],
+        rom2716: [0.441, 0.760, 0.107, 0.045], rom2732: [0.644, 0.256, 0.108, 0.045],
+        rom23256: [0.430, 0.849, 0.126, 0.056],
+        dram4164: [[0.826, 0.257, 0.069, 0.337, 'ARD0-ARD7'], [0.826, 0.600, 0.069, 0.326, 'MRD0-MRD7']] },
       verify: [],
-      note: 'Main logic 820-0115-C (1983). The board prints function names (CPU, MMU, IOU, IWM, TMG, GLU, SER 1, SER 2). The 6551 box covers both (SER 1 and SER 2).' }],
+      note: 'Main logic 820-0115-C (1983). The board prints function names (CPU, MMU, IOU, IWM, TMG, GLU, SER 1, SER 2, ENC, MAP, CHAR GEN, MON, and ARD0-ARD7 and MRD0-MRD7 RAM). The 6551 box covers both (SER 1 and SER 2). MON is the firmware ROM (342-0033-A, a 23256), MAP the keyboard ROM (342-0132-C) and CHAR GEN the video ROM (342-0265-A).' }],
 
     atari800: [{
       board: '800 motherboard, personality, CPU and RAM boards', rev: 'Motherboard Rev A',
@@ -199,7 +212,7 @@
       source: src('Atari-800-Motherboard-Flat-Top.jpg'),
       chips: { pokey: [0.204, 0.541, 0.204, 0.055], pia6520: [0.179, 0.660, 0.208, 0.054] },
       verify: [],
-      note: 'Motherboard only. The card cage covers the top half; the CPU, ANTIC, GTIA, RAM and OS ROM are on plug-in cards not shown.' }],
+      note: 'Motherboard only. The card cage covers the top half; the CPU, ANTIC, GTIA, RAM and OS ROM are on plug-in cards not shown. Not boxed: Z103 and Z104 (CD4051B keyboard multiplexers), the A104 transistor array and a 74LS245.' }],
 
     atari800xl: [{
       board: '800XL main board', rev: 'PAL, serial 72RHA AT8489594',
@@ -210,9 +223,10 @@
         dram4164: [0.116, 0.330, 0.049, 0.360], gtia: [0.160, 0.761, 0.125, 0.054],
         antic: [0.310, 0.761, 0.128, 0.054], cpu6502c: [0.464, 0.761, 0.128, 0.054],
         pia6520: [0.628, 0.761, 0.128, 0.054], pokey: [0.626, 0.639, 0.131, 0.054],
-        mmu61618: [0.502, 0.436, 0.067, 0.033] },
+        mmu61618: [0.502, 0.436, 0.067, 0.033], rom2364: [0.693, 0.312, 0.077, 0.063],
+        rom27128: [0.680, 0.390, 0.090, 0.063] },
       verify: [],
-      note: 'Perspective already corrected by the uploader. This board refreshes its MT4264 RAM through 74LS158 multiplexers; it has no FREDDIE chip.' }],
+      note: 'Perspective already corrected by the uploader. U4 is the BASIC ROM (C024947A-01) and U5 the OS ROM (C061598-29). The eight MT4264 RAMs are 64K x 1 parts, as the FSM parts list gives. This board refreshes its RAM through 74LS158 multiplexers; it has no FREDDIE chip.' }],
 
     colecovision: [{
       board: 'ColecoVision main board (NTSC)', rev: 'PCB 75743 Rev H2-1 (1982)',
@@ -221,11 +235,11 @@
       source: src('ColecoVision-Motherboard-Top.jpg'),
       chips: {
         dram4116: [0.140, 0.113, 0.220, 0.290], vdp9918: [0.381, 0.107, 0.080, 0.316],
-        ls138: [0.487, 0.115, 0.033, 0.104], sram2114: [0.500, 0.241, 0.094, 0.120],
+        ls138: [[0.487, 0.115, 0.033, 0.104, 'U6'], [0.781, 0.607, 0.035, 0.107, 'U5']], sram2114: [0.500, 0.241, 0.094, 0.120],
         'rom9464-cv': [0.500, 0.417, 0.062, 0.168], psg76489: [0.418, 0.447, 0.040, 0.108],
         cpuz80: [0.779, 0.297, 0.070, 0.286], 'ls-controller': [0.326, 0.767, 0.136, 0.148] },
       verify: [],
-      note: 'The VDP (U9) is under its clip-on heatsink; only the pins show. The LS138 box is U6; the second LS138 (U5) is below the Z80.' }],
+      note: 'The VDP (U9) is under its clip-on heatsink; only the pins show. Both 74LS138s are boxed: U6 near the VDP and U5 below the Z80.' }],
 
     spectrum: [{
       board: 'Issue 4A/4B', boards: ['issue4b'], rev: 'Issue 4B',
@@ -246,9 +260,9 @@
       source: src('SinclairZX81PCB.jpg'),
       chips: {
         ula_zx81: [0.345, 0.252, 0.077, 0.278], rom_zx81: [0.424, 0.525, 0.073, 0.203],
-        cpuz80: [0.523, 0.345, 0.073, 0.285] },
-      verify: ['ula_zx81', 'rom_zx81', 'cpuz80'],
-      note: 'Board in the open lower case, shot at an angle with hands in the frame. Placed by marking (Ferranti ULA 2C184E, NEC D2364C ROM, NEC D780C-1 CPU); their designators are not visible. The IC4b 2114 site is empty; one 24-pin RAM is fitted instead, so no 2114 is marked.' }],
+        cpuz80: [0.523, 0.345, 0.073, 0.285], sram4118: [0.713, 0.392, 0.073, 0.183] },
+      verify: ['ula_zx81', 'rom_zx81', 'cpuz80', 'sram4118'],
+      note: 'Board in the open lower case, shot at an angle with hands in the frame. Placed by marking (Ferranti ULA 2C184E, NEC D2364C ROM, NEC D780C-1 CPU); their designators are not visible. The IC4b 2114 site is empty; one 24-pin RAM sits at IC4 instead, so no 2114 is marked. Its marking is blurred. The ZX81 Service and Assembly Manual names the 24-pin IC4 part as an MK4118, so it is boxed as one.' }],
 
     ts1000: [{
       board: 'TS1000 main PCB', rev: 'Silkscreen "Sinclair ZX81 ISS 3"',
@@ -268,11 +282,11 @@
       source: src('Dragon32 PCB Top (PC10087 Issue5).jpg'),
       chips: {
         vdg6847: [0.290, 0.178, 0.048, 0.297], sam6883: [0.375, 0.415, 0.190, 0.090],
-        'rom-dragon32-basic': [0.652, 0.375, 0.112, 0.182], cpu6809e: [0.815, 0.235, 0.062, 0.320],
-        pia6821: [0.428, 0.618, 0.050, 0.305], mux14529: [0.158, 0.605, 0.034, 0.115],
+        'rom-dragon32-basic': [[0.655, 0.382, 0.053, 0.176, 'IC17'], [0.729, 0.382, 0.056, 0.176, 'IC18']], cpu6809e: [0.815, 0.235, 0.062, 0.320],
+        pia6821: [[0.428, 0.618, 0.050, 0.305, 'IC26'], [0.846, 0.628, 0.048, 0.297, 'IC35']], mux14529: [0.158, 0.605, 0.034, 0.115],
         dram4116: [0.488, 0.045, 0.405, 0.290] },
       verify: ['sam6883', 'dram4116'],
-      note: 'Flatbed scan. The PIA box is IC26 (a sticker covers its marking); the second PIA (IC35) is at the right edge. 16 x MK4116 in two rows; their designators are not legible. SAM placed by marking (SN74LS783N); its designator is not visible.' }],
+      note: 'Flatbed scan. Both PIAs are boxed: IC26 (a sticker covers its marking) and IC35 at the right edge. The BASIC ROMs IC17 and IC18 have a box each. 16 x MK4116 in two rows; their designators are not legible. SAM placed by marking (SN74LS783N); its designator is not visible. The LM1889N video modulator (IC9 on the SA2120 drawing) is not boxed.' }],
 
     pc5150: [{
       board: '16KB-64KB CPU', rev: '16KB-64KB CPU (silkscreen)',
@@ -283,9 +297,11 @@
         cpu8088: [0.088, 0.268, 0.171, 0.074], bus8288: [0.172, 0.105, 0.085, 0.050],
         clk8284: [0.281, 0.118, 0.072, 0.042], pic8259: [0.140, 0.368, 0.117, 0.064],
         ppi8255: [0.484, 0.090, 0.158, 0.068], dma8237: [0.478, 0.181, 0.166, 0.062],
-        pit8253: [0.527, 0.286, 0.102, 0.066], dram4116: [0.640, 0.452, 0.310, 0.468] },
+        pit8253: [0.527, 0.286, 0.102, 0.066], dram4116: [0.640, 0.452, 0.310, 0.468],
+        rom2364: [[0.528, 0.400, 0.097, 0.081, 'U33'], [0.528, 0.485, 0.097, 0.081, 'U32'], [0.528, 0.569, 0.097, 0.083, 'U31'],
+          [0.528, 0.656, 0.097, 0.081, 'U30'], [0.528, 0.740, 0.097, 0.058, 'U29']] },
       verify: ['cpu8088'],
-      note: 'The 8087 socket (U4) is empty. The RAM box covers banks 0-3 (AM9016, a 4116 type). The 6845 is on the MDA/CGA card, not the planar.' }],
+      note: 'The 8087 socket (U4) is empty. The RAM box covers banks 0-3 (AM9016, a 4116 type). The five 8K ROMs have legible designators: U33 is the BIOS (5700051) and U29-U32 the cassette BASIC. The ROM socket U28 below them is empty. The 6845 is on the MDA/CGA card, not the planar.' }],
 
     xt5160: [{
       board: '64-256KB SYSTEM BOARD', rev: '64-256KB SYSTEM BOARD (silkscreen)',
@@ -296,9 +312,11 @@
         cpu8088: [0.088, 0.172, 0.169, 0.071], bus8288: [0.268, 0.078, 0.080, 0.042],
         clk8284: [0.064, 0.254, 0.077, 0.044], ppi8255: [0.480, 0.083, 0.177, 0.082],
         dma8237: [0.480, 0.190, 0.177, 0.080], pit8253: [0.480, 0.355, 0.111, 0.077],
-        pic8259: [0.477, 0.453, 0.116, 0.077], dram4164: [0.608, 0.443, 0.345, 0.490] },
-      verify: ['cpu8088', 'clk8284'],
-      note: 'The 8087 socket is empty. RAM banks 0-3 hold mixed 64K x 1 parts (Hyundai, NEC, OKI, Inmos). The 6845 is on the video card.' }],
+        pic8259: [0.477, 0.453, 0.116, 0.077], dram4164: [0.608, 0.443, 0.345, 0.490],
+        rom2764: [0.359, 0.073, 0.119, 0.069], rom23256: [0.359, 0.176, 0.119, 0.067],
+        prom24s10: [0.673, 0.101, 0.066, 0.044] },
+      verify: ['cpu8088', 'clk8284', 'rom2764', 'rom23256'],
+      note: 'The 8087 socket is empty. RAM banks 0-3 hold mixed 64K x 1 parts (Hyundai, NEC, OKI, Inmos). The two ROM designators are not legible. The 32K part (1501512) is boxed as U18 and the 8K part (6359116) as U19, as the Technical Reference assigns them. The 82S129 PROM is U44 (silk legible). The 6845 is on the video card.' }],
 
     portable5155: [{
       board: '64-256KB SYSTEM BOARD (XT type)', rev: '64-256KB SYSTEM BOARD (silkscreen)',
@@ -307,11 +325,13 @@
       source: src('Motherboard (54216337134).jpg'),
       chips: {
         cpu8088: [0.170, 0.268, 0.140, 0.057], bus8288: [0.320, 0.212, 0.066, 0.035],
-        clk8284: [0.128, 0.316, 0.048, 0.032], ppi8255: [0.486, 0.222, 0.120, 0.053],
+        clk8284: [0.151, 0.323, 0.056, 0.023], ppi8255: [0.486, 0.222, 0.120, 0.053],
         dma8237: [0.486, 0.283, 0.122, 0.057], pit8253: [0.485, 0.398, 0.083, 0.050],
-        pic8259: [0.480, 0.473, 0.097, 0.052], dram4164: [0.734, 0.454, 0.160, 0.388] },
-      verify: ['cpu8088', 'bus8288'],
-      note: 'Photo taken at an angle on a bench, so boxes are approximate. The 8087 socket (U4) is empty. Banks 0 and 1 carry HY53C256 256K parts (an upgrade); the 4164 box covers banks 2 and 3 (NEC D4164C).' }],
+        pic8259: [0.480, 0.473, 0.097, 0.052], dram4164: [0.734, 0.454, 0.160, 0.388],
+        dram41256: [0.586, 0.458, 0.138, 0.384], rom2764: [0.392, 0.197, 0.092, 0.050],
+        rom23256: [0.392, 0.262, 0.092, 0.058], prom24s10: [0.616, 0.229, 0.047, 0.034] },
+      verify: ['cpu8088', 'bus8288', 'rom23256'],
+      note: 'Photo taken at an angle on a bench, so boxes are approximate. The 8087 socket (U4) is empty. The 8284 box is U1 (silk legible), under the left end of the CPU; its marking is not legible. Banks 0 and 1 carry HY53C256 256K parts (an upgrade) and the 4164 box covers banks 2 and 3 (NEC D4164C). The ROMs are U19 (6359116, silk legible) and U18 (1501512, designator not clearly legible). The PROM is U44. The National part marked SP8508 next to U1 and two chips under blue stickers are not identified.' }],
 
     pcjr: [{
       board: 'PCjr system board', rev: 'Revision not readable',
@@ -322,9 +342,13 @@
         cpu8088: [0.732, 0.482, 0.152, 0.060], pic8259: [0.762, 0.397, 0.112, 0.052],
         pit8253: [0.739, 0.300, 0.095, 0.059], ppi8255: [0.566, 0.303, 0.150, 0.057],
         crtc6845: [0.192, 0.309, 0.153, 0.058], sn76496: [0.052, 0.311, 0.063, 0.031],
-        clk8284: [0.856, 0.182, 0.066, 0.031] },
-      verify: ['cpu8088', 'pic8259', 'pit8253', 'ppi8255', 'crtc6845', 'sn76496', 'clk8284'],
-      note: 'Shown as uploaded: cartridge slots at the front (bottom), sidecar connector on the right. Chips are fitted both ways round, so some markings read upside down. The board prints almost no reference designators near the chips, so every chip was placed by its part marking. The video gate array was not identified with certainty (the 40-pin IBM 1503730 left of center is a candidate).' }],
+        clk8284: [0.856, 0.182, 0.066, 0.031], pcjr_ga: [0.216, 0.437, 0.152, 0.053],
+        uart8250: [0.153, 0.206, 0.150, 0.053], rom2732: [0.316, 0.764, 0.097, 0.056],
+        rom23256: [[0.555, 0.670, 0.111, 0.062, 'XX1'], [0.555, 0.748, 0.111, 0.061, 'ZM63']],
+        dram4164: [0.040, 0.740, 0.166, 0.186], prom24s10: [0.721, 0.663, 0.059, 0.033],
+        prom28l22: [0.537, 0.614, 0.071, 0.033] },
+      verify: [],
+      note: 'Shown as uploaded: cartridge slots at the front (bottom), sidecar connector on the right. Chips are fitted both ways round, so some markings read upside down. The board prints almost no reference designators near the chips. Every chip was identified by its part marking and placed against the component layout in the PCjr Technical Reference (System Board sheet 17 of 17). The video gate array is the IBM 1503730 at ZM36. The 24-pin IBM 1503723 is the character ROM at ZM64. The 4164 box covers ZM61-ZM77.' }],
 
     model1: [{
       board: 'CPU board 1700069', rev: 'Revision not readable (serial 112788)',
@@ -336,6 +360,6 @@
         'cg-mcm6670': [0.292, 0.380, 0.022, 0.088], sram2102: [0.224, 0.492, 0.123, 0.078],
         'rom-trs80-model1': [0.440, 0.418, 0.108, 0.124] },
       verify: [],
-      note: 'The keyboard sits in front of the board and a ribbon cable covers the lower left. The 2102 box covers Z45-Z48; Z61-Z63 are under the cable. The ROM box covers Z33 (with the ribbon plug to the ROM board) and Z34. The 1771 is in the Expansion Interface, not shown.' }],
+      note: 'The keyboard sits in front of the board and a ribbon cable covers the lower left. The 2102 box covers Z45-Z48; Z61-Z63 are under the cable. The ROM box covers Z33 (with the ribbon plug to the ROM board) and Z34. Not boxed: Z23 (74LS32), Z72 (74LS367), the 723 regulators Z1 and Z2, and the DIP shunts Z3 and Z71. The 1771 is in the Expansion Interface, not shown.' }],
   });
 })();

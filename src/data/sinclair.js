@@ -207,7 +207,7 @@ RCS.add({
     zx81: {
       id: 'zx81', brand: 'sinclair', name: 'ZX81', aka: 'ZX81 (UK), Timex Sinclair 1000 (US, see ts1000)', year: 1981, status: 'ready',
       cpu: 'Z80A @ 3.25 MHz', ram: '1 KB base (2 x 2114 or 1 x 4118); 16 KB via RAM pack', rom: '8 KB BASIC (floating point)', video: 'Monochrome, 32 x 24 text, 64 x 44 block graphics', sound: 'None', os: 'Sinclair BASIC 8K',
-      chips: ['ula_zx81', 'cpuz80', 'sram2114', 'rom_zx81'],
+      chips: ['ula_zx81', 'cpuz80', 'sram2114', 'sram4118', 'rom_zx81'],
       tagline: 'Four chips and a ULA.'
     },
     spectrum: {
@@ -375,6 +375,43 @@ RCS.add({
       datasheets: [
         S('TI TMS 2114 data sheet, pin diagram, 1980 TI MOS Memory Data Book p. 79', TI80),
         S('ZX81 circuit diagram SRC 049 (IC4a, IC4b 2114)', ZX81SCH)
+      ]
+    },
+    sram4118: {
+      id: 'sram4118', name: 'MK4118 SRAM 1K x 8', short: '4118', family: 'Static RAM (NMOS)', role: 'Static RAM: the single-chip 1 KB option of the ZX81', pkg: 'DIP-24',
+      machines: ['zx81'], location: { zx81: 'IC4, the 24-pin option in place of the 2114 pair' },
+      summary: '1K x 8 static RAM in 24 pins on +5 V alone (Mostek MK4118). One chip gives the ZX81 its 1 KB. Pin 19 is a latch input: tied HIGH it makes the chip a plain static RAM. A 2K x 8 6116 has A10 on pin 19, so it is not a direct swap unless pin 19 is held at the level the board expects. A bad 4118 gives garbage on the screen or a crash. ZX81: IC4 takes it in place of the two 2114s IC4a and IC4b, and the wire link L1 must be fitted with it (ZX81 Service and Assembly Manual).',
+      fails: ['Garbled screen', 'Crashes', 'Will not run listings'],
+      heat: 'cool', verifiedAgainst: 'Mostek MK4118 data sheet, pin connections, 1980 Mostek Memory Data Book p. VI-11',
+      pins: [
+        { n: 1, name: 'A7', type: 'addr', dir: 'in', desc: 'Address bit 7.' },
+        { n: 2, name: 'A6', type: 'addr', dir: 'in', desc: 'Address bit 6.' },
+        { n: 3, name: 'A5', type: 'addr', dir: 'in', desc: 'Address bit 5.' },
+        { n: 4, name: 'A4', type: 'addr', dir: 'in', desc: 'Address bit 4.' },
+        { n: 5, name: 'A3', type: 'addr', dir: 'in', desc: 'Address bit 3.' },
+        { n: 6, name: 'A2', type: 'addr', dir: 'in', desc: 'Address bit 2.' },
+        { n: 7, name: 'A1', type: 'addr', dir: 'in', desc: 'Address bit 1.' },
+        { n: 8, name: 'A0', type: 'addr', dir: 'in', desc: 'Address bit 0.' },
+        { n: 9, name: 'DQ0', type: 'data', dir: 'bidir', desc: 'Data in/out 0.', terms: ['tristate'] },
+        { n: 10, name: 'DQ1', type: 'data', dir: 'bidir', desc: 'Data in/out 1.', terms: ['tristate'] },
+        { n: 11, name: 'DQ2', type: 'data', dir: 'bidir', desc: 'Data in/out 2.', terms: ['tristate'] },
+        { n: 12, name: 'VSS', type: 'ground', dir: '-', desc: '0 V.', terms: ['gnd'], probe: '0 V' },
+        { n: 13, name: 'DQ3', type: 'data', dir: 'bidir', desc: 'Data in/out 3.', terms: ['tristate'] },
+        { n: 14, name: 'DQ4', type: 'data', dir: 'bidir', desc: 'Data in/out 4.', terms: ['tristate'] },
+        { n: 15, name: 'DQ5', type: 'data', dir: 'bidir', desc: 'Data in/out 5.', terms: ['tristate'] },
+        { n: 16, name: 'DQ6', type: 'data', dir: 'bidir', desc: 'Data in/out 6.', terms: ['tristate'] },
+        { n: 17, name: 'DQ7', type: 'data', dir: 'bidir', desc: 'Data in/out 7.', terms: ['tristate'] },
+        { n: 18, name: '/CE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Chip enable, active LOW.', terms: ['cs'] },
+        { n: 19, name: '/L', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Latch: LOW latches the address and /CE; tie HIGH for plain static operation.' },
+        { n: 20, name: '/OE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Output enable, active LOW.' },
+        { n: 21, name: '/WE', type: 'ctrl', dir: 'in', activeLow: true, desc: 'Write enable. LOW writes the data pins.' },
+        { n: 22, name: 'A9', type: 'addr', dir: 'in', desc: 'Address bit 9.' },
+        { n: 23, name: 'A8', type: 'addr', dir: 'in', desc: 'Address bit 8.' },
+        { n: 24, name: 'VCC', type: 'power', dir: '-', desc: '+5 V supply.', terms: ['vcc'], probe: '+5 V' }
+      ],
+      datasheets: [
+        S('Mostek MK4118 1K x 8 static RAM data sheet, pin connections, 1980 Mostek Memory Data Book p. VI-11 (PDF p. 156)', 'https://bitsavers.org/components/mostek/_dataBooks/1980_Mostek_Memory_Data_Book_and_Designers_Guide.pdf#page=156'),
+        S('ZX81 Service and Assembly Manual (transcribed): IC4 MK4118 or IC4a/IC4b 2114, link L1 with the 4118, PDF pp. 2 and 7', ZX81SAM(2))
       ]
     },
     rom_zx81: {

@@ -1167,7 +1167,7 @@ const machinesAtari = {
     cpu: '6502C (SALLY) @ 1.79 MHz', ram: '64 KB (eight 4164)',
     rom: 'OS ROM 16 KB, BASIC Rev. B 8 KB (built in)', video: 'ANTIC + GTIA',
     sound: 'POKEY, 4 voices', os: 'Atari OS XL',
-    chips: ['cpu6502c', 'antic', 'gtia', 'pokey', 'pia6520', 'mmu61618', 'freddie', 'dram4164'],
+    chips: ['cpu6502c', 'antic', 'gtia', 'pokey', 'pia6520', 'mmu61618', 'freddie', 'dram4164', 'rom27128', 'rom2364'],
     tagline: 'The 800 successor: SALLY, the MMU and 64 KB, with the OS and BASIC built in.',
   },
   atari130xe: {
@@ -1187,7 +1187,9 @@ RCS.add({
   chipLocations: {
     atari400: { cpu6502: 'A303 (CPU board)', pia6520: 'A102 (motherboard)', dram4116: 'RAM board' },
     atari800: { cpu6502: 'A303 (CPU board)', pia6520: 'A102 (motherboard)', dram4116: 'RAM boards (slots J102-J104)' },
-    atari800xl: { pia6520: 'U23', dram4164: 'U9-U16' },
+    atari800xl: { pia6520: 'U23', dram4164: 'U9-U16',
+      rom27128: 'U5, OS ROM 16K x 8 (C061598-29 on the photographed board). The FSM schematic draws a 27128 with pins 1 (VPP) and 27 (PGM) at +5 V.',
+      rom2364: 'U4, BASIC ROM 8K x 8 (C024947A-01 on the photographed board)' },
     atari130xe: { pia6520: 'U23', dram4164: 'U9-U16, U26-U33' },
   },
   symptoms: { atari400: atariSymptoms, atari800: atariSymptoms, atari600xl: xlSymptoms, atari800xl: xlSymptoms, atari130xe: xlSymptoms },

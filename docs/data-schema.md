@@ -449,8 +449,13 @@ RCS.addPhotos({ c64: [{
   note: 'Optional: what differs from other revisions.' }] });
 ```
 - Boxes are fractions (0-1) of the displayed image before `rotate`. Every key in `chips` is a chip id listed in that
-  machine's `chips`. A chip placed by inference (no legible designator, position from the layout drawing) goes in
-  `verify`.
+  machine's `chips`. A box is proven when its designator is legible on the photo, or when a primary-source layout
+  drawing or parts list places the chip there (cite it in the photo `note`). Any other box (placed by elimination, by
+  part marking alone, or from a community redraw) goes in `verify`.
+- A chip that sits in more than one place on the photo (two CIAs apart, two ROMs) takes a list of boxes, each with
+  its own designator as a fifth item: `cia6526: [[0.02, 0.45, 0.04, 0.34, 'U2'], [0.62, 0.50, 0.04, 0.34, 'U1']]`.
+  The designator is shown on that outline. A chip id in `verify` marks all of its boxes; `'cia6526@U1'` marks only
+  the box labeled U1.
 - `author`, `license`, `licenseUrl` and `source` are required; the app prints them under the photo and on the credits
   page.
 - `rotate` is clockwise. `w` and `h` are the stored file's pixel size (the validator reads WebP headers and compares).

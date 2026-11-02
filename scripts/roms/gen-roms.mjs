@@ -50,6 +50,7 @@ const L1541 = ['1540008', '1540048', '250442'];
 const LOC1541C = 'UAB4 on the long board 1540008, UB3 on the short boards';
 const LOC1541E = 'UAB5 on the long board 1540008, UB4 on the short boards';
 const GROM = { sizeNote: '6 KB: the GROM holds 6144 bytes in an 8 KB address slot' };
+const U19_1986 = '1986 board: MAME stores a 32 KB image and, unlike 5000027, notes no repeat, so this U19 is taken to hold a 32K x 8 ROM, not the 8K part of the earlier boards. No IBM drawing of the 1986 board was read.';
 const A2NOTE = 'MAME notes this dump needs verification against a labeled chip.';
 const COCONOTE = "MAME's coco set covers the Color Computer 1 and 2 and does not say which model shipped which version.";
 
@@ -193,12 +194,12 @@ const spec = {
     M(PC, 411, { part: '5700043', name: 'Cassette BASIC, $FC000', version: 'C1.00', loc: 'U32' }),
   ],
   xt5160: [
-    M(PC, 501, { part: '5000027', name: 'BASIC, $F0000', version: '08/16/82 and 11/08/82', loc: 'U19', note: 'MAME: contents repeat four times.' }),
+    M(PC, 501, { part: '5000027', name: 'BASIC, $F0000', version: '08/16/82 and 11/08/82', chip: 'rom2764', loc: 'U19', sizeNote: '32 KB as MAME stores it: the 8K x 8 ROM\'s contents four times over. A dump of the chip alone is 8 KB and will not match this hash; repeat it four times before comparing.', note: 'MAME: contents repeat four times; FRU 6359116, the part marked on the photographed U19.' }),
     M(PC, 502, { part: '5000026', name: 'BIOS, $F8000', version: '08/16/82', loc: 'U18', note: 'MAME: a rare revision, seen on two machines.' }),
     M(PC, 506, { part: '1501512', name: 'BIOS, $F8000', version: '11/08/82', loc: 'U18' }),
-    M(PC, 509, { part: '62X0854', name: 'BASIC, $F0000', version: '01/10/86', loc: 'U19' }),
+    M(PC, 509, { part: '62X0854', name: 'BASIC, $F0000', version: '01/10/86', chip: 'rom23256', loc: 'U19', note: U19_1986, verify: true }),
     M(PC, 510, { part: '62X0851', name: 'BIOS, $F8000', version: '01/10/86', loc: 'U18' }),
-    M(PC, 513, { part: '68X4370', name: 'BASIC, $F0000', version: '05/09/86', loc: 'U19' }),
+    M(PC, 513, { part: '68X4370', name: 'BASIC, $F0000', version: '05/09/86', chip: 'rom23256', loc: 'U19', note: U19_1986, verify: true }),
     M(PC, 514, { part: '62X0890', name: 'BIOS, $F8000', version: '05/09/86', loc: 'U18' }),
   ],
   zx81: [

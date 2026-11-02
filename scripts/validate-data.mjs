@@ -422,12 +422,20 @@ for (const [mid, list] of Object.entries(R.photos || {})) {
     const chips = p.chips && typeof p.chips === 'object' ? p.chips : {};
     for (const [cid, b] of Object.entries(chips)) {
       if (!(m.chips || []).includes(cid)) err(f, `${at} box for ${cid}, which is not a chip of ${mid}`);
-      if (!Array.isArray(b) || b.length !== 4 || !b.every(Number.isFinite)) { err(f, `${at} ${cid} box must be [x, y, w, h]`); continue; }
-      const [x, y, w, h] = b;
-      if (x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > 1 + 1e-9 || y + h > 1 + 1e-9) err(f, `${at} ${cid} box [${b.join(', ')}] is not inside 0-1`);
+      const list = Array.isArray(b) && Array.isArray(b[0]) ? b : [b];
+      for (const q of list) {
+        if (!Array.isArray(q) || q.length < 4 || q.length > 5 || !q.slice(0, 4).every(Number.isFinite) || (q.length === 5 && (typeof q[4] !== 'string' || !q[4]))) { err(f, `${at} ${cid} box must be [x, y, w, h] or [x, y, w, h, 'designator']`); continue; }
+        const [x, y, w, h] = q;
+        if (x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > 1 + 1e-9 || y + h > 1 + 1e-9) err(f, `${at} ${cid} box [${q.join(', ')}] is not inside 0-1`);
+      }
+      if (list.length > 1 && list.some(q => !Array.isArray(q) || q.length !== 5)) err(f, `${at} ${cid} has ${list.length} boxes; give each its designator as a fifth item`);
     }
     if (p.verify != null && !Array.isArray(p.verify)) err(f, `${at} verify must be an array`);
-    for (const cid of p.verify || []) if (!(cid in chips)) err(f, `${at} verify lists ${cid}, which has no box`);
+    for (const v of p.verify || []) {
+      const [cid, des] = String(v).split('@');
+      if (!(cid in chips)) err(f, `${at} verify lists ${cid}, which has no box`);
+      else if (des && !(Array.isArray(chips[cid][0]) ? chips[cid] : [chips[cid]]).some(q => q[4] === des)) err(f, `${at} verify lists ${v}, but no ${cid} box is labeled ${des}`);
+    }
   });
 }
 /* video.js: the #/video reference. Every signal row needs a source that resolves to a sources entry. */

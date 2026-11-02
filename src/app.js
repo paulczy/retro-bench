@@ -1343,6 +1343,15 @@ const rotOf = p => (((Number(p.rotate) || 0) % 360) + 360) % 360;
 function rotBox([x, y, w, h], r) {
   return r === 90 ? [1 - y - h, x, h, w] : r === 180 ? [1 - x - w, 1 - y - h, w, h] : r === 270 ? [y, 1 - x - w, h, w] : [x, y, w, h];
 }
+/* a chip's photo boxes: one [x, y, w, h], or a list of them when the chip sits in more than one place.
+   An optional fifth item is that box's own designator ('U1'). */
+/* a box's designator on the photo's own board (locByBoard), so a 250469 photo says U7 for the VIC-II whatever board is picked */
+function photoDes(c, m, p) {
+  const bid = arr(p.boards).length === 1 && p.boards[0], v = bid && m.locByBoard && m.locByBoard[bid] && m.locByBoard[bid][c.id];
+  const mm = String(v == null ? '' : typeof v === 'string' ? v : v.loc || '').match(/^[A-Z]{1,3}\d{1,3}\b/);
+  return mm ? mm[0] : desOf(c, m);
+}
+const boxList = b => (Array.isArray(b[0]) ? b : [b]);
 const frac = v => `${(v * 100).toFixed(3)}%`;
 const photoBoard = p => [p.board, p.rev].filter(Boolean).join(', ');
 const photoCredit = p => `Photo: ${esc(p.author)}, <a href="${esc(safeUrl(p.licenseUrl))}" target="_blank" rel="noopener license">${esc(p.license)}</a>, via <a href="${esc(safeUrl(p.source && p.source.url))}" target="_blank" rel="noopener">${esc((p.source && p.source.label) || 'source')}</a>`;
@@ -1353,10 +1362,10 @@ function photoFrame(m, p, o = {}) {
   const vfy = new Set(arr(p.verify));
   /* biggest first, so a small chip's enlarged hit area sits on top of a big neighbor */
   const boxes = Object.entries(p.chips || {}).filter(([cid]) => D.chips[cid] && (!o.only || cid === o.only))
-    .map(([cid, b]) => [cid, rotBox(b, r)]).sort((a, b) => b[1][2] * b[1][3] - a[1][2] * a[1][3]);
+    .flatMap(([cid, b]) => boxList(b).map(q => [cid, rotBox(q, r), q[4]])).sort((a, b) => b[1][2] * b[1][3] - a[1][2] * a[1][3]);
   const sel = o.only || state.ph.sel;
-  const box = ([cid, [x, y, w, h]]) => {
-    const c = D.chips[cid], des = desOf(c, m), v = vfy.has(cid), nc = !c.pins;
+  const box = ([cid, [x, y, w, h], own]) => {
+    const c = D.chips[cid], des = own || photoDes(c, m, p), v = vfy.has(cid) || (own && vfy.has(`${cid}@${own}`)), nc = !c.pins;
     const cls = `pbox${v ? ' vfy' : ''}${cid === sel ? ' on' : ''}${y < 0.14 ? ' tb' : ''}${x + w / 2 > 0.5 ? ' tr' : ''}`;
     const style = `left:${frac(x)};top:${frac(y)};width:${frac(w)};height:${frac(h)}`;
     const tip = `<span class="ptip">${esc(des)} <b>${esc(c.short)}</b>${v ? ' <span class="chk">Unverified</span>' : ''}</span>${v ? '<span class="pck" aria-hidden="true">?</span>' : ''}`;
@@ -1370,11 +1379,11 @@ function photoFrame(m, p, o = {}) {
 }
 function photoBody(m) {
   const list = photosOf(m), i = Math.min(state.ph.i, list.length - 1), p = list[i];
-  const nBox = Object.keys(p.chips || {}).length, nV = arr(p.verify).length;
+  const nBox = Object.values(p.chips || {}).reduce((n, b) => n + boxList(b).length, 0), nV = arr(p.verify).length;
   return `${list.length > 1 ? `<div class="jumpers ptabs" role="group" aria-label="Board photos">${list.map((q, k) => `<button type="button" data-act="photo-tab" data-i="${k}" aria-pressed="${k === i}" class="${k === i ? 'on' : ''}">${esc(q.board || `Photo ${k + 1}`)}${q.rev ? ` ${esc(q.rev)}` : ''}</button>`).join('')}</div>` : ''}
     <div class="pview${state.ph.big ? ' big' : ''}" id="pview">${photoFrame(m, p)}</div>
     <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-2.5"><button type="button" class="btn${state.ph.big ? ' on' : ''}" data-act="photo-big" aria-pressed="${state.ph.big}">${state.ph.big ? 'Fit to width' : 'Full size'}</button>
-      <span class="tin sm">${nBox ? `${nBox} chip${nBox === 1 ? '' : 's'} outlined. Tap an outline for its pinout${nV ? `` : ''}.${nV ? ` <span class="pkey"><span class="pck-k" aria-hidden="true">?</span> Dashed with ?: <button type="button" class="term" data-term="unverified">unverified</button>. The designator next to it can't be read in this photo, so it was placed from the chip's marking or the board layout.</span>` : ''}` : 'No chips outlined on this photo yet.'}</span></div>
+      <span class="tin sm">${nBox ? `${nBox} chip${nBox === 1 ? '' : 's'} outlined. Tap an outline for its pinout${nV ? `` : ''}.${nV ? ` <span class="pkey"><span class="pck-k" aria-hidden="true">?</span> Dashed with ?: <button type="button" class="term" data-term="unverified">unverified</button>. Neither a legible designator nor a primary layout drawing confirms its position; it was placed by the chip's marking or by elimination.</span>` : ''}` : 'No chips outlined on this photo yet.'}</span></div>
     <p class="pcap"><b>${esc(photoBoard(p))}</b>${recTag(p, m)}${p.side ? `, ${esc(p.side)} side` : ''}${p.note ? `. <span class="tin">${esc(p.note)}</span>` : ''}</p>
     <p class="pcred">${photoCredit(p)}. Resized only; the outlines are drawn by Retro Bench.</p>`;
 }
