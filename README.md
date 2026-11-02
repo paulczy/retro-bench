@@ -16,7 +16,7 @@ Counted on 30 October 2026: **62 machines across 15 makers** (50 with full data,
 
 ### Chips, pin by pin
 
-Every chip is a DIP footprint seen from above. Tap a pad and a copper trace runs to the pin detail: direction, type, what a working pin reads, and on this machine what frequency or level to expect. Filters pick out power, clock, reset, ground, address, data and control pins. `VIEW: TOP / BOTTOM` flips the chip for probing from the solder side. Pins reconstructed from incomplete sources carry a `CHECK` mark; every chip names the datasheet it was checked against.
+Every chip is a DIP footprint seen from above. Tap a pad and a copper trace runs to the pin detail: direction, type, what a working pin reads, and on this machine what frequency or level to expect. Filters pick out power, clock, reset, ground, address, data and control pins. `VIEW: TOP / BOTTOM` flips the chip for probing from the solder side. Pins reconstructed from incomplete sources carry a `UNVERIFIED` mark; every chip names the datasheet it was checked against.
 
 ![6510 CPU on the Commodore 64, pin 39 selected, copper trace to the pin detail panel showing the expected clock on this machine](docs/screenshots/readme-chip-c64-6510.png)
 
@@ -110,7 +110,7 @@ Plain HTML, vanilla JavaScript and Tailwind CSS v4. No framework, no bundler, no
 All content lives in `src/data/`, one file per maker, in the shape described in [docs/data-schema.md](docs/data-schema.md). The rules:
 
 - **Every table links to its source.** Chip tables name the datasheet or service manual they were checked against. Connectors, rails, test points, clocks, first-ten steps and replacement rows each carry a link a human can open. The **Sources and credits** page in the app lists every cited document by host.
-- **Nothing is invented.** A fact that could not be checked is left out or marked `verify: true`, which the app shows as `CHECK`. Where two sources disagree, the primary one wins and the other is recorded as a conflict on the pin.
+- **Nothing is invented.** A fact that could not be checked is left out or marked `verify: true`, which the app shows as `UNVERIFIED` (tap it for what that means). Where two sources disagree, the primary one wins and the other is recorded as a conflict on the pin.
 - **Sams Computerfacts is secondary.** Sams folders supply measured voltages and waveform photos, but Sams redrew the schematics with its own part numbers. Every block that cites Sams says so.
 - **Scope traces are idealized** from sourced numbers and labeled as such. They are never presented as real captures.
 

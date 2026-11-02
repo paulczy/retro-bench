@@ -170,7 +170,7 @@
   .roms .hash code { font-size: 15px; color: var(--silk); overflow-wrap: anywhere; min-width: 0; flex: 0 1 auto; }
   .btn.cp { min-height: 44px; padding: 4px 10px; font-size: 13px; }
 
-  .chk { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; border: 1px solid var(--tin); color: var(--tin); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; text-transform: uppercase; }
+  .chk { cursor: pointer; display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; border: 1px solid var(--tin); color: var(--tin); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; text-transform: uppercase; }
   .hot { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .1em; color: var(--pwr); border: 1px solid var(--pwr); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; }
   .term { color: inherit; border-bottom: 1px dotted var(--copper); cursor: pointer; padding: 2px 0; font: inherit; }
   .term:hover { color: var(--copper-hi); }
@@ -290,7 +290,7 @@
   /* the tap area grows to 44 px around a small outline without moving it */
   .pbox::before { content: ''; position: absolute; left: 50%; top: 50%; width: max(100% + 8px, 44px); height: max(100% + 8px, 44px); transform: translate(-50%, -50%); }
   .pbox.vfy { border-style: dashed; }
-  .pbox .pck { position: absolute; left: -2px; bottom: 100%; margin-bottom: 2px; padding: 0 3px; font: 9px/12px var(--font-mono); letter-spacing: .1em; color: #111; background: var(--po); border-radius: 1px; pointer-events: none; }
+  .pbox .pck { position: absolute; left: -2px; bottom: 100%; margin-bottom: 2px; padding: 0 3px; font: 600 12px/14px var(--font-mono); color: #111; background: var(--po); border-radius: 1px; pointer-events: none; }
   .pbox.tb .pck { bottom: auto; top: 100%; margin: 2px 0 0; }
   .pwrap.hl .pbox:not(.on) { opacity: .4; }
   .pbox.on { border-width: 3px; border-color: #ffd29a; background: rgba(240,166,96,.22); box-shadow: 0 0 0 2px var(--pd), 0 0 0 9999px rgba(0,0,0,.28); z-index: 2; }
@@ -302,6 +302,8 @@
   .ptip { display: none; position: absolute; left: -2px; bottom: calc(100% + 6px); max-width: 60vw; padding: 3px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--hole); color: var(--silk); border: 1px solid var(--po); border-radius: 2px; font: 14px/20px var(--font-mono); pointer-events: none; }
   .ptip b { font-weight: 400; color: #ffd29a; }
   .ptip .chk { margin-left: 4px; vertical-align: 1px; }
+  .pkey { display: block; margin-top: 4px; }
+  .pck-k { display: inline-block; padding: 0 4px; font: 11px/14px var(--font-mono); color: #111; background: var(--po); border-radius: 1px; margin-right: 4px; }
   .pbox.tr .ptip { left: auto; right: -2px; }
   .pbox.tb .ptip { bottom: auto; top: calc(100% + 6px); }
   .pbox.vfy .ptip { bottom: calc(100% + 20px); }

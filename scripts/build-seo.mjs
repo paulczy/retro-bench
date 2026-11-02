@@ -19,7 +19,7 @@ const R = window.RCS;
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const arr = x => Array.isArray(x) ? x : x ? [x] : [];
-const flag = x => x && (x.verify || x.conflict) ? ' <span class="chk">CHECK</span>' : '';
+const flag = x => x && (x.verify || x.conflict) ? ' <span class="chk">UNVERIFIED</span>' : '';
 const brandName = id => (R.brands.find(b => b.id === id) || {}).name || id;
 const year = m => m.year ? ` (${m.year})` : '';
 const clip = (s, n = 155) => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : s; };
@@ -62,7 +62,7 @@ dl{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px}dt{opacity:.7
 <body><main>
 <nav class="crumbs">${crumbs.map(([n, u]) => `<a href="${u}">${esc(n)}</a>`).join(' / ')}</nav>
 ${body}
-<footer>Retro Bench: an offline reference for 8-bit computer repair. Every value links to the document it was checked against in the app; <span class="chk">CHECK</span> marks a value not yet proven or where sources disagree. Data <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</footer>
+<footer>Retro Bench: an offline reference for 8-bit computer repair. Every value links to the document it was checked against in the app; <span class="chk">UNVERIFIED</span> marks a value not yet proven or where sources disagree. Data <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</footer>
 </main></body>
 </html>
 `;
@@ -119,7 +119,7 @@ const urls = [BASE, `${BASE}m/`, ...machines.map(mUrl), ...chips.map(cUrl)];
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `  <url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
 write('llms.txt', `# Retro Bench
 
-> Offline reference for repairing 8-bit computers: chip pinouts, port pinouts, power rails, test points, clocks, symptoms and ROM hashes. Every value cites the document it was checked against; values marked CHECK are unproven or disputed in the sources.
+> Offline reference for repairing 8-bit computers: chip pinouts, port pinouts, power rails, test points, clocks, symptoms and ROM hashes. Every value cites the document it was checked against; values marked UNVERIFIED are unproven or disputed in the sources.
 
 The app runs at ${BASE} (hash routes, JavaScript). The pages below are static HTML copies of the same data, one per machine and per chip.
 

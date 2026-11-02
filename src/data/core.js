@@ -139,6 +139,12 @@ window.RCS = (() => {
     "long": "TI's SN74LS00 data sheet gives a high-level input voltage (VIH) of 2 V minimum. NMOS and CMOS parts can use different thresholds; the chip's own data sheet wins.",
     "source": { "label": "TI SN74LS00 data sheet (SDLS025D), 6.3 Recommended operating conditions, VIH, p. 4", "url": "https://www.ti.com/lit/ds/symlink/sn74ls00.pdf#page=4" }
   },
+  "unverified": {
+    "term": "Unverified",
+    "short": "Not yet proven by a primary source, or two sources disagree.",
+    "long": "Retro Bench shows it rather than hiding it, as the best reading of the sources it has. The note beside it says what is missing, or quotes the sources that disagree. Confirm it on your board before you rely on it: read the chip markings, or measure. On a board photo, a dashed outline with ? is unverified because the designator printed next to that chip can't be read in the photo, so the outline was placed from the chip's own marking or from the board layout.",
+    "source": { "label": "Retro Bench data rules (docs/data-schema.md, Sources and verification)", "url": "https://github.com/paulczy/retro-bench/blob/main/docs/data-schema.md#sources-and-verification" }
+  },
   "pulsing": {
     "term": "Pulsing",
     "short": "The pin keeps switching between LOW and HIGH.",

@@ -151,8 +151,9 @@ const mPath = m => `#/${m.brand}/${m.id}`;
 const chipPath = (m, c) => `${mPath(m)}/chip/${c.id}`;
 const ptype = t => D.pinTypes[t] || { label: t || 'Other', hint: '' };
 const statusOf = m => STATUS[m.status] || String(m.status || '').toUpperCase();
-const chk = () => '<span class="chk" title="Reconstructed from incomplete sources; check against a datasheet">Check</span>';
-/* verify and conflict on any record (rail, test point, clock, step, scope, replacement, supply, note): the CHECK
+/* the UNVERIFIED stamp: tap it (any screen, no hover needed) for what it means, from the glossary */
+const chk = () => '<span class="chk" data-term="unverified" role="button" tabindex="0" aria-label="Unverified. What this means">Unverified</span>';
+/* verify and conflict on any record (rail, test point, clock, step, scope, replacement, supply, note): the UNVERIFIED
    stamp on screen; on the print card the words "(unverified)", since a stamp's border may not print.
    One rule for every renderer: a record with verify OR conflict is flagged; a conflict also prints its text
    after the exact words "Sources disagree:". Everything below goes through flagged() and disagree(). */
@@ -782,7 +783,7 @@ function boardGrid(m, chips, onPhoto, print = false) {
   return `<div class="board-grid" role="group" aria-label="Chips on the ${esc(m.name)} board">${chips.map(c => {
     const des = desOf(c, m), nc = !c.pins, role = String(c.role || '').split(/[,(]/)[0].trim();
     const cell = `<a class="bcell${nc ? ' nc' : ''}" href="${nc ? mPath(m) + '/pinouts' : chipPath(m, c)}" aria-label="${esc(des)} ${esc(c.name)}${nc ? ', pinout not captured' : ''}">
-      <span class="bl"><span class="des">${esc(des)}</span>${chipTag(c, m, print)}${c.heat === 'hot' ? '<span class="flag pwr">HOT</span>' : ''}${nc ? '<span class="flag">NOT CAPTURED</span>' : ''}${chipFlagged(c) ? (print ? '<span class="flag">(unverified)</span>' : '<span data-chk class="flag">CHECK</span>') : ''}<span class="pn">${esc(c.pkg || '')}</span></span>
+      <span class="bl"><span class="des">${esc(des)}</span>${chipTag(c, m, print)}${c.heat === 'hot' ? '<span class="flag pwr">HOT</span>' : ''}${nc ? '<span class="flag">NOT CAPTURED</span>' : ''}${chipFlagged(c) ? (print ? '<span class="flag">(unverified)</span>' : '<span data-chk class="flag" data-term="unverified" aria-label="Unverified. What this means">UNVERIFIED</span>') : ''}<span class="pn">${esc(c.pkg || '')}</span></span>
       <span class="bfp"><svg viewBox="0 0 ${BOARD_FW} 46" aria-hidden="true">${dipFootprint(c, m, 0, 0, BOARD_FW, false)}</svg></span>
       <span class="role">${esc(role)}</span>${chipConflicts(c).map(x => disagree(x, 'bcf', 'span')).join('')}</a>`;
     /* a chip outlined on the board photo gets a locate button; hovering or focusing the cell lights its outline */
@@ -1358,8 +1359,8 @@ function photoFrame(m, p, o = {}) {
     const c = D.chips[cid], des = desOf(c, m), v = vfy.has(cid), nc = !c.pins;
     const cls = `pbox${v ? ' vfy' : ''}${cid === sel ? ' on' : ''}${y < 0.14 ? ' tb' : ''}${x + w / 2 > 0.5 ? ' tr' : ''}`;
     const style = `left:${frac(x)};top:${frac(y)};width:${frac(w)};height:${frac(h)}`;
-    const tip = `<span class="ptip">${esc(des)} <b>${esc(c.short)}</b>${v ? ' <span class="chk">Check</span>' : ''}</span>${v ? '<span class="pck" aria-hidden="true">CHECK</span>' : ''}`;
-    if (o.only) return `<span class="${cls}" style="${style}">${v ? '<span class="pck" aria-hidden="true">CHECK</span>' : ''}</span>`;
+    const tip = `<span class="ptip">${esc(des)} <b>${esc(c.short)}</b>${v ? ' <span class="chk">Unverified</span>' : ''}</span>${v ? '<span class="pck" aria-hidden="true">?</span>' : ''}`;
+    if (o.only) return `<span class="${cls}" style="${style}">${v ? '<span class="pck" aria-hidden="true">?</span>' : ''}</span>`;
     return `<a class="${cls}" data-pchip="${esc(cid)}" style="${style}" href="${nc ? mPath(m) + '/pinouts' : chipPath(m, c)}" aria-label="${esc(des)} ${esc(c.name)}${v ? ', position not confirmed by a printed designator' : ''}${nc ? ', pinout not captured' : ''}">${tip}</a>`;
   };
   return `<div class="pwrap${sel && boxes.some(b => b[0] === sel) ? ' hl' : ''}" style="aspect-ratio:${W} / ${H};--pw:${W}px;--pr:${(W / H).toFixed(4)}">
@@ -1373,7 +1374,7 @@ function photoBody(m) {
   return `${list.length > 1 ? `<div class="jumpers ptabs" role="group" aria-label="Board photos">${list.map((q, k) => `<button type="button" data-act="photo-tab" data-i="${k}" aria-pressed="${k === i}" class="${k === i ? 'on' : ''}">${esc(q.board || `Photo ${k + 1}`)}${q.rev ? ` ${esc(q.rev)}` : ''}</button>`).join('')}</div>` : ''}
     <div class="pview${state.ph.big ? ' big' : ''}" id="pview">${photoFrame(m, p)}</div>
     <div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-2.5"><button type="button" class="btn${state.ph.big ? ' on' : ''}" data-act="photo-big" aria-pressed="${state.ph.big}">${state.ph.big ? 'Fit to width' : 'Full size'}</button>
-      <span class="tin sm">${nBox ? `${nBox} chip${nBox === 1 ? '' : 's'} outlined. Tap an outline for its pinout${nV ? `; dashed outlines marked CHECK were placed from the layout, not a printed designator` : ''}.` : 'No chips outlined on this photo yet.'}</span></div>
+      <span class="tin sm">${nBox ? `${nBox} chip${nBox === 1 ? '' : 's'} outlined. Tap an outline for its pinout${nV ? `` : ''}.${nV ? ` <span class="pkey"><span class="pck-k" aria-hidden="true">?</span> Dashed with ?: <button type="button" class="term" data-term="unverified">unverified</button>. The designator next to it can't be read in this photo, so it was placed from the chip's marking or the board layout.</span>` : ''}` : 'No chips outlined on this photo yet.'}</span></div>
     <p class="pcap"><b>${esc(photoBoard(p))}</b>${recTag(p, m)}${p.side ? `, ${esc(p.side)} side` : ''}${p.note ? `. <span class="tin">${esc(p.note)}</span>` : ''}</p>
     <p class="pcred">${photoCredit(p)}. Resized only; the outlines are drawn by Retro Bench.</p>`;
 }
@@ -1845,7 +1846,7 @@ function viewVideo() {
   const V = D.video;
   if (!V) return emptyBlk('NOT LOADED', 'src/data/video.js is missing.');
   const groups = VIDEO_GROUPS.map(([g, title, sub]) => [g, title, sub, arr(V.signals).filter(r => r.group === g)]).filter(x => x[3].length);
-  return head('', 'Video signals', 'What a composite, RGBI, RGB, luma/chroma or RF output should measure. Every number links to the standard or manual it comes from; <span class="mono">CHECK</span> marks the few that no source here gives.') + `
+  return head('', 'Video signals', 'What a composite, RGBI, RGB, luma/chroma or RF output should measure. Every number links to the standard or manual it comes from; <span class="mono">UNVERIFIED</span> marks the few that no source here gives.') + `
     <div class="mt-3">${regionBar()}</div>
     <nav class="jumpers" aria-label="Sections">${groups.map(([g, title]) => `<a href="#/video?at=v-${g}">${esc(title.split(',')[0])}</a>`).join('')}</nav>
     <section class="blk"><span class="lbl">One line, PAL</span>
@@ -2341,6 +2342,7 @@ function go(href) { const h = href.replace(/^#/, ''); if (location.hash === '#' 
 function palGo() { const it = state.palItems[state.palIdx]; if (!it) return; closePalette(); go(it.href); }
 
 /* ---------- events ---------- */
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.chk[data-term]')) { e.preventDefault(); e.target.click(); } });
 document.addEventListener('click', e => {
   const pop = $('#pop');
   if (pop.dataset.open && !pop.contains(e.target) && !e.target.closest('[data-term]')) closePop();
