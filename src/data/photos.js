@@ -46,7 +46,7 @@
       cpu6510: [0.443, 0.199, 0.039, 0.276], pla82s100: [0.444, 0.475, 0.037, 0.198],
       sid6581: [0.505, 0.479, 0.040, 0.194], dram4164: [0.099, 0.560, 0.140, 0.308] },
     verify: ['rom2364', 'rom2332'],
-    note: 'Copper text "©1982 COMMODORE INTL KU-14194HB"; no assy number. The VIC-II (U19) is under the closed RF shield. The ROM designators (U3-U5) are not legible on the photo; the positions of U3, U4 (901226-01, 901227-02) and U5 (901225-01) are proven against the KU-14194HB Rev B KiCad layout by bwack (a redraw of the board, not a Commodore drawing). The cia6526 box covers U1 (legible) and U2. The PLA is marked C64A 93459 DC (a Fairchild 82S100 type).' },
+    note: 'Copper text "©1982 COMMODORE INTL KU-14194HB"; no assy number. The VIC-II (U19) is under the closed RF shield. The ROM designators (U3-U5) are not legible on the photo; the positions of U3, U4 (901226-01, 901227-02) and U5 (901225-01) match the KU-14194HB Rev B KiCad layout by bwack, but that is a community redraw, not a Commodore drawing, so they stay unverified. The cia6526 box covers U1 (legible) and U2. The PLA is marked C64A 93459 DC (a Fairchild 82S100 type).' },
   {
     board: 'Assy 250407 (A, CR)', boards: ['250407'], rev: 'Rev A',
     file: 'photos/c64-250407-reva.webp', w: 1600, h: 822, side: 'component', rotate: 0,
@@ -83,7 +83,7 @@
     sid6581: [0.379, 0.202, 0.039, 0.186], pla82s100: [0.413, 0.511, 0.034, 0.184],
     sram2114: [0.336, 0.753, 0.021, 0.122], vic2: [0.554, 0.672, 0.127, 0.088] },
   verify: [],
-  note: 'RF shield lid removed, so the VIC-II (U19, 6569R5, PAL) is visible. The CIA box is U2 (MOS 8521R0, a 6526-type CIA); U1 (6526A) is to its left, and its designator is hidden. The 2364 box covers U3 (BASIC) and U4 (KERNAL). Color RAM U6 (AM2114-2): its designator is not legible on the photo; its position is proven against the C64/C64C Service Manual 314001-03, p. 36 (B-3 board layout) and Sams Computerfacts CC20, p. 5 (GridTrace: U6 K-10, below U7 at D-10). Two 64K x 4 DRAMs at U9 and U10 replace the eight 4164s. GFDL: the app must ship the GFDL text.' },
+  note: 'RF shield lid removed, so the VIC-II (U19, 6569R5, PAL) is visible. The CIA box is U2 (MOS 8521R0, a 6526-type CIA); U1 (6526A) is to its left, and its designator is hidden. The 2364 box covers U3 (BASIC) and U4 (KERNAL). Color RAM U6 (AM2114-2): its designator is not legible on the photo; its position is proven against the C64/C64C Service Manual 314001-03, p. 36 (B-3 board layout) and Sams Computerfacts CC20, p. 5 (GridTrace: U6 K-10, below U7 at D-10). Two 64K x 4 DRAMs at U9 and U10 replace the eight 4164s.' },
 {
   board: 'Assy 250469 rev A (E, short board)', boards: ['250469a'], rev: 'PCB 252311 Rev A',
   file: 'photos/c64-250469a.webp', w: 1024, h: 404, side: 'component', rotate: 0,
@@ -94,7 +94,7 @@
     cpu6510: [0.226, 0.300, 0.041, 0.322], sram2114: [0.385, 0.548, 0.020, 0.150],
     vic2: [0.427, 0.464, 0.043, 0.328], sid6581: [0.566, 0.602, 0.041, 0.232] },
   verify: ['cia6526'],
-  note: 'Small original (1024 x 404, shown at its own size), so no designators are legible. Positions of U2 (6526), U5 (901225-01), U6 (CPU), U19 (2114), U7 (VIC) and U9 (SID) proven against the C64/C64C Service Manual 314001-03, p. 41 (E board layout, PCB 252311) and p. 40 (parts list #250469-01). The CIA box is U2; U1 is at the right, next to the SID. The 2114 (U19) is the 18-pin chip between the memory controller (U8) and the VIC; the rev B board has no chip there. GFDL: the app must ship the GFDL text.' },
+  note: 'Small original (1024 x 404, shown at its own size), so no designators are legible. Positions of U5 (901225-01), U6 (CPU), U19 (2114), U7 (VIC) and U9 (SID) proven against the C64/C64C Service Manual 314001-03, p. 41 (E board layout, PCB 252311) and p. 40 (parts list #250469-01). The CIA box is U2 and stays unverified: its label in the scan reads like U7, so it was identified by elimination. U1 is at the right, next to the SID. The 2114 (U19) is the 18-pin chip between the memory controller (U8) and the VIC; the rev B board has no chip there.' },
 {
   board: 'Assy 250469 rev B (E, short board)', boards: ['250469b'], rev: 'PCB 252311 Rev B (1992)',
   file: 'photos/c64-250469b.webp', w: 1600, h: 570, side: 'component', rotate: 0,
@@ -272,7 +272,7 @@
         pia6821: [0.428, 0.618, 0.050, 0.305], mux14529: [0.158, 0.605, 0.034, 0.115],
         dram4116: [0.488, 0.045, 0.405, 0.290] },
       verify: ['sam6883', 'dram4116'],
-      note: 'Flatbed scan. The PIA box is IC26 (a sticker covers its marking); the second PIA (IC35) is at the right edge. 16 x MK4116 in two rows; their designators are not legible. SAM placed by marking (SN74LS783N); its designator is not visible. GFDL: the app must ship the GFDL text.' }],
+      note: 'Flatbed scan. The PIA box is IC26 (a sticker covers its marking); the second PIA (IC35) is at the right edge. 16 x MK4116 in two rows; their designators are not legible. SAM placed by marking (SN74LS783N); its designator is not visible.' }],
 
     pc5150: [{
       board: '16KB-64KB CPU', rev: '16KB-64KB CPU (silkscreen)',
