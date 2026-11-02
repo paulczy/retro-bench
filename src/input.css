@@ -457,12 +457,22 @@
   .btag { display: inline-block; font: 12px/16px var(--font-mono); letter-spacing: .06em; color: var(--copper); border: 1px dashed var(--copper); border-radius: 2px; padding: 1px 5px 0; vertical-align: 2px; margin-left: 6px; white-space: normal; text-transform: none; }
   .btag.on { border-style: solid; text-transform: uppercase; }
   .legend.brevs .k.on { color: var(--copper); }
-  .mtabs { display: flex; min-width: 0; max-width: 100%; gap: 0 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
-  .mtabs::-webkit-scrollbar { display: none; }
-  .mtabs a { flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font: 15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk-70); border-bottom: 3px solid transparent; }
-  .mtabs a:hover { color: var(--silk); }
-  .mtabs a.on { color: var(--copper); border-bottom-color: var(--copper); }
-  .mtabs a.off { color: var(--silk-25); text-decoration: line-through dotted; pointer-events: none; }
+  /* the machine's five pages as cards (J0-J4); the page you are on is the copper pour. Once the bar sticks they
+     drop the count line and sit on one row (watchStuck in app.js). */
+  .mcards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; padding: 8px 0 10px; }
+  .mcard { display: flex; flex-direction: column; min-width: 0; padding: 8px 12px 9px; border: var(--w) solid var(--silk-70); border-radius: var(--radius-silk); color: var(--silk); }
+  .mcard .j { font: 12px var(--font-mono); letter-spacing: .1em; color: var(--copper); }
+  .mcard .t { font: 500 19px/1.1 var(--font-sans); text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+  .mcard .m { font: 13px var(--font-mono); color: var(--tin); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mcard:hover { border-color: var(--copper); }
+  .mcard.on { background: var(--copper); border-color: var(--copper-dk); color: var(--copper-ink); box-shadow: inset 0 0 0 3px var(--copper-dk); }
+  .mcard.on .j, .mcard.on .m { color: var(--copper-ink); }
+  .mcard.off { border-style: dashed; border-color: var(--silk-25); color: var(--silk-25); pointer-events: none; }
+  .mcard.off .j, .mcard.off .m { color: var(--silk-25); }
+  .mbar.stuck .mcards { padding: 6px 0; gap: 8px; }
+  .mbar.stuck .mcard { flex-direction: row; align-items: baseline; gap: 8px; padding: 4px 12px; }
+  .mbar.stuck .mcard .t { font-size: 16px; margin-top: 0; }
+  .mbar.stuck .mcard .m { display: none; }
   /* on this page: the view's sections in page order; the lit one follows the scroll (watchTabs in app.js) */
   .secnav { display: flex; min-width: 0; max-width: 100%; gap: 0 2px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; border-top: var(--w) dashed var(--silk-25); }
   .secnav[hidden] { display: none; }
@@ -802,10 +812,14 @@
     .mbar .region button { min-height: 28px; padding: 2px 8px; font-size: 12px; }
     .bsel select { min-height: 28px; max-width: 9.5rem; padding: 2px 20px 2px 6px; font-size: 12px; background-position: right 6px center; }
     .mnav { position: sticky; top: 0; z-index: 25; background: var(--mask); border-bottom: var(--w) solid var(--silk-25); }
-    .mtabs, .secnav { margin: 0; padding: 0 6px; }
+    .mcards, .secnav { margin: 0; padding: 0 6px; }
+    .mcards, .mbar.stuck .mcards { display: flex; gap: 6px; padding: 6px; overflow-x: auto; scrollbar-width: none; }
+    .mcards::-webkit-scrollbar { display: none; }
+    .mcard, .mbar.stuck .mcard { flex: none; flex-direction: row; padding: 5px 10px; }
+    .mcard .j, .mcard .m { display: none; }
+    .mcard .t, .mbar.stuck .mcard .t { font-size: 15px; margin-top: 0; }
     .secnav button { min-height: 34px; font-size: 12px; padding: 0 8px; }
     .legend.fb .v.mono { font-size: 13px; }
-    .mtabs a { min-height: 40px; padding: 0 10px; font-size: 14px; }
     .hd { margin-top: 10px; }
     /* chip toolbar: short labels, one line */
     .ctools-chip { gap: 6px; margin-top: 10px; }

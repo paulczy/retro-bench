@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" data-mask="green">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Concept C: cards on the landing, a Pages drawer everywhere (Retro Bench mockup)</title>
+<link rel="stylesheet" href="../../../dist/app.css">
+<link rel="stylesheet" href="_shared.css">
+<style>
+/* ---- Concept C: no page row at all. The sticky line is the on-this-page strip with a PAGES button at its end;
+   the button opens the five cards as a drawer (a popover on a desk, a bottom sheet on a phone). On a phone the
+   button also lives in the bottom bar as the machine's own entry, so the top stays one short line. ---- */
+.mnav { display: flex; align-items: center; gap: 0 8px; min-width: 0; }
+.secnav { flex: 1 1 auto; border-top: 0; }
+.pages { position: relative; flex: none; margin-left: auto; }
+.pages > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border: var(--w) solid var(--silk-45); border-radius: var(--radius-silk); font: 14px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--silk-70); }
+.pages > summary::-webkit-details-marker { display: none; }
+.pages > summary:hover { color: var(--silk); border-color: var(--silk); }
+.pages > summary .pin { display: inline-grid; grid-template-columns: repeat(2, 5px); gap: 2px; }
+.pages > summary .pin i { width: 5px; height: 5px; border-radius: 50%; background: var(--copper); }
+.pages[open] > summary { color: var(--copper-ink); background: var(--copper); border-color: var(--copper); }
+.pages[open] > summary .pin i { background: var(--copper-ink); }
+.pages .sheet { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; width: 340px; max-width: calc(100vw - 24px); background: var(--mask); border: var(--w) solid var(--silk); border-radius: var(--radius-silk); padding: 8px; display: grid; gap: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.pages .sheet .door { min-height: 0; padding: 8px 12px; display: grid; grid-template-columns: 34px 1fr auto; align-items: baseline; gap: 0 8px; }
+.pages .sheet .door .t { font-size: 18px; margin: 0; }
+.pages .sheet .door .m { margin: 0; grid-column: 2 / -1; }
+.pages .sheet .door .n { font: 14px var(--font-mono); color: var(--tin); }
+.pages .sheet .door.here { border-color: var(--copper); }
+.pages .sheet .door.here .t { color: var(--copper); }
+.pages .sheet .door.pour .n { color: var(--copper-ink); opacity: .75; }
+.pages .sheet .h4 { margin: 2px 4px 4px; }
+@media (width < 640px) {
+  .mbar .mnav { padding: 0 6px; }
+  .pages > summary { display: none; }   /* the bottom bar has it */
+  .pages .sheet { position: fixed; left: 6px; right: 6px; top: auto; bottom: calc(70px + env(safe-area-inset-bottom)); width: auto; max-width: none; }
+}
+</style>
+</head>
+<body>
+<div class="board">
+  <span class="hole tl"></span><span class="hole tr"></span><span class="hole bl"></span><span class="hole br"></span>
+  <header class="strip" id="strip">
+    <div class="title"><a href="#"><b>Retro Bench</b></a><a class="ver" href="#">dev</a></div>
+    <form class="edge" role="search"><input type="search" placeholder="Chips, pins, commands, keys, terms" aria-label="Search"><span class="hint">/</span></form>
+    <nav class="hnav" aria-label="Pages"><a href="#">Home</a><a href="#">Search</a><a href="#">Glossary</a><a href="#">Video</a><a href="#">Notes</a><a href="#">More</a></nav>
+    <div class="tools"><button type="button" class="tog">Awake: <b>off</b></button><button type="button" class="tog">Mask: <b>green</b></button></div>
+  </header>
+  <nav class="trace" aria-label="Breadcrumb"><a href="#">Home</a><span class="seg"></span><a href="#">Commodore</a><span class="seg"></span><span class="here">Commodore 64</span></nav>
+  <main id="main" class="px-2.5 pt-1.5 max-sm:px-0">
+
+<div class="mbar" id="mbar">
+  <div class="ctx"><button type="button" class="mname"><span class="des">C64</span><span class="nm">Commodore 64</span><span class="sw">&#9662;</span></button>
+    <span class="bsel"><select aria-label="Board revision on the bench"><option>All boards</option><option>Assy 250407 (A, CR)</option></select></span>
+    <div class="region"><span class="h">TV</span><button type="button" class="on">Both</button><button type="button">PAL</button><button type="button">NTSC</button></div></div>
+  <div class="mnav">
+    <nav class="secnav" id="secnav" aria-label="On this page">
+      <button type="button" class="on">Chips</button><button type="button">Photo</button><button type="button">First look</button><button type="button">Test points</button><button type="button">Troubleshooting</button><button type="button">ROM images</button><button type="button">Notes</button><button type="button">Schematics</button>
+    </nav>
+    <details class="pages" id="pages">
+      <summary aria-label="Commodore 64 pages"><span class="pin" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Pages</summary>
+      <div class="sheet">
+        <div class="h4 mt-0">C64 Commodore 64</div>
+        <a class="door here" href="#"><span class="j">J0</span><span class="t">Board</span><span class="n">you are here</span><span class="m">chips, photo, first look, faults</span></a>
+        <a class="door pour" href="#"><span class="j">J1</span><span class="t">Pinouts</span><span class="n">9 of 9 drawn</span><span class="m">every pin of every chip</span></a>
+        <a class="door" href="#"><span class="j">J2</span><span class="t">Ports</span><span class="n">7 connectors</span><span class="m">pin by pin, looking at the socket</span></a>
+        <a class="door" href="#"><span class="j">J3</span><span class="t">Power</span><span class="n">3 rails</span><span class="m">brick, rails, test points, clocks</span></a>
+        <a class="door" href="#"><span class="j">J4</span><span class="t">Ref</span><span class="n">6 tables</span><span class="m">first boot, commands, keys, memory</span></a>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="hd"><span class="des">C64</span><h1>Commodore 64</h1><div class="sub">C64 / C64C / SX-64, 1982. The best seller. PLA and VIC-II run hot. <span class="mono tin">FITTED</span></div></div>
+<div class="facts grid gap-x-6 gap-y-1.5 mt-3.5 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+  <div><span>CPU</span><div>6510 @ 1.02/0.985 MHz</div></div><div><span>RAM</span><div>64 KB (38,911 free)</div></div><div><span>ROM</span><div>BASIC 2.0 + KERNAL + char</div></div>
+  <div><span>VIDEO</span><div>VIC-II 6567/6569</div></div><div><span>SOUND</span><div>SID 6581/8580</div></div><div><span>OS</span><div>Commodore BASIC 2.0</div></div>
+</div>
+
+<!-- the four cards, each a page; the small line under each lists that page's sections and each is a deep link -->
+<div class="doors">
+  <div class="door pour"><div class="j">J1</div><a class="t" href="#">Pinouts</a><div class="m">9 of 9 chips drawn</div>
+    <div class="secs"><a href="#">PLA</a><a href="#">VIC-II</a><a href="#">6510</a><a href="#">SID</a><a href="#">CIA</a><a href="#">Parts list</a></div></div>
+  <div class="door"><div class="j">J2</div><a class="t" href="#">Ports</a><div class="m">7 connectors</div>
+    <div class="secs"><a href="#">Power in</a><a href="#">Serial</a><a href="#">Video</a><a href="#">User</a><a href="#">Cartridge</a><a href="#">Control</a><a href="#">Cassette</a></div></div>
+  <div class="door"><div class="j">J3</div><a class="t" href="#">Power</a><div class="m">Brick, 3 rails, 9 test points</div>
+    <div class="secs"><a href="#">Supply</a><a href="#">Rails</a><a href="#">Test points</a><a href="#">Clocks</a><a href="#">First ten minutes</a><a href="#">Probe hints</a></div></div>
+  <div class="door"><div class="j">J4</div><a class="t" href="#">Ref</a><div class="m">First boot, commands, keys, memory map</div>
+    <div class="secs"><a href="#">First boot</a><a href="#">Commands</a><a href="#">Quirks</a><a href="#">Keys</a><a href="#">Memory map</a></div></div>
+</div>
+<div class="flex flex-wrap gap-x-3.5 gap-y-1 items-center mt-3.5"><button type="button" class="btn">Print card</button><span class="tin sm">One page where it fits, two at most, black on white: chips, supply and rail warnings, rails, first checks, clocks, connector pins.</span></div>
+
+<section class="blk boardarea mt-7" id="sec-chips"><span class="lbl"><span class="d">U</span>Chips</span>
+  <div class="fpmock">
+    <div><div class="d">U17 <i class="hot">HOT</i><i>DIP-28</i></div><div class="ic">PLA</div><div class="r">Address decode + bank switching</div></div>
+    <div><div class="d">U19 <i class="hot">HOT</i><i>DIP-40</i></div><div class="ic">VIC-II</div><div class="r">Video + DRAM refresh + CPU clock</div></div>
+    <div><div class="d">U7 <i>DIP-40</i></div><div class="ic">6510</div><div class="r">CPU</div></div>
+    <div><div class="d">U18 <i>DIP-28</i></div><div class="ic">SID</div><div class="r">Sound + paddle A/D</div></div>
+    <div><div class="d">U1 <i>DIP-40</i></div><div class="ic">CIA</div><div class="r">Keyboard</div></div>
+    <div><div class="d">U9-U12, U21-U24 <i>DIP-16</i></div><div class="ic">4164</div><div class="r">Main RAM</div></div>
+    <div><div class="d">U6 <i>DIP-18</i></div><div class="ic">2114</div><div class="r">Static RAM</div></div>
+    <div><div class="d">U3, U4 <i>DIP-24</i></div><div class="ic">2364</div><div class="r">BASIC and KERNAL ROMs</div></div>
+    <div><div class="d">U5 <i>DIP-24</i></div><div class="ic">2332</div><div class="r">Character ROM</div></div>
+  </div>
+  <p class="note">Tap a footprint for its pinout. Designators follow the Commodore 64 board where the sheet records them. The crosshair shows a chip on the board photo below.</p>
+</section>
+<section class="blk" id="sec-photo"><span class="lbl"><span class="d">IMG</span>Photo</span><div class="filler" style="min-height:260px">Board photo, Assy 250407, with chip outlines (real page draws it)</div></section>
+<div class="grid gap-x-[18px] md:grid-cols-2 items-start">
+  <section class="blk" id="sec-first-look"><span class="lbl">First look</span><ul class="bul"><li>Black screen with power LED on: PLA (U17) first, then the 6510 and VIC-II.</li><li>Garbage on screen or dead keys: PLA or the RAMs; swap the 4164s in pairs.</li><li>No sound only: SID (U18) is socketed on most boards; try a known good one.</li></ul></section>
+  <section class="blk" id="sec-test-points"><span class="lbl"><span class="d">TP</span>Test points</span>
+    <div class="legend tri"><div class="k">TP1</div><div class="v"><b>+5 V</b><br><span class="tin sm">pin 40 of the 6510</span></div><div class="v3 mono">4.9-5.1 V</div>
+      <div class="k">TP2</div><div class="v"><b>+12 V</b><br><span class="tin sm">VR1 output</span></div><div class="v3 mono">11.5-12.5 V</div>
+      <div class="k">TP3</div><div class="v"><b>9 VAC</b><br><span class="tin sm">CN7 pins 6 and 7</span></div><div class="v3 mono">9-11 VAC</div></div>
+    <a class="lnk" href="#">All rails and test points</a></section>
+</div>
+<section class="blk" id="sec-troubleshooting"><span class="lbl">Troubleshooting</span>
+  <div class="symrow"><div><div class="s">Black screen, power LED lit</div></div><div class="u"><a href="#">U17 PLA</a><a href="#">U7 6510</a><a href="#">U19 VIC-II</a></div></div>
+  <div class="symrow"><div><div class="s">Garbage screen or dead keys</div></div><div class="u"><a href="#">U17 PLA</a><a href="#">4164</a><a href="#">U1 CIA</a></div></div>
+  <div class="symrow"><div><div class="s">No sound</div></div><div class="u"><a href="#">U18 SID</a></div></div>
+</section>
+<section class="blk" id="sec-roms"><span class="lbl"><span class="d">CRC</span>ROM images</span><div class="filler">BASIC, KERNAL and character ROM hashes (real page lists CRC32 and SHA-1)</div></section>
+<section class="blk" id="sec-notes"><span class="lbl">Notes</span><div class="filler">Your bench notes for the Commodore 64</div></section>
+<section class="blk" id="sec-schematics"><span class="lbl"><span class="d">PCB</span>Schematics</span><div class="filler" style="min-height:300px">Board revisions and drawings (real page lists seven assemblies)</div></section>
+
+  </main>
+</div>
+<nav class="edgebar" aria-label="Main"><a href="#"><span class="fg"></span>Home</a><a href="#" class="on" onclick="event.preventDefault();var p=document.getElementById('pages');p.open=!p.open"><span class="fg"></span>C64</a><a href="#"><span class="fg"></span>Search</a><a href="#"><span class="fg"></span>Notes</a><a href="#"><span class="fg"></span>More</a></nav>
+<div class="mock-tag">CONCEPT C</div>
+<script src="_shared.js"></script>
+</body>
+</html>

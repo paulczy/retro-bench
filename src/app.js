@@ -1010,7 +1010,7 @@ function render() {
         if (r.q.hl && fits(m, r.q.hl)) state.ph.sel = r.q.hl;
         ctx.crumbs[1] = [m.name]; html = viewMachine(m);
       }
-      else if (c === 'pinouts' || (chip && !chip.pins)) { ctx.crumbs.push(['Chips']); html = viewPinouts(m); }
+      else if (c === 'pinouts' || (chip && !chip.pins)) { ctx.crumbs.push(['Pinouts']); html = viewPinouts(m); }
       else if (c === 'quickref') { ctx.crumbs.push(['Quick reference']); if (r.q.tab && !r.q.at) r.q.at = { keys: 'keys', basic: 'commands', memory: 'memory' }[r.q.tab]; html = viewQuickref(m); }
       else if (c === 'ports' || c === 'power') {
         ctx.crumbs.push([c === 'ports' ? 'Ports' : 'Power']);
@@ -1027,7 +1027,7 @@ function render() {
         const pn = Number(r.q.pin);
         if (r.q.pin && chip.pins.some(p => p.n === pn)) state.pin = pn;
         state.compact = wantCompact(chip); state.stack = wantStack(chip);
-        ctx.crumbs.push(['Chips', mPath(m) + '/pinouts'], [chip.short]);
+        ctx.crumbs.push(['Pinouts', mPath(m) + '/pinouts'], [chip.short]);
         html = viewChip(m, chip);
       } else html = viewNotFound();
     }
@@ -1048,7 +1048,7 @@ function render() {
   closePop(); closePalette();
   window.scrollTo(0, 0);
   if (ctx.chip || state.conn) { renderPanel(); drawWire(); } else closePanel();
-  watchDip(); syncWake(); watchTabs();
+  watchDip(); syncWake(); watchTabs(); watchStuck();
   if (a === 'glossary' && r.q.term) { const el = document.getElementById('term-' + r.q.term); if (el) el.scrollIntoView({ block: 'center' }); }
   if (c === 'ports' && r.q.c) { const el = document.getElementById('conn-' + r.q.c); if (el) el.scrollIntoView({ block: 'start' }); }
   if (c === 'power' && r.q.c) { const el = $('#supply'); if (el) el.scrollIntoView({ block: 'start' }); }
@@ -1065,7 +1065,7 @@ const mbarH = () => { const b = $('#mbar'), s = b && (PHONE_MQ.matches ? b.query
 function syncMbar() {
   const b = $('#mbar');
   document.documentElement.style.setProperty('--mbar-h', `${mbarH()}px`);
-  const on = b && b.querySelector('.mtabs .on'), row = on && on.parentElement;
+  const on = b && b.querySelector('.mcards .on'), row = on && on.parentElement;
   if (on && row.scrollWidth > row.clientWidth) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
 }
 /* ---------- on this page: every top-level section of the view, in page order, as a strip under the tabs. The lit
@@ -1074,6 +1074,15 @@ function syncMbar() {
 let tabIO = [];
 const TAB_LINE = 32;   /* px under the bar: a jump to a section lands it within this (scroll padding and margin) */
 const secLabel = sec => { const l = sec.querySelector(':scope > .lbl'); if (!l) return ''; const c = l.cloneNode(true); c.querySelectorAll('.d').forEach(d => d.remove()); return c.textContent.trim(); };
+let stuckIO = null;
+function watchStuck() {
+  if (stuckIO) stuckIO.disconnect(); stuckIO = null;
+  const b = $('#mbar'); if (!b || !window.IntersectionObserver) return;
+  const s = document.createElement('div'); s.className = 'mbar-sentinel'; s.setAttribute('aria-hidden', 'true'); b.before(s);
+  /* the cards show their count line until the bar sticks; then one line each, and the strip re-measures */
+  stuckIO = new IntersectionObserver(([e]) => { const on = !e.isIntersecting && e.boundingClientRect.top < 0; if (b.classList.contains('stuck') !== on) { b.classList.toggle('stuck', on); watchTabs(); } });
+  stuckIO.observe(s);
+}
 function watchTabs() {
   tabIO.forEach(o => o.disconnect()); tabIO = [];
   const nav = $('#secnav'), view = $('#view'); if (!nav || !view) return;
@@ -1083,7 +1092,8 @@ function watchTabs() {
   nav.innerHTML = secs.map(x => `<button type="button" data-sec="${esc(x.id)}">${esc(secLabel(x))}</button>`).join('');
   syncMbar();
   if (nav.hidden || !window.IntersectionObserver) return;
-  const btns = $$('button', nav), end = document.createElement('div'); end.setAttribute('aria-hidden', 'true'); view.appendChild(end);
+  view.querySelectorAll('.secnav-end').forEach(x => x.remove());
+  const btns = $$('button', nav), end = document.createElement('div'); end.className = 'secnav-end'; end.setAttribute('aria-hidden', 'true'); view.appendChild(end);
   let lit = -1;
   const sync = () => {
     const bar = PHONE_MQ.matches ? $('#mbar .mnav') : $('#mbar'), y = (bar ? bar.getBoundingClientRect().bottom : 0) + TAB_LINE;
@@ -1101,7 +1111,7 @@ function watchTabs() {
 function tabJump(e) {
   const b = e.target.closest && e.target.closest('#secnav button[data-sec]');
   if (b) { const el = document.getElementById(b.dataset.sec); if (el) el.scrollIntoView({ block: 'start' }); return; }
-  const a = e.target.closest && e.target.closest('#mbar .mtabs a'); if (!a || a.getAttribute('href') !== location.hash) return;
+  const a = e.target.closest && e.target.closest('#mbar .mcards a'); if (!a || a.getAttribute('href') !== location.hash) return;
   e.preventDefault(); window.scrollTo(0, 0);
 }
 document.addEventListener('click', tabJump);
@@ -1135,7 +1145,7 @@ function renderEdgebar() {
   const f = (href, label, on, off) => `<a href="${href}" class="${on ? 'on' : ''}${off ? ' off' : ''}"${on ? ' aria-current="page"' : ''}${off ? ' aria-disabled="true" tabindex="-1"' : ''}><span class="fg" aria-hidden="true"></span>${label}</a>`;
   $('#edgebar').innerHTML =
     f('#/', 'Home', !a) +
-    f(m ? `${mPath(m)}/pinouts` : '#/', 'Chips', c === 'pinouts' || c === 'chip', !m || !chipsOf(m).length) +
+    f(m ? `${mPath(m)}/pinouts` : '#/', 'Pinouts', c === 'pinouts' || c === 'chip', !m || !chipsOf(m).length) +
     f(m ? `${mPath(m)}/quickref` : '#/', 'Ref', c === 'quickref', !m || !dataFor(D.quickref, m).data) +
     f('#/search', 'Search', a === 'search') +
     f('#/more', 'More', MORE_PAGES.includes(a));
@@ -1147,13 +1157,14 @@ const head = (des, title, sub, checked) => `<div class="hd">${des ? `<span class
    boards the schematics list (one board: its name and revision), the PAL / NTSC toggle when the machine has
    values of one standard, and the tab row. A tab with no data is dashed and inert, by the bottom bar's tests. ---------- */
 function machineTabs(m) {
-  const pw = dataFor(D.power, m).data;
+  const pw = dataFor(D.power, m).data, cn = arr(dataFor(D.connectors, m).data), qr = dataFor(D.quickref, m).data;
+  const chips = chipsOf(m), drawn = chips.filter(c => c.pins).length;
   return [
-    ['board', 'Board', mPath(m), true],
-    ['chips', 'Chips', `${mPath(m)}/pinouts`, chipsOf(m).length > 0],
-    ['ports', 'Ports', `${mPath(m)}/ports`, arr(dataFor(D.connectors, m).data).length > 0],
-    ['power', 'Power', `${mPath(m)}/power`, !!pw],
-    ['ref', 'Ref', `${mPath(m)}/quickref`, !!dataFor(D.quickref, m).data],
+    ['board', 'J0', 'Board', mPath(m), true, 'Chips, photo, first look, faults'],
+    ['chips', 'J1', 'Pinouts', `${mPath(m)}/pinouts`, chips.length > 0, chips.length ? `${drawn} of ${chips.length} chips drawn` : 'Not captured yet'],
+    ['ports', 'J2', 'Ports', `${mPath(m)}/ports`, cn.length > 0, cn.length ? `${cn.length} connector${cn.length === 1 ? '' : 's'}` : 'Not captured yet'],
+    ['power', 'J3', 'Power', `${mPath(m)}/power`, !!pw, pw ? `${arr(pw.rails).length} rails, ${arr(pw.testPoints).length} test points` : 'Not captured yet'],
+    ['ref', 'J4', 'Ref', `${mPath(m)}/quickref`, !!qr, qr ? `${arr(qr.firstBoot).length ? 'First boot, c' : 'C'}ommands, keys, memory` : 'Not captured yet'],
   ];
 }
 /* the board revision on the bench, when RCS.boards lists the machine's boards */
@@ -1169,7 +1180,7 @@ function mbar(m, tab) {
     <div class="ctx"><button type="button" class="mname" data-act="mswitch" aria-label="${esc(m.name)}. Switch machine" title="Switch machine"><span class="des">${esc(mDes(m))}</span><span class="nm">${esc(m.name)}</span><span class="sw" aria-hidden="true">&#9662;</span></button>
       ${boardsOf(m).length ? boardSelect(m) : bl ? `<a class="brev" href="${mPath(m)}?at=boards" title="Boards and schematics">${esc(bl)}</a>` : ''}
       ${machineRegional(m) ? regionBar() : ''}</div>
-    <div class="mnav"><nav class="mtabs" aria-label="${esc(m.name)} pages">${machineTabs(m).map(([id, label, href, ok]) => `<a href="${href}" class="${id === tab ? 'on' : ''}${ok ? '' : ' off'}"${id === tab ? ' aria-current="page"' : ''}${ok ? '' : ' aria-disabled="true" tabindex="-1"'}>${label}</a>`).join('')}</nav>
+    <div class="mnav"><nav class="mcards" aria-label="${esc(m.name)} pages">${machineTabs(m).map(([id, j, label, href, ok, meta]) => `<a href="${href}" class="mcard${id === tab ? ' on' : ''}${ok ? '' : ' off'}"${id === tab ? ' aria-current="page"' : ''}${ok ? '' : ' aria-disabled="true" tabindex="-1"'}><span class="j">${j}</span><span class="t">${label}</span><span class="m">${esc(meta)}</span></a>`).join('')}</nav>
     <nav class="secnav" id="secnav" aria-label="On this page" hidden></nav></div>
   </div>`;
 }
@@ -1266,7 +1277,7 @@ function boardsBlock(m) {
   const mine = all.filter(s => onBoard(s, m)), other = all.filter(s => !onBoard(s, m));
   const revBlk = revs.length ? `<div class="h4 mt-0">Board revisions</div><div class="legend tri brevs">${revs.map(r => `<div class="k${r === b ? ' on' : ''}">${esc(r.name)}</div><div class="v">${r.years ? `<b>${esc(r.years)}</b>` : ''}${vmark(r)}${r === b ? ' <span class="btag on">On the bench</span>' : ''}${r.note ? `<br><span class="sm">${esc(r.note)}</span>` : ''}${disagree(r)}</div><div class="v3">${arr(r.sources).length ? `<ul class="ds">${r.sources.map(d => `<li>${srcLink(d)}</li>`).join('')}</ul>` : ''}</div>`).join('')}</div>
     <p class="note">${b ? `Showing the ${esc(b.name)}: parts, designators, rails, clocks, ports and photos for other boards are hidden.` : 'Showing all boards. Pick the one on your bench in the bar at the top; records only on some boards say which.'}</p>` : '';
-  return `<section class="blk" id="boards"><span class="lbl"><span class="d">PCB</span>Boards and schematics</span>
+  return `<section class="blk" id="boards"><span class="lbl"><span class="d">PCB</span>Schematics</span>
     ${revBlk}${mine.length ? `${revs.length ? '<div class="h4">Drawings</div>' : ''}${legend(mine)}` : b ? `<p class="note mt-0">No drawings linked for the ${esc(b.name)}.</p>` : ''}
     ${other.length ? `<details class="fold"><summary>Other boards<span class="s">${other.length} document${other.length === 1 ? '' : 's'}</span></summary>${legend(other)}</details>` : ''}
     ${all.length ? '<p class="note">Links open the archive that holds the drawing; nothing is copied into the app. Check the assembly number printed on your board against the list.</p>' : ''}</section>`;
@@ -1366,7 +1377,7 @@ function photoBody(m) {
     <p class="pcap"><b>${esc(photoBoard(p))}</b>${recTag(p, m)}${p.side ? `, ${esc(p.side)} side` : ''}${p.note ? `. <span class="tin">${esc(p.note)}</span>` : ''}</p>
     <p class="pcred">${photoCredit(p)}. Resized only; the outlines are drawn by Retro Bench.</p>`;
 }
-const photoBlock = m => (photosOf(m).length ? `<section class="blk photoblk scroll-mt-4" id="photo"><span class="lbl"><span class="d">IMG</span>Board photo</span><div id="photo-body">${photoBody(m)}</div></section>` : '');
+const photoBlock = m => (photosOf(m).length ? `<section class="blk photoblk scroll-mt-4" id="photo"><span class="lbl"><span class="d">IMG</span>Photo</span><div id="photo-body">${photoBody(m)}</div></section>` : '');
 /* chip page: a small copy of the first photo that outlines this chip, linking to the machine page photo */
 function chipPhoto(m, chip) {
   const list = photosOf(m), i = list.findIndex(p => p.chips && p.chips[chip.id]);
@@ -1405,13 +1416,13 @@ function viewPinouts(m) {
         ${arr(c.fails).length ? `<div class="f">FAILS AS: ${esc(c.fails.join(' / '))}</div>` : ''}</div>`;
     return c.pins ? `<a class="chiprow" href="${chipPath(m, c)}">${inner}</a>` : `<div class="chiprow nc">${inner}</div>`;
   }).join('');
-  return head(mDes(m), 'Chips', `${esc(m.name)}. Hottest chips first. Tap one for the footprint.`) +
-    (chips.length ? `<section class="blk"><span class="lbl"><span class="d">U</span>Parts</span>${rows}</section>${partsList(m, chips)}` : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} cheat sheet exists but its chips have not been entered.`));
+  return head(mDes(m), 'Pinouts', `${esc(m.name)}. Hottest chips first. Tap one for the footprint.`) +
+    (chips.length ? `<section class="blk"><span class="lbl"><span class="d">U</span>Chips</span>${rows}</section>${partsList(m, chips)}` : emptyBlk('NO CHIPS CAPTURED', `The ${esc(m.name)} cheat sheet exists but its chips have not been entered.`));
 }
 /* the parts list by designator, with a filter box; a chip with no designator in the data goes last */
 function partsList(m, chips) {
   const rows = chips.map(c => ({ c, ds: desAll(c, m) })).sort((a, b) => desCmp(a.ds[0], b.ds[0]) || String(a.c.short).localeCompare(String(b.c.short)));
-  return `<section class="blk scroll-mt-4" id="parts"><span class="lbl">Parts list by designator</span>
+  return `<section class="blk scroll-mt-4" id="parts"><span class="lbl">Parts list</span>
     <form class="edge pfilter" role="search" autocomplete="off" data-act="parts-form"><input id="parts-q" type="search" placeholder="Filter: U7, 6510, video" aria-label="Filter the parts list" spellcheck="false"></form>
     <table class="ctab parts" id="parts-t"><thead><tr><th>Designator</th><th>Part</th><th>Role</th></tr></thead>
     <tbody>${rows.map(({ c, ds }) => `<tr data-q="${esc([...ds, c.short, c.name, c.role].join(' ').toLowerCase())}"><td class="f">${ds.length ? esc(ds.slice(0, 4).join(', ') + (ds.length > 4 ? ` … (${ds.length})` : '')) : '<span class="tin">—</span>'}${ds.length && locOf(c, m) !== ds.join(', ') ? `<div class="tin sm loc">${esc(locOf(c, m))}</div>` : ''}</td><td class="nm">${c.pins ? `<a class="plink" href="${chipPath(m, c)}">${esc(c.short)}</a>` : `${esc(c.short)} <span class="tin sm">not captured</span>`}${vmark(c)}${vmark(locOver(c, m))}${chipTag(c, m)}${disagree(locOver(c, m))}</td><td>${esc(c.role || '')}</td></tr>`).join('')}</tbody></table>
@@ -1931,7 +1942,7 @@ function noteInput(el) {
 }
 function noteBlock(kind, id, what) {
   const k = noteKey(kind, id), n = noteGet(k), unsaved = notePending.get(k);
-  return `<section class="blk notes scroll-mt-4" id="notes"><span class="lbl">Bench notes</span>
+  return `<section class="blk notes scroll-mt-4" id="notes"><span class="lbl">Notes</span>
     <textarea class="notearea" data-note="${esc(k)}" rows="4" aria-label="Bench notes for ${esc(what)}" placeholder="Readings, swaps, what you tried on this ${kind === 'm' ? 'machine' : 'chip'}.">${esc(unsaved ?? (n ? n.text : ''))}</textarea>
     <p class="note mt-1.5" data-note-status="${esc(k)}" aria-live="polite">${unsaved != null ? noteStatus(null, 'fail') : noteStatus(n)}</p></section>`;
 }
@@ -2307,7 +2318,7 @@ function openPalette(prefill = '', mode = '') {
 function closePalette() { const p = $('#palette'); if (p.hidden) return; p.hidden = true; state.palMode = ''; if (p.contains(document.activeElement)) document.activeElement.blur(); }
 /* another machine, on the same page where it has one (the chip page goes to its pinouts) */
 function switchHref(m) {
-  const c = state.ctx.route.segs[2], ok = Object.fromEntries(machineTabs(m).map(t => [t[0], t[3]]));
+  const c = state.ctx.route.segs[2], ok = Object.fromEntries(machineTabs(m).map(t => [t[0], t[4]]));
   const sec = c === 'chip' || c === 'pinouts' ? ok.chips && 'pinouts' : c === 'ports' ? ok.ports && 'ports' : c === 'power' ? ok.power && 'power' : c === 'quickref' ? ok.ref && 'quickref' : '';
   return sec ? `${mPath(m)}/${sec}` : mPath(m);
 }

@@ -1,0 +1,41 @@
+/* Shared by the three machine-nav mockups. Restores the J-cards (.door) from commit 64fb581^ and adds the
+   section list under each card. Everything else comes from ../../../dist/app.css. */
+.door { display: block; position: relative; border: var(--w) solid var(--silk); border-radius: var(--radius-silk); padding: 12px 14px; min-height: 76px; color: var(--silk); }
+.door .j { font: 14px var(--font-mono); letter-spacing: .1em; color: var(--copper); }
+.door .t { font: 500 22px/1.1 var(--font-sans); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+.door .m { font: 14px var(--font-mono); color: var(--tin); margin-top: 4px; }
+.door:hover { border-color: var(--copper); color: var(--silk); }
+.door.pour { border-color: var(--copper-dk); color: var(--copper-ink); background: var(--copper); }
+.door.pour:hover { background: var(--copper-hi); color: var(--copper-ink); }
+.door.pour .j, .door.pour .m { color: var(--copper-ink); opacity: .75; }
+.door.off { border-style: dashed; border-color: var(--silk-45); color: var(--silk-70); pointer-events: none; }
+.door.off .j { color: var(--tin); }
+/* the whole card opens the page: the title link is stretched over it; the section links sit above it */
+.door a.t::after { content: ''; position: absolute; inset: 0; }
+.door a.t { display: block; color: inherit; }
+.door .secs { position: relative; z-index: 1; }
+/* the page's sections, so a card jumps straight to one (each is its own link) */
+.door .secs { display: flex; flex-wrap: wrap; gap: 2px 0; margin: 10px -4px 0; font: 13px var(--font-mono); letter-spacing: .02em; }
+.door .secs a { color: var(--silk-70); padding: 2px 4px; border-radius: 2px; }
+.door .secs a:hover { color: var(--copper-hi); }
+.door.pour .secs a { color: var(--copper-ink); opacity: .8; }
+.door.pour .secs a:hover { opacity: 1; }
+.door .secs a + a::before { content: '·'; color: var(--silk-45); margin-right: 8px; }
+.door.pour .secs a + a::before { color: var(--copper-ink); }
+.doors { display: grid; gap: 14px; margin-top: 22px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (width >= 1024px) { .doors { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (width < 640px) { .doors { gap: 8px; } .door { padding: 10px 10px; min-height: 0; } .door .t { font-size: 19px; } .door .secs { display: none; } .door .m { font-size: 13px; } }
+/* mockup chrome: a label in the corner saying which concept this is */
+.mock-tag { position: fixed; right: 10px; bottom: 10px; z-index: 99; font: 12px var(--font-mono); letter-spacing: .1em; color: var(--copper-ink); background: var(--copper); padding: 4px 8px; border-radius: 3px; }
+@media (width < 640px) { .mock-tag { bottom: 80px; } }
+/* placeholder board grid: a few DIP footprints drawn in HTML, the real page draws SVG */
+.fpmock { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 18px; margin-top: 8px; }
+.fpmock > div { font-family: var(--font-mono); }
+.fpmock .d { font-size: 13px; color: var(--copper); letter-spacing: .08em; display: flex; justify-content: space-between; }
+.fpmock .d i { font-style: normal; color: var(--silk-70); font-size: 11px; }
+.fpmock .d i.hot { color: var(--pwr); }
+.fpmock .ic { margin-top: 4px; border: 1.5px solid var(--silk); background: var(--mask-deep); border-radius: 3px; height: 34px; display: flex; align-items: center; justify-content: center; font: 600 17px var(--font-sans); letter-spacing: .06em; position: relative; }
+.fpmock .ic::before, .fpmock .ic::after { content: ''; position: absolute; left: 6px; right: 6px; height: 4px; background: repeating-linear-gradient(90deg, var(--copper) 0 4px, transparent 4px 8px); }
+.fpmock .ic::before { top: -6px; } .fpmock .ic::after { bottom: -6px; }
+.fpmock .r { margin-top: 8px; font: 12px var(--font-sans); color: var(--tin); }
+.filler { color: var(--tin-dim); font: 14px var(--font-mono); border: 1px dashed var(--silk-25); border-radius: 4px; padding: 14px; margin-top: 18px; }
