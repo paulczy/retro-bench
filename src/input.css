@@ -97,6 +97,9 @@
 
   /* ---------- the board: one silkscreen outline, four copper-ringed mounting holes ---------- */
   .board { position: relative; max-width: 1320px; min-height: calc(100dvh - 24px); margin: 12px auto; padding: 18px 28px 60px; border: var(--w) solid var(--silk); border-radius: 10px; }
+  /* update ready: a slow opacity breath (compositor only, no repaint) that stops after ten cycles, about 40 s */
+  .strobe { animation: strobe 4s ease-in-out 10; }
+  @keyframes strobe { 50% { opacity: .35; } }
   /* one quiet line under the board: the source repo */
   .sitefoot { max-width: 1320px; margin: -4px auto 14px; padding: 0 6px; font: 13px var(--font-mono); letter-spacing: .04em; color: var(--tin); }
   .sitefoot a { color: inherit; text-decoration: underline; text-decoration-color: var(--silk-25); text-underline-offset: 3px; }

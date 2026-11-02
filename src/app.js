@@ -98,7 +98,11 @@ const netLive = () => !installed() && !net.local && !net.failed && !net.cached &
 const netLost = () => !installed() && !net.local && !net.cached && net.lost;
 /* the strip says nothing when all is well; only while saving, or when the offline copy failed */
 const netLabel = () => (installed() || net.local || net.cached || net.failed ? '' : net.lost ? 'Offline copy failed' : 'Saving for offline…');
-const netBtn = (act, label, cls) => `<button type="button" data-act="${act}" class="${cls}">${label}</button>`;
+const NET_TIP = {
+  install: 'Install adds Retro Bench to this device as an app, with its own icon and window. Everything works offline.',
+  reload: 'A newer version of Retro Bench is downloaded. Reload to start using it.',
+};
+const netBtn = (act, label, cls) => `<button type="button" data-act="${act}" class="${cls}${act === 'reload' ? ' strobe' : ''}" title="${NET_TIP[act]}">${label}</button>`;
 const COPPER_TXT = 'font-mono text-[15px] uppercase whitespace-nowrap text-copper hover:text-copper-hi min-h-11';
 /* strip actions sit with the mask toggle; on a phone there is no room, so Install lives on the More page
    and the update notice gets its own line under the strip (#net-row) */
